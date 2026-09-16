@@ -63,6 +63,7 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
   late GitTransport _transport;
   late bool _autoPush;
   bool _localPathEdited = false;
+  bool _nameEdited = false;
 
   @override
   void initState() {
@@ -80,6 +81,7 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
     _transport = existing?.transport ?? GitTransport.ssh;
     _autoPush = existing?.autoPushOnSave ?? false;
     _localPathEdited = existing != null;
+    _nameEdited = existing != null;
 
     _remote.addListener(_syncDerivedFields);
   }
@@ -119,8 +121,11 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
       if (!_localPathEdited) {
         _localPath.text = AppPaths.instance.defaultClonePath(slug);
       }
-      if (_name.text.trim().isEmpty && slug != 'repo') {
-        _name.text = slug;
+      // Keep following the URL until the user types their own name; checking
+      // for an empty field instead would freeze the name on the first
+      // keystroke of the URL.
+      if (!_nameEdited) {
+        _name.text = slug == 'repo' ? '' : slug;
       }
     });
   }
@@ -169,6 +174,7 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _name,
+                  onChanged: (_) => _nameEdited = true,
                   decoration: const InputDecoration(labelText: 'Nama tampilan'),
                   validator: (value) =>
                       (value ?? '').trim().isEmpty ? 'Nama tidak boleh kosong' : null,
