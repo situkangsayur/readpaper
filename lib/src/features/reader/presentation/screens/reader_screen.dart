@@ -224,14 +224,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 setState(() => _color = value);
                 ref.read(workspaceControllerProvider.notifier).setLastAnnotationColor(value);
               },
-              onHighlight: () => _createFromSelection(
-                _controller.textSelectionDelegate,
-                AnnotationType.highlight,
-              ),
-              onUnderline: () => _createFromSelection(
-                _controller.textSelectionDelegate,
-                AnnotationType.underline,
-              ),
+              onHighlight: () =>
+                  _createFromSelection(_controller.textSelectionDelegate, AnnotationType.highlight),
+              onUnderline: () =>
+                  _createFromSelection(_controller.textSelectionDelegate, AnnotationType.underline),
               onComment: () => _createFromSelection(
                 _controller.textSelectionDelegate,
                 AnnotationType.highlight,
@@ -497,10 +493,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Batal'),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Hapus'),

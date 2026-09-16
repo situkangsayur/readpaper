@@ -103,7 +103,8 @@ class GitHubApiBackend implements GitBackend {
       return GitResult(
         ok: true,
         exitCode: 0,
-        message: 'Mirror siap: ${state.files.length} berkas metadata, '
+        message:
+            'Mirror siap: ${state.files.length} berkas metadata, '
             '${state.attachments.length} lampiran menunggu diunduh saat dibuka',
       );
     } on Failure catch (e) {
@@ -302,11 +303,7 @@ class GitHubApiBackend implements GitBackend {
         PendingChange(message: message, paths: pendingPaths.toList()..sort(), at: DateTime.now()),
       );
     await state.save(repoPath);
-    return GitResult(
-      ok: true,
-      exitCode: 0,
-      message: '${pendingPaths.length} berkas siap dikirim',
-    );
+    return GitResult(ok: true, exitCode: 0, message: '${pendingPaths.length} berkas siap dikirim');
   }
 
   @override
@@ -389,11 +386,7 @@ class GitHubApiBackend implements GitBackend {
         ..pending.clear();
       await state.save(repoPath);
 
-      return GitResult(
-        ok: true,
-        exitCode: 0,
-        message: 'Terkirim: ${pending.paths.length} berkas',
-      );
+      return GitResult(ok: true, exitCode: 0, message: 'Terkirim: ${pending.paths.length} berkas');
     });
   }
 

@@ -39,8 +39,7 @@ class ZoteroAttachment {
   final int annotationCount;
   final String status;
 
-  bool get isPdf =>
-      contentType == 'application/pdf' || filename.toLowerCase().endsWith('.pdf');
+  bool get isPdf => contentType == 'application/pdf' || filename.toLowerCase().endsWith('.pdf');
 
   bool get isEpub =>
       contentType == 'application/epub+zip' || filename.toLowerCase().endsWith('.epub');
@@ -200,7 +199,12 @@ class ZoteroItem {
 /// One creator entry (author, editor, …) of an item.
 @immutable
 class ZoteroCreator {
-  const ZoteroCreator({required this.creatorType, this.firstName = '', this.lastName = '', this.name = ''});
+  const ZoteroCreator({
+    required this.creatorType,
+    this.firstName = '',
+    this.lastName = '',
+    this.name = '',
+  });
 
   factory ZoteroCreator.fromJson(Map<String, dynamic> json) => ZoteroCreator(
     creatorType: json['creatorType'] as String? ?? 'author',
@@ -225,11 +229,7 @@ class ZoteroCreator {
 /// A fully parsed item file, including the annotation children.
 @immutable
 class ItemDetail {
-  const ItemDetail({
-    required this.item,
-    required this.annotations,
-    required this.rawJson,
-  });
+  const ItemDetail({required this.item, required this.annotations, required this.rawJson});
 
   final ZoteroItem item;
   final List<ZoteroAnnotation> annotations;

@@ -40,11 +40,7 @@ class GitHubRepoRef {
     if (ssh != null) {
       final parts = ssh.group(2)!.split('/').where((p) => p.isNotEmpty).toList();
       if (parts.length < 2) return null;
-      return GitHubRepoRef(
-        owner: parts[parts.length - 2],
-        repo: parts.last,
-        host: ssh.group(1)!,
-      );
+      return GitHubRepoRef(owner: parts[parts.length - 2], repo: parts.last, host: ssh.group(1)!);
     }
 
     final uri = Uri.tryParse(url);
@@ -61,8 +57,7 @@ class GitHubRepoRef {
   final String host;
 
   /// REST root; GitHub Enterprise servers expose it under `/api/v3`.
-  String get apiBase =>
-      host == 'github.com' ? 'https://api.github.com' : 'https://$host/api/v3';
+  String get apiBase => host == 'github.com' ? 'https://api.github.com' : 'https://$host/api/v3';
 
   String get slug => '$owner/$repo';
 }
@@ -92,9 +87,9 @@ class GitHubApiClient {
     if ((token ?? '').isNotEmpty) 'Authorization': 'Bearer $token',
   };
 
-  Uri _uri(String path, [Map<String, String>? query]) =>
-      Uri.parse('${ref.apiBase}/repos/${ref.owner}/${ref.repo}$path')
-          .replace(queryParameters: query);
+  Uri _uri(String path, [Map<String, String>? query]) => Uri.parse(
+    '${ref.apiBase}/repos/${ref.owner}/${ref.repo}$path',
+  ).replace(queryParameters: query);
 
   /// Commit sha the branch currently points at.
   Future<String> headSha(String branch) async {
@@ -137,10 +132,7 @@ class GitHubApiClient {
 
   /// Raw bytes of a blob. Works for private repositories through the token.
   Future<Uint8List> blob(String sha) async {
-    final response = await _get(
-      _uri('/git/blobs/$sha'),
-      accept: 'application/vnd.github.raw',
-    );
+    final response = await _get(_uri('/git/blobs/$sha'), accept: 'application/vnd.github.raw');
     return response.bodyBytes;
   }
 
@@ -181,11 +173,10 @@ class GitHubApiClient {
   }
 
   /// Moves `refs/heads/<branch>` to [commitSha]. Never forces.
-  Future<void> updateRef({required String branch, required String commitSha}) =>
-      _patch(_uri('/git/refs/heads/${Uri.encodeComponent(branch)}'), <String, dynamic>{
-        'sha': commitSha,
-        'force': false,
-      });
+  Future<void> updateRef({required String branch, required String commitSha}) => _patch(
+    _uri('/git/refs/heads/${Uri.encodeComponent(branch)}'),
+    <String, dynamic>{'sha': commitSha, 'force': false},
+  );
 
   /// The commit a tree belongs to, used to build the next commit.
   Future<String> treeShaOfCommit(String commitSha) async {

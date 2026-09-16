@@ -29,8 +29,7 @@ class ItemListPane extends ConsumerWidget {
                     return _ItemTile(
                       item: item,
                       selected: item.key == selectedKey,
-                      onTap: () =>
-                          ref.read(selectedItemKeyProvider.notifier).select(item.key),
+                      onTap: () => ref.read(selectedItemKeyProvider.notifier).select(item.key),
                     );
                   },
                 ),

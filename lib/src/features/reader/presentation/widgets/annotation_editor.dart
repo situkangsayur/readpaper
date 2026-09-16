@@ -84,10 +84,7 @@ class _AnnotationEditorDialogState extends State<_AnnotationEditorDialog> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SingleChildScrollView(
-                child: Text(
-                  widget.quotedText!,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                child: Text(widget.quotedText!, style: Theme.of(context).textTheme.bodySmall),
               ),
             ),
             const SizedBox(height: 14),

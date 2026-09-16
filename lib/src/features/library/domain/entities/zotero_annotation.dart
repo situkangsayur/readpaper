@@ -53,12 +53,7 @@ class AnnotationRect {
 
   /// Serialised the way Zotero (JavaScript) writes them: at most three
   /// decimals, and whole numbers without a trailing `.0`.
-  List<num> toList() => <num>[
-    _round(left),
-    _round(bottom),
-    _round(right),
-    _round(top),
-  ];
+  List<num> toList() => <num>[_round(left), _round(bottom), _round(right), _round(top)];
 
   static num _round(double v) {
     final rounded = (v * 1000).roundToDouble() / 1000;

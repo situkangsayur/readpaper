@@ -43,9 +43,9 @@ class HomeScreen extends ConsumerWidget {
           IconButton(
             tooltip: 'Kelola repositori',
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const ProfilesScreen()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute<void>(builder: (_) => const ProfilesScreen())),
           ),
           const SizedBox(width: 4),
         ],

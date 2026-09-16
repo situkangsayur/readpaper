@@ -54,10 +54,7 @@ class AnnotationOverlayPainter extends CustomPainter {
         case AnnotationType.note || AnnotationType.text:
           for (final rect in annotation.rects) {
             final local = _toLocal(rect, scaleX, scaleY);
-            final box = RRect.fromRectAndRadius(
-              local.inflate(1),
-              Radius.circular(2 * scaleX),
-            );
+            final box = RRect.fromRectAndRadius(local.inflate(1), Radius.circular(2 * scaleX));
             canvas.drawRRect(box, Paint()..color = color.withValues(alpha: 0.28));
             canvas.drawRRect(
               box,

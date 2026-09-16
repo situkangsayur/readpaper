@@ -47,8 +47,9 @@ class ExpandedCollectionsController extends Notifier<Set<String>> {
   bool isExpanded(String key) => state.contains(key);
 }
 
-final expandedCollectionsProvider =
-    NotifierProvider<ExpandedCollectionsController, Set<String>>(ExpandedCollectionsController.new);
+final expandedCollectionsProvider = NotifierProvider<ExpandedCollectionsController, Set<String>>(
+  ExpandedCollectionsController.new,
+);
 
 /// Free-text filter over the item list.
 class SearchQueryController extends Notifier<String> {
@@ -79,8 +80,9 @@ class IncludeSubcollectionsController extends Notifier<bool> {
   void toggle() => state = !state;
 }
 
-final includeSubcollectionsProvider =
-    NotifierProvider<IncludeSubcollectionsController, bool>(IncludeSubcollectionsController.new);
+final includeSubcollectionsProvider = NotifierProvider<IncludeSubcollectionsController, bool>(
+  IncludeSubcollectionsController.new,
+);
 
 /// Key of the item selected in the middle pane.
 class SelectedItemController extends Notifier<String?> {
@@ -121,13 +123,17 @@ final visibleItemsProvider = Provider<List<ZoteroItem>>((ref) {
   }
 
   final sorted = <ZoteroItem>[...items];
-  sorted.sort((a, b) => switch (sort) {
-    ItemSort.title => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
-    ItemSort.year => b.year.compareTo(a.year),
-    ItemSort.creator => a.creatorLabel.toLowerCase().compareTo(b.creatorLabel.toLowerCase()),
-    ItemSort.dateAdded => (b.dateAdded ?? DateTime(1970)).compareTo(a.dateAdded ?? DateTime(1970)),
-    ItemSort.annotations => b.annotationCount.compareTo(a.annotationCount),
-  });
+  sorted.sort(
+    (a, b) => switch (sort) {
+      ItemSort.title => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+      ItemSort.year => b.year.compareTo(a.year),
+      ItemSort.creator => a.creatorLabel.toLowerCase().compareTo(b.creatorLabel.toLowerCase()),
+      ItemSort.dateAdded => (b.dateAdded ?? DateTime(1970)).compareTo(
+        a.dateAdded ?? DateTime(1970),
+      ),
+      ItemSort.annotations => b.annotationCount.compareTo(a.annotationCount),
+    },
+  );
   return sorted;
 });
 

@@ -128,7 +128,9 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
       ```
       lalu tambahkan kartu unduhan ReadPaper di `~/apk-share/index.html`
 - [ ] Unduh metadata awal lebih hemat (saat ini ±3.500 permintaan API untuk
-      mirror pertama; kuota GitHub 5.000/jam)
+      mirror pertama; kuota GitHub 5.000/jam). Ide: tunda `notes/**.md`
+      (±1.740 berkas, separuh dari total permintaan) dan ambil satu catatan
+      hanya ketika anotasi paper itu ditulis
 
 ---
 

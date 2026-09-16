@@ -37,7 +37,12 @@ class ZoteroFsDataSource {
 }
 
 /// Parses one library directory. Runs inside a background isolate.
-LibraryIndex parseLibrarySync(String directoryPath, String name, String directoryName, String type) {
+LibraryIndex parseLibrarySync(
+  String directoryPath,
+  String name,
+  String directoryName,
+  String type,
+) {
   final dir = Directory(directoryPath);
   if (!dir.existsSync()) {
     throw LibraryFailure('Direktori library tidak ada', details: directoryPath);

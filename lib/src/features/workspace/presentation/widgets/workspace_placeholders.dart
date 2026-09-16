@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../shared/providers/app_providers.dart';
 import '../../../settings/presentation/widgets/profile_editor_dialog.dart';
 import '../controllers/workspace_controller.dart';
 
@@ -9,22 +10,29 @@ class NoProfileView extends ConsumerWidget {
   const NoProfileView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => _CenteredCard(
-    icon: Icons.library_books_outlined,
-    title: 'Belum ada repositori',
-    body: const Text(
-      'ReadPaper membaca library Zotero yang disinkronkan ke GitHub oleh plugin '
-      'zotero-github-sync. Tambahkan repositori (SSH atau HTTPS) untuk mulai '
-      'membaca, menandai dan memberi komentar pada paper.',
-    ),
-    actions: <Widget>[
-      FilledButton.icon(
-        onPressed: () => showProfileEditor(context, ref),
-        icon: const Icon(Icons.add),
-        label: const Text('Tambah repositori'),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final backend = ref.watch(gitBackendProvider);
+    final akses = backend.supportedTransports.length > 1
+        ? 'lewat SSH atau HTTPS'
+        : 'lewat token GitHub';
+
+    return _CenteredCard(
+      icon: Icons.library_books_outlined,
+      title: 'Belum ada repositori',
+      body: Text(
+        'ReadPaper membaca library Zotero yang disinkronkan ke GitHub oleh plugin '
+        'zotero-github-sync. Tambahkan repositori ($akses) untuk mulai '
+        'membaca, menandai dan memberi komentar pada paper.',
       ),
-    ],
-  );
+      actions: <Widget>[
+        FilledButton.icon(
+          onPressed: () => showProfileEditor(context, ref),
+          icon: const Icon(Icons.add),
+          label: const Text('Tambah repositori'),
+        ),
+      ],
+    );
+  }
 }
 
 /// The profile exists but the clone directory is not there yet.
@@ -38,16 +46,22 @@ class NotClonedView extends ConsumerWidget {
     final profile = state.profile;
     if (profile == null) return const NoProfileView();
 
+    // Android mirrors metadata only, so call the action what it really is.
+    final lazy = ref.watch(gitBackendProvider).usesLazyAttachments;
+
     return _CenteredCard(
       icon: Icons.cloud_download_outlined,
-      title: 'Clone "${profile.name}"',
+      title: lazy ? 'Ambil library "${profile.name}"' : 'Clone "${profile.name}"',
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SelectableText('${profile.remoteUrl}  (${profile.transport.label})'),
           const SizedBox(height: 4),
           Text(
-            'Akan disimpan di ${profile.localPath}',
+            lazy
+                ? 'Metadata library diunduh sekarang; berkas PDF menyusul saat '
+                      'papernya dibuka.'
+                : 'Akan disimpan di ${profile.localPath}',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           if (state.progressLines.isNotEmpty) ...<Widget>[
@@ -80,9 +94,17 @@ class NotClonedView extends ConsumerWidget {
         FilledButton.icon(
           onPressed: state.isBusy ? null : controller.clone,
           icon: state.isBusy
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : const Icon(Icons.download),
-          label: Text(state.isBusy ? 'Meng-clone…' : 'Clone sekarang'),
+          label: Text(
+            state.isBusy
+                ? (lazy ? 'Mengunduh…' : 'Meng-clone…')
+                : (lazy ? 'Ambil sekarang' : 'Clone sekarang'),
+          ),
         ),
       ],
     );
@@ -154,9 +176,7 @@ class _CenteredCard extends StatelessWidget {
                   children: <Widget>[
                     Icon(icon, size: 22, color: Theme.of(context).colorScheme.primary),
                     const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
-                    ),
+                    Expanded(child: Text(title, style: Theme.of(context).textTheme.titleMedium)),
                   ],
                 ),
                 const SizedBox(height: 12),

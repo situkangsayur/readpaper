@@ -127,9 +127,8 @@ class _Header extends ConsumerWidget {
             tooltip: 'Buka semua',
             iconSize: 18,
             icon: const Icon(Icons.unfold_more),
-            onPressed: () => ref
-                .read(expandedCollectionsProvider.notifier)
-                .expandAll(index.collections.keys),
+            onPressed: () =>
+                ref.read(expandedCollectionsProvider.notifier).expandAll(index.collections.keys),
           ),
         ],
       ),

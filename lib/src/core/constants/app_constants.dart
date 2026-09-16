@@ -43,16 +43,7 @@ class AnnotationPalette {
   static const String orange = '#f19837';
   static const String gray = '#aaaaaa';
 
-  static const List<String> all = <String>[
-    yellow,
-    red,
-    green,
-    blue,
-    purple,
-    magenta,
-    orange,
-    gray,
-  ];
+  static const List<String> all = <String>[yellow, red, green, blue, purple, magenta, orange, gray];
 
   static const Map<String, String> names = <String, String>{
     yellow: 'Kuning',

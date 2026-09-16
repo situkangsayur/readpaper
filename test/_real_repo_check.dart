@@ -18,7 +18,9 @@ void main() {
     expect(layout, isNotNull);
     print('zoteroRoot: ${layout!.zoteroRoot}');
     for (final lib in layout.libraries) {
-      print('library: ${lib.name} dir=${lib.directoryName} items=${lib.itemCount} cols=${lib.collectionCount}');
+      print(
+        'library: ${lib.name} dir=${lib.directoryName} items=${lib.itemCount} cols=${lib.collectionCount}',
+      );
     }
 
     final sw = Stopwatch()..start();
@@ -29,7 +31,9 @@ void main() {
       layout.libraries.first.type,
     );
     sw.stop();
-    print('parsed ${index.itemCount} items, ${index.collectionCount} collections in ${sw.elapsedMilliseconds}ms');
+    print(
+      'parsed ${index.itemCount} items, ${index.collectionCount} collections in ${sw.elapsedMilliseconds}ms',
+    );
     print('roots: ${index.roots.map((r) => '${r.name}(${r.totalItemCount})').join(', ')}');
     print('unfiled: ${index.unfiledItemKeys.length}');
 
@@ -39,7 +43,9 @@ void main() {
 
     final sample = index.items['4BTNYYX4'];
     expect(sample, isNotNull, reason: 'standalone attachment item must be indexed');
-    print('sample: ${sample!.title} attachments=${sample.attachments.length} ann=${sample.annotationCount}');
+    print(
+      'sample: ${sample!.title} attachments=${sample.attachments.length} ann=${sample.annotationCount}',
+    );
     print('sample attachment path: ${sample.attachments.first.relativePath}');
   });
 

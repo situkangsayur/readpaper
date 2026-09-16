@@ -100,10 +100,7 @@ class FakeGitHub {
   http.Response _json(Object body) => http.Response(
     jsonEncode(body),
     200,
-    headers: <String, String>{
-      'content-type': 'application/json',
-      'x-ratelimit-remaining': '4999',
-    },
+    headers: <String, String>{'content-type': 'application/json', 'x-ratelimit-remaining': '4999'},
   );
 }
 
@@ -129,8 +126,7 @@ void main() {
       ..put('zotero/my-library/attachments/AT/ATTACH01/paper.pdf', '%PDF-1.4 dummy')
       ..put('zotero/my-library/attachments-lfs/BI/BIG00001/book.pdf', 'lfs pointer');
     backend = GitHubApiBackend(
-      clientFactory: (ref, token) =>
-          GitHubApiClient(ref: ref, token: token, client: server.client),
+      clientFactory: (ref, token) => GitHubApiClient(ref: ref, token: token, client: server.client),
       concurrency: 2,
     );
   });
@@ -160,8 +156,10 @@ void main() {
       expect(https.owner, 'situkangsayur');
       expect(https.repo, 'readpaper');
 
-      expect(GitHubRepoRef.parse('git@git.example.com:team/lib.git')!.apiBase,
-          'https://git.example.com/api/v3');
+      expect(
+        GitHubRepoRef.parse('git@git.example.com:team/lib.git')!.apiBase,
+        'https://git.example.com/api/v3',
+      );
       expect(GitHubRepoRef.parse('bukan-url'), isNull);
     });
   });
@@ -243,11 +241,7 @@ void main() {
       );
       expect(staged.ok, isTrue);
       expect(GitHubSyncState.load(mirror.path)!.pending, hasLength(1));
-      expect(
-        server.createdCommits,
-        isEmpty,
-        reason: 'nothing reaches GitHub until push',
-      );
+      expect(server.createdCommits, isEmpty, reason: 'nothing reaches GitHub until push');
 
       final pushed = await backend.push(repoPath: mirror.path, auth: auth);
       expect(pushed.ok, isTrue, reason: pushed.message);
@@ -337,7 +331,10 @@ void main() {
       final result = await backend.pull(repoPath: mirror.path, auth: auth);
       expect(result.ok, isTrue, reason: result.message);
 
-      expect(File(path('zotero/my-library/items/IT/ITEMKEY1.json')).readAsStringSync(), '{"a":99}\n');
+      expect(
+        File(path('zotero/my-library/items/IT/ITEMKEY1.json')).readAsStringSync(),
+        '{"a":99}\n',
+      );
       expect(File(path('zotero/my-library/items/IT/ITEMKEY2.json')).existsSync(), isTrue);
       expect(File(path('zotero/my-library/notes/M/Migrasi (ITEMKEY1).md')).existsSync(), isFalse);
 

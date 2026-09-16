@@ -139,10 +139,7 @@ class _AttachmentSection extends ConsumerWidget {
             attachment: attachment,
             file: libraryDir == null
                 ? null
-                : repository.resolveAttachment(
-                    libraryDir: libraryDir!,
-                    attachment: attachment,
-                  ),
+                : repository.resolveAttachment(libraryDir: libraryDir!, attachment: attachment),
           ),
       ],
     );
@@ -245,10 +242,7 @@ class _MetadataSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = <MapEntry<String, String>>[
       if (item.creatorDetails.isNotEmpty)
-        MapEntry<String, String>(
-          'Pengarang',
-          item.creatorDetails.map((c) => c.display).join('; '),
-        )
+        MapEntry<String, String>('Pengarang', item.creatorDetails.map((c) => c.display).join('; '))
       else if (item.creators.isNotEmpty)
         MapEntry<String, String>('Pengarang', item.creators.join('; ')),
       if (item.publication.isNotEmpty) MapEntry<String, String>('Publikasi', item.publication),
@@ -290,10 +284,7 @@ class _MetadataSection extends StatelessWidget {
                 Expanded(
                   child: row.key == 'DOI' || row.key == 'URL'
                       ? _LinkText(label: row.value, key: ValueKey<String>(row.value))
-                      : SelectableText(
-                          row.value,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
+                      : SelectableText(row.value, style: Theme.of(context).textTheme.bodySmall),
                 ),
               ],
             ),
@@ -310,7 +301,9 @@ class _LinkText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uri = label.startsWith('http') ? Uri.tryParse(label) : Uri.tryParse('https://doi.org/$label');
+    final uri = label.startsWith('http')
+        ? Uri.tryParse(label)
+        : Uri.tryParse('https://doi.org/$label');
     return InkWell(
       onTap: uri == null ? null : () => launchUrl(uri, mode: LaunchMode.externalApplication),
       child: Text(

@@ -87,11 +87,7 @@ Directory _buildFixture() {
       'DOI': '10.1000/demo',
       'collections': <dynamic>['CHILD001'],
       'creators': <dynamic>[
-        <String, dynamic>{
-          'creatorType': 'author',
-          'firstName': 'Christian',
-          'lastName': 'Naether',
-        },
+        <String, dynamic>{'creatorType': 'author', 'firstName': 'Christian', 'lastName': 'Naether'},
       ],
       'date': '2024',
       'dateAdded': '2026-09-01T00:00:00Z',
@@ -221,8 +217,9 @@ void main() {
     final meta = ZoteroJson.decodeObject(raw)['meta'] as Map<String, dynamic>;
     expect((meta['attachments'] as List).first['annotationCount'], 1);
 
-    final note = File(p.join(libraryDir, 'notes', 'M', 'Migrasi PQC (ITEMKEY1).md'))
-        .readAsStringSync();
+    final note = File(
+      p.join(libraryDir, 'notes', 'M', 'Migrasi PQC (ITEMKEY1).md'),
+    ).readAsStringSync();
     expect(note.contains('## Annotations'), isTrue);
     expect(note.contains('- **p. 3, highlight** “crypto agility'), isTrue);
     expect(note.contains('  catatan uji'), isTrue);
@@ -291,8 +288,9 @@ void main() {
     final meta = ZoteroJson.decodeObject(raw)['meta'] as Map<String, dynamic>;
     expect((meta['attachments'] as List).first['annotationCount'], 0);
 
-    final note = File(p.join(libraryDir, 'notes', 'M', 'Migrasi PQC (ITEMKEY1).md'))
-        .readAsStringSync();
+    final note = File(
+      p.join(libraryDir, 'notes', 'M', 'Migrasi PQC (ITEMKEY1).md'),
+    ).readAsStringSync();
     expect(note.contains('crypto agility'), isFalse);
   });
 }

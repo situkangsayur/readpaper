@@ -79,10 +79,7 @@ class ProfilesScreen extends ConsumerWidget {
                 contentPadding: EdgeInsets.zero,
                 value: deleteClone,
                 title: const Text('Hapus juga folder clone lokal'),
-                subtitle: Text(
-                  profile.localPath,
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
+                subtitle: Text(profile.localPath, style: Theme.of(context).textTheme.labelSmall),
                 onChanged: (value) => setState(() => deleteClone = value ?? false),
               ),
             ],
@@ -144,9 +141,7 @@ class _ProfileCard extends StatelessWidget {
                   color: isActive ? scheme.primary : scheme.outline,
                 ),
                 const SizedBox(width: 10),
-                Expanded(
-                  child: Text(profile.name, style: Theme.of(context).textTheme.titleSmall),
-                ),
+                Expanded(child: Text(profile.name, style: Theme.of(context).textTheme.titleSmall)),
                 Chip(
                   visualDensity: VisualDensity.compact,
                   label: Text(profile.transport.label),

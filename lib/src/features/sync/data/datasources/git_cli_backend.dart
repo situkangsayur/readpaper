@@ -386,7 +386,11 @@ class GitCliBackend implements GitBackend {
         message: ok ? successMessage : _friendlyError(stderrBuffer.toString(), exitCode),
       );
     } on ProcessException catch (e) {
-      return GitResult(ok: false, exitCode: -1, message: 'git tidak dapat dijalankan: ${e.message}');
+      return GitResult(
+        ok: false,
+        exitCode: -1,
+        message: 'git tidak dapat dijalankan: ${e.message}',
+      );
     } finally {
       final script = askpass;
       if (script != null && script.existsSync()) {

@@ -27,7 +27,11 @@ class SyncBar extends ConsumerWidget {
           if (busy)
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 8),
-              child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             ),
           PopupMenuButton<String>(
             tooltip: status.summary,
@@ -51,7 +55,9 @@ class SyncBar extends ConsumerWidget {
               const PopupMenuItem<String>(value: 'fetch', child: Text('Periksa perubahan')),
               PopupMenuItem<String>(
                 value: 'pull',
-                child: Text(status.behind > 0 ? 'Tarik ${status.behind} commit baru' : 'Tarik perubahan'),
+                child: Text(
+                  status.behind > 0 ? 'Tarik ${status.behind} commit baru' : 'Tarik perubahan',
+                ),
               ),
               const PopupMenuItem<String>(value: 'push', child: Text('Kirim perubahan')),
               const PopupMenuItem<String>(value: 'detail', child: Text('Detail sinkronisasi')),

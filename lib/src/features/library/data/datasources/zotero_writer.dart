@@ -95,8 +95,7 @@ class ZoteroWriter {
   /// The plugin writes `children` sorted by Zotero key, regardless of type.
   /// Matching that keeps an added annotation to a few added lines in the diff
   /// instead of rewriting the whole file.
-  String _childKey(dynamic child) =>
-      child is Map ? (child['key'] as String? ?? '') : '';
+  String _childKey(dynamic child) => child is Map ? (child['key'] as String? ?? '') : '';
 
   void _refreshAnnotationCounts(Map<String, dynamic> json, List<ZoteroAnnotation> annotations) {
     final meta = (json['meta'] as Map?)?.cast<String, dynamic>();
@@ -147,11 +146,7 @@ class ZoteroWriter {
           break;
         }
       }
-      final rebuilt = <String>[
-        ...lines.sublist(0, start),
-        ...rendered,
-        ...lines.sublist(end),
-      ];
+      final rebuilt = <String>[...lines.sublist(0, start), ...rendered, ...lines.sublist(end)];
       updated = rebuilt.join('\n');
     } else if (rendered.isEmpty) {
       return false;
@@ -212,7 +207,9 @@ String annotationCommitMessage({
   required String itemTitle,
   required ZoteroAnnotation annotation,
 }) {
-  final page = annotation.pageLabel.isNotEmpty ? annotation.pageLabel : '${annotation.pageIndex + 1}';
+  final page = annotation.pageLabel.isNotEmpty
+      ? annotation.pageLabel
+      : '${annotation.pageIndex + 1}';
   final title = itemTitle.length > 60 ? '${itemTitle.substring(0, 57)}...' : itemTitle;
   return '$action ${annotation.type.wire} p.$page — $title\n\n'
       'ReadPaper ${zoteroTimestamp()}';

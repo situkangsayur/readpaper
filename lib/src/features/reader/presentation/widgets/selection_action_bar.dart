@@ -65,21 +65,9 @@ class SelectionActionBar extends StatelessWidget {
             const SizedBox(width: 6),
             const SizedBox(height: 26, child: VerticalDivider(width: 1)),
             const SizedBox(width: 6),
-            _Action(
-              icon: Icons.format_color_fill,
-              label: 'Stabilo',
-              onPressed: onHighlight,
-            ),
-            _Action(
-              icon: Icons.format_underlined,
-              label: 'Garis bawah',
-              onPressed: onUnderline,
-            ),
-            _Action(
-              icon: Icons.add_comment_outlined,
-              label: 'Komentar',
-              onPressed: onComment,
-            ),
+            _Action(icon: Icons.format_color_fill, label: 'Stabilo', onPressed: onHighlight),
+            _Action(icon: Icons.format_underlined, label: 'Garis bawah', onPressed: onUnderline),
+            _Action(icon: Icons.add_comment_outlined, label: 'Komentar', onPressed: onComment),
             IconButton(
               iconSize: 18,
               tooltip: 'Batalkan pilihan',

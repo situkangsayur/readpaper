@@ -28,11 +28,7 @@ class LibraryRef {
 /// Where the Zotero export lives inside a cloned repository.
 @immutable
 class RepoLayout {
-  const RepoLayout({
-    required this.repoRoot,
-    required this.zoteroRoot,
-    required this.libraries,
-  });
+  const RepoLayout({required this.repoRoot, required this.zoteroRoot, required this.libraries});
 
   final String repoRoot;
 
@@ -125,7 +121,9 @@ class LibraryIndex {
 class LibrarySelection {
   const LibrarySelection.all() : collectionKey = null, kind = SelectionKind.all;
   const LibrarySelection.unfiled() : collectionKey = null, kind = SelectionKind.unfiled;
-  const LibrarySelection.collection(String key) : collectionKey = key, kind = SelectionKind.collection;
+  const LibrarySelection.collection(String key)
+    : collectionKey = key,
+      kind = SelectionKind.collection;
 
   final String? collectionKey;
   final SelectionKind kind;

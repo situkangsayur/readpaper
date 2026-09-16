@@ -139,6 +139,9 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
     final supported = ref.watch(gitBackendProvider).supportedTransports;
     if (!supported.contains(_transport)) _transport = supported.first;
     final isSsh = _transport == GitTransport.ssh;
+    // On a phone the mirror lives in the app's private storage; letting the
+    // user pick a folder there would only offer paths dart:io cannot write to.
+    final canChooseFolder = !Platform.isAndroid && !Platform.isIOS;
 
     return AlertDialog(
       title: Text(widget.existing == null ? 'Tambah repositori' : 'Ubah repositori'),
@@ -223,27 +226,36 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
                   ),
                 ],
                 const SizedBox(height: 12),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: TextFormField(
-                        controller: _branch,
-                        decoration: const InputDecoration(labelText: 'Branch'),
+                if (canChooseFolder)
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: TextFormField(
+                          controller: _branch,
+                          decoration: const InputDecoration(labelText: 'Branch'),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: _PathField(
-                        controller: _localPath,
-                        label: 'Folder clone lokal',
-                        hint: '',
-                        onChanged: () => _localPathEdited = true,
-                        onPick: _pickDirectory,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: _PathField(
+                          controller: _localPath,
+                          label: 'Folder clone lokal',
+                          hint: '',
+                          onChanged: () => _localPathEdited = true,
+                          onPick: _pickDirectory,
+                        ),
                       ),
+                    ],
+                  )
+                else
+                  TextFormField(
+                    controller: _branch,
+                    decoration: const InputDecoration(
+                      labelText: 'Branch',
+                      helperText: 'Data disimpan di penyimpanan privat aplikasi.',
                     ),
-                  ],
-                ),
+                  ),
                 const SizedBox(height: 16),
                 Text('Identitas commit', style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: 8),
@@ -331,10 +343,7 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
     );
 
     Navigator.of(context).pop(
-      ProfileEditorResult(
-        profile,
-        _transport == GitTransport.https ? _token.text.trim() : null,
-      ),
+      ProfileEditorResult(profile, _transport == GitTransport.https ? _token.text.trim() : null),
     );
   }
 }
