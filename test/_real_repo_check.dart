@@ -1,6 +1,9 @@
 // Manual check against a real clone of the Zotero repository.
 // Not named `*_test.dart` on purpose: `flutter test` skips it.
-// Run explicitly: flutter test test/_real_repo_check.dart
+//
+// Point it at your own clone and run it explicitly:
+//   READPAPER_TEST_REPO=~/.local/share/readpaper/repos/<owner>-<repo> \
+//     flutter test test/_real_repo_check.dart
 // ignore_for_file: avoid_print
 import 'dart:io';
 
@@ -10,11 +13,20 @@ import 'package:readpaper/src/features/library/data/datasources/zotero_fs_dataso
 import 'package:readpaper/src/features/library/data/datasources/zotero_json.dart';
 import 'package:readpaper/src/features/library/data/datasources/zotero_writer.dart';
 
-const repoRoot =
-    '/tmp/claude-1000/-home-hendri-own-project-apps-readpaper/1c6bee0a-8687-486c-946a-628d4fa3e462/scratchpad/zh';
+/// Clone to check; the tests are skipped when it is not set or not there.
+final String repoRoot = Platform.environment['READPAPER_TEST_REPO'] ?? '';
 
 void main() {
-  test('parses the real zotero-hendri export', () async {
+  setUpAll(() {
+    if (repoRoot.isEmpty || !Directory(repoRoot).existsSync()) {
+      print(
+        'Lewati: setel READPAPER_TEST_REPO ke folder clone repositori Zotero '
+        'untuk menjalankan pemeriksaan ini.',
+      );
+    }
+  });
+
+  test('parses the real zotero-hendri export', skip: _skipReason, () async {
     final layout = await const RepoLayoutDetector().detect(repoRoot);
     expect(layout, isNotNull);
     print('zoteroRoot: ${layout!.zoteroRoot}');
@@ -50,29 +62,33 @@ void main() {
     print('sample attachment path: ${sample.attachments.first.relativePath}');
   });
 
-  test('re-encoding every item file reproduces the plugin output byte-for-byte', () async {
-    final dir = Directory('$repoRoot/zotero/my-library/items');
-    var checked = 0;
-    var mismatched = 0;
-    final examples = <String>[];
-    for (final entity in dir.listSync(recursive: true)) {
-      if (entity is! File || !entity.path.endsWith('.json')) continue;
-      final original = entity.readAsStringSync();
-      final reencoded = ZoteroJson.encodeFile(ZoteroJson.decodeObject(original));
-      checked++;
-      if (original != reencoded) {
-        mismatched++;
-        if (examples.length < 3) examples.add(entity.path);
+  test(
+    're-encoding every item file reproduces the plugin output byte-for-byte',
+    skip: _skipReason,
+    () async {
+      final dir = Directory('$repoRoot/zotero/my-library/items');
+      var checked = 0;
+      var mismatched = 0;
+      final examples = <String>[];
+      for (final entity in dir.listSync(recursive: true)) {
+        if (entity is! File || !entity.path.endsWith('.json')) continue;
+        final original = entity.readAsStringSync();
+        final reencoded = ZoteroJson.encodeFile(ZoteroJson.decodeObject(original));
+        checked++;
+        if (original != reencoded) {
+          mismatched++;
+          if (examples.length < 3) examples.add(entity.path);
+        }
       }
-    }
-    print('checked $checked files, $mismatched mismatched');
-    for (final e in examples) {
-      print('mismatch example: $e');
-    }
-    expect(mismatched, 0);
-  });
+      print('checked $checked files, $mismatched mismatched');
+      for (final e in examples) {
+        print('mismatch example: $e');
+      }
+      expect(mismatched, 0);
+    },
+  );
 
-  test('rendered annotation blocks match what the plugin wrote', () async {
+  test('rendered annotation blocks match what the plugin wrote', skip: _skipReason, () async {
     const writer = ZoteroWriter();
     final libraryDir = '$repoRoot/zotero/my-library';
     var compared = 0;
@@ -132,3 +148,8 @@ void main() {
     expect(mismatched, 0);
   });
 }
+
+/// Null when the clone is available, otherwise the reason the checks are skipped.
+String? get _skipReason => repoRoot.isNotEmpty && Directory(repoRoot).existsSync()
+    ? null
+    : 'READPAPER_TEST_REPO belum disetel ke folder clone yang ada';

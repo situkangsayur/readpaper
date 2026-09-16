@@ -137,8 +137,9 @@ network:
 
 ```bash
 # Parses a real clone, and confirms every item file re-encodes byte for byte
-# to what the plugin wrote.
-flutter test test/_real_repo_check.dart
+# to what the plugin wrote. Skipped unless you point it at a clone.
+READPAPER_TEST_REPO=~/.local/share/readpaper/repos/<owner>-<repo> \
+  flutter test test/_real_repo_check.dart
 
 # Exercises GitHubApiClient against the live GitHub API (public repo, no token).
 flutter test test/_real_github_api_check.dart
