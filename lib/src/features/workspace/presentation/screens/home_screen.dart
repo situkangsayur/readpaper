@@ -1,0 +1,161 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/constants/app_constants.dart';
+import '../../../library/presentation/controllers/library_controllers.dart';
+import '../../../library/presentation/widgets/collection_tree_pane.dart';
+import '../../../library/presentation/widgets/item_detail_pane.dart';
+import '../../../library/presentation/widgets/item_list_pane.dart';
+import '../../../settings/presentation/screens/profiles_screen.dart';
+import '../controllers/workspace_controller.dart';
+import '../widgets/repo_switcher.dart';
+import '../widgets/sync_bar.dart';
+import '../widgets/workspace_placeholders.dart';
+
+/// Width below which the three panes collapse into a drawer + list.
+const double _compactBreakpoint = 1000;
+
+class HomeScreen extends ConsumerWidget {
+  const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(workspaceControllerProvider);
+    final isCompact = MediaQuery.sizeOf(context).width < _compactBreakpoint;
+
+    return Scaffold(
+      appBar: AppBar(
+        titleSpacing: 12,
+        title: Row(
+          children: <Widget>[
+            const Icon(Icons.menu_book_outlined, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              AppConstants.appName,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(width: 16),
+            const Flexible(child: RepoSwitcher()),
+          ],
+        ),
+        actions: <Widget>[
+          const SyncBar(),
+          IconButton(
+            tooltip: 'Kelola repositori',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const ProfilesScreen()),
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
+        bottom: state.isBusy || state.loadingLibrary
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(2),
+                child: LinearProgressIndicator(minHeight: 2),
+              )
+            : null,
+      ),
+      drawer: isCompact && state.hasLibrary
+          ? const Drawer(child: SafeArea(child: CollectionTreePane()))
+          : null,
+      body: Column(
+        children: <Widget>[
+          if (state.error != null) _Banner(message: state.error!, isError: true),
+          if (state.message != null) _Banner(message: state.message!, isError: false),
+          Expanded(child: _Body(isCompact: isCompact)),
+        ],
+      ),
+    );
+  }
+}
+
+class _Body extends ConsumerWidget {
+  const _Body({required this.isCompact});
+
+  final bool isCompact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(workspaceControllerProvider);
+
+    if (!state.hasProfile) return const NoProfileView();
+    if (!state.isCloned) return const NotClonedView();
+    if (state.loadingLibrary && !state.hasLibrary) {
+      return const Center(child: _LoadingLibrary());
+    }
+    if (!state.hasLibrary) return const NoLibraryView();
+
+    if (isCompact) {
+      final selected = ref.watch(selectedItemKeyProvider);
+      return selected == null ? const ItemListPane() : const ItemDetailPane();
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: const <Widget>[
+        SizedBox(width: 300, child: CollectionTreePane()),
+        VerticalDivider(width: 1),
+        SizedBox(width: 400, child: ItemListPane()),
+        VerticalDivider(width: 1),
+        Expanded(child: ItemDetailPane()),
+      ],
+    );
+  }
+}
+
+class _LoadingLibrary extends StatelessWidget {
+  const _LoadingLibrary();
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 3)),
+      const SizedBox(height: 16),
+      Text('Membaca library…', style: Theme.of(context).textTheme.bodyMedium),
+    ],
+  );
+}
+
+class _Banner extends ConsumerWidget {
+  const _Banner({required this.message, required this.isError});
+
+  final String message;
+  final bool isError;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    final background = isError ? scheme.errorContainer : scheme.secondaryContainer;
+    final foreground = isError ? scheme.onErrorContainer : scheme.onSecondaryContainer;
+
+    return Material(
+      color: background,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        child: Row(
+          children: <Widget>[
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              size: 18,
+              color: foreground,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: SelectableText(
+                message,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: foreground),
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.close, size: 16, color: foreground),
+              tooltip: 'Tutup',
+              onPressed: () => ref.read(workspaceControllerProvider.notifier).clearMessages(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
