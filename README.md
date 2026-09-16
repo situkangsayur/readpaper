@@ -14,6 +14,10 @@ setiap perubahan langsung ditulis balik ke berkas Zotero dan di-*commit* ke git.
 - **Sinkron GitHub** — clone, fetch, pull, commit, push lewat **SSH** (dengan
   pilihan kunci privat) maupun **HTTPS** (personal access token). `git lfs pull`
   untuk lampiran besar. PDF baru yang ditambahkan lewat GitHub muncul setelah pull.
+- **Jalan juga di Android** — di sana tidak ada biner `git`, jadi repositori
+  di-*mirror* lewat GitHub REST API: metadata library (±19 MB) diunduh penuh,
+  PDF-nya (±529 MB) baru diambil saat papernya dibuka. Anotasi dikirim balik
+  sebagai commit sungguhan.
 - **Ganti repositori kapan saja** — tiap profil punya folder clone sendiri, jadi
   pindah bolak-balik antar repo tidak perlu clone ulang.
 - **Struktur koleksi Zotero** — pohon koleksi bertingkat yang bisa
@@ -44,6 +48,12 @@ Butuh Flutter 3.41+ (diuji di 3.44.5 / Dart 3.12) dan, untuk desktop Linux,
 sudo apt install clang ninja-build libgtk-3-dev git git-lfs
 flutter pub get
 flutter run -d linux
+```
+
+Untuk Android (butuh token GitHub dengan izin *Contents: read and write*):
+
+```bash
+flutter build apk --release --target-platform=android-arm64
 ```
 
 Saat pertama dijalankan, tambahkan repositori:
@@ -83,7 +93,8 @@ lib/
     features/
       library/               parser & penulis ekspor Zotero, pohon koleksi, daftar item
       reader/                pembaca PDF, geometri anotasi, panel anotasi
-      sync/                  entity git + GitBackend (implementasi CLI)
+      sync/                  GitBackend + dua implementasi: git CLI (desktop)
+                             dan GitHub REST API (Android)
       settings/              profil repositori & kredensial
       workspace/             orkestrasi: repo aktif, status git, library terbaca
 ```
@@ -105,3 +116,10 @@ flutter test test/_real_repo_check.dart
 
 Pemeriksaan itu memastikan seluruh berkas item bisa dibaca ulang dan ditulis
 kembali **byte-for-byte** sama dengan keluaran plugin.
+
+Ada pula pemeriksaan klien GitHub terhadap API sungguhan (repo publik, tanpa
+token):
+
+```bash
+flutter test test/_real_github_api_check.dart
+```

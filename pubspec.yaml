@@ -17,6 +17,10 @@ dependencies:
   # PDF rendering + text selection
   pdfrx: ^2.4.8
 
+  # Network (backend sinkronisasi Android lewat GitHub REST API)
+  http: ^1.6.0
+  crypto: ^3.0.7
+
   # Platform / IO
   path: ^1.9.0
   path_provider: ^2.1.6

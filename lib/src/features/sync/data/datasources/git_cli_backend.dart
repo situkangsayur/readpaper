@@ -19,7 +19,7 @@ class GitCliBackend implements GitBackend {
 
   /// Field separator for `git log --format`; a byte that cannot appear in a
   /// commit subject.
-  static const String _logSeparator = '';
+  static final String _logSeparator = String.fromCharCode(1);
 
   bool? _available;
   bool? _lfsAvailable;
@@ -34,6 +34,30 @@ class GitCliBackend implements GitBackend {
       return _available = false;
     }
   }
+
+  @override
+  String get label => 'git (CLI sistem)';
+
+  @override
+  bool get usesLazyAttachments => false;
+
+  @override
+  Set<GitTransport> get supportedTransports => <GitTransport>{GitTransport.ssh, GitTransport.https};
+
+  /// The CLI mirror always holds every attachment, so there is nothing to fetch.
+  @override
+  Future<GitResult> fetchAttachment({
+    required String repoPath,
+    required GitAuth auth,
+    required String absoluteFilePath,
+    void Function(String line)? onProgress,
+  }) async => File(absoluteFilePath).existsSync()
+      ? const GitResult(ok: true, exitCode: 0, message: 'Berkas sudah ada di lokal')
+      : const GitResult(
+          ok: false,
+          exitCode: 1,
+          message: 'Berkas belum ada di clone lokal. Jalankan pull (atau LFS pull).',
+        );
 
   @override
   Future<bool> isLfsAvailable() async {

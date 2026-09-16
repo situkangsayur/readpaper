@@ -18,6 +18,11 @@ abstract class LibraryRepository {
   /// Absolute path of an attachment, or null when the file is not on disk.
   File? resolveAttachment({required String libraryDir, required ZoteroAttachment attachment});
 
+  /// Where an attachment belongs, whether or not it has been downloaded yet.
+  ///
+  /// The Android backend needs this to know what to fetch on demand.
+  File? attachmentLocation({required String libraryDir, required ZoteroAttachment attachment});
+
   /// True when the attachment is still an unfetched Git LFS pointer.
   bool isLfsPointer(File file);
 

@@ -48,6 +48,17 @@ class LibraryRepositoryImpl implements LibraryRepository {
   }
 
   @override
+  File? attachmentLocation({required String libraryDir, required ZoteroAttachment attachment}) {
+    final relative = attachment.relativePath;
+    if (relative != null && relative.isNotEmpty) {
+      return File(p.join(libraryDir, relative));
+    }
+    if (attachment.key.isEmpty || attachment.filename.isEmpty) return null;
+    final bucket = attachment.key.substring(0, attachment.key.length >= 2 ? 2 : 1);
+    return File(p.join(libraryDir, 'attachments', bucket, attachment.key, attachment.filename));
+  }
+
+  @override
   bool isLfsPointer(File file) {
     try {
       if (file.lengthSync() > 1024) return false;

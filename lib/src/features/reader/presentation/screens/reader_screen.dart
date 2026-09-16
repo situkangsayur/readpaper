@@ -41,6 +41,7 @@ class ReaderScreen extends ConsumerStatefulWidget {
 
 class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   final PdfViewerController _controller = PdfViewerController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   /// Text selection must stay identical between builds: pdfrx reloads the
   /// document when this object changes.
@@ -100,6 +101,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final isWide = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,9 +137,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             onPressed: () => _controller.zoomUp(),
           ),
           IconButton(
-            tooltip: _showSidebar ? 'Sembunyikan panel anotasi' : 'Tampilkan panel anotasi',
-            icon: Icon(_showSidebar ? Icons.view_sidebar : Icons.view_sidebar_outlined),
-            onPressed: () => setState(() => _showSidebar = !_showSidebar),
+            tooltip: 'Panel anotasi',
+            icon: Badge(
+              isLabelVisible: !isWide && _annotations.isNotEmpty,
+              label: Text('${_annotations.length}'),
+              child: Icon(
+                _showSidebar && isWide ? Icons.view_sidebar : Icons.view_sidebar_outlined,
+              ),
+            ),
+            // Wide layouts dock the panel; a phone opens it as a drawer.
+            onPressed: isWide
+                ? () => setState(() => _showSidebar = !_showSidebar)
+                : () => _scaffoldKey.currentState?.openEndDrawer(),
           ),
           const SizedBox(width: 4),
         ],
@@ -179,15 +190,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 ),
               ],
             ),
-      endDrawer: _showSidebar || isWide
+      endDrawer: isWide
           ? null
           : Drawer(
-              child: AnnotationSidebar(
-                annotations: _annotations,
-                selectedKey: _selectedAnnotationKey,
-                onTap: _goToAnnotation,
-                onEdit: _editAnnotation,
-                onDelete: _deleteAnnotation,
+              child: SafeArea(
+                child: AnnotationSidebar(
+                  annotations: _annotations,
+                  selectedKey: _selectedAnnotationKey,
+                  onTap: (annotation) {
+                    Navigator.of(context).pop();
+                    _goToAnnotation(annotation);
+                  },
+                  onEdit: _editAnnotation,
+                  onDelete: _deleteAnnotation,
+                ),
               ),
             ),
     );

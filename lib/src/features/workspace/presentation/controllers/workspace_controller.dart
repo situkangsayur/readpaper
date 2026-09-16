@@ -62,9 +62,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
     if (!await git.isAvailable()) {
       state = state.copyWith(
-        error:
-            'Perintah git tidak ditemukan di sistem. Pasang git terlebih dahulu '
-            '(sudo apt install git git-lfs).',
+        error: Platform.isLinux || Platform.isMacOS
+            ? 'Perintah git tidak ditemukan di sistem. Pasang git terlebih dahulu '
+                  '(sudo apt install git git-lfs).'
+            : 'Backend sinkronisasi tidak tersedia di perangkat ini.',
       );
       return;
     }
@@ -220,6 +221,28 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await _endPhase(pushed);
     if (pushed.ok) await _touchSyncTime(profile);
     return pushed.ok;
+  }
+
+  /// Downloads one attachment that the mirror does not hold yet.
+  ///
+  /// Only the Android backend needs this: it keeps metadata locally but leaves
+  /// the PDFs on GitHub until a paper is actually opened.
+  Future<bool> downloadAttachment(String absoluteFilePath) async {
+    final profile = state.profile;
+    if (profile == null) return false;
+
+    _beginPhase(SyncPhase.pulling);
+    final auth = await _authFor(profile);
+    final result = await ref
+        .read(gitBackendProvider)
+        .fetchAttachment(
+          repoPath: profile.localPath,
+          auth: auth,
+          absoluteFilePath: absoluteFilePath,
+          onProgress: _appendProgress,
+        );
+    await _endPhase(result);
+    return result.ok;
   }
 
   Future<void> refreshGitStatus() async {

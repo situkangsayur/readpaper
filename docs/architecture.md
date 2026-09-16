@@ -118,8 +118,46 @@ yang ditulis Zotero sendiri.
 - Pesan error git yang umum diterjemahkan ke bahasa yang bisa ditindaklanjuti
   (kunci ditolak, token kedaluwarsa, repo tidak ditemukan, konflik, jaringan).
 
-Android nanti tidak punya biner `git`; yang perlu ditambahkan hanyalah
-implementasi `GitBackend` lain dan mengganti `gitBackendProvider`.
+## Sinkronisasi Android (tanpa git)
+
+Android tidak punya biner `git`, jadi `gitBackendProvider` memilih
+`GitHubApiBackend` di sana. Antarmuka `GitBackend` tidak berubah, sehingga
+seluruh UI dan `WorkspaceController` sama persis di kedua platform.
+
+Alih-alih clone, backend ini menyimpan **mirror**:
+
+```
+<folder profil>/
+  .readpaper/sync-state.json     commit asal, id blob tiap berkas, antrean kirim
+  zotero/my-library/…            metadata (±19 MB) — ikut di-mirror
+  zotero/my-library/attachments/ kosong sampai papernya dibuka (±529 MB di GitHub)
+```
+
+| Operasi | Yang terjadi |
+| --- | --- |
+| clone | `GET /commits/{branch}` → `GET /git/trees/{sha}?recursive=1` → unduh setiap blob metadata (8 paralel), catat id blob lampiran untuk nanti |
+| fetch | bandingkan `headSha` dengan commit mirror, hitung selisih commit |
+| pull | ambil pohon baru, unduh blob yang id-nya berubah, hapus berkas yang hilang di remote |
+| commit | catat berkas yang berubah ke antrean lokal (`pending`) — belum menyentuh GitHub |
+| push | `POST /git/blobs` tiap berkas → `POST /git/trees` di atas pohon commit terakhir → `POST /git/commits` → `PATCH /git/refs/heads/{branch}` |
+| buka lampiran | `GET /git/blobs/{sha}` satu berkas saja, saat tombol **Unduh** ditekan |
+
+Beberapa keputusan yang penting:
+
+- **Deteksi perubahan tanpa git.** `gitBlobSha()` menghitung id blob git
+  (`sha1("blob <len>\0" + isi)`), jadi mirror bisa dibandingkan langsung dengan
+  daftar pohon GitHub. Pemeriksaan murah (ukuran + mtime) dilakukan dulu; sha1
+  hanya dihitung kalau keduanya berubah, supaya status tetap cepat di ponsel.
+- **Push menolak kalau remote sudah bergerak.** Commit dibuat di atas
+  `state.commitSha`; kalau `headSha` remote sudah berbeda, push dibatalkan dan
+  pengguna diminta menarik perubahan dulu — tidak pernah memaksa.
+- **SSH tidak tersedia** di jalur ini; `supportedTransports` hanya berisi HTTPS
+  dan editor profil otomatis menyembunyikan pilihan SSH di Android.
+- **Izin `INTERNET`** dideklarasikan di `android/app/src/main/AndroidManifest.xml`.
+  Flutter hanya menambahkannya pada manifest debug, jadi tanpa baris itu build
+  rilis tidak bisa mengakses jaringan sama sekali.
+- **Git LFS belum didukung** di Android; berkas `attachments-lfs/` perlu
+  endpoint LFS batch tersendiri.
 
 ## Kinerja
 

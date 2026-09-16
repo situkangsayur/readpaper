@@ -1,6 +1,7 @@
 # ReadPaper — Backlog
 
-Status per 2026-09-16. Fase 1 sudah terpasang di kode; fase berikutnya belum.
+Status per 2026-09-16. Fase 1 selesai dan teruji di desktop Linux; fase 4
+sebagian besar terpasang (sinkronisasi Android), menunggu uji perangkat.
 
 Legenda: `[x]` selesai · `[~]` sebagian · `[ ]` belum.
 
@@ -99,12 +100,25 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
 
 ## Fase 4 — Android & distribusi
 
-- [ ] Backend git untuk Android (biner `git` tidak tersedia di sana):
-      pure-Dart atau libgit2 lewat FFI — antarmuka `GitBackend` sudah disiapkan
-      supaya penggantinya tidak menyentuh kode lain
-- [ ] Penyimpanan kunci SSH / token di keystore Android
-- [ ] Tata letak layar sempit: laci koleksi, daftar, pembaca layar penuh
-- [ ] Build APK rilis (arm64) dengan keystore sendiri
+- [x] **Backend sinkronisasi Android** (`GitHubApiBackend`): Android tidak punya
+      biner `git`, jadi repositori di-*mirror* lewat GitHub REST API —
+      baca pohon commit, unduh blob metadata, tulis balik sebagai blob → tree →
+      commit → pindahkan ref. Antarmuka `GitBackend` dipakai apa adanya, jadi
+      seluruh UI dan pengendali tidak berubah.
+- [x] **Lampiran diunduh sesuai kebutuhan**: metadata library ±19 MB ikut
+      di-mirror, PDF (±529 MB) tetap di GitHub sampai papernya dibuka
+      ("Unduh" pada kartu lampiran)
+- [x] Izin `INTERNET` pada manifest rilis (Flutter hanya menambahkannya di
+      manifest debug — build rilis tanpa ini tidak bisa jaringan sama sekali)
+- [x] Tata letak layar sempit: laci koleksi, daftar → detail, panel anotasi
+      sebagai laci kanan, bilah sinkronisasi ringkas
+- [x] Editor profil menyesuaikan diri: di Android hanya menawarkan HTTPS + token
+- [x] Build APK rilis (arm64)
+- [ ] Uji end-to-end di perangkat dengan token GitHub sungguhan
+- [ ] Penyimpanan token di keystore Android (sekarang di berkas privat aplikasi)
+- [ ] Git LFS di Android (`attachments-lfs/`) — perlu endpoint LFS batch
+- [ ] Penandatanganan rilis dengan keystore sendiri (sekarang debug key)
+- [ ] **Rilis GitHub**: tag + Release berisi APK supaya bisa diunduh dari GitHub
 - [ ] **Publikasi APK ke `http://10.100.21.22:8899`** (folder `~/apk-share/`,
       dilayani systemd user service `apk-share` di `nvda11-gpu`) — pola yang sama
       dengan Leuwi Panjang:
@@ -113,13 +127,15 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
       ln -sfn readpaper_vX.Y.Z.apk ~/apk-share/readpaper-latest.apk
       ```
       lalu tambahkan kartu unduhan ReadPaper di `~/apk-share/index.html`
-- [ ] Sinkronisasi hemat kuota di Android (clone dangkal, lampiran diunduh sesuai kebutuhan)
+- [ ] Unduh metadata awal lebih hemat (saat ini ±3.500 permintaan API untuk
+      mirror pertama; kuota GitHub 5.000/jam)
 
 ---
 
 ## Lintas fase — utang teknis
 
-- [ ] Uji unit untuk parser Zotero dan penulis anotasi (round-trip JSON byte-for-byte)
+- [x] Uji unit parser Zotero + penulis anotasi (round-trip JSON byte-for-byte)
+- [x] Uji unit backend GitHub API (clone, status, commit, push, pull, lampiran)
 - [ ] Uji widget untuk pohon koleksi dan alur anotasi
 - [ ] Cache indeks library di disk + invalidasi berdasarkan mtime
 - [ ] Penanganan berkas item rusak yang lebih informatif (saat ini dilewati diam-diam)

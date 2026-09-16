@@ -117,6 +117,7 @@ class RepoProfile {
     sshKeyPath: sshKeyPath,
     httpsUsername: httpsUsername,
     httpsToken: token,
+    remoteUrl: remoteUrl,
   );
 
   /// True when the remote URL matches the chosen transport.

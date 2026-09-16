@@ -163,6 +163,14 @@ class _AttachmentCard extends ConsumerWidget {
     final isPointer = file != null && repository.isLfsPointer(file!);
     final canRead = file != null && !isPointer && attachment.isPdf;
 
+    // On Android the mirror holds metadata only; a PDF is fetched when asked for.
+    final lazy = ref.watch(gitBackendProvider).usesLazyAttachments;
+    final libraryDir = ref.watch(workspaceControllerProvider).library?.directoryPath;
+    final expected = file == null && lazy && libraryDir != null
+        ? repository.attachmentLocation(libraryDir: libraryDir, attachment: attachment)
+        : null;
+    final busy = ref.watch(workspaceControllerProvider).isBusy;
+
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 8),
@@ -184,7 +192,8 @@ class _AttachmentCard extends ConsumerWidget {
           <String>[
             if (attachment.sizeLabel.isNotEmpty) attachment.sizeLabel,
             if (attachment.annotationCount > 0) '${attachment.annotationCount} anotasi',
-            if (file == null) 'berkas belum diunduh',
+            if (file == null && expected != null) 'ada di GitHub, belum diunduh',
+            if (file == null && expected == null) 'berkas belum diunduh',
             if (isPointer) 'pointer Git LFS — jalankan LFS pull',
             if (file != null && !attachment.isPdf && !isPointer) 'format belum didukung pembaca',
           ].join(' · '),
@@ -210,6 +219,16 @@ class _AttachmentCard extends ConsumerWidget {
             ? TextButton(
                 onPressed: () => ref.read(workspaceControllerProvider.notifier).lfsPull(),
                 child: const Text('LFS pull'),
+              )
+            : expected != null
+            ? FilledButton.tonalIcon(
+                onPressed: busy
+                    ? null
+                    : () => ref
+                          .read(workspaceControllerProvider.notifier)
+                          .downloadAttachment(expected.path),
+                icon: const Icon(Icons.download_outlined, size: 18),
+                label: const Text('Unduh'),
               )
             : null,
       ),

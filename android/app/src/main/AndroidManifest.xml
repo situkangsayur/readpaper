@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sinkronisasi Android berjalan lewat GitHub REST API. Flutter hanya
+         menambahkan izin ini pada manifest debug, jadi build rilis harus
+         mendeklarasikannya sendiri. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="readpaper"
+        android:label="ReadPaper"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

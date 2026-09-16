@@ -37,17 +37,17 @@ Future<void> showProfileEditor(BuildContext context, WidgetRef ref, {RepoProfile
       .saveProfile(result.profile, httpsToken: result.token);
 }
 
-class ProfileEditorDialog extends StatefulWidget {
+class ProfileEditorDialog extends ConsumerStatefulWidget {
   const ProfileEditorDialog({super.key, this.existing, this.existingToken});
 
   final RepoProfile? existing;
   final String? existingToken;
 
   @override
-  State<ProfileEditorDialog> createState() => _ProfileEditorDialogState();
+  ConsumerState<ProfileEditorDialog> createState() => _ProfileEditorDialogState();
 }
 
-class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
+class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _name;
@@ -114,8 +114,10 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
     final detected = looksSsh ? GitTransport.ssh : GitTransport.https;
     final slug = slugFromRemote(url);
 
+    final supported = ref.read(gitBackendProvider).supportedTransports;
     setState(() {
-      if (url.startsWith('git@') || url.startsWith('ssh://') || url.startsWith('http')) {
+      if (supported.contains(detected) &&
+          (url.startsWith('git@') || url.startsWith('ssh://') || url.startsWith('http'))) {
         _transport = detected;
       }
       if (!_localPathEdited) {
@@ -132,6 +134,10 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // Android mirrors through the GitHub API, which can only authenticate with
+    // a token — SSH is simply not on offer there.
+    final supported = ref.watch(gitBackendProvider).supportedTransports;
+    if (!supported.contains(_transport)) _transport = supported.first;
     final isSsh = _transport == GitTransport.ssh;
 
     return AlertDialog(
@@ -155,22 +161,32 @@ class _ProfileEditorDialogState extends State<ProfileEditorDialog> {
                       (value ?? '').trim().isEmpty ? 'URL tidak boleh kosong' : null,
                 ),
                 const SizedBox(height: 12),
-                SegmentedButton<GitTransport>(
-                  segments: const <ButtonSegment<GitTransport>>[
-                    ButtonSegment<GitTransport>(
-                      value: GitTransport.ssh,
-                      label: Text('SSH'),
-                      icon: Icon(Icons.vpn_key_outlined, size: 16),
+                if (supported.length > 1)
+                  SegmentedButton<GitTransport>(
+                    segments: const <ButtonSegment<GitTransport>>[
+                      ButtonSegment<GitTransport>(
+                        value: GitTransport.ssh,
+                        label: Text('SSH'),
+                        icon: Icon(Icons.vpn_key_outlined, size: 16),
+                      ),
+                      ButtonSegment<GitTransport>(
+                        value: GitTransport.https,
+                        label: Text('HTTPS'),
+                        icon: Icon(Icons.lock_outline, size: 16),
+                      ),
+                    ],
+                    selected: <GitTransport>{_transport},
+                    onSelectionChanged: (values) => setState(() => _transport = values.first),
+                  )
+                else
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Perangkat ini menyinkronkan lewat GitHub API, jadi aksesnya '
+                      'memakai token HTTPS.',
+                      style: Theme.of(context).textTheme.labelSmall,
                     ),
-                    ButtonSegment<GitTransport>(
-                      value: GitTransport.https,
-                      label: Text('HTTPS'),
-                      icon: Icon(Icons.lock_outline, size: 16),
-                    ),
-                  ],
-                  selected: <GitTransport>{_transport},
-                  onSelectionChanged: (values) => setState(() => _transport = values.first),
-                ),
+                  ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _name,

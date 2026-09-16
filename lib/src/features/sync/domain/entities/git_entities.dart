@@ -20,6 +20,7 @@ class GitAuth {
     this.sshKeyPath,
     this.httpsUsername,
     this.httpsToken,
+    this.remoteUrl,
     this.strictHostKeyChecking = false,
   });
 
@@ -28,6 +29,7 @@ class GitAuth {
       sshKeyPath = keyPath,
       httpsUsername = null,
       httpsToken = null,
+      remoteUrl = null,
       strictHostKeyChecking = false;
 
   final GitTransport transport;
@@ -36,6 +38,10 @@ class GitAuth {
   final String? sshKeyPath;
   final String? httpsUsername;
   final String? httpsToken;
+
+  /// Remote this credential belongs to. The API backend needs it because a
+  /// mirror has no `.git/config` to read the remote from.
+  final String? remoteUrl;
   final bool strictHostKeyChecking;
 
   bool get hasHttpsCredentials => (httpsToken ?? '').isNotEmpty;

@@ -17,6 +17,49 @@ class SyncBar extends ConsumerWidget {
     if (!state.hasProfile || status == null || !status.exists) return const SizedBox.shrink();
 
     final busy = state.isBusy;
+    // A phone has no room for four buttons plus the status chip.
+    final compact = MediaQuery.sizeOf(context).width < 720;
+
+    if (compact) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (busy)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+          PopupMenuButton<String>(
+            tooltip: status.summary,
+            icon: Badge(
+              isLabelVisible: !status.isClean,
+              child: Icon(status.isClean ? Icons.cloud_done_outlined : Icons.cloud_sync_outlined),
+            ),
+            enabled: !busy,
+            onSelected: (value) => switch (value) {
+              'fetch' => controller.fetch(),
+              'pull' => controller.pull(),
+              'push' => _commitAndPush(context, ref),
+              _ => showSyncDetailSheet(context),
+            },
+            itemBuilder: (_) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(
+                enabled: false,
+                child: Text(status.summary, style: Theme.of(context).textTheme.labelSmall),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem<String>(value: 'fetch', child: Text('Periksa perubahan')),
+              PopupMenuItem<String>(
+                value: 'pull',
+                child: Text(status.behind > 0 ? 'Tarik ${status.behind} commit baru' : 'Tarik perubahan'),
+              ),
+              const PopupMenuItem<String>(value: 'push', child: Text('Kirim perubahan')),
+              const PopupMenuItem<String>(value: 'detail', child: Text('Detail sinkronisasi')),
+            ],
+          ),
+        ],
+      );
+    }
 
     return Row(
       mainAxisSize: MainAxisSize.min,
