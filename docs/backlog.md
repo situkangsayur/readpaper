@@ -119,14 +119,17 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
 - [ ] Git LFS di Android (`attachments-lfs/`) — perlu endpoint LFS batch
 - [ ] Penandatanganan rilis dengan keystore sendiri (sekarang debug key)
 - [ ] **Rilis GitHub**: tag + Release berisi APK supaya bisa diunduh dari GitHub
-- [ ] **Publikasi APK ke `http://10.100.21.22:8899`** (folder `~/apk-share/`,
+- [x] **Publikasi APK ke `http://10.100.21.22:8899`** (folder `~/apk-share/`,
       dilayani systemd user service `apk-share` di `nvda11-gpu`) — pola yang sama
       dengan Leuwi Panjang:
       ```bash
       cp build/app/outputs/flutter-apk/app-release.apk ~/apk-share/readpaper_vX.Y.Z.apk
       ln -sfn readpaper_vX.Y.Z.apk ~/apk-share/readpaper-latest.apk
       ```
-      lalu tambahkan kartu unduhan ReadPaper di `~/apk-share/index.html`
+      Kartu unduhan ReadPaper sudah ada di `~/apk-share/index.html`.
+      Catatan: `ufw` hanya mengizinkan port 8899 dari `10.100.21.0/24`, jadi HP
+      harus tersambung WireGuard. Kalau ingin bisa dari WiFi rumah juga:
+      `sudo ufw allow from 192.168.11.0/24 to any port 8899 proto tcp`
 - [ ] Unduh metadata awal lebih hemat (saat ini ±3.500 permintaan API untuk
       mirror pertama; kuota GitHub 5.000/jam). Ide: tunda `notes/**.md`
       (±1.740 berkas, separuh dari total permintaan) dan ambil satu catatan
