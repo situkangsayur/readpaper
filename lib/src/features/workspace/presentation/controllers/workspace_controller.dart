@@ -167,6 +167,38 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return result.ok;
   }
 
+  /// Throws away the working copy and takes it again, so an old full clone can
+  /// become a lazy one without touching the profile.
+  ///
+  /// Refuses while anything is unsaved: a re-clone deletes local annotations
+  /// that have not reached GitHub yet.
+  Future<bool> recloneActive() async {
+    final profile = state.profile;
+    if (profile == null) return false;
+
+    final status = state.gitStatus;
+    if (status != null && (status.isDirty || status.ahead > 0)) {
+      state = state.copyWith(
+        error:
+            'Masih ada perubahan yang belum dikirim ke GitHub. '
+            'Kirim dulu, baru ambil ulang.',
+      );
+      return false;
+    }
+
+    final dir = Directory(profile.localPath);
+    if (dir.existsSync()) {
+      try {
+        await dir.delete(recursive: true);
+      } on FileSystemException catch (e) {
+        state = state.copyWith(error: 'Gagal menghapus salinan lama: ${e.message}');
+        return false;
+      }
+    }
+    state = state.copyWith(clearIndex: true, clearLayout: true, clearLibrary: true);
+    return clone();
+  }
+
   Future<bool> fetch() => _remoteAction(SyncPhase.fetching, (backend, profile, auth) {
     return backend.fetch(repoPath: profile.localPath, auth: auth, onProgress: _appendProgress);
   });

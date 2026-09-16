@@ -53,6 +53,11 @@ class _SyncDetailSheet extends ConsumerWidget {
               ],
             ),
           ),
+          if (profile != null && profile.lazyAttachments && status?.lazyAttachments == false)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: _RecloneNotice(busy: state.isBusy),
+            ),
           if (profile != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -84,6 +89,70 @@ class _SyncDetailSheet extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+/// Offered when the working copy still holds every attachment although the
+/// profile asks for the lazy layout — typically a clone made before that
+/// option existed.
+class _RecloneNotice extends ConsumerWidget {
+  const _RecloneNotice({required this.busy});
+
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.secondaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(Icons.storage_outlined, size: 18, color: scheme.onSecondaryContainer),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Salinan lokal ini masih menyimpan semua lampiran. Mengambilnya ulang '
+              'hanya mengunduh metadata; PDF menyusul saat papernya dibuka.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.tonal(
+            onPressed: busy ? null : () => _confirm(context, ref),
+            child: const Text('Ambil ulang'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirm(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Ambil ulang salinan lokal?'),
+        content: const Text(
+          'Folder lokal dihapus lalu diambil lagi tanpa lampiran. '
+          'Anotasi yang sudah dikirim ke GitHub tetap aman; yang belum dikirim '
+          'akan hilang, jadi ini ditolak kalau masih ada perubahan tertunda.',
+        ),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Ambil ulang'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    if (!context.mounted) return;
+    Navigator.of(context).pop();
+    await ref.read(workspaceControllerProvider.notifier).recloneActive();
   }
 }
 
