@@ -366,7 +366,7 @@ class _ProgressRow extends ConsumerWidget {
 
     final progress = state.progress;
     final text = state.isBusy
-        ? (progress?.label ?? state.phaseLabel)
+        ? (state.progressLabel.isNotEmpty ? state.progressLabel : state.phaseLabel)
         : 'Membaca library dari berkas…';
 
     return Padding(

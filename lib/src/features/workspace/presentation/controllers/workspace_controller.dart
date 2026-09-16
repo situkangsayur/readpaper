@@ -409,10 +409,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (line.isEmpty) return;
     final lines = <String>[...state.progressLines, line];
     state = state.copyWith(
-      // Keep the last measurable report so the bar can show a real percentage;
-      // unmeasurable lines only update the log.
+      // The bar keeps the last measurable percentage, but the caption always
+      // shows the newest line so a long silent step never looks frozen.
       progress: progress.isMeasurable ? progress : null,
-      clearProgress: !progress.isMeasurable && state.progress == null,
+      progressLabel: line,
       progressLines: lines.length > 200 ? lines.sublist(lines.length - 200) : lines,
     );
   }

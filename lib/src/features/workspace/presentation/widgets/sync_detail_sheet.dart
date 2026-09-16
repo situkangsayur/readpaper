@@ -41,12 +41,14 @@ class _SyncDetailSheet extends ConsumerWidget {
                     message: 'git-lfs tidak terpasang; lampiran besar tetap berupa pointer',
                     child: Icon(Icons.warning_amber_outlined, size: 18),
                   ),
+                // Deliberately manual: LFS objects are attachments, and one
+                // real library keeps 136 MB of them in a couple of books.
                 TextButton.icon(
                   onPressed: state.isBusy
                       ? null
                       : () => ref.read(workspaceControllerProvider.notifier).lfsPull(),
                   icon: const Icon(Icons.file_download_outlined, size: 16),
-                  label: const Text('LFS pull'),
+                  label: const Text('Unduh semua berkas LFS'),
                 ),
               ],
             ),

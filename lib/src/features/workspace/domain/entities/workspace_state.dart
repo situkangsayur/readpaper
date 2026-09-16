@@ -21,6 +21,7 @@ class WorkspaceState {
     this.gitStatus,
     this.phase = SyncPhase.idle,
     this.progress,
+    this.progressLabel = '',
     this.progressLines = const <String>[],
     this.message,
     this.error,
@@ -37,6 +38,13 @@ class WorkspaceState {
 
   /// Latest progress report of the running operation, when it is measurable.
   final SyncProgress? progress;
+
+  /// The newest line of output, measurable or not.
+  ///
+  /// Kept apart from [progress] so the text keeps moving during a long step
+  /// that reports no percentage — otherwise the screen looks frozen at
+  /// whatever number came last.
+  final String progressLabel;
   final List<String> progressLines;
   final String? message;
   final String? error;
@@ -65,6 +73,7 @@ class WorkspaceState {
     GitRepoStatus? gitStatus,
     SyncPhase? phase,
     SyncProgress? progress,
+    String? progressLabel,
     List<String>? progressLines,
     String? message,
     String? error,
@@ -85,6 +94,7 @@ class WorkspaceState {
     gitStatus: gitStatus ?? this.gitStatus,
     phase: phase ?? this.phase,
     progress: clearProgress ? null : (progress ?? this.progress),
+    progressLabel: clearProgress ? '' : (progressLabel ?? this.progressLabel),
     progressLines: progressLines ?? this.progressLines,
     message: clearMessage ? null : (message ?? this.message),
     error: clearError ? null : (error ?? this.error),

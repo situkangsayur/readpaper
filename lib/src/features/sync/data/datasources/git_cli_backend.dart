@@ -79,7 +79,34 @@ class GitCliBackend implements GitBackend {
         message: 'Berkas tidak ada di repositori ini.',
       );
     }
+
+    // A checked-out LFS file is still just a pointer; pull the one object it
+    // names rather than every LFS object in the repository.
+    if (_isLfsPointer(file) && await isLfsAvailable()) {
+      final relativePath = p.relative(absoluteFilePath, from: repoPath);
+      onProgress?.call(const SyncProgress.message('Mengunduh berkas besar (Git LFS)…'));
+      final lfs = await _run(
+        args: <String>['lfs', 'pull', '--include=$relativePath'],
+        workingDirectory: repoPath,
+        auth: auth,
+        onProgress: onProgress,
+        successMessage: 'Berkas selesai diunduh',
+      );
+      if (!lfs.ok) return lfs;
+    }
     return result;
+  }
+
+  /// Cheap check for the small text stub Git LFS leaves in the working tree.
+  bool _isLfsPointer(File file) {
+    try {
+      if (file.lengthSync() > 1024) return false;
+      return file.readAsStringSync().startsWith('version https://git-lfs');
+    } on FileSystemException {
+      return false;
+    } on FormatException {
+      return false;
+    }
   }
 
   @override
@@ -198,16 +225,7 @@ class GitCliBackend implements GitBackend {
     final lastCommit = await _capture(repoPath, <String>['log', '-1', '--format=%s%n%cI']);
     final commitLines = const LineSplitter().convert(lastCommit);
 
-    final filter = (await _capture(repoPath, <String>[
-      'config',
-      '--get',
-      'remote.origin.partialclonefilter',
-    ])).trim();
-    final sparse = (await _capture(repoPath, <String>[
-      'config',
-      '--get',
-      'core.sparseCheckout',
-    ])).trim();
+    final lazy = await isLazyRepo(repoPath);
 
     return GitRepoStatus(
       repoPath: repoPath,
@@ -221,7 +239,7 @@ class GitCliBackend implements GitBackend {
       lastCommitDate: commitLines.length > 1 ? DateTime.tryParse(commitLines[1]) : null,
       hasUpstream: hasUpstream,
       lfsAvailable: await isLfsAvailable(),
-      lazyAttachments: filter.isNotEmpty && sparse == 'true',
+      lazyAttachments: lazy,
     );
   }
 
@@ -252,10 +270,29 @@ class GitCliBackend implements GitBackend {
       successMessage: 'Pull selesai',
     );
     if (!result.ok) return result;
-    if (await isLfsAvailable()) {
+
+    // Never pull Git LFS objects automatically on a lazy working copy: they are
+    // attachments too. One real library holds 136 MB of them in two books, so
+    // doing this after every pull is exactly what the sparse checkout avoids.
+    if (!await isLazyRepo(repoPath) && await isLfsAvailable()) {
       await lfsPull(repoPath: repoPath, auth: auth, onProgress: onProgress);
     }
     return result;
+  }
+
+  /// True when this working copy is a partial + sparse clone.
+  Future<bool> isLazyRepo(String repoPath) async {
+    final filter = (await _capture(repoPath, <String>[
+      'config',
+      '--get',
+      'remote.origin.partialclonefilter',
+    ])).trim();
+    final sparse = (await _capture(repoPath, <String>[
+      'config',
+      '--get',
+      'core.sparseCheckout',
+    ])).trim();
+    return filter.isNotEmpty && sparse == 'true';
   }
 
   @override

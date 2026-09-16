@@ -17,7 +17,10 @@ berwarna dan komentar, lalu commit & push perubahannya.
 - [x] Clone repo lewat **HTTPS** + personal access token (token disimpan di
       `credentials.json`, izin `600`, tidak pernah masuk ke URL remote)
 - [x] `fetch` / `pull --rebase --autostash` / `commit` / `push`
-- [x] `git lfs pull` untuk lampiran besar (`attachments-lfs/`)
+- [x] Git LFS: berkas besar diunduh per berkas saat papernya dibuka
+      (`git lfs pull --include=<path>`), bukan sekaligus setiap kali pull —
+      pada library asli itu 136 MB dalam dua buku. Tombol "Unduh semua berkas
+      LFS" tetap ada di panel sinkronisasi kalau memang diinginkan.
 - [x] Status working copy: jumlah perubahan lokal, ahead/behind, commit terakhir
 - [x] Panel detail sinkronisasi: daftar perubahan, riwayat commit, log mentah git
 - [x] PDF baru yang ditambahkan lewat GitHub otomatis muncul setelah `pull`
