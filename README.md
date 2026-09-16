@@ -12,8 +12,11 @@ setiap perubahan langsung ditulis balik ke berkas Zotero dan di-*commit* ke git.
 ## Yang bisa dilakukan sekarang
 
 - **Sinkron GitHub** — clone, fetch, pull, commit, push lewat **SSH** (dengan
-  pilihan kunci privat) maupun **HTTPS** (personal access token). `git lfs pull`
-  untuk lampiran besar. PDF baru yang ditambahkan lewat GitHub muncul setelah pull.
+  pilihan kunci privat) maupun **HTTPS** (personal access token), dengan bilah
+  progres berpersen. PDF baru yang ditambahkan lewat GitHub muncul setelah pull.
+- **Clone hemat** — library Zotero didominasi PDF, jadi yang diunduh dulu hanya
+  metadata dan tiap PDF menyusul saat papernya dibuka. Pada library asli
+  (1.740 item): **~23 MB dalam ~14 detik**, dari ~940 MB untuk clone penuh.
 - **Jalan juga di Android** — di sana tidak ada biner `git`, jadi repositori
   di-*mirror* lewat GitHub REST API: metadata library (±19 MB) diunduh penuh,
   PDF-nya (±529 MB) baru diambil saat papernya dibuka. Anotasi dikirim balik

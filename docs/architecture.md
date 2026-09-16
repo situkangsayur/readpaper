@@ -106,8 +106,8 @@ yang ditulis Zotero sendiri.
 
 ## Sinkronisasi git
 
-`GitBackend` adalah antarmuka; satu-satunya implementasi saat ini adalah
-`GitCliBackend` yang memanggil biner `git` sistem:
+`GitBackend` adalah antarmuka; di desktop implementasinya `GitCliBackend`, yang
+memanggil biner `git` sistem:
 
 - **SSH** lewat `GIT_SSH_COMMAND` (`-i <kunci> -o IdentitiesOnly=yes`,
   `BatchMode=yes` supaya tidak pernah menunggu input).
@@ -117,6 +117,37 @@ yang ditulis Zotero sendiri.
   jadi error, bukan proses yang menggantung.
 - Pesan error git yang umum diterjemahkan ke bahasa yang bisa ditindaklanjuti
   (kunci ditolak, token kedaluwarsa, repo tidak ditemukan, konflik, jaringan).
+
+### Clone hemat
+
+Library Zotero didominasi PDF, jadi clone bawaannya **partial + sparse**:
+
+```bash
+git clone --filter=blob:none --sparse --single-branch <url> <dir>
+git -C <dir> sparse-checkout set --no-cone '/*' '!/**/attachments/**' '!/**/attachments-lfs/**'
+```
+
+Diukur pada repositori asli (1.740 item, 187 PDF):
+
+| | Ukuran | Waktu |
+| --- | --- | --- |
+| clone penuh | ~940 MB | menit-an |
+| partial + sparse | **~23 MB** | **~14 detik** |
+| membuka satu paper | +berkas itu saja | ~4 detik |
+
+Saat sebuah paper dibuka, `fetchAttachment` menjalankan
+`git sparse-checkout add '/<folder berkas>/*'`; pada partial clone perintah itu
+sekaligus menarik blob-nya dari remote. `GitRepoStatus.lazyAttachments`
+mendeteksi kondisi ini dari `remote.origin.partialclonefilter` +
+`core.sparseCheckout`, dan UI memakainya untuk menampilkan tombol **Unduh**.
+Push dari partial clone sudah diuji terhadap remote asli dengan `--dry-run`.
+
+### Progres
+
+Keluaran `git --progress` (dipisah carriage return) diurai
+`GitProgressParser` menjadi fase, persen, jumlah objek, dan kecepatan, sehingga
+bilah progres benar-benar menunjukkan kemajuan. Baris tanpa persentase tetap
+memakai bilah indeterminate alih-alih angka palsu.
 
 ## Sinkronisasi Android (tanpa git)
 

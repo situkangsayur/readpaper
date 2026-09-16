@@ -23,8 +23,13 @@ berwarna dan komentar, lalu commit & push perubahannya.
 - [x] PDF baru yang ditambahkan lewat GitHub otomatis muncul setelah `pull`
       (library dibaca ulang)
 - [ ] Deteksi & bantuan penyelesaian konflik merge (saat ini hanya menampilkan pesan error git)
+- [x] Aksi sinkronisasi saat proses berjalan memberi pesan, bukan tombol mati
 - [ ] Auto-fetch berkala di latar belakang
-- [ ] Indikator progres yang lebih detail saat clone repo besar (persen objek)
+- [x] Indikator progres berpersen saat clone/pull (fase, jumlah objek, kecepatan),
+      diurai dari keluaran `git --progress`
+- [x] **Clone hemat**: `--filter=blob:none` + sparse-checkout tanpa `attachments/`,
+      lalu tiap PDF diambil saat papernya dibuka. Pada library asli: ~23 MB /
+      ~14 detik, dari ~940 MB untuk clone penuh
 
 ### 1.2 Ganti / pindah repositori
 - [x] Profil repositori: nama, URL, transport, branch, folder clone, identitas commit
@@ -130,8 +135,8 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
       Catatan: `ufw` hanya mengizinkan port 8899 dari `10.100.21.0/24`, jadi HP
       harus tersambung WireGuard. Kalau ingin bisa dari WiFi rumah juga:
       `sudo ufw allow from 192.168.11.0/24 to any port 8899 proto tcp`
-- [ ] Unduh metadata awal lebih hemat (saat ini ±3.500 permintaan API untuk
-      mirror pertama; kuota GitHub 5.000/jam). Ide: tunda `notes/**.md`
+- [ ] Unduh metadata awal lebih hemat di Android (saat ini ±3.500 permintaan API
+      untuk mirror pertama; kuota GitHub 5.000/jam). Ide: tunda `notes/**.md`
       (±1.740 berkas, separuh dari total permintaan) dan ambil satu catatan
       hanya ketika anotasi paper itu ditulis
 
@@ -141,6 +146,9 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
 
 - [x] Uji unit parser Zotero + penulis anotasi (round-trip JSON byte-for-byte)
 - [x] Uji unit backend GitHub API (clone, status, commit, push, pull, lampiran)
+- [x] Uji unit pengurai progres git
+- [x] Pemeriksaan kesetiaan catatan: blok anotasi hasil render dibandingkan
+      dengan tulisan plugin pada seluruh library asli
 - [ ] Uji widget untuk pohon koleksi dan alur anotasi
 - [ ] Cache indeks library di disk + invalidasi berdasarkan mtime
 - [ ] Penanganan berkas item rusak yang lebih informatif (saat ini dilewati diam-diam)
