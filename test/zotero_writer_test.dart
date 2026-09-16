@@ -233,6 +233,50 @@ void main() {
     expect(lines, contains('  need & kesulitan 1- kitchenham'));
   });
 
+  test('annotations with the same sort index keep creation order', () async {
+    const writer = ZoteroWriter();
+    // A highlight and an underline over the same line share a sort index
+    // exactly; Zotero keeps the one created first, and so must ReadPaper —
+    // otherwise every save would reshuffle that pair in the note.
+    final later = _highlight(key: 'BBBB0001', comment: '').copyWith(
+      type: AnnotationType.underline,
+      text: 'agility',
+      dateModified: DateTime.utc(2026, 9, 16, 11),
+    );
+    final earlier = ZoteroAnnotation(
+      key: 'AAAA0002',
+      parentItemKey: 'ATTACH01',
+      type: AnnotationType.highlight,
+      color: '#ffd400',
+      pageIndex: 2,
+      rects: const <AnnotationRect>[AnnotationRect(72, 600, 500, 612)],
+      text: 'crypto agility belum ada di produksi',
+      pageLabel: '3',
+      sortIndex: later.sortIndex,
+      dateAdded: DateTime.utc(2026, 9, 16, 9),
+      dateModified: DateTime.utc(2026, 9, 16, 9),
+    );
+
+    // Written in the "wrong" order on purpose.
+    for (final annotation in <ZoteroAnnotation>[later, earlier]) {
+      await writer.upsertAnnotation(
+        itemFilePath: itemPath,
+        libraryDir: libraryDir,
+        annotation: annotation,
+      );
+    }
+
+    final detail = buildItemDetail(
+      ZoteroJson.decodeObject(File(itemPath).readAsStringSync()),
+      itemPath,
+    );
+    expect(
+      detail.annotations.map((a) => a.key).toList(),
+      <String>['AAAA0002', 'BBBB0001'],
+      reason: 'the older annotation comes first when the sort index ties',
+    );
+  });
+
   test('children stay sorted by key so diffs stay small', () async {
     const writer = ZoteroWriter();
     for (final key in <String>['ZZZZ0001', 'AAAA0001', 'MMMM0001']) {

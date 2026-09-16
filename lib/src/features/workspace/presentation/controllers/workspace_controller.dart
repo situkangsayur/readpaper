@@ -11,6 +11,7 @@ import '../../../library/domain/entities/zotero_annotation.dart';
 import '../../../library/domain/entities/zotero_item.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../sync/domain/entities/git_entities.dart';
+import '../../../sync/domain/entities/sync_progress.dart';
 import '../../../sync/domain/repositories/git_backend.dart';
 import '../../domain/entities/workspace_state.dart';
 
@@ -155,6 +156,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           targetPath: profile.localPath,
           auth: auth,
           branch: profile.branch.isEmpty ? null : profile.branch,
+          lazyAttachments: profile.lazyAttachments,
           onProgress: _appendProgress,
         );
     await _endPhase(result);
@@ -396,16 +398,21 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(
       phase: phase,
       progressLines: const <String>[],
+      clearProgress: true,
       clearError: true,
       clearMessage: true,
     );
   }
 
-  void _appendProgress(String line) {
-    final trimmed = line.trim();
-    if (trimmed.isEmpty) return;
-    final lines = <String>[...state.progressLines, trimmed];
+  void _appendProgress(SyncProgress progress) {
+    final line = progress.label;
+    if (line.isEmpty) return;
+    final lines = <String>[...state.progressLines, line];
     state = state.copyWith(
+      // Keep the last measurable report so the bar can show a real percentage;
+      // unmeasurable lines only update the log.
+      progress: progress.isMeasurable ? progress : null,
+      clearProgress: !progress.isMeasurable && state.progress == null,
       progressLines: lines.length > 200 ? lines.sublist(lines.length - 200) : lines,
     );
   }
@@ -413,6 +420,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<void> _endPhase(GitResult result) async {
     state = state.copyWith(
       phase: SyncPhase.idle,
+      clearProgress: true,
       message: result.ok && result.message.isNotEmpty ? result.message : null,
       error: result.ok ? null : result.message,
       clearError: result.ok,

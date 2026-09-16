@@ -160,13 +160,15 @@ class _AttachmentCard extends ConsumerWidget {
     final isPointer = file != null && repository.isLfsPointer(file!);
     final canRead = file != null && !isPointer && attachment.isPdf;
 
-    // On Android the mirror holds metadata only; a PDF is fetched when asked for.
-    final lazy = ref.watch(gitBackendProvider).usesLazyAttachments;
-    final libraryDir = ref.watch(workspaceControllerProvider).library?.directoryPath;
+    // A partial clone (and the Android mirror) keeps metadata only, so a PDF
+    // that is not on disk can still be fetched on demand.
+    final workspace = ref.watch(workspaceControllerProvider);
+    final lazy = workspace.gitStatus?.lazyAttachments ?? false;
+    final libraryDir = workspace.library?.directoryPath;
     final expected = file == null && lazy && libraryDir != null
         ? repository.attachmentLocation(libraryDir: libraryDir, attachment: attachment)
         : null;
-    final busy = ref.watch(workspaceControllerProvider).isBusy;
+    final busy = workspace.isBusy;
 
     return Card(
       elevation: 0,

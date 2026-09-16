@@ -8,8 +8,7 @@ import '../../../library/presentation/widgets/item_detail_pane.dart';
 import '../../../library/presentation/widgets/item_list_pane.dart';
 import '../../../settings/presentation/screens/profiles_screen.dart';
 import '../controllers/workspace_controller.dart';
-import '../widgets/repo_switcher.dart';
-import '../widgets/sync_bar.dart';
+import '../widgets/workspace_bar.dart';
 import '../widgets/workspace_placeholders.dart';
 
 /// Width below which the three panes collapse into a drawer + list.
@@ -26,7 +25,11 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 12,
+        // Only the app name lives here. Everything else sits in the full-width
+        // WorkspaceBar below: the app bar gives its title a fixed box, and a
+        // long repository name used to overflow it right over the action icons.
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             const Icon(Icons.menu_book_outlined, size: 20),
             const SizedBox(width: 8),
@@ -34,12 +37,9 @@ class HomeScreen extends ConsumerWidget {
               AppConstants.appName,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
-            const SizedBox(width: 16),
-            const Flexible(child: RepoSwitcher()),
           ],
         ),
         actions: <Widget>[
-          const SyncBar(),
           IconButton(
             tooltip: 'Kelola repositori',
             icon: const Icon(Icons.settings_outlined),
@@ -49,18 +49,13 @@ class HomeScreen extends ConsumerWidget {
           ),
           const SizedBox(width: 4),
         ],
-        bottom: state.isBusy || state.loadingLibrary
-            ? const PreferredSize(
-                preferredSize: Size.fromHeight(2),
-                child: LinearProgressIndicator(minHeight: 2),
-              )
-            : null,
       ),
       drawer: isCompact && state.hasLibrary
           ? const Drawer(child: SafeArea(child: CollectionTreePane()))
           : null,
       body: Column(
         children: <Widget>[
+          const WorkspaceBar(),
           if (state.error != null) _Banner(message: state.error!, isError: true),
           if (state.message != null) _Banner(message: state.message!, isError: false),
           Expanded(child: _Body(isCompact: isCompact)),

@@ -172,7 +172,7 @@ void main() {
         targetPath: mirror.path,
         auth: auth,
         branch: 'main',
-        onProgress: progress.add,
+        onProgress: (p) => progress.add(p.label),
       );
 
       expect(result.ok, isTrue, reason: result.message);

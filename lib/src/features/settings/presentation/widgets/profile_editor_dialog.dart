@@ -62,6 +62,7 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
 
   late GitTransport _transport;
   late bool _autoPush;
+  late bool _lazyAttachments;
   bool _localPathEdited = false;
   bool _nameEdited = false;
 
@@ -80,6 +81,7 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
     _authorEmail = TextEditingController(text: existing?.authorEmail ?? '');
     _transport = existing?.transport ?? GitTransport.ssh;
     _autoPush = existing?.autoPushOnSave ?? false;
+    _lazyAttachments = existing?.lazyAttachments ?? true;
     _localPathEdited = existing != null;
     _nameEdited = existing != null;
 
@@ -282,6 +284,18 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
                 const SizedBox(height: 8),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
+                  value: _lazyAttachments,
+                  title: const Text('Unduh PDF hanya saat dibuka'),
+                  subtitle: const Text(
+                    'Ambil metadata library dulu (puluhan MB); berkas PDF menyusul '
+                    'satu per satu. Matikan kalau ingin semua berkas tersedia offline.',
+                  ),
+                  onChanged: canChooseFolder
+                      ? (value) => setState(() => _lazyAttachments = value)
+                      : null,
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   value: _autoPush,
                   title: const Text('Push otomatis setelah menyimpan anotasi'),
                   subtitle: const Text('Setiap highlight/komentar langsung dikirim ke GitHub.'),
@@ -338,6 +352,7 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
       authorName: _authorName.text.trim(),
       authorEmail: _authorEmail.text.trim(),
       autoPushOnSave: _autoPush,
+      lazyAttachments: _lazyAttachments,
       preferredLibraryDir: existing?.preferredLibraryDir,
       lastSyncedAt: existing?.lastSyncedAt,
     );

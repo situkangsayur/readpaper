@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../domain/entities/git_entities.dart';
+import '../../domain/entities/sync_progress.dart';
 import '../../domain/repositories/git_backend.dart';
 
 /// Git implementation backed by the system `git` executable.
@@ -39,25 +40,47 @@ class GitCliBackend implements GitBackend {
   String get label => 'git (CLI sistem)';
 
   @override
-  bool get usesLazyAttachments => false;
-
-  @override
   Set<GitTransport> get supportedTransports => <GitTransport>{GitTransport.ssh, GitTransport.https};
 
-  /// The CLI mirror always holds every attachment, so there is nothing to fetch.
+  /// Widens the sparse checkout so git materialises this one attachment.
+  ///
+  /// On a partial clone that also pulls the blob down from the remote, which is
+  /// exactly what "open this paper" should cost.
   @override
   Future<GitResult> fetchAttachment({
     required String repoPath,
     required GitAuth auth,
     required String absoluteFilePath,
-    void Function(String line)? onProgress,
-  }) async => File(absoluteFilePath).existsSync()
-      ? const GitResult(ok: true, exitCode: 0, message: 'Berkas sudah ada di lokal')
-      : const GitResult(
-          ok: false,
-          exitCode: 1,
-          message: 'Berkas belum ada di clone lokal. Jalankan pull (atau LFS pull).',
-        );
+    void Function(SyncProgress progress)? onProgress,
+  }) async {
+    final file = File(absoluteFilePath);
+    if (file.existsSync()) {
+      return const GitResult(ok: true, exitCode: 0, message: 'Berkas sudah ada di lokal');
+    }
+
+    final relativeDir = p.dirname(p.relative(absoluteFilePath, from: repoPath));
+    if (relativeDir.isEmpty || relativeDir == '.') {
+      return const GitResult(ok: false, exitCode: 1, message: 'Lokasi berkas tidak dikenali.');
+    }
+
+    onProgress?.call(SyncProgress.message('Mengunduh ${p.basename(absoluteFilePath)}…'));
+    final result = await _run(
+      args: <String>['sparse-checkout', 'add', '/$relativeDir/*'],
+      workingDirectory: repoPath,
+      auth: auth,
+      onProgress: onProgress,
+      successMessage: 'Berkas selesai diunduh',
+    );
+    if (!result.ok) return result;
+    if (!file.existsSync()) {
+      return const GitResult(
+        ok: false,
+        exitCode: 1,
+        message: 'Berkas tidak ada di repositori ini.',
+      );
+    }
+    return result;
+  }
 
   @override
   Future<bool> isLfsAvailable() async {
@@ -70,13 +93,21 @@ class GitCliBackend implements GitBackend {
     }
   }
 
+  /// Sparse patterns that keep every metadata file but no attachment.
+  static const List<String> _sparsePatterns = <String>[
+    '/*',
+    '!/**/attachments/**',
+    '!/**/attachments-lfs/**',
+  ];
+
   @override
   Future<GitResult> clone({
     required String remoteUrl,
     required String targetPath,
     required GitAuth auth,
     String? branch,
-    void Function(String line)? onProgress,
+    bool lazyAttachments = true,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final parent = Directory(p.dirname(targetPath));
     if (!parent.existsSync()) await parent.create(recursive: true);
@@ -90,10 +121,15 @@ class GitCliBackend implements GitBackend {
       );
     }
 
-    return _run(
+    // A Zotero library is mostly PDFs: for one real library that is ~940 MB of
+    // clone versus ~23 MB when the blobs are left on the server and fetched per
+    // paper. So the default is a partial + sparse clone.
+    final result = await _run(
       args: <String>[
         'clone',
         '--progress',
+        '--single-branch',
+        if (lazyAttachments) ...<String>['--filter=blob:none', '--sparse'],
         if (branch != null && branch.isNotEmpty) ...<String>['--branch', branch],
         remoteUrl,
         targetPath,
@@ -102,6 +138,23 @@ class GitCliBackend implements GitBackend {
       auth: auth,
       onProgress: onProgress,
       successMessage: 'Repositori berhasil di-clone',
+    );
+    if (!result.ok || !lazyAttachments) return result;
+
+    onProgress?.call(const SyncProgress.message('Menyiapkan berkas metadata…'));
+    final sparse = await _run(
+      args: <String>['sparse-checkout', 'set', '--no-cone', ..._sparsePatterns],
+      workingDirectory: targetPath,
+      auth: auth,
+      onProgress: onProgress,
+      successMessage: 'Metadata siap',
+    );
+    if (!sparse.ok) return sparse;
+
+    return const GitResult(
+      ok: true,
+      exitCode: 0,
+      message: 'Repositori siap. Lampiran diunduh saat papernya dibuka.',
     );
   }
 
@@ -145,6 +198,17 @@ class GitCliBackend implements GitBackend {
     final lastCommit = await _capture(repoPath, <String>['log', '-1', '--format=%s%n%cI']);
     final commitLines = const LineSplitter().convert(lastCommit);
 
+    final filter = (await _capture(repoPath, <String>[
+      'config',
+      '--get',
+      'remote.origin.partialclonefilter',
+    ])).trim();
+    final sparse = (await _capture(repoPath, <String>[
+      'config',
+      '--get',
+      'core.sparseCheckout',
+    ])).trim();
+
     return GitRepoStatus(
       repoPath: repoPath,
       exists: true,
@@ -157,6 +221,7 @@ class GitCliBackend implements GitBackend {
       lastCommitDate: commitLines.length > 1 ? DateTime.tryParse(commitLines[1]) : null,
       hasUpstream: hasUpstream,
       lfsAvailable: await isLfsAvailable(),
+      lazyAttachments: filter.isNotEmpty && sparse == 'true',
     );
   }
 
@@ -164,7 +229,7 @@ class GitCliBackend implements GitBackend {
   Future<GitResult> fetch({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   }) => _run(
     args: <String>['fetch', '--prune', '--progress', 'origin'],
     workingDirectory: repoPath,
@@ -177,7 +242,7 @@ class GitCliBackend implements GitBackend {
   Future<GitResult> pull({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final result = await _run(
       args: <String>['pull', '--rebase', '--autostash', '--progress'],
@@ -227,7 +292,7 @@ class GitCliBackend implements GitBackend {
   Future<GitResult> push({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final branch = (await _capture(repoPath, <String>['rev-parse', '--abbrev-ref', 'HEAD'])).trim();
     final upstream = (await _capture(repoPath, <String>[
@@ -254,7 +319,7 @@ class GitCliBackend implements GitBackend {
   Future<GitResult> lfsPull({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     if (!await isLfsAvailable()) {
       return const GitResult(ok: true, exitCode: 0, message: 'git-lfs tidak terpasang, dilewati');
@@ -328,7 +393,7 @@ class GitCliBackend implements GitBackend {
     required List<String> args,
     required String workingDirectory,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
     String successMessage = '',
   }) async {
     File? askpass;
@@ -361,7 +426,7 @@ class GitCliBackend implements GitBackend {
           .transform(const LineSplitter())
           .listen((line) {
             stdoutBuffer.writeln(line);
-            onProgress?.call(line);
+            if (line.trim().isNotEmpty) onProgress?.call(GitProgressParser.parse(line));
           })
           .asFuture<void>();
 
@@ -370,7 +435,7 @@ class GitCliBackend implements GitBackend {
           .transform(const LineSplitter())
           .listen((line) {
             stderrBuffer.writeln(line);
-            onProgress?.call(line);
+            if (line.trim().isNotEmpty) onProgress?.call(GitProgressParser.parse(line));
           })
           .asFuture<void>();
 

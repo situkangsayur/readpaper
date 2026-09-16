@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../../core/errors/failure.dart';
 import '../../domain/entities/git_entities.dart';
+import '../../domain/entities/sync_progress.dart';
 import '../../domain/repositories/git_backend.dart';
 import 'github_api_client.dart';
 import 'github_sync_state.dart';
@@ -35,9 +36,6 @@ class GitHubApiBackend implements GitBackend {
   String get label => 'GitHub API';
 
   @override
-  bool get usesLazyAttachments => true;
-
-  @override
   Set<GitTransport> get supportedTransports => <GitTransport>{GitTransport.https};
 
   @override
@@ -54,7 +52,9 @@ class GitHubApiBackend implements GitBackend {
     required String targetPath,
     required GitAuth auth,
     String? branch,
-    void Function(String line)? onProgress,
+    // The mirror never holds attachments, so this preference does not apply.
+    bool lazyAttachments = true,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final ref = GitHubRepoRef.parse(remoteUrl);
     if (ref == null) {
@@ -85,7 +85,7 @@ class GitHubApiBackend implements GitBackend {
     try {
       await target.create(recursive: true);
       final targetBranch = (branch ?? '').isNotEmpty ? branch! : await client.defaultBranch();
-      onProgress?.call('Membaca branch $targetBranch di ${ref.slug}…');
+      onProgress?.call(SyncProgress.message('Membaca branch $targetBranch di ${ref.slug}…'));
 
       final head = await client.headSha(targetBranch);
       final entries = await client.tree(head);
@@ -142,6 +142,7 @@ class GitHubApiBackend implements GitBackend {
       lastCommitDate: state.lastCommitDate,
       hasUpstream: true,
       lfsAvailable: false,
+      lazyAttachments: true,
     );
   }
 
@@ -199,7 +200,7 @@ class GitHubApiBackend implements GitBackend {
   Future<GitResult> fetch({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final state = GitHubSyncState.load(repoPath);
     if (state == null) return _notMirrored;
@@ -225,7 +226,7 @@ class GitHubApiBackend implements GitBackend {
   Future<GitResult> pull({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final state = GitHubSyncState.load(repoPath);
     if (state == null) return _notMirrored;
@@ -238,7 +239,7 @@ class GitHubApiBackend implements GitBackend {
         return const GitResult(ok: true, exitCode: 0, message: 'Sudah paling baru');
       }
 
-      onProgress?.call('Membandingkan dengan commit $head…');
+      onProgress?.call(SyncProgress.message('Membandingkan dengan commit $head…'));
       final entries = await client.tree(head);
       final downloaded = await _mirror(
         client: client,
@@ -265,7 +266,7 @@ class GitHubApiBackend implements GitBackend {
   Future<GitResult> lfsPull({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   }) async => const GitResult(
     ok: false,
     exitCode: 1,
@@ -310,7 +311,7 @@ class GitHubApiBackend implements GitBackend {
   Future<GitResult> push({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final state = GitHubSyncState.load(repoPath);
     if (state == null) return _notMirrored;
@@ -343,7 +344,16 @@ class GitHubApiBackend implements GitBackend {
           });
           continue;
         }
-        onProgress?.call('Mengunggah ${p.basename(path)} (${++uploaded}/${pending.paths.length})');
+        uploaded++;
+        onProgress?.call(
+          SyncProgress(
+            message: 'Mengunggah berkas',
+            fraction: uploaded / pending.paths.length,
+            current: uploaded,
+            total: pending.paths.length,
+            detail: p.basename(path),
+          ),
+        );
         final bytes = await file.readAsBytes();
         final blobSha = await client.createBlob(bytes);
         treeEntries.add(<String, dynamic>{
@@ -397,7 +407,7 @@ class GitHubApiBackend implements GitBackend {
     required String repoPath,
     required GitAuth auth,
     required String absoluteFilePath,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final state = GitHubSyncState.load(repoPath);
     if (state == null) return _notMirrored;
@@ -413,7 +423,7 @@ class GitHubApiBackend implements GitBackend {
     }
 
     return _withClient(repoPath, auth, (client, ref) async {
-      onProgress?.call('Mengunduh ${p.basename(relative)}…');
+      onProgress?.call(SyncProgress.message('Mengunduh ${p.basename(relative)}…'));
       final bytes = await client.blob(known.sha);
       final file = File(absoluteFilePath);
       await file.parent.create(recursive: true);
@@ -467,7 +477,7 @@ class GitHubApiBackend implements GitBackend {
     required List<GitTreeEntry> entries,
     required String repoPath,
     required GitHubSyncState state,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   }) async {
     final wanted = <GitTreeEntry>[];
     final remotePaths = <String>{};
@@ -497,7 +507,9 @@ class GitHubApiBackend implements GitBackend {
 
     var done = 0;
     final total = wanted.length;
-    onProgress?.call('Mengunduh $total berkas metadata…');
+    onProgress?.call(
+      SyncProgress(message: 'Mengunduh metadata', fraction: 0, current: 0, total: total),
+    );
 
     Future<void> worker(Iterable<GitTreeEntry> slice) async {
       for (final entry in slice) {
@@ -512,8 +524,15 @@ class GitHubApiBackend implements GitBackend {
           mtimeMs: stat.modified.millisecondsSinceEpoch,
         );
         done++;
-        if (done % 50 == 0 || done == total) {
-          onProgress?.call('Mengunduh metadata $done/$total');
+        if (done % 10 == 0 || done == total) {
+          onProgress?.call(
+            SyncProgress(
+              message: 'Mengunduh metadata',
+              fraction: done / total,
+              current: done,
+              total: total,
+            ),
+          );
         }
       }
     }

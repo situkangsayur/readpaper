@@ -1,4 +1,5 @@
 import '../entities/git_entities.dart';
+import '../entities/sync_progress.dart';
 
 /// Abstraction over the git implementation.
 ///
@@ -12,13 +13,6 @@ abstract class GitBackend {
   /// Human readable name of the backend, shown in the sync panel.
   String get label;
 
-  /// True when attachments are *not* mirrored during a pull and each file has
-  /// to be fetched on demand ([fetchAttachment]).
-  ///
-  /// The Android backend works this way: a library's metadata is a handful of
-  /// megabytes, but its PDFs can be hundreds.
-  bool get usesLazyAttachments;
-
   /// Transports this backend can authenticate with.
   Set<GitTransport> get supportedTransports;
 
@@ -30,7 +24,11 @@ abstract class GitBackend {
     required String targetPath,
     required GitAuth auth,
     String? branch,
-    void Function(String line)? onProgress,
+
+    /// Fetch attachments only when a paper is opened, instead of pulling every
+    /// PDF up front.
+    bool lazyAttachments = true,
+    void Function(SyncProgress progress)? onProgress,
   });
 
   Future<GitRepoStatus> status(String repoPath);
@@ -38,13 +36,13 @@ abstract class GitBackend {
   Future<GitResult> fetch({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   });
 
   Future<GitResult> pull({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   });
 
   Future<GitResult> commitAll({
@@ -58,14 +56,14 @@ abstract class GitBackend {
   Future<GitResult> push({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   });
 
   /// Materialises Git LFS pointer files into real attachments.
   Future<GitResult> lfsPull({
     required String repoPath,
     required GitAuth auth,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   });
 
   /// Downloads a single attachment into the mirror.
@@ -75,7 +73,7 @@ abstract class GitBackend {
     required String repoPath,
     required GitAuth auth,
     required String absoluteFilePath,
-    void Function(String line)? onProgress,
+    void Function(SyncProgress progress)? onProgress,
   });
 
   Future<GitResult> setRemote({required String repoPath, required String remoteUrl});

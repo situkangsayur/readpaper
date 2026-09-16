@@ -84,6 +84,7 @@ class GitRepoStatus {
     this.lastCommitDate,
     this.hasUpstream = true,
     this.lfsAvailable = false,
+    this.lazyAttachments = false,
   });
 
   const GitRepoStatus.missing(String path)
@@ -97,7 +98,8 @@ class GitRepoStatus {
       lastCommitSubject = '',
       lastCommitDate = null,
       hasUpstream = false,
-      lfsAvailable = false;
+      lfsAvailable = false,
+      lazyAttachments = false;
 
   final String repoPath;
   final bool exists;
@@ -110,6 +112,10 @@ class GitRepoStatus {
   final DateTime? lastCommitDate;
   final bool hasUpstream;
   final bool lfsAvailable;
+
+  /// True when attachments are not in the working copy and are fetched per
+  /// file: a partial+sparse git clone, or the Android mirror.
+  final bool lazyAttachments;
 
   bool get isDirty => changes.isNotEmpty;
   bool get needsPush => ahead > 0;

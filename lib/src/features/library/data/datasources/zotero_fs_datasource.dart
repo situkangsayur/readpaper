@@ -270,14 +270,24 @@ ItemDetail buildItemDetail(Map<String, dynamic> json, String filePath) {
   return ItemDetail(item: item, annotations: annotations, rawJson: json);
 }
 
+/// Orders annotations the way Zotero (and therefore the plugin's notes) does.
+///
+/// `annotationSortIndex` decides it almost always. Two annotations can share an
+/// index exactly — a highlight and an underline over the same line, for example
+/// — and Zotero then keeps the one that was created first, so the tiebreak is
+/// `dateAdded`, with the key as a last resort so the order is never arbitrary.
 int compareAnnotations(ZoteroAnnotation a, ZoteroAnnotation b) {
   if (a.sortIndex.isNotEmpty && b.sortIndex.isNotEmpty && a.sortIndex != b.sortIndex) {
     return a.sortIndex.compareTo(b.sortIndex);
   }
   if (a.pageIndex != b.pageIndex) return a.pageIndex.compareTo(b.pageIndex);
-  final aTop = a.rects.isEmpty ? 0.0 : a.rects.first.top;
-  final bTop = b.rects.isEmpty ? 0.0 : b.rects.first.top;
-  return bTop.compareTo(aTop);
+
+  final aAdded = a.dateAdded;
+  final bAdded = b.dateAdded;
+  if (aAdded != null && bAdded != null && aAdded != bAdded) {
+    return aAdded.compareTo(bAdded);
+  }
+  return a.key.compareTo(b.key);
 }
 
 String _yearOf(String? date) {

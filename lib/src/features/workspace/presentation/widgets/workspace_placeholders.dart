@@ -46,8 +46,8 @@ class NotClonedView extends ConsumerWidget {
     final profile = state.profile;
     if (profile == null) return const NoProfileView();
 
-    // Android mirrors metadata only, so call the action what it really is.
-    final lazy = ref.watch(gitBackendProvider).usesLazyAttachments;
+    // Both the Android mirror and a partial clone fetch only metadata first.
+    final lazy = profile.lazyAttachments;
 
     return _CenteredCard(
       icon: Icons.cloud_download_outlined,

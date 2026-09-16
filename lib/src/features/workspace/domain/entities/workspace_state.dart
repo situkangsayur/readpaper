@@ -3,6 +3,7 @@ import 'package:meta/meta.dart';
 import '../../../library/domain/entities/library_index.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../sync/domain/entities/git_entities.dart';
+import '../../../sync/domain/entities/sync_progress.dart';
 
 /// What the app is currently doing with the remote.
 enum SyncPhase { idle, cloning, fetching, pulling, committing, pushing }
@@ -19,6 +20,7 @@ class WorkspaceState {
     this.index,
     this.gitStatus,
     this.phase = SyncPhase.idle,
+    this.progress,
     this.progressLines = const <String>[],
     this.message,
     this.error,
@@ -32,6 +34,9 @@ class WorkspaceState {
   final LibraryIndex? index;
   final GitRepoStatus? gitStatus;
   final SyncPhase phase;
+
+  /// Latest progress report of the running operation, when it is measurable.
+  final SyncProgress? progress;
   final List<String> progressLines;
   final String? message;
   final String? error;
@@ -59,6 +64,7 @@ class WorkspaceState {
     LibraryIndex? index,
     GitRepoStatus? gitStatus,
     SyncPhase? phase,
+    SyncProgress? progress,
     List<String>? progressLines,
     String? message,
     String? error,
@@ -69,6 +75,7 @@ class WorkspaceState {
     bool clearIndex = false,
     bool clearMessage = false,
     bool clearError = false,
+    bool clearProgress = false,
   }) => WorkspaceState(
     settings: settings ?? this.settings,
     profile: clearProfile ? null : (profile ?? this.profile),
@@ -77,6 +84,7 @@ class WorkspaceState {
     index: clearIndex ? null : (index ?? this.index),
     gitStatus: gitStatus ?? this.gitStatus,
     phase: phase ?? this.phase,
+    progress: clearProgress ? null : (progress ?? this.progress),
     progressLines: progressLines ?? this.progressLines,
     message: clearMessage ? null : (message ?? this.message),
     error: clearError ? null : (error ?? this.error),

@@ -22,6 +22,7 @@ class RepoProfile {
     this.authorName = '',
     this.authorEmail = '',
     this.autoPushOnSave = false,
+    this.lazyAttachments = true,
     this.preferredLibraryDir,
     this.lastSyncedAt,
   });
@@ -38,6 +39,7 @@ class RepoProfile {
     authorName: json['authorName'] as String? ?? '',
     authorEmail: json['authorEmail'] as String? ?? '',
     autoPushOnSave: json['autoPushOnSave'] as bool? ?? false,
+    lazyAttachments: json['lazyAttachments'] as bool? ?? true,
     preferredLibraryDir: json['preferredLibraryDir'] as String?,
     lastSyncedAt: DateTime.tryParse(json['lastSyncedAt'] as String? ?? ''),
   );
@@ -60,6 +62,11 @@ class RepoProfile {
   /// Push straight after every annotation commit.
   final bool autoPushOnSave;
 
+  /// Clone metadata only and fetch each PDF when the paper is opened.
+  ///
+  /// For a real 1.700-item library that is ~23 MB instead of ~940 MB.
+  final bool lazyAttachments;
+
   /// Library directory name last opened for this repo (`my-library`).
   final String? preferredLibraryDir;
   final DateTime? lastSyncedAt;
@@ -76,6 +83,7 @@ class RepoProfile {
     'authorName': authorName,
     'authorEmail': authorEmail,
     'autoPushOnSave': autoPushOnSave,
+    'lazyAttachments': lazyAttachments,
     'preferredLibraryDir': preferredLibraryDir,
     'lastSyncedAt': lastSyncedAt?.toIso8601String(),
   };
@@ -91,6 +99,7 @@ class RepoProfile {
     String? authorName,
     String? authorEmail,
     bool? autoPushOnSave,
+    bool? lazyAttachments,
     String? preferredLibraryDir,
     DateTime? lastSyncedAt,
     bool clearSshKey = false,
@@ -106,6 +115,7 @@ class RepoProfile {
     authorName: authorName ?? this.authorName,
     authorEmail: authorEmail ?? this.authorEmail,
     autoPushOnSave: autoPushOnSave ?? this.autoPushOnSave,
+    lazyAttachments: lazyAttachments ?? this.lazyAttachments,
     preferredLibraryDir: preferredLibraryDir ?? this.preferredLibraryDir,
     lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
   );
