@@ -1,51 +1,58 @@
 # ReadPaper
 
-Pembaca paper bergaya Zotero untuk library yang disinkronkan ke GitHub oleh
-plugin [zotero-github-sync](https://github.com/situkangsayur/zotero-github-plugin).
+A Zotero-style paper reader for libraries synced to GitHub by the
+[zotero-github-sync](https://github.com/situkangsayur/zotero-github-plugin) plugin.
 
-Buka repositori Zotero di GitHub, telusuri koleksinya seperti di Zotero, baca
-PDF-nya, beri **stabilo berwarna** dan **komentar** pada teks tertentu — lalu
-setiap perubahan langsung ditulis balik ke berkas Zotero dan di-*commit* ke git.
+Open your Zotero repository from GitHub, browse the collections the way Zotero
+shows them, read the PDFs, and put **coloured markers** and **comments** on
+specific passages — every change is written straight back into the Zotero files
+and committed to git.
 
-![ReadPaper](docs/screenshot-library.png)
+> The application interface is in Indonesian; this document describes the
+> project in English.
 
-## Yang bisa dilakukan sekarang
+![ReadPaper library view](docs/screenshot-library.png)
 
-- **Sinkron GitHub** — clone, fetch, pull, commit, push lewat **SSH** (dengan
-  pilihan kunci privat) maupun **HTTPS** (personal access token), dengan bilah
-  progres berpersen. PDF baru yang ditambahkan lewat GitHub muncul setelah pull.
-- **Clone hemat** — library Zotero didominasi PDF, jadi yang diunduh dulu hanya
-  metadata dan tiap PDF menyusul saat papernya dibuka. Pada library asli
-  (1.740 item): **~23 MB dalam ~14 detik**, dari ~940 MB untuk clone penuh.
-- **Jalan juga di Android** — di sana tidak ada biner `git`, jadi repositori
-  di-*mirror* lewat GitHub REST API: metadata library (±19 MB) diunduh penuh,
-  PDF-nya (±529 MB) baru diambil saat papernya dibuka. Anotasi dikirim balik
-  sebagai commit sungguhan.
-- **Ganti repositori kapan saja** — tiap profil punya folder clone sendiri, jadi
-  pindah bolak-balik antar repo tidak perlu clone ulang.
-- **Struktur koleksi Zotero** — pohon koleksi bertingkat yang bisa
-  dibuka/ditutup, jumlah item per koleksi, "Semua item", "Tanpa koleksi", dan
-  opsi menyertakan item sub-koleksi.
-- **Daftar paper** — judul, pengarang, tahun, jenis item, badge lampiran /
-  anotasi / catatan; pencarian cepat dan pengurutan.
-- **Pembaca PDF** — seleksi teks, stabilo & garis bawah dalam 8 warna palet
-  Zotero, komentar per anotasi, catatan lepas di halaman (tekan lama), panel
-  anotasi yang bisa diklik untuk loncat ke posisinya.
-- **Kompatibel dua arah dengan Zotero** — anotasi ditulis ke
-  `items/<XX>/<KEY>.json` dalam format Zotero API JSON yang sama persis dengan
-  yang ditulis plugin (indentasi tab, kunci terurut, `annotationPosition`,
-  `annotationSortIndex`), dan blok `## Annotations` di `notes/**.md` ikut
-  diperbarui. Menambah satu stabilo = satu baris baru di catatan dan satu blok
-  baru di JSON, jadi diff-nya tetap kecil.
+## What it does today
 
-Rencana berikutnya ada di [docs/backlog.md](docs/backlog.md): pencarian
-pengarang & detail metadata (fase 2), EPUB (fase 3), lalu Android + publikasi
-APK (fase 4).
+- **GitHub sync** — clone, fetch, pull, commit and push over **SSH** (with a
+  per-profile private key) or **HTTPS** (personal access token), with a real
+  percentage progress bar. A PDF added through GitHub shows up after a pull.
+- **Lean clone** — a Zotero library is mostly PDFs, so only the metadata comes
+  down first and each PDF is fetched when you open that paper. Measured on a
+  real library of 1,740 items: **~23 MB in ~14 seconds**, against ~940 MB for a
+  full clone. Opening one paper costs about 4 seconds.
+- **Runs on Android too** — there is no `git` binary there, so the repository is
+  *mirrored* through the GitHub REST API instead: the library metadata (~19 MB)
+  is downloaded, the PDFs (~529 MB) stay on GitHub until a paper is opened.
+  Annotations go back as real commits.
+- **Switch repositories any time** — each profile owns its own clone directory,
+  so moving back and forth never re-downloads one you already have.
+- **Zotero collection structure** — a nested, expandable collection tree with
+  per-collection counts, plus "all items", "unfiled", and the option to include
+  the items of sub-collections.
+- **Paper list** — title, authors, year, item type, and badges for attachments,
+  annotations and notes; quick search and sorting.
+- **PDF reader** — text selection, highlights and underlines in the eight Zotero
+  palette colours, a comment per annotation, free-standing page notes
+  (long press), and an annotation panel you can click to jump to a marker.
+- **Round-trips with Zotero** — annotations are written into
+  `items/<XX>/<KEY>.json` in exactly the shape the plugin writes (tab indents,
+  sorted keys, `annotationPosition`, `annotationSortIndex`), and the
+  `## Annotations` block of `notes/**.md` is kept in step. Adding one highlight
+  means one new line in the note and one new block in the JSON, so diffs stay
+  small.
 
-## Menjalankan
+![Reader with highlights](docs/screenshot-reader.png)
 
-Butuh Flutter 3.41+ (diuji di 3.44.5 / Dart 3.12) dan, untuk desktop Linux,
-`clang`, `ninja-build`, `libgtk-3-dev`, `git`, dan `git-lfs`:
+What comes next is in [docs/backlog.md](docs/backlog.md): author search and
+metadata detail (phase 2), EPUB and other ebook formats (phase 3), then the
+remaining Android and distribution work (phase 4).
+
+## Running it
+
+Needs Flutter 3.41+ (developed against 3.44.5 / Dart 3.12). The Linux desktop
+build also needs `clang`, `ninja-build`, `libgtk-3-dev`, `git` and `git-lfs`:
 
 ```bash
 sudo apt install clang ninja-build libgtk-3-dev git git-lfs
@@ -53,76 +60,86 @@ flutter pub get
 flutter run -d linux
 ```
 
-Untuk Android (butuh token GitHub dengan izin *Contents: read and write*):
+For Android (needs a GitHub token with *Contents: read and write*):
 
 ```bash
 flutter build apk --release --target-platform=android-arm64
 ```
 
-Saat pertama dijalankan, tambahkan repositori:
+On first launch, add a repository:
 
-| Isian | Contoh |
+| Field | Example |
 | --- | --- |
-| URL repositori | `git@github.com:situkangsayur/zotero-hendri.git` |
-| Transport | SSH (kunci privat opsional) atau HTTPS + token |
-| Folder clone | otomatis `~/.local/share/readpaper/repos/<owner>-<repo>` |
+| Repository URL | `git@github.com:situkangsayur/zotero-hendri.git` |
+| Transport | SSH (private key optional) or HTTPS + token. Android offers HTTPS only. |
+| Clone folder | defaults to `~/.local/share/readpaper/repos/<owner>-<repo>` |
 
-Lalu tekan **Clone sekarang**. Setelah selesai, koleksi dan daftar paper
-langsung terbaca.
+Then press **Ambil sekarang** ("fetch now"). The collections and the paper list
+are ready as soon as the metadata is down.
 
-## Cara memberi tanda
+## Marking up a paper
 
-1. Buka paper → tombol **Baca** pada lampiran PDF.
-2. Seleksi teks di halaman. Bilah aksi muncul di bawah.
-3. Pilih warna, lalu **Stabilo**, **Garis bawah**, atau **Komentar**.
-4. Klik anotasi di halaman (atau ikon pensil di panel kanan) untuk mengubah
-   warna/komentar, atau menghapusnya.
+1. Open a paper and press **Baca** ("read") on its PDF attachment.
+2. Select text on the page. An action bar appears at the bottom.
+3. Pick a colour, then **Stabilo** (highlight), **Garis bawah** (underline) or
+   **Komentar** (highlight with a comment).
+4. Tap a marker on the page — or the pencil in the side panel — to change its
+   colour or comment, or to delete it.
 
-Setiap aksi langsung jadi satu commit. Aktifkan *Push otomatis setelah
-menyimpan anotasi* di profil kalau ingin langsung terkirim ke GitHub;
-kalau tidak, tekan tombol unggah di bilah atas untuk commit & push manual.
+Every action becomes one commit. Turn on *push after saving an annotation* in
+the profile to send each one to GitHub immediately; otherwise use the upload
+button in the workspace bar to commit and push when you are ready.
 
-## Struktur kode
+## How it is put together
 
-Feature-first, tiap fitur dipisah `domain` / `data` / `presentation`:
+Feature-first, with `domain` / `data` / `presentation` separated inside each
+feature:
 
 ```
 lib/
   main.dart
   src/
-    app/                     tema + widget aplikasi
-    core/                    konstanta, error, util (path, warna, key Zotero)
-    shared/providers/        provider Riverpod untuk repository & backend
+    app/                     theme and the app widget
+    core/                    constants, errors, utilities (paths, colours, Zotero keys)
+    shared/providers/        Riverpod providers for repositories and backends
     features/
-      library/               parser & penulis ekspor Zotero, pohon koleksi, daftar item
-      reader/                pembaca PDF, geometri anotasi, panel anotasi
-      sync/                  GitBackend + dua implementasi: git CLI (desktop)
-                             dan GitHub REST API (Android)
-      settings/              profil repositori & kredensial
-      workspace/             orkestrasi: repo aktif, status git, library terbaca
+      library/               Zotero export parser and writer, collection tree, item list
+      reader/                PDF reader, annotation geometry, annotation panel
+      sync/                  GitBackend plus two implementations: the git CLI
+                             (desktop) and the GitHub REST API (Android)
+      settings/              repository profiles and credentials
+      workspace/             orchestration: active repo, git status, loaded library
 ```
 
-Detail arsitektur dan format data ada di
-[docs/architecture.md](docs/architecture.md).
+Two things are worth knowing before changing anything:
 
-## Pengujian
+- **The export format is reproduced byte for byte.** `ZoteroJson.encodeFile`
+  matches the plugin's output exactly — verified against all 1,740 item files of
+  a real library. `children` is sorted by Zotero key, whole numbers are written
+  without a trailing `.0`, and annotations that share a sort index keep creation
+  order. Anything else turns a one-line change into a rewritten file.
+- **`GitBackend` is the only seam between platforms.** Desktop shells out to
+  `git`; Android speaks the GitHub git data API. Everything above that seam —
+  the whole UI and `WorkspaceController` — is identical on both.
+
+[docs/architecture.md](docs/architecture.md) has the layer rules, the data
+format, the annotation coordinate system, and the measurements behind the lean
+clone.
+
+## Tests
 
 ```bash
 flutter test
 ```
 
-Ada juga pemeriksaan manual terhadap clone asli (tidak ikut `flutter test`):
+Two checks are kept out of that run because they need a real repository or the
+network:
 
 ```bash
+# Parses a real clone, and confirms every item file re-encodes byte for byte
+# to what the plugin wrote.
 flutter test test/_real_repo_check.dart
-```
 
-Pemeriksaan itu memastikan seluruh berkas item bisa dibaca ulang dan ditulis
-kembali **byte-for-byte** sama dengan keluaran plugin.
-
-Ada pula pemeriksaan klien GitHub terhadap API sungguhan (repo publik, tanpa
-token):
-
-```bash
+# Exercises GitHubApiClient against the live GitHub API (public repo, no token).
 flutter test test/_real_github_api_check.dart
 ```
