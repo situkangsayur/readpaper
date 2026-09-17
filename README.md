@@ -13,6 +13,21 @@ and committed to git.
 
 ![ReadPaper library view](docs/screenshot-library.png)
 
+## Download
+
+**Android** — get the APK from the
+[latest release](https://github.com/situkangsayur/readpaper/releases/latest):
+
+| File | Platform | Size |
+| --- | --- | --- |
+| `readpaper-v0.1.2-arm64.apk` | Android 5.0+, arm64 | 25 MB |
+
+It is signed with a debug key, so Android warns about an unknown source on
+install. Sync needs a GitHub fine-grained token with *Contents: read and write*
+for the library repository.
+
+**Linux desktop** — build from source, see [Running it](#running-it).
+
 ## What it does today
 
 - **GitHub sync** — clone, fetch, pull, commit and push over **SSH** (with a
