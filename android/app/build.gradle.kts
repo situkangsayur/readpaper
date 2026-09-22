@@ -15,14 +15,21 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.situkangsayur.readpaper"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // ReadPaper ships 64-bit only: the Flutter engine and pdfium are built
+        // for arm64. Without this filter a stray 32-bit plugin library still
+        // creates a lib/armeabi-v7a/ folder, the APK advertises that ABI, and a
+        // 32-bit device installs it happily and then crashes for want of
+        // libflutter.so. Declaring one ABI keeps the promise honest.
+        ndk {
+            abiFilters.clear()
+            abiFilters.add("arm64-v8a")
+        }
     }
 
     buildTypes {

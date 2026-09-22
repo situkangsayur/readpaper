@@ -134,6 +134,10 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
 - [ ] Uji end-to-end di perangkat dengan token GitHub sungguhan
 - [ ] Penyimpanan token di keystore Android (sekarang di berkas privat aplikasi)
 - [ ] Git LFS di Android (`attachments-lfs/`) — perlu endpoint LFS batch
+- [x] APK hanya mengiklankan arm64-v8a. Sebelumnya ada pustaka 32-bit nyasar
+      dari sebuah plugin sehingga APK mengaku mendukung armeabi-v7a dan x86_64
+      padahal libflutter.so-nya tidak ada di sana — perangkat 32-bit akan
+      memasangnya lalu crash saat dibuka.
 - [ ] Penandatanganan rilis dengan keystore sendiri (sekarang debug key)
 - [ ] **Rilis GitHub**: tag + Release berisi APK supaya bisa diunduh dari GitHub
 - [x] **Publikasi APK ke `http://10.100.21.22:8899`** (folder `~/apk-share/`,

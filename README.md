@@ -20,7 +20,7 @@ and committed to git.
 
 | File | Platform | Size |
 | --- | --- | --- |
-| `readpaper-v0.1.3-arm64.apk` | Android 5.0+, arm64 · phone and tablet | 25 MB |
+| `readpaper-v0.1.4-arm64.apk` | Android 7.0+, arm64 · phone and tablet | 25 MB |
 
 It is signed with a debug key, so Android warns about an unknown source on
 install. Sync needs a GitHub fine-grained token with *Contents: read and write*
