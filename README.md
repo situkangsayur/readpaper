@@ -20,7 +20,7 @@ and committed to git.
 
 | File | Platform | Size |
 | --- | --- | --- |
-| `readpaper-v0.1.2-arm64.apk` | Android 5.0+, arm64 | 25 MB |
+| `readpaper-v0.1.3-arm64.apk` | Android 5.0+, arm64 · phone and tablet | 25 MB |
 
 It is signed with a debug key, so Android warns about an unknown source on
 install. Sync needs a GitHub fine-grained token with *Contents: read and write*
@@ -48,6 +48,10 @@ for the library repository.
   the items of sub-collections.
 - **Paper list** — title, authors, year, item type, and badges for attachments,
   annotations and notes; quick search and sorting.
+- **Phone, tablet and desktop** — one pane on a phone, list beside the paper on
+  a tablet in portrait, and collections beside both in landscape or on a
+  desktop. Touch targets, row heights and the reader's side panel follow the
+  device rather than the window alone.
 - **PDF reader** — text selection, highlights and underlines in the eight Zotero
   palette colours, a comment per annotation, free-standing page notes
   (long press), and an annotation panel you can click to jump to a marker.
