@@ -76,6 +76,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   ///
   /// A finger cannot do both at once, so marking has to be a mode on touch.
   bool _markerMode = false;
+
+  /// Shown once per opened paper on touch, because nothing else on screen
+  /// explains that marking has to be switched on first.
+  bool _showCoach = isTouchPlatform;
   bool _loading = true;
   String? _error;
   int _currentPage = 1;
@@ -142,18 +146,28 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           ],
         ),
         actions: <Widget>[
+          // Labelled on purpose: a bare icon left people swiping at the page
+          // and wondering why nothing was marked.
           if (isTouchPlatform)
-            IconButton(
-              tooltip: _markerMode
-                  ? 'Mode penanda aktif — sapukan jari di atas teks'
-                  : 'Mode penanda: sapukan jari untuk menandai teks',
-              isSelected: _markerMode,
-              selectedIcon: const Icon(Icons.border_color),
-              icon: const Icon(Icons.border_color_outlined),
-              onPressed: () => setState(() {
-                _markerMode = !_markerMode;
-                if (_markerMode) _noteMode = false;
-              }),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: FilledButton.tonalIcon(
+                style: FilledButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: _markerMode ? colorFromHex(_color) : null,
+                  foregroundColor: _markerMode ? Colors.black87 : null,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                onPressed: () => setState(() {
+                  _markerMode = !_markerMode;
+                  if (_markerMode) _noteMode = false;
+                }),
+                icon: Icon(
+                  _markerMode ? Icons.border_color : Icons.border_color_outlined,
+                  size: 18,
+                ),
+                label: Text(_markerMode ? 'Menandai' : 'Tandai'),
+              ),
             ),
           IconButton(
             tooltip: _noteMode
@@ -213,6 +227,32 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       child: Text(
                         _error!,
                         style: TextStyle(color: scheme.onErrorContainer, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                if (_showCoach && !_markerMode && !_noteMode)
+                  Material(
+                    color: scheme.surfaceContainerHighest,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(Icons.touch_app_outlined, size: 18, color: scheme.onSurfaceVariant),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Untuk menandai: tekan "Tandai" di atas, lalu sapukan jari di '
+                              'atas teks. Untuk catatan: tekan ikon catatan, lalu ketuk halaman.',
+                              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5),
+                            ),
+                          ),
+                          IconButton(
+                            iconSize: 18,
+                            tooltip: 'Mengerti',
+                            icon: const Icon(Icons.close),
+                            onPressed: () => setState(() => _showCoach = false),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -613,10 +653,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
     if (confirmed != true) return;
 
-    await ref
+    final removed = await ref
         .read(workspaceControllerProvider.notifier)
         .deleteAnnotation(item: item, annotation: annotation);
     if (!mounted) return;
+    if (!removed) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 5),
+            content: Text(ref.read(workspaceControllerProvider).error ?? 'Gagal menghapus anotasi'),
+          ),
+        );
+    }
     setState(() => _selectedAnnotationKey = null);
     await _load();
   }
@@ -624,10 +674,26 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   Future<void> _persist(ZoteroAnnotation annotation, {required bool isNew}) async {
     final item = _detail?.item;
     if (item == null) return;
-    await ref
+    final saved = await ref
         .read(workspaceControllerProvider.notifier)
         .saveAnnotation(item: item, annotation: annotation, isNew: isNew);
     if (!mounted) return;
+
+    // Saying so beats a marker that appears and then quietly disappears on the
+    // reload that follows.
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: saved ? 1 : 5),
+          content: Text(
+            saved
+                ? (isNew ? 'Tersimpan' : 'Perubahan tersimpan')
+                : ref.read(workspaceControllerProvider).error ?? 'Gagal menyimpan anotasi',
+          ),
+        ),
+      );
+
     setState(() => _selectedAnnotationKey = annotation.key);
     await _load();
   }
