@@ -104,7 +104,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final isWide = MediaQuery.sizeOf(context).width >= 900;
+    // Portrait on a tablet is still ~960dp: wide enough for a docked panel,
+    // but the page itself wants that width more, so the panel stays a drawer
+    // until the window is genuinely wide.
+    final isWide = LayoutSize.of(context) == LayoutSize.expanded;
 
     return Scaffold(
       key: _scaffoldKey,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/formatting.dart';
+import '../../../../core/utils/layout_size.dart';
 
 /// Floating bar shown while text is selected in the reader.
 ///
@@ -29,6 +30,8 @@ class SelectionActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // A 22dp circle is an easy click and a hard tap.
+    final swatch = isTouchPlatform ? 32.0 : 22.0;
 
     return Material(
       elevation: 6,
@@ -48,8 +51,8 @@ class SelectionActionBar extends StatelessWidget {
                     onTap: () => onColorChanged(hex),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
-                      width: 22,
-                      height: 22,
+                      width: swatch,
+                      height: swatch,
                       decoration: BoxDecoration(
                         color: colorFromHex(hex),
                         shape: BoxShape.circle,
@@ -63,7 +66,7 @@ class SelectionActionBar extends StatelessWidget {
                 ),
               ),
             const SizedBox(width: 6),
-            const SizedBox(height: 26, child: VerticalDivider(width: 1)),
+            SizedBox(height: swatch + 4, child: const VerticalDivider(width: 1)),
             const SizedBox(width: 6),
             _Action(icon: Icons.format_color_fill, label: 'Stabilo', onPressed: onHighlight),
             _Action(icon: Icons.format_underlined, label: 'Garis bawah', onPressed: onUnderline),
