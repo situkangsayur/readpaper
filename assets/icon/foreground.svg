@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ReadPaper adaptive-icon foreground: a page with a highlighter stroke.
+     The canvas is 108x108 and launchers may mask anything outside the centre
+     66dp, so every shape stays well inside that circle. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
+  <g transform="rotate(-6 54 54)">
+    <!-- page -->
+    <rect x="33" y="26" width="42" height="56" rx="4" fill="#FFFFFF"/>
+    <!-- folded corner -->
+    <path d="M75 26 L63 26 L75 38 Z" fill="#D7E0EA"/>
+    <!-- lines of text -->
+    <rect x="39" y="36" width="24" height="3.2" rx="1.6" fill="#93A2B4"/>
+    <rect x="39" y="43" width="30" height="3.2" rx="1.6" fill="#93A2B4"/>
+    <rect x="39" y="66" width="30" height="3.2" rx="1.6" fill="#93A2B4"/>
+    <rect x="39" y="73" width="19" height="3.2" rx="1.6" fill="#93A2B4"/>
+    <!-- highlighter stroke, overshooting the page the way a real marker does -->
+    <rect x="28" y="50" width="52" height="12" rx="2.5" fill="#FFD400"/>
+    <!-- the highlighted line itself, dark enough to read through the ink -->
+    <rect x="39" y="54.4" width="31" height="3.2" rx="1.6" fill="#4A5665"/>
+  </g>
+</svg>

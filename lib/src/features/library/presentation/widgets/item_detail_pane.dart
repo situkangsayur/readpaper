@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/utils/formatting.dart';
+import '../../../../core/utils/layout_size.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
@@ -87,7 +88,7 @@ class _Title extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => Row(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: <Widget>[
-      if (MediaQuery.sizeOf(context).width < 1000)
+      if (LayoutSize.of(context).isCompact)
         IconButton(
           icon: const Icon(Icons.arrow_back),
           tooltip: 'Kembali ke daftar',

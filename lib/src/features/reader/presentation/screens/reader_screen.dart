@@ -5,6 +5,7 @@ import 'package:pdfrx/pdfrx.dart';
 import '../../../../app/theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/formatting.dart';
+import '../../../../core/utils/layout_size.dart';
 import '../../../../core/utils/zotero_key.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
@@ -56,6 +57,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   String _color = AnnotationPalette.yellow;
   bool _showSidebar = true;
   bool _hasSelection = false;
+
+  /// Armed by the note button: the next tap on a page drops a note there.
+  ///
+  /// Touch devices need this because long-press belongs to text selection.
+  bool _noteMode = false;
   bool _loading = true;
   String? _error;
   int _currentPage = 1;
@@ -119,6 +125,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           ],
         ),
         actions: <Widget>[
+          IconButton(
+            tooltip: _noteMode
+                ? 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)'
+                : 'Tempel catatan di halaman',
+            isSelected: _noteMode,
+            selectedIcon: const Icon(Icons.sticky_note_2),
+            icon: const Icon(Icons.sticky_note_2_outlined),
+            onPressed: () => setState(() => _noteMode = !_noteMode),
+          ),
           _ColorButton(
             color: _color,
             onSelected: (value) {
@@ -165,6 +180,33 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       child: Text(
                         _error!,
                         style: TextStyle(color: scheme.onErrorContainer, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                if (_noteMode)
+                  Material(
+                    color: scheme.secondaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(
+                            Icons.touch_app_outlined,
+                            size: 18,
+                            color: scheme.onSecondaryContainer,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Ketuk tempat di halaman untuk menaruh catatan.',
+                              style: TextStyle(color: scheme.onSecondaryContainer, fontSize: 13),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => setState(() => _noteMode = false),
+                            child: const Text('Batal'),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -298,7 +340,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       }
     }
 
-    if (details.type == PdfViewerGeneralTapType.longPress) {
+    if (_noteMode && details.type == PdfViewerGeneralTapType.tap) {
+      setState(() => _noteMode = false);
+      _createNoteAt(page: hit.page, point: hit.offset);
+      return true;
+    }
+
+    // Long-press is how a finger starts selecting a word, so on touch it is
+    // left to the viewer; the note button takes its place there.
+    if (details.type == PdfViewerGeneralTapType.longPress && !isTouchPlatform) {
       _createNoteAt(page: hit.page, point: hit.offset);
       return true;
     }

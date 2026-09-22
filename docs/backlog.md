@@ -120,6 +120,15 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
       manifest debug — build rilis tanpa ini tidak bisa jaringan sama sekali)
 - [x] Tata letak layar sempit: laci koleksi, daftar → detail, panel anotasi
       sebagai laci kanan, bilah sinkronisasi ringkas
+- [x] **Tata letak tablet**: tiga kelas ukuran (compact <600dp, medium 600–1099dp,
+      expanded ≥1100dp). Tablet 11" potret (±960dp) menampilkan daftar + detail
+      berdampingan, lanskap (±1536dp) menampilkan koleksi + daftar + detail.
+- [x] Sasaran sentuh: kerapatan tema mengikuti jenis perangkat, baris pohon
+      koleksi 48dp di layar sentuh, chevron punya area ketuk sendiri
+- [x] Tekan-lama dikembalikan ke seleksi teks di perangkat sentuh; membuat
+      catatan lepas kini lewat tombol khusus di bilah pembaca
+- [x] Ikon peluncur sendiri (adaptive + monochrome), menggantikan logo Flutter
+      bawaan yang membuatnya kembar dengan aplikasi lain
 - [x] Editor profil menyesuaikan diri: di Android hanya menawarkan HTTPS + token
 - [x] Build APK rilis (arm64)
 - [ ] Uji end-to-end di perangkat dengan token GitHub sungguhan

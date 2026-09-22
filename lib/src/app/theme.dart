@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/utils/layout_size.dart';
+
 /// ReadPaper uses a calm, paper-like surface so the PDF stays the focus.
 class AppTheme {
   const AppTheme._();
@@ -15,15 +17,17 @@ class AppTheme {
     return ThemeData(
       colorScheme: scheme,
       useMaterial3: true,
-      visualDensity: VisualDensity.compact,
+      // Compact suits a mouse; fingers need the standard spacing to hit
+      // anything reliably on a tablet.
+      visualDensity: isTouchPlatform ? VisualDensity.standard : VisualDensity.compact,
       scaffoldBackgroundColor: scheme.surface,
       dividerTheme: DividerThemeData(
         space: 1,
         thickness: 1,
         color: scheme.outlineVariant.withValues(alpha: 0.5),
       ),
-      listTileTheme: const ListTileThemeData(
-        dense: true,
+      listTileTheme: ListTileThemeData(
+        dense: !isTouchPlatform,
         horizontalTitleGap: 8,
         minLeadingWidth: 20,
       ),

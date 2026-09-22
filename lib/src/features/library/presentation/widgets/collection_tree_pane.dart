@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/layout_size.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/library_index.dart';
 import '../../domain/entities/zotero_collection.dart';
@@ -165,21 +166,26 @@ class _TreeRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        height: 30,
+        height: treeRowHeight,
         padding: EdgeInsets.only(left: 4 + depth * 14.0, right: 8),
         color: selected ? scheme.primaryContainer.withValues(alpha: 0.5) : null,
         child: Row(
           children: <Widget>[
             SizedBox(
-              width: 20,
+              // The chevron is its own tap target, so it needs room of its own
+              // on a touch screen or it swallows taps meant for the row.
+              width: isTouchPlatform ? 34 : 20,
               child: hasChildren
                   ? InkWell(
                       onTap: onToggle,
                       borderRadius: BorderRadius.circular(4),
-                      child: Icon(
-                        isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
-                        size: 16,
-                        color: scheme.onSurfaceVariant,
+                      child: SizedBox(
+                        height: treeRowHeight,
+                        child: Icon(
+                          isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                          size: isTouchPlatform ? 22 : 16,
+                          color: scheme.onSurfaceVariant,
+                        ),
                       ),
                     )
                   : null,
