@@ -30,10 +30,16 @@ class AppConstants {
   static const String annotationAuthorTag = 'ReadPaper';
 }
 
-/// Zotero highlight palette (matches the colors Zotero itself offers).
+/// Colours available for markers and ink.
+///
+/// The first eight are Zotero's own palette, byte for byte, so a marker made
+/// here lands on one of Zotero's colour buttons when the library is imported
+/// back. The four extras still round-trip correctly, but Zotero shows them as
+/// a plain custom colour rather than one of its presets.
 class AnnotationPalette {
   const AnnotationPalette._();
 
+  // --- Zotero's own palette -------------------------------------------------
   static const String yellow = '#ffd400';
   static const String red = '#ff6666';
   static const String green = '#5fb236';
@@ -43,7 +49,30 @@ class AnnotationPalette {
   static const String orange = '#f19837';
   static const String gray = '#aaaaaa';
 
-  static const List<String> all = <String>[yellow, red, green, blue, purple, magenta, orange, gray];
+  // --- Extras; eight colours run out quickly once ink is in the mix ---------
+  static const String teal = '#12b5a8';
+  static const String pink = '#ff8fb1';
+  static const String brown = '#9c6b4f';
+  static const String ink = '#3b4a5a';
+
+  /// The eight colours Zotero itself offers.
+  static const List<String> zotero = <String>[
+    yellow,
+    red,
+    green,
+    blue,
+    purple,
+    magenta,
+    orange,
+    gray,
+  ];
+
+  static const List<String> extras = <String>[teal, pink, brown, ink];
+
+  static const List<String> all = <String>[...zotero, ...extras];
+
+  /// True for a colour Zotero will show as one of its own presets.
+  static bool isZoteroPreset(String hex) => zotero.contains(hex);
 
   static const Map<String, String> names = <String, String>{
     yellow: 'Kuning',
@@ -54,5 +83,9 @@ class AnnotationPalette {
     magenta: 'Magenta',
     orange: 'Oranye',
     gray: 'Abu-abu',
+    teal: 'Tosca',
+    pink: 'Merah muda',
+    brown: 'Cokelat',
+    ink: 'Tinta',
   };
 }

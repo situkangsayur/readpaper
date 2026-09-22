@@ -44,10 +44,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   final PdfViewerController _controller = PdfViewerController();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  /// Text selection must stay identical between builds: pdfrx reloads the
-  /// document when this object changes.
-  late final PdfTextSelectionParams _textSelectionParams = PdfTextSelectionParams(
+  /// Two fixed configurations, swapped by the marker toggle.
+  ///
+  /// pdfrx wires drag-to-select as `enableSelectionHandles ? null : onPanStart`,
+  /// and that flag defaults to true on touch — which is why a finger only ever
+  /// panned the page and marking never started. Turning the handles off hands
+  /// the drag to text selection instead.
+  late final PdfTextSelectionParams _selectByHandles = PdfTextSelectionParams(
     enabled: true,
+    onTextSelectionChange: _onTextSelectionChange,
+  );
+  late final PdfTextSelectionParams _selectByDrag = PdfTextSelectionParams(
+    enabled: true,
+    enableSelectionHandles: false,
     onTextSelectionChange: _onTextSelectionChange,
   );
 
@@ -62,6 +71,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   ///
   /// Touch devices need this because long-press belongs to text selection.
   bool _noteMode = false;
+
+  /// While on, dragging marks text instead of panning the page.
+  ///
+  /// A finger cannot do both at once, so marking has to be a mode on touch.
+  bool _markerMode = false;
   bool _loading = true;
   String? _error;
   int _currentPage = 1;
@@ -128,6 +142,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           ],
         ),
         actions: <Widget>[
+          if (isTouchPlatform)
+            IconButton(
+              tooltip: _markerMode
+                  ? 'Mode penanda aktif — sapukan jari di atas teks'
+                  : 'Mode penanda: sapukan jari untuk menandai teks',
+              isSelected: _markerMode,
+              selectedIcon: const Icon(Icons.border_color),
+              icon: const Icon(Icons.border_color_outlined),
+              onPressed: () => setState(() {
+                _markerMode = !_markerMode;
+                if (_markerMode) _noteMode = false;
+              }),
+            ),
           IconButton(
             tooltip: _noteMode
                 ? 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)'
@@ -135,7 +162,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             isSelected: _noteMode,
             selectedIcon: const Icon(Icons.sticky_note_2),
             icon: const Icon(Icons.sticky_note_2_outlined),
-            onPressed: () => setState(() => _noteMode = !_noteMode),
+            onPressed: () => setState(() {
+              _noteMode = !_noteMode;
+              if (_noteMode) _markerMode = false;
+            }),
           ),
           _ColorButton(
             color: _color,
@@ -183,6 +213,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       child: Text(
                         _error!,
                         style: TextStyle(color: scheme.onErrorContainer, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                if (_markerMode)
+                  Material(
+                    color: scheme.tertiaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(Icons.border_color, size: 18, color: scheme.onTertiaryContainer),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Sapukan jari di atas teks untuk menandainya. '
+                              'Geser halaman nonaktif selama mode ini.',
+                              style: TextStyle(color: scheme.onTertiaryContainer, fontSize: 13),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => setState(() => _markerMode = false),
+                            child: const Text('Selesai'),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -291,7 +345,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     params: PdfViewerParams(
       backgroundColor: AppTheme.readerBackground(scheme),
       margin: 10,
-      textSelectionParams: _textSelectionParams,
+      textSelectionParams: _markerMode ? _selectByDrag : _selectByHandles,
+      // While marking, the drag belongs to the selection; panning would fight
+      // it for the same gesture.
+      panEnabled: !_markerMode,
       onPageChanged: (pageNumber) {
         if (pageNumber != null && mounted) setState(() => _currentPage = pageNumber);
       },
