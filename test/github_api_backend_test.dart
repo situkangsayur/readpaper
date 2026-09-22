@@ -33,7 +33,10 @@ class FakeGitHub {
 
   String shaOf(String path) => gitBlobSha(blobs[path]!);
 
-  http.Client get client => MockClient((request) async {
+  http.Client get client => MockClient(handle);
+
+  /// The handler itself, so a test can wrap it to simulate a flaky network.
+  Future<http.Response> handle(http.Request request) async {
     final path = request.url.path;
     calls.add('${request.method} $path');
 
@@ -95,7 +98,7 @@ class FakeGitHub {
       return _json(<String, dynamic>{'default_branch': branch});
     }
     return http.Response('unhandled ${request.method} $path', 500);
-  });
+  }
 
   http.Response _json(Object body) => http.Response(
     jsonEncode(body),
@@ -315,6 +318,78 @@ void main() {
       );
       expect(result.ok, isFalse);
       expect(result.message, contains('tidak ada di repositori'));
+    });
+  });
+
+  group('unduhan yang terputus', () {
+    test('menyimpan apa yang sudah terunduh lalu melanjutkannya', () async {
+      // Putuskan koneksi setelah dua blob, seperti layar terkunci di tengah jalan.
+      var served = 0;
+      final flaky = GitHubApiBackend(
+        clientFactory: (ref, token) => GitHubApiClient(
+          ref: ref,
+          token: token,
+          maxAttempts: 1,
+          client: MockClient((request) async {
+            if (request.url.path.contains('/git/blobs/') && ++served > 2) {
+              throw const SocketException('jaringan hilang');
+            }
+            return server.handle(request);
+          }),
+        ),
+        concurrency: 1,
+      );
+
+      final gagal = await flaky.clone(
+        remoteUrl: remote,
+        targetPath: mirror.path,
+        auth: auth,
+        branch: 'main',
+      );
+      expect(gagal.ok, isFalse);
+      expect(gagal.message, contains('Lanjutkan'));
+
+      final sebagian = GitHubSyncState.load(mirror.path);
+      expect(sebagian, isNotNull, reason: 'pembukuan harus tersimpan, bukan terhapus');
+      expect(sebagian!.files, hasLength(2), reason: 'dua berkas pertama tetap ada');
+      expect(Directory(mirror.path).existsSync(), isTrue, reason: 'folder tidak boleh dihapus');
+
+      // Jaringan pulih: jalankan lagi, harus melanjutkan bukan mengulang.
+      final lanjut = await backend.clone(
+        remoteUrl: remote,
+        targetPath: mirror.path,
+        auth: auth,
+        branch: 'main',
+      );
+      expect(lanjut.ok, isTrue, reason: lanjut.message);
+      expect(GitHubSyncState.load(mirror.path)!.files, hasLength(3));
+      expect(await backend.status(mirror.path).then((s) => s.changes), isEmpty);
+    });
+
+    test('menolak berkas yang rusak saat transfer', () async {
+      final rusak = GitHubApiBackend(
+        clientFactory: (ref, token) => GitHubApiClient(
+          ref: ref,
+          token: token,
+          maxAttempts: 1,
+          client: MockClient((request) async {
+            if (request.url.path.contains('/git/blobs/')) {
+              return http.Response('isi yang salah', 200);
+            }
+            return server.handle(request);
+          }),
+        ),
+        concurrency: 1,
+      );
+
+      final hasil = await rusak.clone(
+        remoteUrl: remote,
+        targetPath: mirror.path,
+        auth: auth,
+        branch: 'main',
+      );
+      expect(hasil.ok, isFalse);
+      expect(hasil.message, contains('rusak'));
     });
   });
 

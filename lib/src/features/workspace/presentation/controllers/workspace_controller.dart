@@ -279,6 +279,20 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return result.ok;
   }
 
+  /// Tests the connection without changing anything, for the button that
+  /// answers "is it stuck, or is the network gone?".
+  Future<bool> checkConnection() async {
+    final profile = state.profile;
+    if (profile == null) return false;
+    _beginPhase(SyncPhase.fetching);
+    final auth = await _authFor(profile);
+    final result = await ref
+        .read(gitBackendProvider)
+        .checkConnection(auth: auth, repoPath: profile.localPath);
+    await _endPhase(result);
+    return result.ok;
+  }
+
   Future<void> refreshGitStatus() async {
     final profile = state.profile;
     if (profile == null) return;

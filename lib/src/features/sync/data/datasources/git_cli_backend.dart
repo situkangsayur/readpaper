@@ -110,6 +110,20 @@ class GitCliBackend implements GitBackend {
   }
 
   @override
+  Future<GitResult> checkConnection({required GitAuth auth, String? repoPath}) async {
+    final path = repoPath ?? Directory.systemTemp.path;
+    final result = await _run(
+      args: <String>['ls-remote', '--heads', 'origin'],
+      workingDirectory: path,
+      auth: auth,
+      successMessage: 'Remote terjangkau',
+    );
+    if (!result.ok) return result;
+    final branches = const LineSplitter().convert(result.stdout).where((l) => l.isNotEmpty).length;
+    return GitResult(ok: true, exitCode: 0, message: 'Terhubung · $branches branch di remote');
+  }
+
+  @override
   Future<bool> isLfsAvailable() async {
     if (_lfsAvailable != null) return _lfsAvailable!;
     try {

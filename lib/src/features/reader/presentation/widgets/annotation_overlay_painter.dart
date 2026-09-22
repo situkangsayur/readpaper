@@ -64,7 +64,33 @@ class AnnotationOverlayPainter extends CustomPainter {
                 ..strokeWidth = (isSelected ? 2 : 1) * scaleX,
             );
           }
-        case AnnotationType.image || AnnotationType.ink:
+        case AnnotationType.ink:
+          final paint = Paint()
+            ..color = color.withValues(alpha: isSelected ? 1 : 0.9)
+            ..style = PaintingStyle.stroke
+            ..strokeCap = StrokeCap.round
+            ..strokeJoin = StrokeJoin.round
+            ..strokeWidth = annotation.inkWidth * scaleX;
+          for (final stroke in annotation.paths) {
+            if (stroke.length == 0) continue;
+            final path = Path()
+              ..moveTo(stroke.xAt(0) * scaleX, (pageHeight - stroke.yAt(0)) * scaleY);
+            for (var i = 1; i < stroke.length; i++) {
+              path.lineTo(stroke.xAt(i) * scaleX, (pageHeight - stroke.yAt(i)) * scaleY);
+            }
+            // A single tap is a dot, which lineTo alone would not draw.
+            if (stroke.length == 1) {
+              canvas.drawCircle(
+                Offset(stroke.xAt(0) * scaleX, (pageHeight - stroke.yAt(0)) * scaleY),
+                annotation.inkWidth * scaleX / 2,
+                Paint()..color = paint.color,
+              );
+            } else {
+              canvas.drawPath(path, paint);
+            }
+          }
+
+        case AnnotationType.image:
           for (final rect in annotation.rects) {
             canvas.drawRect(
               _toLocal(rect, scaleX, scaleY),
@@ -76,7 +102,7 @@ class AnnotationOverlayPainter extends CustomPainter {
           }
       }
 
-      if (isSelected) {
+      if (isSelected && annotation.rects.isNotEmpty) {
         final bounds = _boundsOf(annotation, scaleX, scaleY);
         if (bounds != null) {
           canvas.drawRRect(

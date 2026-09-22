@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../../shared/providers/app_providers.dart';
 import '../../../settings/presentation/widgets/profile_editor_dialog.dart';
@@ -48,6 +51,9 @@ class NotClonedView extends ConsumerWidget {
 
     // Both the Android mirror and a partial clone fetch only metadata first.
     final lazy = profile.lazyAttachments;
+    // An interrupted download leaves its bookkeeping behind; the same button
+    // then continues instead of starting over.
+    final partial = File(p.join(profile.localPath, '.readpaper', 'sync-state.json')).existsSync();
 
     return _CenteredCard(
       icon: Icons.cloud_download_outlined,
@@ -58,7 +64,10 @@ class NotClonedView extends ConsumerWidget {
           SelectableText('${profile.remoteUrl}  (${profile.transport.label})'),
           const SizedBox(height: 4),
           Text(
-            lazy
+            partial
+                ? 'Unduhan sebelumnya terputus. Melanjutkan hanya mengambil berkas '
+                      'yang belum sempat tersimpan.'
+                : lazy
                 ? 'Metadata library diunduh sekarang; berkas PDF menyusul saat '
                       'papernya dibuka.'
                 : 'Akan disimpan di ${profile.localPath}',
@@ -87,6 +96,11 @@ class NotClonedView extends ConsumerWidget {
       ),
       actions: <Widget>[
         TextButton.icon(
+          onPressed: state.isBusy ? null : controller.checkConnection,
+          icon: const Icon(Icons.wifi_tethering, size: 18),
+          label: const Text('Periksa koneksi'),
+        ),
+        TextButton.icon(
           onPressed: () => showProfileEditor(context, ref, existing: profile),
           icon: const Icon(Icons.edit_outlined, size: 18),
           label: const Text('Ubah profil'),
@@ -103,7 +117,7 @@ class NotClonedView extends ConsumerWidget {
           label: Text(
             state.isBusy
                 ? (lazy ? 'Mengunduh…' : 'Meng-clone…')
-                : (lazy ? 'Ambil sekarang' : 'Clone sekarang'),
+                : (partial ? 'Lanjutkan' : (lazy ? 'Ambil sekarang' : 'Clone sekarang')),
           ),
         ),
       ],

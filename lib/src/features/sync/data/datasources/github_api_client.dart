@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -68,15 +70,40 @@ class GitHubRepoRef {
 /// data API: read a tree, read blobs, and write a new commit by posting blobs,
 /// a tree, a commit and then moving the branch ref.
 class GitHubApiClient {
-  GitHubApiClient({required this.ref, required this.token, http.Client? client})
-    : _client = client ?? http.Client();
+  GitHubApiClient({
+    required this.ref,
+    required this.token,
+    http.Client? client,
+    this.timeout = const Duration(seconds: 30),
+    this.maxAttempts = 3,
+  }) : _client = client ?? http.Client();
 
   final GitHubRepoRef ref;
   final String? token;
   final http.Client _client;
 
+  /// How long one request may take before it is abandoned.
+  ///
+  /// Without this a locked phone screen freezes the socket and the download
+  /// hangs for good instead of failing and retrying.
+  final Duration timeout;
+
+  /// Attempts per request, for failures worth retrying (timeout, socket drop,
+  /// 5xx, secondary rate limit).
+  final int maxAttempts;
+
   /// Remaining requests reported by the last response, when known.
   int? rateLimitRemaining;
+
+  /// Cheap reachability check used by the "periksa koneksi" button.
+  ///
+  /// Returns the authenticated login on success.
+  Future<String> whoAmI() async {
+    final uri = Uri.parse('${ref.apiBase}/user');
+    final response = await _send(() => _client.get(uri, headers: _headers()), uri);
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    return json['login'] as String? ?? '(tidak diketahui)';
+  }
 
   void close() => _client.close();
 
@@ -194,20 +221,48 @@ class GitHubApiClient {
 
   // ---------------------------------------------------------------- internals
 
-  Future<http.Response> _get(Uri uri, {String accept = 'application/vnd.github+json'}) async {
-    final response = await _client.get(uri, headers: _headers(accept: accept));
-    return _check(response, uri);
+  Future<http.Response> _get(Uri uri, {String accept = 'application/vnd.github+json'}) =>
+      _send(() => _client.get(uri, headers: _headers(accept: accept)), uri);
+
+  Future<http.Response> _post(Uri uri, Map<String, dynamic> body) =>
+      _send(() => _client.post(uri, headers: _headers(), body: jsonEncode(body)), uri);
+
+  Future<http.Response> _patch(Uri uri, Map<String, dynamic> body) =>
+      _send(() => _client.patch(uri, headers: _headers(), body: jsonEncode(body)), uri);
+
+  /// Runs one request with a timeout, retrying the failures that are worth it.
+  ///
+  /// A write that GitHub rejected is never retried: only transport faults and
+  /// server-side hiccups are, so a commit is not applied twice.
+  Future<http.Response> _send(Future<http.Response> Function() attempt, Uri uri) async {
+    Object? lastError;
+    for (var tries = 1; tries <= maxAttempts; tries++) {
+      try {
+        final response = await attempt().timeout(timeout);
+        if (_isRetryableStatus(response.statusCode) && tries < maxAttempts) {
+          await Future<void>.delayed(_backoff(tries));
+          continue;
+        }
+        return _check(response, uri);
+      } on TimeoutException catch (e) {
+        lastError = e;
+      } on http.ClientException catch (e) {
+        lastError = e;
+      } on SocketException catch (e) {
+        lastError = e;
+      }
+      if (tries < maxAttempts) await Future<void>.delayed(_backoff(tries));
+    }
+    throw GitFailure(
+      'Koneksi ke GitHub terputus dan tidak pulih setelah $maxAttempts percobaan. '
+      'Unduhan bisa dilanjutkan dari tempatnya berhenti.',
+      details: '${uri.path} — $lastError',
+    );
   }
 
-  Future<http.Response> _post(Uri uri, Map<String, dynamic> body) async {
-    final response = await _client.post(uri, headers: _headers(), body: jsonEncode(body));
-    return _check(response, uri);
-  }
+  static bool _isRetryableStatus(int code) => code >= 500 || code == 429 || code == 408;
 
-  Future<http.Response> _patch(Uri uri, Map<String, dynamic> body) async {
-    final response = await _client.patch(uri, headers: _headers(), body: jsonEncode(body));
-    return _check(response, uri);
-  }
+  static Duration _backoff(int attempt) => Duration(milliseconds: 400 * attempt * attempt);
 
   http.Response _check(http.Response response, Uri uri) {
     final remaining = response.headers['x-ratelimit-remaining'];

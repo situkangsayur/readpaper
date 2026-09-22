@@ -29,6 +29,9 @@ enum AnnotationType {
 
   /// Kinds whose rectangles are painted over the page text.
   bool get isTextMarker => this == AnnotationType.highlight || this == AnnotationType.underline;
+
+  /// Freehand drawing: stored as paths rather than rectangles.
+  bool get isInk => this == AnnotationType.ink;
 }
 
 /// A rectangle in PDF page coordinates (origin bottom-left, unit = points).
@@ -61,6 +64,30 @@ class AnnotationRect {
   }
 }
 
+/// One freehand stroke, as a flat list of alternating x/y in page points.
+///
+/// Zotero stores ink exactly this way (`position.paths`), so a stroke drawn
+/// here shows up as a drawing in Zotero too.
+@immutable
+class InkPath {
+  const InkPath(this.points);
+
+  factory InkPath.fromList(List<dynamic> raw) => InkPath(<double>[
+    for (final v in raw)
+      if (v is num) v.toDouble(),
+  ]);
+
+  /// `[x0, y0, x1, y1, …]` in PDF page coordinates.
+  final List<double> points;
+
+  int get length => points.length ~/ 2;
+
+  double xAt(int i) => points[i * 2];
+  double yAt(int i) => points[i * 2 + 1];
+
+  List<num> toList() => <num>[for (final v in points) (v * 1000).roundToDouble() / 1000];
+}
+
 /// A Zotero annotation attached to a PDF attachment.
 @immutable
 class ZoteroAnnotation {
@@ -71,6 +98,8 @@ class ZoteroAnnotation {
     required this.color,
     required this.pageIndex,
     this.rects = const <AnnotationRect>[],
+    this.paths = const <InkPath>[],
+    this.inkWidth = 2,
     this.text = '',
     this.comment = '',
     this.pageLabel = '',
@@ -106,6 +135,14 @@ class ZoteroAnnotation {
       }
     }
 
+    final pathsRaw = position['paths'];
+    final paths = <InkPath>[];
+    if (pathsRaw is List) {
+      for (final entry in pathsRaw) {
+        if (entry is List && entry.length >= 4) paths.add(InkPath.fromList(entry));
+      }
+    }
+
     return ZoteroAnnotation(
       key: json['key'] as String? ?? ZoteroKey.generate(),
       parentItemKey: json['parentItem'] as String? ?? '',
@@ -113,6 +150,8 @@ class ZoteroAnnotation {
       color: json['annotationColor'] as String? ?? AnnotationPalette.yellow,
       pageIndex: (position['pageIndex'] as num?)?.toInt() ?? 0,
       rects: rects,
+      paths: paths,
+      inkWidth: (position['width'] as num?)?.toDouble() ?? 2,
       text: json['annotationText'] as String? ?? '',
       comment: json['annotationComment'] as String? ?? '',
       pageLabel: json['annotationPageLabel'] as String? ?? '',
@@ -131,6 +170,12 @@ class ZoteroAnnotation {
   final String color;
   final int pageIndex;
   final List<AnnotationRect> rects;
+
+  /// Freehand strokes; empty for every kind but [AnnotationType.ink].
+  final List<InkPath> paths;
+
+  /// Stroke width in page points.
+  final double inkWidth;
   final String text;
   final String comment;
   final String pageLabel;
@@ -154,6 +199,8 @@ class ZoteroAnnotation {
     AnnotationType? type,
     List<String>? tags,
     DateTime? dateModified,
+    List<InkPath>? paths,
+    double? inkWidth,
   }) => ZoteroAnnotation(
     key: key,
     parentItemKey: parentItemKey,
@@ -161,6 +208,8 @@ class ZoteroAnnotation {
     color: color ?? this.color,
     pageIndex: pageIndex,
     rects: rects,
+    paths: paths ?? this.paths,
+    inkWidth: inkWidth ?? this.inkWidth,
     text: text ?? this.text,
     comment: comment ?? this.comment,
     pageLabel: pageLabel,
@@ -177,9 +226,17 @@ class ZoteroAnnotation {
     final position = <String, dynamic>{
       ...?rawPosition,
       'pageIndex': pageIndex,
-      'rects': rects.map((r) => r.toList()).toList(),
+      if (rects.isNotEmpty) 'rects': rects.map((r) => r.toList()).toList(),
+      if (paths.isNotEmpty) ...<String, dynamic>{
+        'paths': paths.map((p) => p.toList()).toList(),
+        'width': inkWidth,
+      },
     };
-    if (rects.isEmpty) position.remove('rects');
+    position.remove(rects.isEmpty ? 'rects' : '__none__');
+    if (paths.isEmpty) {
+      position.remove('paths');
+      position.remove('width');
+    }
 
     return <String, dynamic>{
       'annotationAuthorName': authorName,

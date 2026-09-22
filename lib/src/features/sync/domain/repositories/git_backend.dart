@@ -10,6 +10,10 @@ abstract class GitBackend {
   /// Whether this backend can run on the current device.
   Future<bool> isAvailable();
 
+  /// Checks that the remote is reachable and the credentials still work,
+  /// without changing anything.
+  Future<GitResult> checkConnection({required GitAuth auth, String? repoPath});
+
   /// Human readable name of the backend, shown in the sync panel.
   String get label;
 

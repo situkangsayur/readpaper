@@ -44,6 +44,35 @@ class GitHubApiBackend implements GitBackend {
   @override
   Future<bool> isLfsAvailable() async => false;
 
+  @override
+  Future<GitResult> checkConnection({required GitAuth auth, String? repoPath}) async {
+    final remote = auth.remoteUrl == null ? null : GitHubRepoRef.parse(auth.remoteUrl!);
+    if (remote == null) {
+      return const GitResult(ok: false, exitCode: 1, message: 'URL repositori tidak dikenali.');
+    }
+    if (!auth.hasHttpsCredentials) {
+      return const GitResult(ok: false, exitCode: 1, message: 'Token GitHub belum diisi.');
+    }
+    final client = clientFactory(remote, auth.httpsToken);
+    try {
+      final login = await client.whoAmI();
+      final head = await client.headSha(GitHubSyncState.load(repoPath ?? '')?.branch ?? 'main');
+      return GitResult(
+        ok: true,
+        exitCode: 0,
+        message:
+            'Terhubung sebagai $login · ${remote.slug} pada ${head.substring(0, 7)}'
+            '${client.rateLimitRemaining != null ? ' · sisa kuota ${client.rateLimitRemaining}' : ''}',
+      );
+    } on Failure catch (e) {
+      return GitResult(ok: false, exitCode: 1, message: e.message, stderr: e.details ?? '');
+    } on SocketException {
+      return const GitResult(ok: false, exitCode: 1, message: 'Jaringan tidak tersedia.');
+    } finally {
+      client.close();
+    }
+  }
+
   // ------------------------------------------------------------------- clone
 
   @override
@@ -73,7 +102,8 @@ class GitHubApiBackend implements GitBackend {
     }
 
     final target = Directory(targetPath);
-    if (target.existsSync() && target.listSync().isNotEmpty) {
+    final resuming = GitHubSyncState.existsIn(targetPath);
+    if (!resuming && target.existsSync() && target.listSync().isNotEmpty) {
       return const GitResult(
         ok: false,
         exitCode: 1,
@@ -89,7 +119,14 @@ class GitHubApiBackend implements GitBackend {
 
       final head = await client.headSha(targetBranch);
       final entries = await client.tree(head);
-      final state = GitHubSyncState(branch: targetBranch, commitSha: head);
+      // Resuming keeps what is already on disk: _mirror skips every file whose
+      // blob id already matches, so an interrupted download carries on.
+      final state =
+          (resuming ? GitHubSyncState.load(targetPath) : null) ??
+          GitHubSyncState(branch: targetBranch, commitSha: head);
+      state
+        ..branch = targetBranch
+        ..commitSha = head;
 
       await _mirror(
         client: client,
@@ -108,15 +145,18 @@ class GitHubApiBackend implements GitBackend {
             '${state.attachments.length} lampiran menunggu diunduh saat dibuka',
       );
     } on Failure catch (e) {
-      // Leave no half-written mirror behind: the next attempt should start clean.
-      if (target.existsSync()) {
-        try {
-          await target.delete(recursive: true);
-        } on FileSystemException {
-          // best effort
-        }
-      }
-      return GitResult(ok: false, exitCode: 1, message: e.message, stderr: e.details ?? '');
+      // What is already downloaded stays put, together with its bookkeeping:
+      // losing a connection halfway should cost the rest of the download, not
+      // the part that already succeeded.
+      final done = GitHubSyncState.load(targetPath)?.files.length ?? 0;
+      return GitResult(
+        ok: false,
+        exitCode: 1,
+        message: done > 0
+            ? '${e.message} $done berkas sudah tersimpan — tekan "Lanjutkan" untuk meneruskan.'
+            : e.message,
+        stderr: e.details ?? '',
+      );
     } finally {
       client.close();
     }
@@ -503,17 +543,40 @@ class GitHubApiBackend implements GitBackend {
       state.files.remove(path);
     }
 
-    if (wanted.isEmpty) return 0;
+    // Nothing left to fetch means the mirror is already complete.
+    if (wanted.isEmpty) {
+      await state.save(repoPath);
+      return 0;
+    }
 
     var done = 0;
+    var sinceCheckpoint = 0;
     final total = wanted.length;
+    final alreadyHave = state.files.length;
     onProgress?.call(
-      SyncProgress(message: 'Mengunduh metadata', fraction: 0, current: 0, total: total),
+      SyncProgress(
+        message: alreadyHave > 0 ? 'Melanjutkan unduhan metadata' : 'Mengunduh metadata',
+        fraction: 0,
+        current: 0,
+        total: total,
+      ),
     );
 
     Future<void> worker(Iterable<GitTreeEntry> slice) async {
       for (final entry in slice) {
         final bytes = await client.blob(entry.sha);
+
+        // GitHub told us the blob id; if what arrived does not hash to it the
+        // transfer was truncated, and writing it would leave a file that looks
+        // downloaded but is broken.
+        if (gitBlobSha(bytes) != entry.sha) {
+          throw GitFailure(
+            'Berkas rusak saat diunduh: ${p.basename(entry.path)}. '
+            'Jalankan lagi untuk mengunduh ulang bagian yang gagal.',
+            details: entry.path,
+          );
+        }
+
         final file = File(p.join(repoPath, entry.path));
         await file.parent.create(recursive: true);
         await file.writeAsBytes(bytes, flush: true);
@@ -524,6 +587,13 @@ class GitHubApiBackend implements GitBackend {
           mtimeMs: stat.modified.millisecondsSinceEpoch,
         );
         done++;
+        sinceCheckpoint++;
+
+        // Persist regularly so an interruption costs at most a few files.
+        if (sinceCheckpoint >= 50) {
+          sinceCheckpoint = 0;
+          await state.save(repoPath);
+        }
         if (done % 10 == 0 || done == total) {
           onProgress?.call(
             SyncProgress(
@@ -541,7 +611,12 @@ class GitHubApiBackend implements GitBackend {
     for (var i = 0; i < wanted.length; i++) {
       lanes[i % concurrency].add(wanted[i]);
     }
-    await Future.wait(lanes.where((l) => l.isNotEmpty).map(worker));
+    try {
+      await Future.wait(lanes.where((l) => l.isNotEmpty).map(worker));
+    } finally {
+      // Whether it finished or failed, keep what was downloaded.
+      await state.save(repoPath);
+    }
     return total;
   }
 
