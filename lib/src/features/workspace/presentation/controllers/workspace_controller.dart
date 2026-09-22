@@ -303,49 +303,79 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   // ------------------------------------------------------------- annotations
 
   /// Persists an annotation and commits it (pushing when the profile says so).
-  Future<void> saveAnnotation({
+  /// Persists an annotation and commits it. Returns false when it did not
+  /// stick, after putting the reason on screen.
+  ///
+  /// Every failure here used to return silently, so a marker would appear and
+  /// then vanish on the next reload with nothing to explain it.
+  Future<bool> saveAnnotation({
     required ZoteroItem item,
     required ZoteroAnnotation annotation,
     required bool isNew,
   }) async {
     final library = state.library;
     final profile = state.profile;
-    if (library == null || profile == null) return;
+    if (library == null || profile == null) {
+      state = state.copyWith(
+        error: 'Anotasi tidak tersimpan: tidak ada library aktif di aplikasi.',
+      );
+      return false;
+    }
 
-    final changed = await ref
-        .read(libraryRepositoryProvider)
-        .saveAnnotation(
-          itemFilePath: item.filePath,
-          libraryDir: library.directoryPath,
+    try {
+      final changed = await ref
+          .read(libraryRepositoryProvider)
+          .saveAnnotation(
+            itemFilePath: item.filePath,
+            libraryDir: library.directoryPath,
+            annotation: annotation,
+          );
+      if (changed.isEmpty) {
+        state = state.copyWith(error: 'Anotasi tidak tersimpan: berkas item tidak berubah.');
+        return false;
+      }
+
+      await _commitAnnotation(
+        profile: profile,
+        message: annotationCommitMessage(
+          action: isNew ? 'Tambah' : 'Ubah',
+          itemTitle: item.title,
           annotation: annotation,
-        );
-    if (changed.isEmpty) return;
-
-    await _commitAnnotation(
-      profile: profile,
-      message: annotationCommitMessage(
-        action: isNew ? 'Tambah' : 'Ubah',
-        itemTitle: item.title,
-        annotation: annotation,
-      ),
-    );
+        ),
+      );
+      return true;
+    } on Failure catch (e) {
+      state = state.copyWith(error: 'Anotasi tidak tersimpan: ${e.message}');
+      return false;
+    } catch (e) {
+      state = state.copyWith(error: 'Anotasi tidak tersimpan: $e');
+      return false;
+    }
   }
 
-  Future<void> deleteAnnotation({
+  Future<bool> deleteAnnotation({
     required ZoteroItem item,
     required ZoteroAnnotation annotation,
   }) async {
     final library = state.library;
     final profile = state.profile;
-    if (library == null || profile == null) return;
+    if (library == null || profile == null) {
+      state = state.copyWith(error: 'Anotasi tidak dihapus: tidak ada library aktif.');
+      return false;
+    }
 
-    await ref
-        .read(libraryRepositoryProvider)
-        .removeAnnotation(
-          itemFilePath: item.filePath,
-          libraryDir: library.directoryPath,
-          annotationKey: annotation.key,
-        );
+    try {
+      await ref
+          .read(libraryRepositoryProvider)
+          .removeAnnotation(
+            itemFilePath: item.filePath,
+            libraryDir: library.directoryPath,
+            annotationKey: annotation.key,
+          );
+    } catch (e) {
+      state = state.copyWith(error: 'Anotasi tidak dihapus: $e');
+      return false;
+    }
 
     await _commitAnnotation(
       profile: profile,
@@ -355,6 +385,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         annotation: annotation,
       ),
     );
+    return true;
   }
 
   Future<void> _commitAnnotation({required RepoProfile profile, required String message}) async {

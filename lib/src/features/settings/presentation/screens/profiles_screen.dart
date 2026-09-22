@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/repo_profile.dart';
@@ -37,6 +38,7 @@ class ProfilesScreen extends ConsumerWidget {
         icon: const Icon(Icons.add),
         label: const Text('Tambah repositori'),
       ),
+      bottomNavigationBar: const SafeArea(child: _VersionFooter()),
       body: profiles.isEmpty
           ? const Center(child: Text('Belum ada repositori.'))
           : ListView.separated(
@@ -190,4 +192,40 @@ class _ProfileCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Shows which build is actually installed.
+///
+/// Two devices running different APKs looked like a broken feature once: a
+/// tablet still on an older build had no marker button at all, and there was
+/// no way to tell from inside the app.
+class _VersionFooter extends StatelessWidget {
+  const _VersionFooter();
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<PackageInfo>(
+    future: PackageInfo.fromPlatform(),
+    builder: (context, snapshot) {
+      final info = snapshot.data;
+      final text = info == null
+          ? 'ReadPaper'
+          : 'ReadPaper ${info.version} (build ${info.buildNumber})';
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(Icons.info_outline, size: 14, color: Theme.of(context).colorScheme.outline),
+            const SizedBox(width: 6),
+            SelectableText(
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.outline),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
