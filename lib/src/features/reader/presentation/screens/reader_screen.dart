@@ -77,6 +77,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// A finger cannot do both at once, so marking has to be a mode on touch.
   bool _markerMode = false;
 
+  /// Guards the auto-marker so one finger lift cannot create two highlights.
+  bool _marking = false;
+
   /// Shown once per opened paper on touch, because nothing else on screen
   /// explains that marking has to be switched on first.
   bool _showCoach = isTouchPlatform;
@@ -113,6 +116,28 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (!mounted) return;
     if (selection.hasSelectedText != _hasSelection) {
       setState(() => _hasSelection = selection.hasSelectedText);
+    }
+  }
+
+  /// Marking is finished when the finger leaves the glass.
+  ///
+  /// The action bar sits at the bottom of the window, which on an 11" tablet
+  /// is a hand-span away from the text being swept — far enough that the
+  /// marker looked broken, because the sweep alone never coloured anything.
+  /// In marker mode the lift now applies the active colour straight away and
+  /// offers an undo, so choosing a colour and sweeping is the whole gesture.
+  Future<void> _onMarkerPointerUp() async {
+    if (!_markerMode || _marking) return;
+    _marking = true;
+    try {
+      // The selection settles a frame or two after the pointer is released.
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      if (!mounted || !_markerMode) return;
+      final delegate = _controller.textSelectionDelegate;
+      if (!delegate.hasSelectedText) return;
+      await _createFromSelection(delegate, AnnotationType.highlight, undoable: true);
+    } finally {
+      _marking = false;
     }
   }
 
@@ -241,8 +266,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Untuk menandai: tekan "Tandai" di atas, lalu sapukan jari di '
-                              'atas teks. Untuk catatan: tekan ikon catatan, lalu ketuk halaman.',
+                              'Untuk menandai: tekan "Tandai", pilih warna, lalu sapukan jari '
+                              'di atas teks — begitu jari diangkat teks langsung berwarna. '
+                              'Untuk catatan: tekan ikon catatan, lalu ketuk halaman.',
                               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5),
                             ),
                           ),
@@ -267,10 +293,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Sapukan jari di atas teks untuk menandainya. '
+                              'Sapukan jari di atas teks — lepas jari, langsung ditandai '
+                              '${AnnotationPalette.names[_color] ?? _color.toLowerCase()}. '
                               'Geser halaman nonaktif selama mode ini.',
                               style: TextStyle(color: scheme.onTertiaryContainer, fontSize: 13),
                             ),
+                          ),
+                          _ColorButton(
+                            color: _color,
+                            onSelected: (value) {
+                              setState(() => _color = value);
+                              ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .setLastAnnotationColor(value);
+                            },
                           ),
                           TextButton(
                             onPressed: () => setState(() => _markerMode = false),
@@ -350,8 +386,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   Widget _buildViewer(ColorScheme scheme) => Stack(
     children: <Widget>[
-      Positioned.fill(child: _buildPdf(scheme)),
-      if (_hasSelection)
+      // Listener only watches; it never claims the gesture, so the viewer's
+      // own drag-to-select still runs underneath.
+      Positioned.fill(
+        child: Listener(
+          onPointerUp: (_) => _onMarkerPointerUp(),
+          onPointerCancel: (_) => _onMarkerPointerUp(),
+          child: _buildPdf(scheme),
+        ),
+      ),
+      if (_hasSelection && !_markerMode)
         Positioned(
           left: 0,
           right: 0,
@@ -512,6 +556,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     PdfTextSelectionDelegate delegate,
     AnnotationType type, {
     bool withComment = false,
+    bool undoable = false,
   }) async {
     final ranges = await delegate.getSelectedTextRanges();
     if (ranges.isEmpty) return;
@@ -565,7 +610,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
 
     await delegate.clearTextSelection();
-    await _persist(annotation, isNew: true);
+    await _persist(annotation, isNew: true, undoable: undoable);
   }
 
   /// Long-press on empty space drops a Zotero `text` note on the page.
@@ -671,7 +716,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     await _load();
   }
 
-  Future<void> _persist(ZoteroAnnotation annotation, {required bool isNew}) async {
+  Future<void> _persist(
+    ZoteroAnnotation annotation, {
+    required bool isNew,
+    bool undoable = false,
+  }) async {
     final item = _detail?.item;
     if (item == null) return;
     final saved = await ref
@@ -685,12 +734,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          duration: Duration(seconds: saved ? 1 : 5),
+          duration: Duration(seconds: saved ? (undoable ? 4 : 1) : 5),
           content: Text(
             saved
                 ? (isNew ? 'Tersimpan' : 'Perubahan tersimpan')
                 : ref.read(workspaceControllerProvider).error ?? 'Gagal menyimpan anotasi',
           ),
+          // A sweep that grabbed the wrong line should cost one tap to undo,
+          // not a trip through the sidebar.
+          action: saved && undoable
+              ? SnackBarAction(label: 'Urungkan', onPressed: () => _deleteAnnotation(annotation))
+              : null,
         ),
       );
 
