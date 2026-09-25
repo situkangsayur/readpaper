@@ -1,9 +1,54 @@
 # ReadPaper — Backlog
 
-Status per 2026-09-16. Fase 1 selesai dan teruji di desktop Linux; fase 4
-sebagian besar terpasang (sinkronisasi Android), menunggu uji perangkat.
+Status per 2026-09-25. Fase 1 selesai dan teruji di desktop Linux dan di
+perangkat Android; fase 4 terpasang dan dipakai sehari-hari. Fase 5–12 baru
+rencana: belum ada satu barispun kodenya kecuali yang ditandai `[~]`.
 
 Legenda: `[x]` selesai · `[~]` sebagian · `[ ]` belum.
+
+---
+
+## Urutan pengerjaan
+
+Fase 1–4 sudah jalan. Sisanya dikerjakan berurutan seperti di bawah; urutannya
+bukan selera, tapi mengikuti apa yang menghalangi apa.
+
+| Tahap | Isi | Kenapa di sini | Menghalangi |
+|---|---|---|---|
+| **A** | Bug terbuka + Fase 5 (alat tulis) & Fase 6 (kenyamanan baca) | Ini yang dipakai tiap hari dan sebagiannya sudah setengah jadi | — |
+| **B** | Fase 7 (recent, pindah koleksi, duplikat) | Murni di atas data yang sudah ada, tidak menunggu apa pun | — |
+| **C** | Fase 8 (dwibahasa) | Harus **sebelum** fitur baru menumpuk teks Indonesia di kode. Makin lama ditunda makin mahal | Fase 9, 12 |
+| **D** | Fase 9 (bibliografi & CSL) | Mesin CSL adalah inti sitasi; berdiri sendiri dan bisa diuji tanpa editor apa pun | Fase 10 |
+| **E** | Fase 11 (sistem plugin) | Keputusan runtime-nya mengikat selamanya, jadi harus diambil sebelum ada plugin | Fase 12 |
+| **F** | Fase 12 (AI Detector & Humanizer) | Plugin pertama, sekaligus pembuktian API Fase 11 | — |
+| **G** | Fase 10 (sitasi di editor + build desktop) | Paling besar dan paling banyak bergantung: butuh CSL (D), butuh anotasi sebagai bookmark (Fase 5), butuh aplikasi desktop | — |
+
+Catatan: Fase 10 sengaja ditaruh terakhir sesuai permintaan — dikerjakan
+setelah yang lain selesai.
+
+Tiga keputusan yang harus diambil **sebelum** tahapnya dimulai, karena sulit
+diubah setelah dipakai orang:
+
+1. **Runtime plugin** (Tahap E) — sandbox JS, proses terpisah, atau keduanya.
+2. **Jalur Google Docs** (Tahap G) — ekstensi peramban atau Google Docs API.
+3. **Gaya CSL kesehatan nasional Indonesia** (Tahap D) — pakai yang sudah ada
+   atau tulis sendiri lalu ajukan ke repositori CSL.
+
+---
+
+## Bug terbuka
+
+- [ ] **Salin teks menghasilkan papan klip kosong.** Tombol "Salin" sudah ada
+      di bilah pilihan teks (v0.1.9) dan memanggil `copyTextSelection()` milik
+      pdfrx, tapi diuji di perangkat pada 2026-09-25 hasil tempelnya kosong —
+      dibuktikan dengan menempel ke bilah URL peramban, bukan hanya ke dalam
+      aplikasi. Dugaan: pilihan teks sudah dibersihkan sebelum teksnya diambil.
+      Rencana perbaikan: ambil `getSelectedTextRanges()` sendiri lalu panggil
+      `Clipboard.setData` langsung, dan tampilkan jumlah karakter yang disalin
+      supaya kegagalan seperti ini ketahuan tanpa alat bantu.
+- [ ] Menyalin tidak mungkin selama mode penanda aktif (sapuan langsung jadi
+      stabilo). Sudah dijelaskan di bilah mode, tapi perlu dilihat lagi apakah
+      ada cara yang lebih enak daripada mematikan mode dulu.
 
 ---
 
@@ -92,7 +137,7 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
 - [ ] Pencarian lanjutan dengan operator (`author:`, `year:`, `tag:`, `type:`)
 - [ ] Pengayaan metadata dari DOI (Crossref / OpenAlex) untuk item yang datanya kosong
 - [ ] Ekstraksi metadata dari isi PDF ketika item tidak punya metadata sama sekali
-- [ ] Ekspor sitasi (BibTeX / RIS / APA) per item atau per koleksi
+- [ ] Ekspor sitasi per item atau per koleksi — dipindahkan ke Fase 9
 - [ ] Statistik library: jumlah per tahun, per jenis, pengarang terbanyak
 
 ---
@@ -158,6 +203,276 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
 
 ---
 
+## Fase 5 — Alat tulis di atas halaman
+
+Tujuan: halaman PDF bisa diperlakukan seperti papan tulis, tanpa pernah
+merusak berkas aslinya.
+
+- [~] **Gambar bebas (ink)** — model sudah ada (`InkPath`, `paths`, `inkWidth`
+      di `ZoteroAnnotation`; painter sudah menggambarnya). Yang belum: mode pena
+      di bilah pembaca, penangkapan goresan jari/stylus, pilihan ketebalan,
+      undo per goresan, dan penghapus.
+- [ ] **Kotak teks di atas halaman** (add text): teks bebas yang ditempel pada
+      koordinat halaman, ukuran & warna font bisa diatur. Zotero punya tipe
+      anotasi `text`; yang sekarang dipakai ReadPaper untuk catatan lepas, jadi
+      formatnya sudah kompatibel.
+- [ ] **Simpan sebagai PDF baru** — halaman + coretan dirender ke berkas baru
+      lewat `FPDFPage_CreateAnnot` / `FPDFAnnot_AddInkStroke` / `encodePdf`,
+      berkas asli tidak disentuh.
+- [ ] **Resave** ke berkas yang sama, dengan salinan `.orig.pdf` disimpan lebih dulu.
+- [ ] **Ekspor halaman sebagai PNG / JPG** (satu halaman, rentang halaman, atau
+      hanya area yang dipilih), lengkap dengan coretan.
+- [ ] Stylus: bedakan jari dan pena (`PointerDeviceKind.stylus`), tekanan jadi
+      ketebalan goresan, telapak tangan diabaikan.
+
+---
+
+## Fase 6 — Kenyamanan membaca
+
+- [ ] **Zoom in / zoom out eksplisit** dengan tombol dan pintasan, plus
+      "sesuaikan lebar" dan "sesuaikan halaman". (Tombol pembesaran sudah ada di
+      bilah; yang belum adalah tingkat zoom yang terbaca dan tersimpan per paper.)
+- [ ] **Lompat langsung ke halaman**: kotak isian nomor halaman, penggeser
+      halaman, dan panel thumbnail.
+- [ ] **Daftar isi PDF** (outline/bookmark bawaan berkas) sebagai panel navigasi.
+- [ ] **Reading mode**: sembunyikan semua panel, gulir menerus, tema terang /
+      sepia / gelap, kunci orientasi, layar tetap menyala.
+- [ ] **Baca nyaring (read aloud / TTS)**
+      - Dwibahasa sejak awal: Inggris dan Indonesia, suara dipilih per paper
+        mengikuti bahasa item.
+      - Ikuti teks yang sedang dibaca dengan sorotan berjalan, bisa jeda,
+        lanjut, ganti kecepatan.
+      - Lewati catatan kaki, nomor halaman, header/footer, dan daftar pustaka.
+      - Mesin: `flutter_tts` (Android TTS / macOS AVSpeech / SAPI di Windows /
+        speech-dispatcher di Linux) untuk lapisan dasar; sediakan lapisan
+        opsional untuk suara neural (mis. Piper lokal) karena intonasi bawaan
+        sistem untuk bahasa Indonesia biasanya datar.
+      - **Perlu dicek**: apakah Zotero 7 memang punya fitur baca nyaring bawaan
+        dan seperti apa suaranya. Kalau ada, contoh intonasinya dijadikan acuan;
+        kalau tidak ada, acuan diambil dari pembaca lain. Jangan diasumsikan.
+
+---
+
+## Fase 7 — Library: riwayat, penataan, dan duplikat
+
+- [ ] **Recent sebagai layar pembuka**: begitu aplikasi dibuka, yang tampil
+      adalah paper yang terakhir dibuka/dibaca, bukan daftar kosong.
+- [ ] **Riwayat baca** yang bisa diakses dari mana saja (dari daftar koleksi
+      maupun setelah selesai membaca): kapan dibuka, halaman terakhir, berapa
+      lama dibaca, anotasi yang dibuat di sesi itu.
+- [ ] Lanjutkan di halaman terakhir saat paper dibuka lagi.
+- [ ] **Pindahkan dokumen antar koleksi** (seret-lepas dan menu), termasuk
+      menyalin ke koleksi lain tanpa memindahkan — Zotero mengizinkan satu item
+      berada di banyak koleksi.
+- [ ] **Deteksi duplikat**: cocokkan DOI, lalu ISBN, lalu judul+tahun+pengarang
+      yang dinormalkan; tampilkan berdampingan dan tawarkan penggabungan yang
+      mempertahankan anotasi dari kedua salinan.
+- [ ] Pencarian referensi berdasarkan **judul, pengarang, dan abstrak**
+      (lihat juga Fase 2 — ini perluasannya ke abstrak dan ke isi catatan).
+
+---
+
+## Fase 8 — Dwibahasa (i18n)
+
+- [ ] Antarmuka dalam **Bahasa Indonesia dan Inggris**, bisa diganti di
+      pengaturan dan mengikuti bahasa sistem secara bawaan.
+- [ ] Pindahkan semua teks yang sekarang ditulis langsung di kode ke ARB
+      (`flutter_localizations` + `gen_l10n`).
+- [ ] Format tanggal, angka, dan jumlah mengikuti locale.
+- [ ] Bahasa antarmuka terpisah dari bahasa isi: TTS, pemeriksa AI, dan
+      humanizer memakai bahasa dokumen, bukan bahasa menu.
+
+---
+
+## Fase 9 — Bibliografi & ekspor sitasi
+
+- [ ] **Gaya sitasi berbasis CSL** (Citation Style Language) — jangan menulis
+      setiap gaya dengan tangan. CSL adalah format yang dipakai Zotero sendiri,
+      dan repositori gayanya berisi ribuan gaya siap pakai, termasuk:
+      - **Vancouver** (ada beberapa varian: Vancouver, Vancouver superscript,
+        dan turunan penerbit — perlu ditentukan mana yang dipakai)
+      - **IEEE** (teknik)
+      - **Harvard** (beberapa varian institusi) dan gaya humaniora lain
+        (APA, MLA, Chicago)
+      - Gaya kesehatan nasional Indonesia — **perlu dicari**: apakah sudah ada
+        berkas CSL-nya, atau harus kita tulis sendiri lalu diajukan ke
+        repositori CSL.
+- [ ] Mesin sitasi: pakai `citeproc` (port Dart) atau jalankan `citeproc-js`
+      di dalam sandbox JS yang sama dengan sistem plugin (Fase 11).
+- [ ] **Ekspor**: BibTeX (`.bib`), BibLaTeX, RIS, CSL-JSON, EndNote XML.
+- [ ] Salin sitasi / daftar pustaka ke papan klip dalam bentuk teks biasa,
+      HTML, dan RTF (RTF diperlukan agar tempel ke Word mempertahankan format).
+- [ ] Bibliografi per koleksi, per pilihan item, atau per hasil pencarian.
+- [ ] Lokalisasi bibliografi (istilah "dkk." / "et al.", "dalam" / "in")
+      mengikuti Fase 8.
+
+---
+
+## Fase 10 — Sitasi langsung di editor dokumen
+
+Tujuan: menulis di Word/LibreOffice/OnlyOffice/Google Docs, menekan satu
+tombol, mencari referensi di library ReadPaper, dan sitasi beserta daftar
+pustakanya masuk ke dokumen — dengan ReadPaper berjalan sebagai sumbernya.
+
+### 10.1 Fondasi: ReadPaper sebagai server lokal
+- [ ] API lokal di `127.0.0.1` (HTTP + WebSocket) yang hanya hidup selama
+      ReadPaper berjalan, dilindungi token yang dibuat per pemasangan.
+- [ ] Endpoint: cari (judul / pengarang / abstrak), ambil metadata CSL-JSON,
+      ambil anotasi & bookmark sebuah item, render sitasi & daftar pustaka
+      untuk gaya tertentu.
+- [ ] Protokol dokumen: sisipkan sitasi, perbarui semua sitasi, bangun ulang
+      daftar pustaka, konversi ke teks biasa. (Bentuknya mengikuti pola yang
+      sudah terbukti di Zotero: field/bookmark tersembunyi di dokumen yang
+      menyimpan identitas sitasi, bukan sekadar teks.)
+
+### 10.2 Alur memilih apa yang disitasi
+- [ ] Pencarian di dalam dialog sitasi: **nama pengarang, judul, abstrak**.
+- [ ] **Pilih beberapa referensi sekaligus** untuk satu sitasi
+      (mis. `[1], [3]–[5]`).
+- [ ] **Tandai bagian mana yang disitasi**: nomor halaman, rentang halaman,
+      atau **pilih dari anotasi yang sudah ada** — stabilo berwarna, garis
+      bawah, dan catatan yang sudah dibuat di pembaca berlaku sebagai bookmark
+      yang bisa dipilih, lengkap dengan kutipan teksnya.
+- [ ] Prefiks/sufiks sitasi ("lihat", "bdk.", "hlm. 12–14") dan opsi
+      menyembunyikan pengarang untuk sitasi naratif.
+- [ ] **Atur mana yang masuk daftar pustaka**: sitasi bisa ditandai "jangan
+      masukkan ke daftar pustaka", dan referensi bisa ditambahkan ke daftar
+      pustaka tanpa pernah disitasi di badan teks.
+- [ ] Bangun **daftar isi / daftar referensi** di posisi yang ditentukan
+      penulis, dan perbarui otomatis saat sitasi berubah.
+
+### 10.3 Penyambung per editor
+- [ ] **LibreOffice / OpenOffice**: ekstensi UNO (`.oxt`) dengan menu dan
+      toolbar sendiri, berbicara ke API lokal ReadPaper.
+- [ ] **Microsoft Word**: add-in Office.js — satu basis kode untuk **Word 365
+      web dan Word desktop** (Windows & macOS). Perlu manifest add-in dan,
+      untuk distribusi di luar toko, sideload lewat berbagi folder/registry.
+- [ ] **OnlyOffice**: plugin JavaScript sesuai API plugin OnlyOffice.
+- [ ] **Google Docs**: kendala nyata — Apps Script berjalan di server Google
+      dan **tidak bisa menghubungi `127.0.0.1`**. Dua jalan yang mungkin:
+      (a) ekstensi peramban yang menjembatani halaman Google Docs dengan
+      ReadPaper lokal (pola yang dipakai Zotero), atau (b) ReadPaper menulis
+      langsung ke dokumen lewat Google Docs API dengan OAuth, tanpa add-on.
+      **Perlu diputuskan sebelum dikerjakan.**
+- [ ] Uji lintas editor: satu dokumen yang sama disitasi dari dua editor
+      berbeda harus tetap bisa diperbarui.
+
+### 10.4 Aplikasi desktop
+- [ ] **Linux**: x86_64 dan arm64 (AppImage / .deb / Flatpak).
+- [ ] **Windows**: x86_64; arm64 **perlu dicek** dukungan Flutter-nya saat
+      dikerjakan.
+- [ ] **macOS**: Apple Silicon (arm64); sediakan universal binary bila
+      memungkinkan. Perlu penandatanganan dan notarisasi Apple.
+- [ ] Aplikasi berjalan di latar (tray/menu bar) supaya API lokal tetap hidup
+      selama menulis.
+- [ ] Pembaruan otomatis untuk build desktop.
+
+---
+
+## Fase 11 — Sistem plugin
+
+Tujuan: orang lain bisa menambah kemampuan ReadPaper tanpa mengubah kode
+intinya — menambah tombol, menu, halaman pengaturan, dan fungsi baru.
+
+### 11.1 Prasyarat
+- [ ] **Bilah menu aplikasi** yang sekarang belum ada: **File, Edit, View,
+      Tools, Plugins, Help**. Di desktop jadi menu bar sungguhan, di Android
+      jadi laci/overflow dengan pengelompokan yang sama.
+- [ ] Sistem *command*: setiap aksi inti diberi id dan bisa dipanggil dari
+      menu, pintasan papan tik, atau plugin.
+
+### 11.2 Bentuk plugin
+- [ ] **Manifest `plugin.json`**: id, nama, versi, penulis, `minAppVersion`,
+      ikon, daftar izin, titik masuk, dan bagian `contributes` yang bersifat
+      deklaratif (menu, tombol, panel, halaman pengaturan) sehingga menambah
+      UI tidak perlu menulis kode sama sekali.
+- [ ] **Titik perluasan**:
+      - tombol di bilah pembaca dan bilah ruang kerja
+      - item menu di File/Edit/View/Tools/Plugins/Help
+      - menu konteks pada teks yang dipilih dan pada anotasi
+      - panel samping sendiri di pembaca dan di library
+      - halaman pengaturan sendiri (form dideklarasikan di manifest)
+      - kait peristiwa: `onItemOpen`, `onAnnotationCreated`, `onSync`,
+        `onLibraryLoaded`
+      - **API saran (suggestion)**: plugin menempelkan kartu saran pada
+        rentang teks tertentu — inilah yang dipakai AI Detector dan Humanizer
+        di Fase 12, dan yang membuat keduanya bisa ditulis orang lain juga.
+- [ ] **Runtime**: rekomendasi awal adalah manifest deklaratif untuk UI +
+      sandbox JavaScript (QuickJS lewat `flutter_js`) untuk logika, karena itu
+      satu-satunya pilihan yang jalan sama di Android dan desktop. Kode Dart
+      tidak bisa dimuat saat aplikasi berjalan pada build AOT, jadi plugin
+      berbentuk Dart tidak mungkin. Alternatif untuk plugin berat di desktop:
+      proses terpisah yang berbicara JSON-RPC lewat stdio (pola LSP).
+      **Keputusan runtime harus diambil sebelum API dipublikasikan**, karena
+      setelah itu sulit diubah.
+- [ ] **Izin**: akses jaringan, baca/tulis library, baca berkas lampiran,
+      papan klip — dideklarasikan di manifest dan diminta ke pengguna saat
+      pemasangan.
+- [ ] **Distribusi**: pasang dari berkas `.zip` atau dari URL; daftar plugin
+      resmi berupa repositori git; pemeriksaan tanda tangan; pembaruan dan
+      penonaktifan per plugin.
+- [ ] **Dokumentasi & contoh**: satu plugin contoh yang bisa disalin, dan
+      dokumen spesifikasi API yang diversikan.
+- [ ] Mode pengembang: muat plugin dari folder, muat ulang tanpa menutup
+      aplikasi, konsol log per plugin.
+
+---
+
+## Fase 12 — Plugin bawaan: AI Detector & Humanizer
+
+Dua plugin pertama yang kita tulis sendiri, sekaligus jadi bukti bahwa API
+Fase 11 cukup untuk dipakai orang lain.
+
+### 12.1 Model interaksi
+Meniru **model kartu saran** seperti yang dipakai Grammarly — yang ditiru
+adalah cara berinteraksinya, yang bisa diamati langsung dari produknya, bukan
+cara kerja dalamnya. **Catatan jujur: Grammarly tidak menerbitkan detail teknis
+mesin deteksi maupun penulisan ulangnya**, jadi tidak ada spesifikasi resmi
+yang bisa diikuti; yang bisa dicontoh hanya tata letak dan alur kerjanya.
+
+- [ ] Panel saran di samping teks; setiap saran satu kartu berisi alasan,
+      kutipan bagian yang disorot, dan usulan penggantinya.
+- [ ] Menyorot kartu akan menyorot bagian teksnya, dan sebaliknya.
+- [ ] **Terapkan satu per satu**, **pilih sebagian lewat kotak centang**, atau
+      **Terapkan semua** sekaligus.
+- [ ] Tolak saran (dan jangan tawarkan lagi untuk teks yang sama).
+- [ ] Urungkan setelah diterapkan, termasuk setelah "terapkan semua".
+- [ ] Pratinjau perbedaan sebelum-sesudah untuk setiap saran.
+
+### 12.2 AI Detector
+- [ ] **Dwibahasa sejak awal: Inggris dan Indonesia.**
+- [ ] Skor per paragraf, bukan satu vonis untuk seluruh dokumen.
+- [ ] Wajib menampilkan tingkat keyakinan dan peringatannya: pendeteksi teks AI
+      sering salah, terutama pada tulisan teknis dan pada penulis yang bahasa
+      Inggrisnya bukan bahasa ibu. Hasilnya disajikan sebagai bahan
+      pertimbangan, bukan tuduhan.
+- [ ] Sumber teks: catatan, komentar, dan abstrak di dalam library; untuk PDF,
+      teks hasil ekstraksi per halaman (lihat batasan di 12.4).
+
+### 12.3 Humanizer
+- [ ] **Dwibahasa sejak awal: Inggris dan Indonesia.**
+- [ ] Usulan penulisan ulang per kalimat/paragraf, dengan pilihan nada
+      (akademis, ringkas, lugas).
+- [ ] Menjaga istilah teknis, kutipan, angka, dan sitasi agar tidak ikut
+      diubah.
+- [ ] Untuk bahasa Indonesia: perhatikan ragam baku vs. percakapan, dan
+      jangan mengubah istilah serapan yang memang dipakai di bidangnya.
+
+### 12.4 Batasan yang harus dipahami sejak awal
+- [ ] **Teks di dalam PDF tidak bisa diubah begitu saja.** "Terapkan" hanya
+      masuk akal untuk teks yang memang milik kita: catatan, komentar, abstrak,
+      dan — nanti — dokumen di editor lewat Fase 10. Untuk badan PDF, hasilnya
+      berupa usulan yang bisa disalin atau disimpan sebagai catatan, bukan
+      penggantian di halaman.
+- [ ] **Mesin model**: bisa lokal (Ollama / llama.cpp) atau lewat API.
+      Halaman pengaturan plugin menyediakan pilihan penyedia, model, dan kunci
+      API. Bahasa Indonesia perlu diuji terpisah — kualitas model untuk bahasa
+      Indonesia jauh lebih beragam daripada untuk bahasa Inggris.
+- [ ] **Privasi**: kalau teks dikirim ke layanan luar, katakan dengan jelas
+      sebelum dikirim, dan sediakan mode yang sepenuhnya lokal.
+
+---
+
 ## Lintas fase — utang teknis
 
 - [x] Uji unit parser Zotero + penulis anotasi (round-trip JSON byte-for-byte)
@@ -169,4 +484,4 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
 - [ ] Cache indeks library di disk + invalidasi berdasarkan mtime
 - [ ] Penanganan berkas item rusak yang lebih informatif (saat ini dilewati diam-diam)
 - [ ] Dukungan repositori tanpa `.zotero-sync/manifest.json` sudah ada, tapi belum diuji luas
-- [ ] Lokalisasi (saat ini antarmuka berbahasa Indonesia, belum ada i18n)
+- [ ] Lokalisasi (saat ini antarmuka berbahasa Indonesia saja) — dikerjakan di Fase 8
