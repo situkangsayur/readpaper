@@ -85,7 +85,10 @@ class InkPath {
   double xAt(int i) => points[i * 2];
   double yAt(int i) => points[i * 2 + 1];
 
-  List<num> toList() => <num>[for (final v in points) (v * 1000).roundToDouble() / 1000];
+  /// Same rule as [AnnotationRect.toList]: at most three decimals, and whole
+  /// numbers without a trailing `.0`. A stroke of 40 points written as `40.0`
+  /// would differ from what the plugin writes on every single coordinate.
+  List<num> toList() => <num>[for (final v in points) AnnotationRect._round(v)];
 }
 
 /// A Zotero annotation attached to a PDF attachment.
