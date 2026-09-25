@@ -454,6 +454,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(settings: settings);
   }
 
+  /// Records that a paper was opened, and at which page it was left.
+  Future<void> rememberRecent(RecentPaper entry) async {
+    final settings = await ref.read(settingsRepositoryProvider).rememberRecent(entry);
+    state = state.copyWith(settings: settings);
+  }
+
+  Future<void> forgetRecent({RecentPaper? entry}) async {
+    final settings = await ref.read(settingsRepositoryProvider).forgetRecent(entry: entry);
+    state = state.copyWith(settings: settings);
+  }
+
   Future<void> setThemeMode(String mode) async {
     final settings = await ref.read(settingsRepositoryProvider).updatePreferences(themeMode: mode);
     state = state.copyWith(settings: settings);

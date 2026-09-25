@@ -4,11 +4,7 @@ import 'package:pdfrx/pdfrx.dart';
 import 'package:readpaper/src/features/reader/presentation/widgets/navigation_sheet.dart';
 
 PdfOutlineNode node(String title, int page, {List<PdfOutlineNode> children = const []}) =>
-    PdfOutlineNode(
-      title: title,
-      dest: PdfDest(page, PdfDestCommand.fit, null),
-      children: children,
-    );
+    PdfOutlineNode(title: title, dest: PdfDest(page, PdfDestCommand.fit, null), children: children);
 
 void main() {
   /// Opens the sheet and hands back whatever it returns.
@@ -75,11 +71,7 @@ void main() {
       tester,
       outline: <PdfOutlineNode>[
         node('1 Pendahuluan', 1),
-        node(
-          '2 Metode',
-          4,
-          children: <PdfOutlineNode>[node('2.1 Data', 5), node('2.2 Model', 7)],
-        ),
+        node('2 Metode', 4, children: <PdfOutlineNode>[node('2.1 Data', 5), node('2.2 Model', 7)]),
       ],
     );
 

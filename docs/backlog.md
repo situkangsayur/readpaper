@@ -298,8 +298,19 @@ merusak berkas aslinya.
       pemeriksaan bahwa anak benar-benar menjorok lebih dalam). **Belum diuji
       di perangkat dengan PDF yang benar-benar punya daftar isi** — berkas uji
       di ponsel hanya satu halaman tanpa outline.
-- [ ] **Reading mode**: sembunyikan semua panel, gulir menerus, tema terang /
-      sepia / gelap, kunci orientasi, layar tetap menyala.
+- [x] **Reading mode**: bilah atas, petunjuk, dan panel anotasi disembunyikan,
+      bilah sistem masuk mode imersif, dan tiga tombol bulat mengambang di atas
+      halaman untuk warna, lompat halaman, dan keluar. Masuk mode baca
+      mematikan mode penanda, catatan, dan pena — mode yang menggambar di
+      halaman sambil menyembunyikan alat untuk membatalkannya adalah jebakan.
+- [x] **Warna halaman**: Normal, Sepia, Redup, Balik warna — dipasang sebagai
+      color filter di atas halaman, jadi dokumennya sendiri tidak diubah.
+      Catatan: pada Balik warna, penanda ikut jadi warna komplemennya (kuning
+      terbaca biru); itu konsekuensi membalik seluruh halaman, dikatakan di
+      snackbar-nya, dan karena itu bukan mode bawaan.
+- [ ] Gulir menerus dan kunci orientasi (belum).
+- [ ] Layar tetap menyala saat mode baca — butuh `wakelock_plus`, belum ada di
+      cache paket, jadi ditunda.
 - [ ] **Baca nyaring (read aloud / TTS)**
       - Dwibahasa sejak awal: Inggris dan Indonesia, suara dipilih per paper
         mengikuti bahasa item.
@@ -318,12 +329,20 @@ merusak berkas aslinya.
 
 ## Fase 7 — Library: riwayat, penataan, dan duplikat
 
-- [ ] **Recent sebagai layar pembuka**: begitu aplikasi dibuka, yang tampil
-      adalah paper yang terakhir dibuka/dibaca, bukan daftar kosong.
-- [ ] **Riwayat baca** yang bisa diakses dari mana saja (dari daftar koleksi
-      maupun setelah selesai membaca): kapan dibuka, halaman terakhir, berapa
-      lama dibaca, anotasi yang dibuat di sesi itu.
-- [ ] Lanjutkan di halaman terakhir saat paper dibuka lagi.
+- [x] **Recent**: kartu "Terakhir dibaca" di atas daftar item, berisi judul,
+      pengarang, tahun, halaman terakhir, dan berapa lama lalu. Disembunyikan
+      saat sedang mencari — layar yang ditanyai sesuatu sebaiknya menjawabnya.
+      Riwayat dari library lain tidak ditampilkan: klonanya mungkin tidak ada
+      di disk, dan menawarkan paper yang tidak bisa dibuka lebih buruk
+      daripada tidak menawarkannya.
+- [~] **Riwayat baca**: kapan dibuka dan halaman terakhir sudah dicatat
+      (maksimal 40 entri, karena ini tinggal di `config.json` yang dibaca tiap
+      aplikasi dijalankan). Belum: berapa lama dibaca dan anotasi per sesi.
+- [x] **Lanjutkan di halaman terakhir** saat paper dibuka lagi, dengan
+      pemberitahuan halaman berapa. Penulisan riwayat ditunda 1,5 detik supaya
+      membolak-balik dua puluh halaman menulis sekali, bukan dua puluh kali —
+      dan `dispose` menuliskan yang tertunda, supaya keluar cepat tidak
+      membuang halaman terakhirnya.
 - [ ] **Pindahkan dokumen antar koleksi** (seret-lepas dan menu), termasuk
       menyalin ke koleksi lain tanpa memindahkan — Zotero mengizinkan satu item
       berada di banyak koleksi.

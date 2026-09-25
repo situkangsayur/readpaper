@@ -58,3 +58,20 @@ String humanFileSize(int bytes) {
   }
   return '${size.toStringAsFixed(unit == 0 ? 0 : 1)} ${units[unit]}';
 }
+
+/// How long ago something happened, in words.
+///
+/// Reading history is glanced at, not studied — "2 jam lalu" answers the
+/// question faster than a timestamp does, and the exact minute never matters.
+String relativeTime(DateTime when, {DateTime? now}) {
+  final diff = (now ?? DateTime.now()).difference(when);
+  if (diff.isNegative) return 'baru saja';
+  if (diff.inMinutes < 1) return 'baru saja';
+  if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
+  if (diff.inHours < 24) return '${diff.inHours} jam lalu';
+  if (diff.inDays == 1) return 'kemarin';
+  if (diff.inDays < 7) return '${diff.inDays} hari lalu';
+  if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} pekan lalu';
+  if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} bulan lalu';
+  return '${(diff.inDays / 365).floor()} tahun lalu';
+}

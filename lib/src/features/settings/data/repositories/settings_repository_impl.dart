@@ -69,5 +69,25 @@ class SettingsRepositoryImpl implements SettingsRepository {
   }
 
   @override
+  Future<AppSettings> rememberRecent(RecentPaper entry) async {
+    // Reloaded rather than taken from memory: the reader writes here while
+    // the sync panel may have written a profile a moment earlier.
+    final settings = await _local.load();
+    final updated = settings.withRecent(entry);
+    await _local.save(updated);
+    return updated;
+  }
+
+  @override
+  Future<AppSettings> forgetRecent({RecentPaper? entry}) async {
+    final settings = await _local.load();
+    final updated = entry == null
+        ? settings.copyWith(recents: const <RecentPaper>[])
+        : settings.copyWith(recents: settings.recents.where((r) => !r.sameFileAs(entry)).toList());
+    await _local.save(updated);
+    return updated;
+  }
+
+  @override
   Future<String?> tokenFor(String profileId) => _local.tokenFor(profileId);
 }

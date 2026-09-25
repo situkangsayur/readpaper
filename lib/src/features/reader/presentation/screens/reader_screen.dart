@@ -14,6 +14,7 @@ import '../../../../core/utils/zotero_key.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
 import '../../../library/domain/entities/zotero_item.dart';
+import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/annotation_geometry.dart';
 import '../widgets/annotation_editor.dart';
@@ -23,6 +24,7 @@ import '../widgets/annotation_sidebar.dart';
 import '../widgets/export_image_sheet.dart';
 import '../widgets/ink_capture_layer.dart';
 import '../widgets/navigation_sheet.dart';
+import '../widgets/page_tint.dart';
 import '../widgets/selection_action_bar.dart';
 
 /// Reads one PDF attachment: text selection, coloured markers and comments,
@@ -35,6 +37,7 @@ class ReaderScreen extends ConsumerStatefulWidget {
     required this.attachmentKey,
     required this.filePath,
     required this.title,
+    this.subtitle = '',
     super.key,
   });
 
@@ -43,6 +46,9 @@ class ReaderScreen extends ConsumerStatefulWidget {
   final String attachmentKey;
   final String filePath;
   final String title;
+
+  /// Author and year, kept only so the history list can show them.
+  final String subtitle;
 
   @override
   ConsumerState<ReaderScreen> createState() => _ReaderScreenState();
@@ -95,6 +101,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// While on, dragging draws on the page instead of panning or selecting.
   bool _penMode = false;
 
+  /// Debounces history writes while pages are being flicked through.
+  Timer? _recordTimer;
+
+  /// Held so the final history write still works from [dispose].
+  late final WorkspaceController _workspace;
+
+  /// The library this paper belongs to, captured once it is known.
+  String? _profileId;
+
+  /// Hides everything but the page.
+  bool _readingMode = false;
+
+  /// Tint applied over the page while reading.
+  PageTint _tint = PageTint.none;
+
   /// The document's own table of contents, empty when it has none.
   List<PdfOutlineNode> _outline = const <PdfOutlineNode>[];
 
@@ -115,8 +136,27 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   int _currentPage = 1;
 
   @override
+  void dispose() {
+    // Leaving within the debounce window would otherwise throw away the very
+    // page the reader stopped on, which is the one worth keeping. The
+    // notifier is held from initState because it outlives this widget, so a
+    // last write can still go through from here.
+    if (_recordTimer?.isActive ?? false) {
+      _recordTimer!.cancel();
+      final profileId = _profileId;
+      if (profileId != null) _recordVisit(profileId);
+    }
+    _recordTimer = null;
+    // The bars must come back even if the reader is closed from inside
+    // reading mode, or the rest of the app loses its status bar.
+    if (_readingMode) SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
+    _workspace = ref.read(workspaceControllerProvider.notifier);
     _color = ref.read(workspaceControllerProvider).settings.lastAnnotationColor;
     _load();
   }
@@ -306,6 +346,90 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     await _persist(annotation, isNew: true, undoable: true);
   }
 
+  // ------------------------------------------------------- mode baca
+
+  /// Hides every bar and panel, leaving the page.
+  void _toggleReadingMode() {
+    setState(() {
+      _readingMode = !_readingMode;
+      if (_readingMode) {
+        // A mode that draws on the page while hiding the tools to undo it
+        // would be a trap.
+        _markerMode = false;
+        _noteMode = false;
+        _penMode = false;
+      }
+    });
+    SystemChrome.setEnabledSystemUIMode(
+      _readingMode ? SystemUiMode.immersive : SystemUiMode.edgeToEdge,
+    );
+  }
+
+  void _cycleTint() {
+    final next = PageTint.values[(_tint.index + 1) % PageTint.values.length];
+    setState(() => _tint = next);
+    _say(
+      next == PageTint.invert
+          ? 'Warna halaman: ${next.label} — warna penanda ikut terbalik'
+          : 'Warna halaman: ${next.label}',
+    );
+  }
+
+  // ----------------------------------------------------------- riwayat
+
+  /// Goes back to where this paper was left, and records the visit.
+  ///
+  /// Papers are put down mid-way far more often than they are finished, so
+  /// reopening one at page 1 throws away the only thing the reader knew.
+  Future<void> _resumeAndRemember() async {
+    final workspace = ref.read(workspaceControllerProvider);
+    final profileId = workspace.settings.activeProfile?.id;
+    if (profileId == null) return;
+    _profileId = profileId;
+
+    final previous = workspace.settings.recentFor(profileId: profileId, filePath: widget.filePath);
+    if (previous != null &&
+        previous.lastPage > 1 &&
+        previous.lastPage <= _controller.pages.length) {
+      await _controller.goToPage(pageNumber: previous.lastPage);
+      if (mounted) _say('Dilanjutkan di halaman ${previous.lastPage}');
+    }
+
+    _recordVisit(profileId);
+  }
+
+  /// Saves the page after the scrolling stops, not during it.
+  ///
+  /// Flicking through twenty pages should write the history once, not twenty
+  /// times: it lands in `config.json`, which is the same file the profiles
+  /// live in.
+  void _scheduleRecordVisit() {
+    _recordTimer?.cancel();
+    _recordTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (!mounted) return;
+      final profileId = _profileId;
+      if (profileId != null) _recordVisit(profileId);
+    });
+  }
+
+  void _recordVisit(String profileId) {
+    unawaited(
+      _workspace.rememberRecent(
+        RecentPaper(
+          profileId: profileId,
+          itemKey: widget.itemKey,
+          itemFilePath: widget.itemFilePath,
+          attachmentKey: widget.attachmentKey,
+          filePath: widget.filePath,
+          title: widget.title,
+          subtitle: widget.subtitle,
+          lastPage: _currentPage,
+          openedAt: DateTime.now(),
+        ),
+      ),
+    );
+  }
+
   /// Opens the jump-to-page and table-of-contents sheet.
   Future<void> _navigate() async {
     final target = await showNavigationSheet(
@@ -437,131 +561,143 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              widget.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            // Tappable: the page number is exactly where you look when you
-            // want to be on a different page.
-            InkWell(
-              onTap: _loading ? null : _navigate,
-              borderRadius: BorderRadius.circular(4),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(
-                      '${_annotations.length} anotasi · halaman $_currentPage'
-                      '${_controller.isReady ? ' dari ${_controller.pages.length}' : ''}',
-                      style: Theme.of(context).textTheme.labelSmall,
+      appBar: _readingMode
+          ? null
+          : AppBar(
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    widget.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  // Tappable: the page number is exactly where you look when you
+                  // want to be on a different page.
+                  InkWell(
+                    onTap: _loading ? null : _navigate,
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(
+                            '${_annotations.length} anotasi · halaman $_currentPage'
+                            '${_controller.isReady ? ' dari ${_controller.pages.length}' : ''}',
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(
+                            Icons.unfold_more,
+                            size: 12,
+                            color: Theme.of(context).textTheme.labelSmall?.color,
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 3),
-                    Icon(
-                      Icons.unfold_more,
-                      size: 12,
-                      color: Theme.of(context).textTheme.labelSmall?.color,
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                // Labelled on purpose: a bare icon left people swiping at the page
+                // and wondering why nothing was marked.
+                if (isTouchPlatform)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: FilledButton.tonalIcon(
+                      style: FilledButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        backgroundColor: _markerMode ? colorFromHex(_color) : null,
+                        foregroundColor: _markerMode ? Colors.black87 : null,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      onPressed: () => setState(() {
+                        _markerMode = !_markerMode;
+                        if (_markerMode) {
+                          _noteMode = false;
+                          _penMode = false;
+                        }
+                      }),
+                      icon: Icon(
+                        _markerMode ? Icons.border_color : Icons.border_color_outlined,
+                        size: 18,
+                      ),
+                      label: Text(_markerMode ? 'Menandai' : 'Tandai'),
                     ),
-                  ],
+                  ),
+                IconButton(
+                  tooltip: _noteMode
+                      ? 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)'
+                      : 'Tempel catatan di halaman',
+                  isSelected: _noteMode,
+                  selectedIcon: const Icon(Icons.sticky_note_2),
+                  icon: const Icon(Icons.sticky_note_2_outlined),
+                  onPressed: () => setState(() {
+                    _noteMode = !_noteMode;
+                    if (_noteMode) {
+                      _markerMode = false;
+                      _penMode = false;
+                    }
+                  }),
                 ),
-              ),
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          // Labelled on purpose: a bare icon left people swiping at the page
-          // and wondering why nothing was marked.
-          if (isTouchPlatform)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: FilledButton.tonalIcon(
-                style: FilledButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  backgroundColor: _markerMode ? colorFromHex(_color) : null,
-                  foregroundColor: _markerMode ? Colors.black87 : null,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                IconButton(
+                  tooltip: _penMode ? 'Selesai menggambar' : 'Tulis atau gambar di halaman',
+                  isSelected: _penMode,
+                  selectedIcon: const Icon(Icons.draw),
+                  icon: const Icon(Icons.draw_outlined),
+                  onPressed: _togglePen,
                 ),
-                onPressed: () => setState(() {
-                  _markerMode = !_markerMode;
-                  if (_markerMode) {
-                    _noteMode = false;
-                    _penMode = false;
-                  }
-                }),
-                icon: Icon(
-                  _markerMode ? Icons.border_color : Icons.border_color_outlined,
-                  size: 18,
+                _ColorButton(
+                  color: _color,
+                  onSelected: (value) {
+                    setState(() => _color = value);
+                    ref.read(workspaceControllerProvider.notifier).setLastAnnotationColor(value);
+                  },
                 ),
-                label: Text(_markerMode ? 'Menandai' : 'Tandai'),
-              ),
+                IconButton(
+                  tooltip: 'Warna halaman: ${_tint.label}',
+                  icon: Icon(_tint.icon),
+                  onPressed: _cycleTint,
+                ),
+                IconButton(
+                  tooltip: 'Mode baca — sembunyikan semua bilah',
+                  icon: const Icon(Icons.fullscreen),
+                  onPressed: _loading ? null : _toggleReadingMode,
+                ),
+                IconButton(
+                  tooltip: 'Simpan salinan beranotasi (PNG, JPG, PDF)',
+                  icon: const Icon(Icons.image_outlined),
+                  onPressed: _loading ? null : _exportImages,
+                ),
+                IconButton(
+                  tooltip: 'Perkecil',
+                  icon: const Icon(Icons.zoom_out),
+                  onPressed: () => _controller.zoomDown(),
+                ),
+                IconButton(
+                  tooltip: 'Perbesar',
+                  icon: const Icon(Icons.zoom_in),
+                  onPressed: () => _controller.zoomUp(),
+                ),
+                IconButton(
+                  tooltip: 'Panel anotasi',
+                  icon: Badge(
+                    isLabelVisible: !isWide && _annotations.isNotEmpty,
+                    label: Text('${_annotations.length}'),
+                    child: Icon(
+                      _showSidebar && isWide ? Icons.view_sidebar : Icons.view_sidebar_outlined,
+                    ),
+                  ),
+                  // Wide layouts dock the panel; a phone opens it as a drawer.
+                  onPressed: isWide
+                      ? () => setState(() => _showSidebar = !_showSidebar)
+                      : () => _scaffoldKey.currentState?.openEndDrawer(),
+                ),
+                const SizedBox(width: 4),
+              ],
             ),
-          IconButton(
-            tooltip: _noteMode
-                ? 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)'
-                : 'Tempel catatan di halaman',
-            isSelected: _noteMode,
-            selectedIcon: const Icon(Icons.sticky_note_2),
-            icon: const Icon(Icons.sticky_note_2_outlined),
-            onPressed: () => setState(() {
-              _noteMode = !_noteMode;
-              if (_noteMode) {
-                _markerMode = false;
-                _penMode = false;
-              }
-            }),
-          ),
-          IconButton(
-            tooltip: _penMode ? 'Selesai menggambar' : 'Tulis atau gambar di halaman',
-            isSelected: _penMode,
-            selectedIcon: const Icon(Icons.draw),
-            icon: const Icon(Icons.draw_outlined),
-            onPressed: _togglePen,
-          ),
-          _ColorButton(
-            color: _color,
-            onSelected: (value) {
-              setState(() => _color = value);
-              ref.read(workspaceControllerProvider.notifier).setLastAnnotationColor(value);
-            },
-          ),
-          IconButton(
-            tooltip: 'Simpan salinan beranotasi (PNG, JPG, PDF)',
-            icon: const Icon(Icons.image_outlined),
-            onPressed: _loading ? null : _exportImages,
-          ),
-          IconButton(
-            tooltip: 'Perkecil',
-            icon: const Icon(Icons.zoom_out),
-            onPressed: () => _controller.zoomDown(),
-          ),
-          IconButton(
-            tooltip: 'Perbesar',
-            icon: const Icon(Icons.zoom_in),
-            onPressed: () => _controller.zoomUp(),
-          ),
-          IconButton(
-            tooltip: 'Panel anotasi',
-            icon: Badge(
-              isLabelVisible: !isWide && _annotations.isNotEmpty,
-              label: Text('${_annotations.length}'),
-              child: Icon(
-                _showSidebar && isWide ? Icons.view_sidebar : Icons.view_sidebar_outlined,
-              ),
-            ),
-            // Wide layouts dock the panel; a phone opens it as a drawer.
-            onPressed: isWide
-                ? () => setState(() => _showSidebar = !_showSidebar)
-                : () => _scaffoldKey.currentState?.openEndDrawer(),
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
@@ -577,7 +713,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       ),
                     ),
                   ),
-                if (_showCoach && !_markerMode && !_noteMode)
+                if (_showCoach && !_markerMode && !_noteMode && !_readingMode)
                   Material(
                     color: scheme.surfaceContainerHighest,
                     child: Padding(
@@ -720,7 +856,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   child: Row(
                     children: <Widget>[
                       Expanded(child: _buildViewer(scheme)),
-                      if (_showSidebar && isWide) ...<Widget>[
+                      if (_showSidebar && isWide && !_readingMode) ...<Widget>[
                         const VerticalDivider(width: 1),
                         SizedBox(
                           width: 320,
@@ -765,9 +901,41 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         child: Listener(
           onPointerUp: (_) => _onMarkerPointerUp(),
           onPointerCancel: (_) => _onMarkerPointerUp(),
-          child: _buildPdf(scheme),
+          child: _tint.filter == null
+              ? _buildPdf(scheme)
+              : ColorFiltered(colorFilter: _tint.filter!, child: _buildPdf(scheme)),
         ),
       ),
+      // In reading mode the bar is gone, so the way back has to be on the
+      // page itself — and small enough not to become part of the page.
+      if (_readingMode)
+        Positioned(
+          top: 8,
+          right: 8,
+          child: SafeArea(
+            child: Row(
+              children: <Widget>[
+                _ReadingChip(
+                  icon: _tint.icon,
+                  tooltip: 'Warna halaman: ${_tint.label}',
+                  onTap: _cycleTint,
+                ),
+                const SizedBox(width: 8),
+                _ReadingChip(
+                  icon: Icons.unfold_more,
+                  tooltip: 'Halaman $_currentPage',
+                  onTap: _navigate,
+                ),
+                const SizedBox(width: 8),
+                _ReadingChip(
+                  icon: Icons.fullscreen_exit,
+                  tooltip: 'Keluar dari mode baca',
+                  onTap: _toggleReadingMode,
+                ),
+              ],
+            ),
+          ),
+        ),
       if (_hasSelection && !_markerMode)
         Positioned(
           left: 0,
@@ -801,20 +969,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     widget.filePath,
     controller: _controller,
     params: PdfViewerParams(
-      backgroundColor: AppTheme.readerBackground(scheme),
+      backgroundColor: _tint.background ?? AppTheme.readerBackground(scheme),
       margin: 10,
       textSelectionParams: _markerMode ? _selectByDrag : _selectByHandles,
       // While marking, the drag belongs to the selection; while drawing, to
       // the pen. Panning would fight either one for the same gesture.
       panEnabled: !_markerMode && !_penMode,
       onPageChanged: (pageNumber) {
-        if (pageNumber != null && mounted) setState(() => _currentPage = pageNumber);
+        if (pageNumber == null || !mounted) return;
+        setState(() => _currentPage = pageNumber);
+        _scheduleRecordVisit();
       },
       onViewerReady: (document, controller) async {
         // Outlines are cheap to read but only exist once the document is
         // open, so this cannot be part of the annotation load.
         final outline = await document.loadOutline();
         if (mounted) setState(() => _outline = outline);
+        await _resumeAndRemember();
       },
       pageOverlaysBuilder: (context, pageRect, page) => <Widget>[
         Positioned.fill(
@@ -1259,4 +1430,34 @@ class _WidthButton extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// A small round button that floats over the page in reading mode.
+class _ReadingChip extends StatelessWidget {
+  const _ReadingChip({required this.icon, required this.tooltip, required this.onTap});
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: scheme.surface.withValues(alpha: 0.82),
+        shape: const CircleBorder(),
+        elevation: 2,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(9),
+            child: Icon(icon, size: 20, color: scheme.onSurface),
+          ),
+        ),
+      ),
+    );
+  }
 }

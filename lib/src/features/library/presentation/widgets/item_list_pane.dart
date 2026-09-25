@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/entities/zotero_item.dart';
 import '../controllers/library_controllers.dart';
+import 'recent_papers_card.dart';
 
 /// The middle pane: every item of the selected collection, with search + sort.
 class ItemListPane extends ConsumerWidget {
@@ -12,6 +14,9 @@ class ItemListPane extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(visibleItemsProvider);
     final selectedKey = ref.watch(selectedItemKeyProvider);
+    // While searching, the history is in the way: the screen was asked a
+    // question and should answer it.
+    final searching = ref.watch(searchQueryProvider).trim().isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -19,20 +24,40 @@ class ItemListPane extends ConsumerWidget {
         const _ListHeader(),
         const Divider(height: 1),
         Expanded(
-          child: items.isEmpty
-              ? const Center(child: Text('Tidak ada item.'))
-              : ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, _) => const Divider(height: 1),
-                  itemBuilder: (context, i) {
-                    final item = items[i];
-                    return _ItemTile(
-                      item: item,
-                      selected: item.key == selectedKey,
-                      onTap: () => ref.read(selectedItemKeyProvider.notifier).select(item.key),
-                    );
-                  },
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: <Widget>[
+              if (!searching)
+                RecentPapersCard(
+                  onOpen: (entry) => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ReaderScreen(
+                        itemKey: entry.itemKey,
+                        itemFilePath: entry.itemFilePath,
+                        attachmentKey: entry.attachmentKey,
+                        filePath: entry.filePath,
+                        title: entry.title,
+                        subtitle: entry.subtitle,
+                      ),
+                    ),
+                  ),
                 ),
+              if (items.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: Text('Tidak ada item.')),
+                )
+              else
+                for (var i = 0; i < items.length; i++) ...<Widget>[
+                  if (i > 0) const Divider(height: 1),
+                  _ItemTile(
+                    item: items[i],
+                    selected: items[i].key == selectedKey,
+                    onTap: () => ref.read(selectedItemKeyProvider.notifier).select(items[i].key),
+                  ),
+                ],
+            ],
+          ),
         ),
         _ListFooter(count: items.length),
       ],
