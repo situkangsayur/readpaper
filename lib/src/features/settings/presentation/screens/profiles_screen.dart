@@ -210,18 +210,28 @@ class _VersionFooter extends StatelessWidget {
       final text = info == null
           ? 'ReadPaper'
           : 'ReadPaper ${info.version} (build ${info.buildNumber})';
+      final outline = Theme.of(context).colorScheme.outline;
+      final small = Theme.of(context).textTheme.labelSmall?.copyWith(color: outline);
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
           children: <Widget>[
-            Icon(Icons.info_outline, size: 14, color: Theme.of(context).colorScheme.outline),
-            const SizedBox(width: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Icon(Icons.info_outline, size: 14, color: outline),
+                const SizedBox(width: 6),
+                SelectableText(text, style: small),
+              ],
+            ),
+            const SizedBox(height: 4),
+            // AGPL asks that an interactive program keeps showing where its
+            // source is; this line is that notice, not decoration.
             SelectableText(
-              text,
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: Theme.of(context).colorScheme.outline),
+              'Perangkat lunak bebas, lisensi AGPL-3.0-or-later.\n'
+              'Kode sumber: github.com/situkangsayur/readpaper',
+              textAlign: TextAlign.center,
+              style: small,
             ),
           ],
         ),

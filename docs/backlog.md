@@ -473,6 +473,34 @@ yang bisa diikuti; yang bisa dicontoh hanya tata letak dan alur kerjanya.
 
 ---
 
+## Lisensi & tata kelola
+
+- [x] **AGPL-3.0-or-later** dipasang sebagai lisensi (`LICENSE`). Dipilih karena
+      permintaannya jelas: boleh dipakai siapa saja, boleh dijual, tapi tidak
+      boleh ditutup. AGPL menutup celah yang tidak ditutup GPL biasa — kalau
+      seseorang menjalankan versi modifikasinya sebagai layanan jaringan, ia
+      tetap wajib menyediakan sumbernya. Itu relevan justru karena ReadPaper
+      berencana punya API lokal (Fase 10) dan kemungkinan app service untuk
+      pemeriksa AI (Fase 12).
+- [x] Notis lisensi tampil di layar Profil, bukan hanya di berkas.
+- [x] `CONTRIBUTING.md`, templat issue dan pull request, CI, dan
+      `scripts/setup-github-project.sh`.
+- [x] **DCO** (`git commit -s`), bukan CLA — supaya tidak ada hak yang
+      diserahkan ke siapa pun dan hambatan kontribusi tetap rendah.
+- [ ] **Lisensi API/SDK plugin** (Fase 11) perlu diputuskan terpisah. Kalau
+      seluruhnya AGPL, plugin pihak ketiga ikut wajib AGPL dan itu menekan
+      jumlah orang yang mau menulis plugin. Usulan: paket SDK/antarmukanya
+      diberi lisensi permisif (Apache-2.0) atau AGPL dengan pengecualian
+      tautan, sementara intinya tetap AGPL.
+- [ ] Konsekuensi yang perlu diketahui: syarat App Store Apple selama ini
+      dianggap bertabrakan dengan (A)GPL, jadi versi iOS tidak bisa
+      didistribusikan di sana. Android, desktop, dan unduhan langsung tidak
+      terpengaruh.
+- [ ] Berkas `NOTICE` berisi daftar lisensi dependensi (saat ini semuanya MIT
+      atau BSD-3-Clause, cocok dengan AGPL-3.0).
+
+---
+
 ## Lintas fase — utang teknis
 
 - [x] Uji unit parser Zotero + penulis anotasi (round-trip JSON byte-for-byte)

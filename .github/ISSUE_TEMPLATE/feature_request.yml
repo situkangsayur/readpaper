@@ -1,0 +1,36 @@
+name: Feature request
+description: Something ReadPaper should be able to do
+labels: ["type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please skim [docs/backlog.md](https://github.com/situkangsayur/readpaper/blob/main/docs/backlog.md)
+        first. Much of what is planned is already written down there, often
+        together with the constraint that makes it harder than it looks.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The task, not the solution. What are you doing with your papers when this gets in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+    validations:
+      required: true
+  - type: input
+    id: backlog
+    attributes:
+      label: Related backlog item
+      description: Phase number or heading from docs/backlog.md, if there is one.
+  - type: textarea
+    id: zotero
+    attributes:
+      label: How does Zotero do it?
+      description: |
+        ReadPaper writes back into a real Zotero library, so anything that
+        touches the data has to survive a round trip through Zotero. If Zotero
+        has an equivalent, say how it behaves.
