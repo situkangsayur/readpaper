@@ -284,9 +284,20 @@ merusak berkas aslinya.
 - [ ] **Zoom in / zoom out eksplisit** dengan tombol dan pintasan, plus
       "sesuaikan lebar" dan "sesuaikan halaman". (Tombol pembesaran sudah ada di
       bilah; yang belum adalah tingkat zoom yang terbaca dan tersimpan per paper.)
-- [ ] **Lompat langsung ke halaman**: kotak isian nomor halaman, penggeser
-      halaman, dan panel thumbnail.
-- [ ] **Daftar isi PDF** (outline/bookmark bawaan berkas) sebagai panel navigasi.
+- [x] **Lompat langsung ke halaman**: nomor halaman di bilah atas sekarang
+      bisa diketuk — di situlah mata mencari ketika ingin pindah halaman —
+      membuka kotak isian nomor dan penggeser halaman. Nomor di luar
+      jangkauan ditolak dengan menyebut jangkauannya, bukan dikosongkan
+      diam-diam.
+- [ ] Panel thumbnail halaman (belum).
+- [x] **Daftar isi PDF** (outline bawaan berkas) di sheet yang sama, bertingkat
+      dan menjorok sesuai kedalaman, mengetuk judul melompat ke *destination*
+      aslinya — bukan sekadar ke awal halaman, jadi posisinya tepat. Judul
+      tanpa tujuan tidak bisa diketuk.
+      Diuji lewat widget test dengan outline buatan (6 tes, termasuk
+      pemeriksaan bahwa anak benar-benar menjorok lebih dalam). **Belum diuji
+      di perangkat dengan PDF yang benar-benar punya daftar isi** — berkas uji
+      di ponsel hanya satu halaman tanpa outline.
 - [ ] **Reading mode**: sembunyikan semua panel, gulir menerus, tema terang /
       sepia / gelap, kunci orientasi, layar tetap menyala.
 - [ ] **Baca nyaring (read aloud / TTS)**
