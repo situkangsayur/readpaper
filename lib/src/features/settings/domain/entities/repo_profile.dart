@@ -158,6 +158,7 @@ class AppSettings {
     this.activeProfileId,
     this.themeMode = 'system',
     this.lastAnnotationColor = AnnotationPalette.yellow,
+    this.recents = const <RecentPaper>[],
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -168,12 +169,19 @@ class AppSettings {
     activeProfileId: json['activeProfileId'] as String?,
     themeMode: json['themeMode'] as String? ?? 'system',
     lastAnnotationColor: json['lastAnnotationColor'] as String? ?? AnnotationPalette.yellow,
+    recents: <RecentPaper>[
+      for (final entry in (json['recents'] as List?) ?? const <dynamic>[])
+        if (entry is Map) RecentPaper.fromJson(entry.cast<String, dynamic>()),
+    ],
   );
 
   final List<RepoProfile> profiles;
   final String? activeProfileId;
   final String themeMode;
   final String lastAnnotationColor;
+
+  /// Papers opened before, newest first.
+  final List<RecentPaper> recents;
 
   RepoProfile? get activeProfile {
     if (profiles.isEmpty) return null;
@@ -188,6 +196,7 @@ class AppSettings {
     'activeProfileId': activeProfileId,
     'themeMode': themeMode,
     'lastAnnotationColor': lastAnnotationColor,
+    'recents': recents.map((r) => r.toJson()).toList(),
   };
 
   AppSettings copyWith({
@@ -195,11 +204,110 @@ class AppSettings {
     String? activeProfileId,
     String? themeMode,
     String? lastAnnotationColor,
+    List<RecentPaper>? recents,
     bool clearActive = false,
   }) => AppSettings(
     profiles: profiles ?? this.profiles,
     activeProfileId: clearActive ? null : (activeProfileId ?? this.activeProfileId),
     themeMode: themeMode ?? this.themeMode,
     lastAnnotationColor: lastAnnotationColor ?? this.lastAnnotationColor,
+    recents: recents ?? this.recents,
   );
+
+  /// Puts [entry] at the front, replacing any earlier visit to the same file.
+  ///
+  /// The list is capped because it lives in `config.json`, which is read on
+  /// every launch; an unbounded history would make starting the app slower
+  /// the longer someone used it.
+  static const int maxRecents = 40;
+
+  AppSettings withRecent(RecentPaper entry) {
+    final kept = <RecentPaper>[
+      entry,
+      for (final r in recents)
+        if (!r.sameFileAs(entry)) r,
+    ];
+    return copyWith(recents: kept.length <= maxRecents ? kept : kept.sublist(0, maxRecents));
+  }
+
+  /// Drops history belonging to a profile that no longer exists.
+  AppSettings withoutRecentsOf(String profileId) =>
+      copyWith(recents: recents.where((r) => r.profileId != profileId).toList());
+
+  RecentPaper? recentFor({required String profileId, required String filePath}) {
+    for (final r in recents) {
+      if (r.profileId == profileId && r.filePath == filePath) return r;
+    }
+    return null;
+  }
+}
+
+/// A paper that was opened, so it can be reopened where it was left.
+@immutable
+class RecentPaper {
+  const RecentPaper({
+    required this.profileId,
+    required this.itemKey,
+    required this.itemFilePath,
+    required this.attachmentKey,
+    required this.filePath,
+    required this.title,
+    this.subtitle = '',
+    this.lastPage = 1,
+    required this.openedAt,
+  });
+
+  factory RecentPaper.fromJson(Map<String, dynamic> json) => RecentPaper(
+    profileId: json['profileId'] as String? ?? '',
+    itemKey: json['itemKey'] as String? ?? '',
+    itemFilePath: json['itemFilePath'] as String? ?? '',
+    attachmentKey: json['attachmentKey'] as String? ?? '',
+    filePath: json['filePath'] as String? ?? '',
+    title: json['title'] as String? ?? '',
+    subtitle: json['subtitle'] as String? ?? '',
+    lastPage: (json['lastPage'] as num?)?.toInt() ?? 1,
+    openedAt: DateTime.tryParse(json['openedAt'] as String? ?? '') ?? DateTime(1970),
+  );
+
+  /// Which library it belongs to, so switching repositories does not offer
+  /// papers from a clone that is not mounted.
+  final String profileId;
+
+  final String itemKey;
+  final String itemFilePath;
+  final String attachmentKey;
+
+  /// Absolute path of the attachment; also what identifies the entry.
+  final String filePath;
+
+  final String title;
+  final String subtitle;
+  final int lastPage;
+  final DateTime openedAt;
+
+  bool sameFileAs(RecentPaper other) => profileId == other.profileId && filePath == other.filePath;
+
+  RecentPaper copyWith({int? lastPage, DateTime? openedAt}) => RecentPaper(
+    profileId: profileId,
+    itemKey: itemKey,
+    itemFilePath: itemFilePath,
+    attachmentKey: attachmentKey,
+    filePath: filePath,
+    title: title,
+    subtitle: subtitle,
+    lastPage: lastPage ?? this.lastPage,
+    openedAt: openedAt ?? this.openedAt,
+  );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'profileId': profileId,
+    'itemKey': itemKey,
+    'itemFilePath': itemFilePath,
+    'attachmentKey': attachmentKey,
+    'filePath': filePath,
+    'title': title,
+    'subtitle': subtitle,
+    'lastPage': lastPage,
+    'openedAt': openedAt.toIso8601String(),
+  };
 }

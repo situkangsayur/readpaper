@@ -209,6 +209,10 @@ class _AttachmentCard extends ConsumerWidget {
                       attachmentKey: attachment.key,
                       filePath: file!.path,
                       title: item.title,
+                      subtitle: <String>[
+                        if (item.creatorLabel.isNotEmpty) item.creatorLabel,
+                        if (item.year.isNotEmpty) item.year,
+                      ].join(' · '),
                     ),
                   ),
                 ),
