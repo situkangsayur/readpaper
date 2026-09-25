@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/entities/zotero_item.dart';
 import '../controllers/library_controllers.dart';
+import 'creator_facet_sheet.dart';
 import 'recent_papers_card.dart';
 
 /// The middle pane: every item of the selected collection, with search + sort.
@@ -83,6 +84,66 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
     super.dispose();
   }
 
+  /// Explains the operators, because nothing on screen hints they exist.
+  void _showSearchHelp(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mempersempit pencarian'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Text(
+                'Kata biasa dicari di judul, pengarang, jurnal, tag, koleksi, '
+                'DOI, dan abstrak. Beberapa kata berarti semuanya harus cocok.',
+              ),
+              const SizedBox(height: 14),
+              for (final row in const <(String, String)>[
+                ('pengarang:hendri', 'hanya di nama pengarang'),
+                ('judul:"deep learning"', 'frasa utuh di judul'),
+                ('tahun:2024', 'tahun persis'),
+                ('tag:radiologi', 'hanya di tag'),
+                ('jenis:book', 'jenis item Zotero'),
+                ('jurnal:nature', 'nama publikasi'),
+                ('abstrak:segmentasi', 'hanya di abstrak'),
+                ('koleksi:tesis', 'nama koleksi'),
+                ('doi:10.1000', 'DOI'),
+                ('-astrofisika', 'kecualikan yang mengandungnya'),
+              ])
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      SizedBox(
+                        width: 170,
+                        child: Text(
+                          row.$1,
+                          style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
+                        ),
+                      ),
+                      Expanded(child: Text(row.$2, style: Theme.of(context).textTheme.bodySmall)),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 8),
+              Text(
+                'Nama bidang boleh bahasa Inggris juga: author, title, year, '
+                'type, journal, abstract, collection.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Tutup')),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final sort = ref.watch(itemSortProvider);
@@ -94,11 +155,13 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
             child: TextField(
               controller: _controller,
               decoration: InputDecoration(
-                hintText: 'Cari judul, pengarang, tahun, DOI…',
+                hintText: 'Cari judul, pengarang, abstrak, DOI…',
                 prefixIcon: const Icon(Icons.search, size: 18),
-                suffixIcon: _controller.text.isEmpty
-                    ? null
-                    : IconButton(
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    if (_controller.text.isNotEmpty)
+                      IconButton(
                         icon: const Icon(Icons.clear, size: 16),
                         onPressed: () {
                           _controller.clear();
@@ -106,12 +169,30 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
                           setState(() {});
                         },
                       ),
+                    IconButton(
+                      tooltip: 'Cara mempersempit pencarian',
+                      icon: const Icon(Icons.help_outline, size: 16),
+                      onPressed: () => _showSearchHelp(context),
+                    ),
+                  ],
+                ),
               ),
               onChanged: (value) {
                 ref.read(searchQueryProvider.notifier).set(value);
                 setState(() {});
               },
             ),
+          ),
+          IconButton(
+            tooltip: 'Telusuri berdasarkan pengarang',
+            icon: const Icon(Icons.people_alt_outlined, size: 18),
+            onPressed: () async {
+              final query = await showCreatorFacetSheet(context);
+              if (query == null || !mounted) return;
+              _controller.text = query;
+              ref.read(searchQueryProvider.notifier).set(query);
+              setState(() {});
+            },
           ),
           PopupMenuButton<ItemSort>(
             tooltip: 'Urutkan: ${sort.label}',
