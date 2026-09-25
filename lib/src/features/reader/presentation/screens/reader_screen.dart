@@ -22,6 +22,7 @@ import '../../domain/page_image_export.dart';
 import '../widgets/annotation_sidebar.dart';
 import '../widgets/export_image_sheet.dart';
 import '../widgets/ink_capture_layer.dart';
+import '../widgets/navigation_sheet.dart';
 import '../widgets/selection_action_bar.dart';
 
 /// Reads one PDF attachment: text selection, coloured markers and comments,
@@ -93,6 +94,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   /// While on, dragging draws on the page instead of panning or selecting.
   bool _penMode = false;
+
+  /// The document's own table of contents, empty when it has none.
+  List<PdfOutlineNode> _outline = const <PdfOutlineNode>[];
 
   /// Strokes drawn but not yet saved, and the page they belong to.
   ///
@@ -302,6 +306,22 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     await _persist(annotation, isNew: true, undoable: true);
   }
 
+  /// Opens the jump-to-page and table-of-contents sheet.
+  Future<void> _navigate() async {
+    final target = await showNavigationSheet(
+      context,
+      currentPage: _currentPage,
+      pageCount: _controller.pages.length,
+      outline: _outline,
+    );
+    if (target == null || !mounted) return;
+    if (target.dest != null) {
+      await _controller.goToDest(target.dest);
+      return;
+    }
+    await _controller.goToPage(pageNumber: target.pageNumber!);
+  }
+
   // ------------------------------------------------------------- ekspor
 
   /// Saves the page — or every page — as PNG or JPG, markers included.
@@ -427,9 +447,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleSmall,
             ),
-            Text(
-              '${_annotations.length} anotasi · halaman $_currentPage',
-              style: Theme.of(context).textTheme.labelSmall,
+            // Tappable: the page number is exactly where you look when you
+            // want to be on a different page.
+            InkWell(
+              onTap: _loading ? null : _navigate,
+              borderRadius: BorderRadius.circular(4),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      '${_annotations.length} anotasi · halaman $_currentPage'
+                      '${_controller.isReady ? ' dari ${_controller.pages.length}' : ''}',
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                    const SizedBox(width: 3),
+                    Icon(
+                      Icons.unfold_more,
+                      size: 12,
+                      color: Theme.of(context).textTheme.labelSmall?.color,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -768,6 +809,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       panEnabled: !_markerMode && !_penMode,
       onPageChanged: (pageNumber) {
         if (pageNumber != null && mounted) setState(() => _currentPage = pageNumber);
+      },
+      onViewerReady: (document, controller) async {
+        // Outlines are cheap to read but only exist once the document is
+        // open, so this cannot be part of the annotation load.
+        final outline = await document.loadOutline();
+        if (mounted) setState(() => _outline = outline);
       },
       pageOverlaysBuilder: (context, pageRect, page) => <Widget>[
         Positioned.fill(
