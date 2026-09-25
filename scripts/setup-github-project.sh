@@ -5,7 +5,12 @@
 # are updated rather than duplicated, and the board is only created if a board
 # with the same name is not there yet.
 #
-#   gh auth login          # needs scopes: repo, project, read:org
+# Labelnya hanya butuh `public_repo`. Bagian papan proyek butuh scope
+# `project`, yang merupakan izin tingkat organisasi — kalau tidak ingin
+# memberikannya, lewati saja dan buat papannya dari antarmuka web. Skrip ini
+# memeriksanya sendiri dan melewati bagian papan tanpa membatalkan labelnya.
+#
+#   gh auth login --hostname github.com --scopes public_repo --web
 #   ./scripts/setup-github-project.sh
 set -euo pipefail
 
@@ -48,6 +53,15 @@ label "needs-repro"      "e99695" "Menunggu langkah yang bisa diulang"
 label "blocked"          "000000" "Menunggu keputusan atau pekerjaan lain"
 
 # --- papan proyek -----------------------------------------------------------
+if ! gh auth status 2>&1 | grep -q "project"; then
+  echo
+  echo "Token ini tidak punya scope 'project', jadi papan proyek dilewati."
+  echo "Buat papannya dari web: Projects -> New project -> Board, lalu kolomnya"
+  echo "Inbox -> Ready -> In progress -> Done."
+  echo "Labelnya sudah selesai dibuat."
+  exit 0
+fi
+
 existing="$(gh project list --owner "$OWNER" --format json \
             --jq ".projects[] | select(.title==\"$BOARD\") | .number" 2>/dev/null || true)"
 
