@@ -31,26 +31,27 @@ diubah setelah dipakai orang:
 
 1. ~~**Runtime plugin**~~ — diusulkan: WebAssembly lewat inti Rust (KT-2).
 2. ~~**Jalur Google Docs**~~ — diusulkan: Google Docs API resmi (KT-3).
-3. **Gaya CSL kesehatan nasional Indonesia** (Tahap D) — pakai yang sudah ada
-   atau tulis sendiri lalu ajukan ke repositori CSL. **Masih terbuka.**
-4. **Lisensi SDK plugin** (Tahap E) — AGPL seperti intinya, atau Apache-2.0
-   supaya plugin pihak ketiga bebas memilih. **Masih terbuka.**
+3. ~~**Gaya CSL kesehatan nasional Indonesia**~~ — pakai gaya CSL yang sudah
+   ada di repositori, jangan menulis sendiri.
+4. ~~**Lisensi SDK plugin**~~ — AGPL-3.0, sama dengan intinya, supaya plugin
+   pihak ketiga pun tetap terbuka.
 
-Keputusan yang sudah diusulkan ada di [keputusan-teknis.md](keputusan-teknis.md)
-dan menunggu persetujuan, bukan sudah final.
+Keempatnya disetujui 2026-09-25. Rinciannya di
+[keputusan-teknis.md](keputusan-teknis.md).
 
 ---
 
 ## Bug terbuka
 
-- [ ] **Salin teks menghasilkan papan klip kosong.** Tombol "Salin" sudah ada
-      di bilah pilihan teks (v0.1.9) dan memanggil `copyTextSelection()` milik
-      pdfrx, tapi diuji di perangkat pada 2026-09-25 hasil tempelnya kosong —
-      dibuktikan dengan menempel ke bilah URL peramban, bukan hanya ke dalam
-      aplikasi. Dugaan: pilihan teks sudah dibersihkan sebelum teksnya diambil.
-      Rencana perbaikan: ambil `getSelectedTextRanges()` sendiri lalu panggil
-      `Clipboard.setData` langsung, dan tampilkan jumlah karakter yang disalin
-      supaya kegagalan seperti ini ketahuan tanpa alat bantu.
+- [x] **Salin teks menghasilkan papan klip kosong** — ternyata bukan bug
+      aplikasi, melainkan kesalahan pengujian: tekan-lama jatuh tepat di spasi
+      antara dua kata, jadi yang tersalin memang satu karakter spasi. Ketahuan
+      setelah `hasSelectedText`, jumlah rentang, dan panjang teksnya
+      ditampilkan langsung di layar. Yang tetap diperbaiki: penyalinan
+      sekarang memakai `Clipboard.setData` sendiri dengan cadangan teks yang
+      disimpan selagi pilihan masih hidup, jumlah karakter ditampilkan setelah
+      menyalin, dan memilih spasi memberi pesan yang menyebut sebabnya —
+      sebelumnya papan klip berisi spasi terlihat persis seperti kegagalan.
 - [ ] Menyalin tidak mungkin selama mode penanda aktif (sapuan langsung jadi
       stabilo). Sudah dijelaskan di bilah mode, tapi perlu dilihat lagi apakah
       ada cara yang lebih enak daripada mematikan mode dulu.
@@ -305,9 +306,9 @@ merusak berkas aslinya.
       - **IEEE** (teknik)
       - **Harvard** (beberapa varian institusi) dan gaya humaniora lain
         (APA, MLA, Chicago)
-      - Gaya kesehatan nasional Indonesia — **perlu dicari**: apakah sudah ada
-        berkas CSL-nya, atau harus kita tulis sendiri lalu diajukan ke
-        repositori CSL.
+      - Gaya kesehatan nasional Indonesia — **pakai gaya CSL yang sudah ada**
+        di repositori (diputuskan 2026-09-25). Tugasnya memilih yang paling
+        dekat dan mengujinya, bukan menulis gaya baru.
 - [ ] Mesin sitasi: pakai `citeproc` (port Dart) atau jalankan `citeproc-js`
       di dalam sandbox JS yang sama dengan sistem plugin (Fase 11).
 - [ ] **Ekspor**: BibTeX (`.bib`), BibLaTeX, RIS, CSL-JSON, EndNote XML.
@@ -508,11 +509,10 @@ yang bisa diikuti; yang bisa dicontoh hanya tata letak dan alur kerjanya.
       `scripts/setup-github-project.sh`.
 - [x] **DCO** (`git commit -s`), bukan CLA — supaya tidak ada hak yang
       diserahkan ke siapa pun dan hambatan kontribusi tetap rendah.
-- [ ] **Lisensi API/SDK plugin** (Fase 11) perlu diputuskan terpisah. Kalau
-      seluruhnya AGPL, plugin pihak ketiga ikut wajib AGPL dan itu menekan
-      jumlah orang yang mau menulis plugin. Usulan: paket SDK/antarmukanya
-      diberi lisensi permisif (Apache-2.0) atau AGPL dengan pengecualian
-      tautan, sementara intinya tetap AGPL.
+- [x] **Lisensi API/SDK plugin**: AGPL-3.0, sama dengan intinya (diputuskan
+      2026-09-25). Konsekuensinya disadari — plugin pihak ketiga ikut wajib
+      AGPL dan itu menekan jumlah penulis plugin — tapi syaratnya memang apa
+      pun yang dibangun di atas ReadPaper tetap terbuka, termasuk kalau dijual.
 - [ ] Konsekuensi yang perlu diketahui: syarat App Store Apple selama ini
       dianggap bertabrakan dengan (A)GPL, jadi versi iOS tidak bisa
       didistribusikan di sana. Android, desktop, dan unduhan langsung tidak
