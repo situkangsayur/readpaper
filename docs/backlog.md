@@ -234,8 +234,13 @@ merusak berkas aslinya.
       lewat `FPDFPage_CreateAnnot` / `FPDFAnnot_AddInkStroke` / `encodePdf`,
       berkas asli tidak disentuh.
 - [ ] **Resave** ke berkas yang sama, dengan salinan `.orig.pdf` disimpan lebih dulu.
-- [ ] **Ekspor halaman sebagai PNG / JPG** (satu halaman, rentang halaman, atau
-      hanya area yang dipilih), lengkap dengan coretan.
+- [x] **Ekspor halaman sebagai PNG / JPG**, lengkap dengan stabilo, garis
+      bawah, dan coretan — digambar dengan painter yang sama seperti di layar,
+      supaya tidak pernah menyimpang darinya. Bisa halaman yang sedang dibuka
+      atau seluruh dokumen, pada 72 / 144 / 288 dpi. Disimpan lewat dialog
+      sistem, jadi di Android tidak perlu izin penyimpanan sama sekali.
+      Diuji di perangkat: PNG 1190x1684 berisi teks, stabilo, dan gambar ink.
+- [ ] Ekspor hanya area yang dipilih (sekarang selalu satu halaman penuh).
 - [ ] **Ekspor komentar & saran, dan menggabungkannya kembali ke PDF lama**
       sehingga bisa dimuat lagi tanpa kehilangan apa pun. Formatnya tiga lapis
       — anotasi PDF sungguhan, lampiran JSON di dalam berkas, dan halaman
