@@ -163,3 +163,34 @@ READPAPER_TEST_REPO=~/.local/share/readpaper/repos/<owner>-<repo> \
 # Exercises GitHubApiClient against the live GitHub API (public repo, no token).
 flutter test test/_real_github_api_check.dart
 ```
+
+## Contributing
+
+Patches are welcome, and so are bug reports from people who only use the app.
+[CONTRIBUTING.md](CONTRIBUTING.md) has the short version: fork, branch, keep
+`flutter analyze` clean and `flutter test` green, sign your commits off with
+`-s`, open a pull request. Issues and the board live on
+[GitHub](https://github.com/situkangsayur/readpaper/issues).
+
+## License
+
+ReadPaper is free software under the **GNU Affero General Public License,
+version 3 or later** ([LICENSE](LICENSE)).
+
+In plain terms: you may use it, read it, change it and sell it. What you may
+not do is take it closed. Anyone you hand a copy to — or anyone who uses a
+modified copy of it over a network — has the right to the corresponding source
+under the same licence. That is deliberate: the point of this app is that it
+keeps being something people can build on.
+
+Two consequences worth knowing before you plan on them:
+
+- Apple's App Store terms have long been treated as incompatible with the
+  (A)GPL, so an iOS build could not be shipped there. Android, desktop and
+  direct downloads are unaffected.
+- The plugin API (once it exists) is intended to ship under a permissive
+  licence so that third-party plugins may choose their own terms. That is
+  tracked in the backlog and is not settled yet.
+
+Third-party dependencies keep their own licences; all current ones are MIT or
+BSD-3-Clause, which AGPL-3.0 accepts.

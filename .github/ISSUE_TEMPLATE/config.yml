@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: What is planned, and in what order
+    url: https://github.com/situkangsayur/readpaper/blob/main/docs/backlog.md
+    about: Check the backlog before filing a feature request — it may already be there, with the constraints written down.
+  - name: How to contribute
+    url: https://github.com/situkangsayur/readpaper/blob/main/CONTRIBUTING.md
+    about: Setup, the byte-exact library format rule, and the pull request process.

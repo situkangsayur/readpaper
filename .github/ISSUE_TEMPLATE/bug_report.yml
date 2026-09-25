@@ -1,0 +1,59 @@
+name: Bug report
+description: Something does not work
+labels: ["type:bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the version first — the Profile screen shows it at the
+        bottom. More than one "nothing works" report has turned out to be an
+        older APK.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: From the bottom of the Profile screen, e.g. "ReadPaper 0.1.9 (build 10)"
+      placeholder: ReadPaper 0.0.0 (build 0)
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Where
+      options:
+        - Android phone
+        - Android tablet
+        - Linux desktop
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      placeholder: Moto Pad 60 Neo 11", Android 15
+  - type: textarea
+    id: steps
+    attributes:
+      label: What you did
+      description: Tap by tap, so it can be reproduced.
+      placeholder: |
+        1. Opened a paper
+        2. Pressed "Tandai"
+        3. Swept a finger across a line
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshot, recording, or log
+      description: |
+        A screen recording is worth a page of description. Please do not paste
+        private paper contents — the item key and the shape of the file are
+        enough.

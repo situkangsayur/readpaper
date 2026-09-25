@@ -1,5 +1,5 @@
 name: readpaper
-description: "ReadPaper — Zotero-style paper reader with GitHub sync, highlights and comments."
+description: "ReadPaper — Zotero-style paper reader with GitHub sync, highlights and comments. Free software, AGPL-3.0-or-later."
 publish_to: 'none'
 version: 0.1.9+10
 

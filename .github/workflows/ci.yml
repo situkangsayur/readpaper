@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.5'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Same three commands the contributing guide asks for locally, so a PR
+      # cannot be red here and green on someone's machine.
+      - name: Format
+        run: dart format --line-length 100 --set-exit-if-changed .
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+  # The real-repository and live-API checks are deliberately not run here:
+  # one needs somebody's actual Zotero clone, the other spends GitHub API
+  # quota. They are run by hand before merging anything under
+  # features/library/data/.
