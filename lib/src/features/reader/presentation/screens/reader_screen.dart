@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -17,7 +18,9 @@ import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/annotation_geometry.dart';
 import '../widgets/annotation_editor.dart';
 import '../widgets/annotation_overlay_painter.dart';
+import '../../domain/page_image_export.dart';
 import '../widgets/annotation_sidebar.dart';
+import '../widgets/export_image_sheet.dart';
 import '../widgets/ink_capture_layer.dart';
 import '../widgets/selection_action_bar.dart';
 
@@ -299,6 +302,64 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     await _persist(annotation, isNew: true, undoable: true);
   }
 
+  // ------------------------------------------------------------- ekspor
+
+  /// Saves the page — or every page — as PNG or JPG, markers included.
+  Future<void> _exportImages() async {
+    final pageCount = _controller.pages.length;
+    final choice = await showExportImageSheet(
+      context,
+      currentPage: _currentPage,
+      pageCount: pageCount,
+    );
+    if (choice == null || !mounted) return;
+
+    final pages = choice.wholeDocument
+        ? List<int>.generate(pageCount, (i) => i + 1)
+        : <int>[_currentPage];
+    final base = _fileStem(widget.title);
+
+    var saved = 0;
+    try {
+      for (final pageNumber in pages) {
+        final bytes = await exportPageImage(
+          page: _controller.pages[pageNumber - 1],
+          annotations: _onPage(pageNumber),
+          format: choice.format,
+          scale: choice.scale,
+        );
+        if (!mounted) return;
+
+        final suffix = pages.length > 1 ? '-hal${pageNumber.toString().padLeft(3, '0')}' : '';
+        final uri = await FilePicker.saveFile(
+          fileName: '$base$suffix.${choice.format.extension}',
+          bytes: bytes,
+          mimeType: choice.format.mimeType,
+          dialogTitle: 'Simpan halaman $pageNumber',
+        );
+        // Cancelling one page cancels the rest; carrying on would mean a save
+        // dialog per page with no way out.
+        if (uri == null) break;
+        saved++;
+      }
+    } catch (e) {
+      _say('Gagal menyimpan gambar: $e');
+      return;
+    }
+
+    _say(saved == 0 ? 'Tidak ada yang disimpan' : '$saved berkas disimpan');
+  }
+
+  /// A file name that survives every platform's rules.
+  static String _fileStem(String title) {
+    final cleaned = title
+        .replaceAll(RegExp(r'[^\w\s-]'), '')
+        .trim()
+        .replaceAll(RegExp(r'\s+'), '-');
+    if (cleaned.isEmpty) return 'halaman';
+    return cleaned.length <= 60 ? cleaned : cleaned.substring(0, 60);
+  }
+
   void _say(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -390,6 +451,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               setState(() => _color = value);
               ref.read(workspaceControllerProvider.notifier).setLastAnnotationColor(value);
             },
+          ),
+          IconButton(
+            tooltip: 'Simpan halaman sebagai gambar',
+            icon: const Icon(Icons.image_outlined),
+            onPressed: _loading ? null : _exportImages,
           ),
           IconButton(
             tooltip: 'Perkecil',
