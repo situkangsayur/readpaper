@@ -190,7 +190,18 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
       padahal libflutter.so-nya tidak ada di sana — perangkat 32-bit akan
       memasangnya lalu crash saat dibuka.
 - [ ] Penandatanganan rilis dengan keystore sendiri (sekarang debug key)
-- [ ] **Rilis GitHub**: tag + Release berisi APK supaya bisa diunduh dari GitHub
+- [~] **Rilis GitHub**: tag sudah ada sampai v0.2.2, tapi halaman Releases
+      masih berhenti di v0.1.2 — `git push --tags` hanya membuat tag, Release
+      adalah objek terpisah. `scripts/publish-releases.sh` menyusulnya sekali
+      jalan dan aman diulang.
+      Tertahan pada kredensial: butuh `gh auth login --scopes public_repo`
+      (bukan `repo` penuh, dan **bukan** `project` — dua-duanya menyeret izin
+      organisasi yang tidak diperlukan), atau `GH_TOKEN` berisi fine-grained
+      token yang dibatasi ke repositori ini dengan izin *Contents: read and
+      write*. Fine-grained token adalah yang paling sempit.
+- [ ] Papan GitHub Project: dibuat dari web, bukan dari CLI — scope `project`
+      itu tingkat organisasi dan tidak sepadan untuk sebuah papan. Labelnya
+      tetap bisa dibuat `scripts/setup-github-project.sh`.
 - [x] **Publikasi APK ke `http://10.100.21.22:8899`** (folder `~/apk-share/`,
       dilayani systemd user service `apk-share` di `nvda11-gpu`) — pola yang sama
       dengan Leuwi Panjang:
