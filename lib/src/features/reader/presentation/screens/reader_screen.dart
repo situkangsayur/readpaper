@@ -18,6 +18,7 @@ import '../../domain/annotation_geometry.dart';
 import '../widgets/annotation_editor.dart';
 import '../widgets/annotation_overlay_painter.dart';
 import '../widgets/annotation_sidebar.dart';
+import '../widgets/ink_capture_layer.dart';
 import '../widgets/selection_action_bar.dart';
 
 /// Reads one PDF attachment: text selection, coloured markers and comments,
@@ -86,6 +87,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// The live selection's text, kept current by [_cacheSelectedText].
   String _selectedText = '';
   int _selectionToken = 0;
+
+  /// While on, dragging draws on the page instead of panning or selecting.
+  bool _penMode = false;
+
+  /// Strokes drawn but not yet saved, and the page they belong to.
+  ///
+  /// Zotero keeps a whole drawing as one `ink` annotation holding many paths,
+  /// so strokes are gathered until the pen is put away rather than saved one
+  /// by one. Drawing on another page commits what is pending first.
+  final List<InkPath> _pendingInk = <InkPath>[];
+  int? _inkPage;
+  double _inkWidth = 2;
 
   /// Shown once per opened paper on touch, because nothing else on screen
   /// explains that marking has to be switched on first.
@@ -205,6 +218,87 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _say('${text.characters.length} karakter disalin');
   }
 
+  // ---------------------------------------------------------------- ink
+
+  Future<void> _addStroke(int pageNumber, InkPath stroke) async {
+    // A drawing belongs to one page. Wandering onto the next one saves what
+    // is there before starting a new drawing.
+    if (_inkPage != null && _inkPage != pageNumber && _pendingInk.isNotEmpty) {
+      await _saveInk();
+    }
+    setState(() {
+      _inkPage = pageNumber;
+      _pendingInk.add(stroke);
+    });
+  }
+
+  /// Turning the pen off is also what saves the drawing.
+  Future<void> _togglePen() async {
+    if (_penMode) {
+      setState(() => _penMode = false);
+      await _saveInk();
+      return;
+    }
+    setState(() {
+      _penMode = true;
+      _markerMode = false;
+      _noteMode = false;
+    });
+  }
+
+  void _undoStroke() {
+    if (_pendingInk.isEmpty) return;
+    setState(_pendingInk.removeLast);
+  }
+
+  void _discardInk() {
+    setState(() {
+      _pendingInk.clear();
+      _inkPage = null;
+    });
+  }
+
+  /// Turns the strokes gathered so far into one Zotero `ink` annotation.
+  Future<void> _saveInk() async {
+    final pageNumber = _inkPage;
+    if (pageNumber == null || _pendingInk.isEmpty) return;
+
+    final strokes = List<InkPath>.of(_pendingInk);
+    final page = _controller.pages[pageNumber - 1];
+
+    // Ink has no rects in Zotero's format; the sort index still needs to know
+    // how far down the page the drawing starts.
+    var top = 0.0;
+    for (final stroke in strokes) {
+      for (var i = 0; i < stroke.length; i++) {
+        final y = stroke.yAt(i);
+        if (y > top) top = y;
+      }
+    }
+
+    final annotation = ZoteroAnnotation(
+      key: ZoteroKey.generate(),
+      parentItemKey: widget.attachmentKey,
+      type: AnnotationType.ink,
+      color: _color,
+      pageIndex: pageNumber - 1,
+      paths: strokes,
+      inkWidth: _inkWidth,
+      pageLabel: '$pageNumber',
+      sortIndex: ZoteroAnnotation.buildSortIndex(
+        pageIndex: pageNumber - 1,
+        textOffset: 0,
+        topFromPageTop: page.height - top,
+      ),
+      authorName: '',
+      dateAdded: DateTime.now(),
+      dateModified: DateTime.now(),
+    );
+
+    _discardInk();
+    await _persist(annotation, isNew: true, undoable: true);
+  }
+
   void _say(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -256,7 +350,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 ),
                 onPressed: () => setState(() {
                   _markerMode = !_markerMode;
-                  if (_markerMode) _noteMode = false;
+                  if (_markerMode) {
+                    _noteMode = false;
+                    _penMode = false;
+                  }
                 }),
                 icon: Icon(
                   _markerMode ? Icons.border_color : Icons.border_color_outlined,
@@ -274,8 +371,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             icon: const Icon(Icons.sticky_note_2_outlined),
             onPressed: () => setState(() {
               _noteMode = !_noteMode;
-              if (_noteMode) _markerMode = false;
+              if (_noteMode) {
+                _markerMode = false;
+                _penMode = false;
+              }
             }),
+          ),
+          IconButton(
+            tooltip: _penMode ? 'Selesai menggambar' : 'Tulis atau gambar di halaman',
+            isSelected: _penMode,
+            selectedIcon: const Icon(Icons.draw),
+            icon: const Icon(Icons.draw_outlined),
+            onPressed: _togglePen,
           ),
           _ColorButton(
             color: _color,
@@ -386,6 +493,54 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                             onPressed: () => setState(() => _markerMode = false),
                             child: const Text('Selesai'),
                           ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (_penMode)
+                  Material(
+                    color: scheme.primaryContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+                      child: Row(
+                        children: <Widget>[
+                          Icon(Icons.draw, size: 18, color: scheme.onPrimaryContainer),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _pendingInk.isEmpty
+                                  ? 'Gambar bebas di halaman dengan jari atau stylus.'
+                                  : '${_pendingInk.length} goresan di halaman $_inkPage — '
+                                        'disimpan saat menekan Selesai.',
+                              style: TextStyle(color: scheme.onPrimaryContainer, fontSize: 13),
+                            ),
+                          ),
+                          _WidthButton(
+                            width: _inkWidth,
+                            onSelected: (value) => setState(() => _inkWidth = value),
+                          ),
+                          _ColorButton(
+                            color: _color,
+                            onSelected: (value) {
+                              setState(() => _color = value);
+                              ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .setLastAnnotationColor(value);
+                            },
+                          ),
+                          IconButton(
+                            tooltip: 'Urungkan goresan terakhir',
+                            iconSize: 20,
+                            icon: const Icon(Icons.undo),
+                            onPressed: _pendingInk.isEmpty ? null : _undoStroke,
+                          ),
+                          IconButton(
+                            tooltip: 'Buang semua goresan yang belum disimpan',
+                            iconSize: 20,
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: _pendingInk.isEmpty ? null : _discardInk,
+                          ),
+                          TextButton(onPressed: _togglePen, child: const Text('Selesai')),
                         ],
                       ),
                     ),
@@ -505,9 +660,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       backgroundColor: AppTheme.readerBackground(scheme),
       margin: 10,
       textSelectionParams: _markerMode ? _selectByDrag : _selectByHandles,
-      // While marking, the drag belongs to the selection; panning would fight
-      // it for the same gesture.
-      panEnabled: !_markerMode,
+      // While marking, the drag belongs to the selection; while drawing, to
+      // the pen. Panning would fight either one for the same gesture.
+      panEnabled: !_markerMode && !_penMode,
       onPageChanged: (pageNumber) {
         if (pageNumber != null && mounted) setState(() => _currentPage = pageNumber);
       },
@@ -524,6 +679,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             ),
           ),
         ),
+        if (_penMode)
+          Positioned.fill(
+            child: InkCaptureLayer(
+              // Rebuilt from scratch when the colour or width changes, so the
+              // live stroke never keeps the previous pen's look.
+              key: ValueKey<String>('ink-${page.pageNumber}-$_color-$_inkWidth'),
+              pageWidth: page.width,
+              pageHeight: page.height,
+              color: colorFromHex(_color),
+              strokeWidth: _inkWidth,
+              strokes: _inkPage == page.pageNumber ? _pendingInk : const <InkPath>[],
+              onStrokeFinished: (stroke) => _addStroke(page.pageNumber, stroke),
+            ),
+          ),
       ],
       onGeneralTap: _handleTap,
       buildContextMenu: _buildContextMenu,
@@ -883,6 +1052,59 @@ class _ColorButton extends StatelessWidget {
             ),
           ),
           const Icon(Icons.arrow_drop_down, size: 18),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Picks the pen thickness, in PDF points — the same unit Zotero stores.
+class _WidthButton extends StatelessWidget {
+  const _WidthButton({required this.width, required this.onSelected});
+
+  final double width;
+  final ValueChanged<double> onSelected;
+
+  static const List<double> _choices = <double>[1, 2, 4, 8, 16];
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<double>(
+    tooltip: 'Tebal goresan: ${width.toStringAsFixed(0)}',
+    onSelected: onSelected,
+    itemBuilder: (_) => <PopupMenuEntry<double>>[
+      for (final choice in _choices)
+        PopupMenuItem<double>(
+          value: choice,
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 40,
+                height: choice,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  borderRadius: BorderRadius.circular(choice),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(choice.toStringAsFixed(0)),
+            ],
+          ),
+        ),
+    ],
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 22,
+            height: width.clamp(1, 10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          const Icon(Icons.arrow_drop_down, size: 16),
         ],
       ),
     ),

@@ -214,10 +214,18 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
 Tujuan: halaman PDF bisa diperlakukan seperti papan tulis, tanpa pernah
 merusak berkas aslinya.
 
-- [~] **Gambar bebas (ink)** — model sudah ada (`InkPath`, `paths`, `inkWidth`
-      di `ZoteroAnnotation`; painter sudah menggambarnya). Yang belum: mode pena
-      di bilah pembaca, penangkapan goresan jari/stylus, pilihan ketebalan,
-      undo per goresan, dan penghapus.
+- [x] **Gambar bebas (ink)** — mode pena di bilah pembaca, goresan ditangkap
+      per halaman, pilihan ketebalan (1–16 pt), pilihan warna, undo per
+      goresan, dan buang semua. Satu gambar disimpan sebagai satu anotasi
+      `ink` berisi banyak path, sama seperti Zotero. Diuji di perangkat:
+      tiga goresan, disimpan, lalu bertahan setelah aplikasi ditutup dan
+      dibuka lagi.
+      Satu bug format ikut ketahuan dan diperbaiki: `InkPath.toList()` selalu
+      menghasilkan `double`, jadi akan menulis `[10.0, 20.0]` — persis
+      masalah `72.0` vs `72` yang dulu diperbaiki untuk rects tapi terlewat
+      di ink. Sekarang memakai pembulatan yang sama.
+- [ ] Penghapus: ketuk satu goresan yang sudah tersimpan untuk membuangnya
+      (sekarang penghapusan hanya lewat panel anotasi).
 - [ ] **Kotak teks di atas halaman** (add text): teks bebas yang ditempel pada
       koordinat halaman, ukuran & warna font bisa diatur. Zotero punya tipe
       anotasi `text`; yang sekarang dipakai ReadPaper untuk catatan lepas, jadi
