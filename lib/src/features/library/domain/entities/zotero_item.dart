@@ -185,15 +185,33 @@ class ZoteroItem {
 
   bool get hasReadableFile => attachments.any((a) => a.isAvailable);
 
-  String get searchHaystack => <String>[
-    title,
-    ...creators,
-    year,
-    publication,
-    doi,
-    itemType,
-    ...tags,
-  ].join(' ').toLowerCase();
+  /// True when [needle] — already lowercased — appears anywhere worth
+  /// searching.
+  ///
+  /// Written as a short-circuiting scan rather than one joined string: on a
+  /// library of 1,740 items with abstracts, building that string again for
+  /// every keystroke is the whole cost of searching, and most items fail on
+  /// the title anyway.
+  bool matchesAnywhere(String needle) {
+    if (title.toLowerCase().contains(needle)) return true;
+    for (final creator in creators) {
+      if (creator.toLowerCase().contains(needle)) return true;
+    }
+    if (year.contains(needle)) return true;
+    if (publication.toLowerCase().contains(needle)) return true;
+    if (publisher.toLowerCase().contains(needle)) return true;
+    if (doi.toLowerCase().contains(needle)) return true;
+    if (itemType.toLowerCase().contains(needle)) return true;
+    for (final tag in tags) {
+      if (tag.toLowerCase().contains(needle)) return true;
+    }
+    for (final path in collectionPaths) {
+      if (path.toLowerCase().contains(needle)) return true;
+    }
+    // Abstracts are long and rarely the reason a search matched, so they are
+    // checked last.
+    return abstractNote.toLowerCase().contains(needle);
+  }
 }
 
 /// One creator entry (author, editor, …) of an item.

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/library_index.dart';
+import '../../domain/entities/search_query.dart';
 import '../../domain/entities/zotero_item.dart';
 
 /// How the item list is ordered.
@@ -116,10 +117,7 @@ final visibleItemsProvider = Provider<List<ZoteroItem>>((ref) {
   };
 
   if (query.isNotEmpty) {
-    final terms = query.split(RegExp(r'\s+')).where((t) => t.isNotEmpty).toList();
-    items = items
-        .where((item) => terms.every((term) => item.searchHaystack.contains(term)))
-        .toList(growable: false);
+    items = SearchQuery.parse(query).filter(items);
   }
 
   final sorted = <ZoteroItem>[...items];

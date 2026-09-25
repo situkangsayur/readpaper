@@ -136,11 +136,28 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
 
 - [~] Panel detail item (pengarang, publikasi, DOI, URL, penerbit, tag, koleksi,
       tanggal, dan sisa field Zotero) — sudah ada, masih perlu dirapikan
-- [ ] Pencarian khusus pengarang (facet daftar pengarang + jumlah karyanya;
-      `LibraryIndex.creatorFacets()` sudah disiapkan)
-- [ ] Filter gabungan: pengarang × tahun × jenis item × tag
+- [x] **Abstrak, penerbit, dan nama koleksi ikut dicari** oleh kata biasa.
+      Pencocokannya ditulis sebagai penelusuran bidang satu per satu yang
+      berhenti di kecocokan pertama, bukan satu string gabungan: pada library
+      1.740 item dengan abstrak, membangun string itu ulang tiap ketikan
+      adalah seluruh ongkos pencarian.
+- [x] **Pencarian khusus pengarang**: panel berisi seluruh pengarang dengan
+      jumlah karyanya, bisa disaring dan diurutkan A–Z atau terbanyak;
+      mengetuk nama mengisi kotak cari dengan `pengarang:"Nama"`. Ini
+      menjawab pertanyaan yang tidak bisa dijawab kotak cari — nama harus
+      sudah diketahui sebelum bisa diketik.
+- [x] **Filter gabungan** lewat operator yang bisa digabung bebas, mis.
+      `pengarang:hendri tahun:2024 -tag:draf`.
 - [ ] Halaman "profil pengarang": semua karya, koleksi tempat ia muncul, rentang tahun
-- [ ] Pencarian lanjutan dengan operator (`author:`, `year:`, `tag:`, `type:`)
+- [x] **Pencarian lanjutan dengan operator**: `pengarang:`, `judul:`,
+      `tahun:`, `tag:`, `jenis:`, `jurnal:`, `doi:`, `abstrak:`, `koleksi:` —
+      nama bidang diterima dalam dua bahasa, karena nama bidang diketik dari
+      ingatan dan tidak seharusnya orang menghafal bahasa mana yang dipilih
+      aplikasi ini. Frasa dikutip dengan tanda kutip, `-` mengecualikan, dan
+      prefiks yang belum ada isinya diabaikan supaya daftar tidak berkedip
+      kosong setiap kali titik dua diketik. Ada dialog bantuan di kotak cari,
+      karena tidak ada apa pun di layar yang memberi tahu operator ini ada.
+      15 tes.
 - [ ] Pengayaan metadata dari DOI (Crossref / OpenAlex) untuk item yang datanya kosong
 - [ ] Ekstraksi metadata dari isi PDF ketika item tidak punya metadata sama sekali
 - [ ] Ekspor sitasi per item atau per koleksi — dipindahkan ke Fase 9
