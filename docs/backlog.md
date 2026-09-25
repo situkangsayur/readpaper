@@ -29,10 +29,15 @@ setelah yang lain selesai.
 Tiga keputusan yang harus diambil **sebelum** tahapnya dimulai, karena sulit
 diubah setelah dipakai orang:
 
-1. **Runtime plugin** (Tahap E) — sandbox JS, proses terpisah, atau keduanya.
-2. **Jalur Google Docs** (Tahap G) — ekstensi peramban atau Google Docs API.
+1. ~~**Runtime plugin**~~ — diusulkan: WebAssembly lewat inti Rust (KT-2).
+2. ~~**Jalur Google Docs**~~ — diusulkan: Google Docs API resmi (KT-3).
 3. **Gaya CSL kesehatan nasional Indonesia** (Tahap D) — pakai yang sudah ada
-   atau tulis sendiri lalu ajukan ke repositori CSL.
+   atau tulis sendiri lalu ajukan ke repositori CSL. **Masih terbuka.**
+4. **Lisensi SDK plugin** (Tahap E) — AGPL seperti intinya, atau Apache-2.0
+   supaya plugin pihak ketiga bebas memilih. **Masih terbuka.**
+
+Keputusan yang sudah diusulkan ada di [keputusan-teknis.md](keputusan-teknis.md)
+dan menunggu persetujuan, bukan sudah final.
 
 ---
 
@@ -222,6 +227,12 @@ merusak berkas aslinya.
 - [ ] **Resave** ke berkas yang sama, dengan salinan `.orig.pdf` disimpan lebih dulu.
 - [ ] **Ekspor halaman sebagai PNG / JPG** (satu halaman, rentang halaman, atau
       hanya area yang dipilih), lengkap dengan coretan.
+- [ ] **Ekspor komentar & saran, dan menggabungkannya kembali ke PDF lama**
+      sehingga bisa dimuat lagi tanpa kehilangan apa pun. Formatnya tiga lapis
+      — anotasi PDF sungguhan, lampiran JSON di dalam berkas, dan halaman
+      lampiran "Catatan" di belakang. Lengkapnya di
+      [anotasi-ekspor-pdf.md](anotasi-ekspor-pdf.md), termasuk kenapa halaman
+      belakang dipilih daripada catatan kaki.
 - [ ] Stylus: bedakan jari dan pena (`PointerDeviceKind.stylus`), tekanan jadi
       ketebalan goresan, telapak tangan diabaikan.
 
@@ -348,16 +359,19 @@ pustakanya masuk ke dokumen — dengan ReadPaper berjalan sebagai sumbernya.
       web dan Word desktop** (Windows & macOS). Perlu manifest add-in dan,
       untuk distribusi di luar toko, sideload lewat berbagi folder/registry.
 - [ ] **OnlyOffice**: plugin JavaScript sesuai API plugin OnlyOffice.
-- [ ] **Google Docs**: kendala nyata — Apps Script berjalan di server Google
-      dan **tidak bisa menghubungi `127.0.0.1`**. Dua jalan yang mungkin:
-      (a) ekstensi peramban yang menjembatani halaman Google Docs dengan
-      ReadPaper lokal (pola yang dipakai Zotero), atau (b) ReadPaper menulis
-      langsung ke dokumen lewat Google Docs API dengan OAuth, tanpa add-on.
-      **Perlu diputuskan sebelum dikerjakan.**
+- [ ] **Google Docs**: lewat Google Docs API resmi dengan OAuth PKCE dan scope
+      `drive.file`, bukan ekstensi peramban. Alasan dan langkah lengkapnya —
+      termasuk cara mendapatkan kredensialnya — ada di
+      [google-docs-api.md](google-docs-api.md); keputusannya KT-3 di
+      [keputusan-teknis.md](keputusan-teknis.md).
 - [ ] Uji lintas editor: satu dokumen yang sama disitasi dari dua editor
       berbeda harus tetap bisa diperbarui.
 
 ### 10.4 Aplikasi desktop
+
+Antarmuka tetap Flutter, intinya dipindah ke Rust lewat `flutter_rust_bridge`
+— lihat KT-1 di [keputusan-teknis.md](keputusan-teknis.md) untuk kenapa
+menulis ulang antarmukanya dengan Rust justru merugikan.
 - [ ] **Linux**: x86_64 dan arm64 (AppImage / .deb / Flatpak).
 - [ ] **Windows**: x86_64; arm64 **perlu dicek** dukungan Flutter-nya saat
       dikerjakan.
@@ -397,14 +411,14 @@ intinya — menambah tombol, menu, halaman pengaturan, dan fungsi baru.
       - **API saran (suggestion)**: plugin menempelkan kartu saran pada
         rentang teks tertentu — inilah yang dipakai AI Detector dan Humanizer
         di Fase 12, dan yang membuat keduanya bisa ditulis orang lain juga.
-- [ ] **Runtime**: rekomendasi awal adalah manifest deklaratif untuk UI +
-      sandbox JavaScript (QuickJS lewat `flutter_js`) untuk logika, karena itu
-      satu-satunya pilihan yang jalan sama di Android dan desktop. Kode Dart
-      tidak bisa dimuat saat aplikasi berjalan pada build AOT, jadi plugin
-      berbentuk Dart tidak mungkin. Alternatif untuk plugin berat di desktop:
-      proses terpisah yang berbicara JSON-RPC lewat stdio (pola LSP).
-      **Keputusan runtime harus diambil sebelum API dipublikasikan**, karena
-      setelah itu sulit diubah.
+- [ ] **Runtime: WebAssembly**, dijalankan lewat inti Rust (`wasm_run` →
+      `wasmtime`, dengan `wasmi` sebagai cadangan di platform tanpa JIT).
+      Plugin boleh ditulis dengan bahasa apa pun yang bisa dikompilasi ke WASM.
+      Kode Dart tidak bisa dimuat saat aplikasi berjalan pada build AOT, jadi
+      plugin berbentuk Dart memang tidak mungkin. Rinciannya KT-2 di
+      [keputusan-teknis.md](keputusan-teknis.md) — **keputusan ini yang paling
+      sulit dibatalkan**, karena begitu orang menulis plugin formatnya tidak
+      bisa diganti.
 - [ ] **Izin**: akses jaringan, baca/tulis library, baca berkas lampiran,
       papan klip — dideklarasikan di manifest dan diminta ke pengguna saat
       pemasangan.
@@ -441,6 +455,13 @@ yang bisa diikuti; yang bisa dicontoh hanya tata letak dan alur kerjanya.
 
 ### 12.2 AI Detector
 - [ ] **Dwibahasa sejak awal: Inggris dan Indonesia.**
+- [ ] Riset paper dan rencana teknisnya sudah ditulis di
+      [deteksi-ai.md](deteksi-ai.md): kandidat terkuat adalah pendekatan
+      stylometri ringan (CNN ~25 MB, akurasi 97% pada korpus penulisnya) yang
+      muat di dalam aplikasi; untuk bahasa Indonesia datanya harus dibuat
+      sendiri. **Dua fitur ini saling melawan** — humanizer menjatuhkan
+      akurasi pendeteksi sampai belasan persen, dan itu harus dikatakan di
+      dalam aplikasi.
 - [ ] Skor per paragraf, bukan satu vonis untuk seluruh dokumen.
 - [ ] Wajib menampilkan tingkat keyakinan dan peringatannya: pendeteksi teks AI
       sering salah, terutama pada tulisan teknis dan pada penulis yang bahasa
