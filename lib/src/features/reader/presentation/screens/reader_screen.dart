@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdfrx/pdfrx.dart';
 
@@ -80,6 +83,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// Guards the auto-marker so one finger lift cannot create two highlights.
   bool _marking = false;
 
+  /// The live selection's text, kept current by [_cacheSelectedText].
+  String _selectedText = '';
+  int _selectionToken = 0;
+
   /// Shown once per opened paper on touch, because nothing else on screen
   /// explains that marking has to be switched on first.
   bool _showCoach = isTouchPlatform;
@@ -117,6 +124,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (selection.hasSelectedText != _hasSelection) {
       setState(() => _hasSelection = selection.hasSelectedText);
     }
+    _cacheSelectedText(selection);
+  }
+
+  /// Keeps the selected text at hand while the selection still exists.
+  ///
+  /// Reading it back when a button is pressed is too late: by then the
+  /// selection can already be gone, and the copy silently produced an empty
+  /// clipboard. Fetching it here, while the selection is live, is the only
+  /// moment it is reliably available.
+  void _cacheSelectedText(PdfTextSelection selection) {
+    // Deliberately not cleared when the selection goes away. Tapping a button
+    // in the action bar clears the selection first and runs the action second,
+    // so wiping the cache here would empty it exactly when it is needed. It is
+    // only ever overwritten by the next real selection.
+    if (!selection.hasSelectedText) return;
+    final token = ++_selectionToken;
+    unawaited(
+      selection.getSelectedText().then((text) {
+        // A newer selection may have landed while this was in flight.
+        if (mounted && token == _selectionToken && text.trim().isNotEmpty) {
+          _selectedText = text;
+        }
+      }),
+    );
   }
 
   /// Marking is finished when the finger leaves the glass.
@@ -148,18 +179,37 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// what a selection is for.
   Future<void> _copySelection() async {
     final delegate = _controller.textSelectionDelegate;
-    final copied = await delegate.copyTextSelection();
-    if (!mounted) return;
+    if (!delegate.isCopyAllowed) {
+      _say('Dokumen ini tidak mengizinkan penyalinan');
+      return;
+    }
+
+    // Prefer what is selected right now; fall back to what was cached while
+    // the selection was still live.
+    var text = '';
+    final ranges = await delegate.getSelectedTextRanges();
+    if (ranges.isNotEmpty) text = ranges.map((r) => r.text).join();
+    if (text.trim().isEmpty) text = _selectedText;
+
+    if (text.trim().isEmpty) {
+      // Reachable in practice: a long-press that lands between two words
+      // selects the space, and copying a space looks exactly like a failure.
+      _say('Tidak ada teks terpilih — tekan lama tepat di atas sebuah kata');
+      return;
+    }
+
+    await Clipboard.setData(ClipboardData(text: text));
     await delegate.clearTextSelection();
+    // The character count is not decoration: an empty clipboard used to look
+    // exactly like a successful copy.
+    _say('${text.characters.length} karakter disalin');
+  }
+
+  void _say(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          duration: const Duration(seconds: 2),
-          content: Text(copied ? 'Teks disalin' : 'Dokumen ini tidak mengizinkan penyalinan'),
-        ),
-      );
+      ..showSnackBar(SnackBar(duration: const Duration(seconds: 2), content: Text(message)));
   }
 
   List<ZoteroAnnotation> _onPage(int pageNumber) =>

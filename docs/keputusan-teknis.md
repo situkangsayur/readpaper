@@ -7,7 +7,7 @@ keputusan: apa yang diputuskan, kenapa, dan apa yang dikorbankan.
 
 ## KT-1 — Rust untuk inti, Flutter tetap untuk antarmuka
 
-**Status:** usulan, menunggu persetujuan.
+**Status:** disetujui 2026-09-25.
 
 ### Yang diminta
 
@@ -62,7 +62,7 @@ tertutup.
 
 ## KT-2 — Plugin berbentuk WebAssembly, dijalankan runtime Rust
 
-**Status:** usulan, menunggu persetujuan. Ini keputusan yang **paling sulit
+**Status:** disetujui 2026-09-25. Ini keputusan yang **paling sulit
 dibatalkan**: begitu orang menulis plugin, formatnya tidak bisa diganti.
 
 ### Kenapa bukan Dart
@@ -117,15 +117,21 @@ Dideklarasikan di manifes, ditanyakan saat pemasangan, dan bisa dicabut:
 
 ### Lisensi SDK
 
-Inti ReadPaper AGPL-3.0. Paket antarmuka plugin diusulkan **Apache-2.0**,
-supaya plugin pihak ketiga bebas memilih lisensinya sendiri. Belum diputuskan;
-lihat bagian Lisensi & tata kelola di [backlog](backlog.md).
+**AGPL-3.0, sama dengan intinya** (diputuskan 2026-09-25). Usulan Apache-2.0
+ditolak karena bertabrakan dengan syarat yang sudah ditetapkan: apa pun yang
+dibangun di atas ReadPaper harus tetap terbuka, termasuk plugin pihak ketiga
+dan termasuk kalau dijual.
+
+Biaya yang disadari: sebagian penulis plugin tidak mau terikat AGPL, jadi
+jumlah plugin akan lebih sedikit daripada kalau SDK-nya permisif. Itu
+pertukaran yang memang dipilih. Hak ciptanya di tangan pemilik proyek, jadi
+keputusan ini bisa dilonggarkan kemudian — arah sebaliknya tidak bisa.
 
 ---
 
 ## KT-3 — Google Docs lewat API resmi, bukan ekstensi peramban
 
-**Status:** usulan. Rinciannya di [google-docs-api.md](google-docs-api.md).
+**Status:** disetujui 2026-09-25. Rinciannya di [google-docs-api.md](google-docs-api.md).
 
 Ringkasnya: add-on Google Docs berjalan di server Google dan tidak bisa
 menghubungi ReadPaper di `127.0.0.1`, jadi pola yang dipakai LibreOffice dan
@@ -137,4 +143,12 @@ jalan satunya berarti merawat dua ekstensi peramban selamanya. Scope
 
 ## KT-4 — Pendeteksi AI: ringan di perangkat dulu, layanan belakangan
 
-**Status:** usulan. Rinciannya dan papernya di [deteksi-ai.md](deteksi-ai.md).
+**Status:** disetujui 2026-09-25. Rinciannya dan papernya di
+[deteksi-ai.md](deteksi-ai.md).
+
+Satu hal ditambahkan saat persetujuan: kedua fitur memang bersifat adversarial,
+tapi **dipakai bergantian, tidak pernah dipicu bersamaan**. Tidak ada alur yang
+menjalankan humanizer lalu langsung memeriksanya dengan pendeteksi sendiri.
+Konsekuensinya untuk antarmuka: keduanya panel terpisah dengan sesi terpisah,
+dan menjalankan salah satunya menutup hasil yang lain supaya tidak terbaca
+sebagai "sudah lolos pemeriksaan".

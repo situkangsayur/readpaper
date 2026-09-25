@@ -26,6 +26,13 @@ keluaran LLM. Begitu teks itu lewat humanizer — termasuk humanizer milik
 ReadPaper sendiri — angkanya jatuh. Ini harus dikatakan di dalam aplikasi,
 bukan disembunyikan.
 
+**Keputusan atas hal ini (2026-09-25):** sifat adversarial itu diterima, dan
+kedua fitur **dipakai bergantian, tidak pernah dipicu bersamaan**. Tidak ada
+alur "humanize lalu cek ulang", dan tidak ada angka deteksi yang ditampilkan
+setelah humanizer dijalankan pada teks yang sama dalam satu sesi — karena
+angka itu akan selalu terlihat bagus dan tidak berarti apa-apa. Keduanya panel
+terpisah dengan sesi terpisah.
+
 Masalah kedua, yang lebih serius untuk pengguna kita:
 
 - Studi Stanford 2023: pendeteksi menandai hingga **97%** esai TOEFL
