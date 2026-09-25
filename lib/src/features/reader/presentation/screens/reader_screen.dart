@@ -141,6 +141,27 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
   }
 
+  /// Copies the selection to the clipboard and says so.
+  ///
+  /// Marking is a mode, so the plain selection has to stay good for reading
+  /// work too: quoting a sentence into notes elsewhere is the other half of
+  /// what a selection is for.
+  Future<void> _copySelection() async {
+    final delegate = _controller.textSelectionDelegate;
+    final copied = await delegate.copyTextSelection();
+    if (!mounted) return;
+    await delegate.clearTextSelection();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          content: Text(copied ? 'Teks disalin' : 'Dokumen ini tidak mengizinkan penyalinan'),
+        ),
+      );
+  }
+
   List<ZoteroAnnotation> _onPage(int pageNumber) =>
       _annotations.where((a) => a.pageIndex == pageNumber - 1).toList(growable: false);
 
@@ -268,7 +289,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                             child: Text(
                               'Untuk menandai: tekan "Tandai", pilih warna, lalu sapukan jari '
                               'di atas teks — begitu jari diangkat teks langsung berwarna. '
-                              'Untuk catatan: tekan ikon catatan, lalu ketuk halaman.',
+                              'Untuk menyalin: biarkan "Tandai" mati, tekan lama di teks, '
+                              'lalu pilih Salin. Untuk catatan: tekan ikon catatan, lalu '
+                              'ketuk halaman.',
                               style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5),
                             ),
                           ),
@@ -295,7 +318,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                             child: Text(
                               'Sapukan jari di atas teks — lepas jari, langsung ditandai '
                               '${AnnotationPalette.names[_color] ?? _color.toLowerCase()}. '
-                              'Geser halaman nonaktif selama mode ini.',
+                              'Geser halaman dan salin teks nonaktif; tekan Selesai untuk '
+                              'kembali.',
                               style: TextStyle(color: scheme.onTertiaryContainer, fontSize: 13),
                             ),
                           ),
@@ -416,6 +440,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 AnnotationType.highlight,
                 withComment: true,
               ),
+              onCopy: _controller.textSelectionDelegate.isCopyAllowed ? _copySelection : null,
               onDismiss: () => _controller.textSelectionDelegate.clearTextSelection(),
             ),
           ),

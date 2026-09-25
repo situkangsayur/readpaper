@@ -17,6 +17,7 @@ class SelectionActionBar extends StatelessWidget {
     required this.onUnderline,
     required this.onComment,
     required this.onDismiss,
+    this.onCopy,
     super.key,
   });
 
@@ -26,6 +27,9 @@ class SelectionActionBar extends StatelessWidget {
   final VoidCallback onUnderline;
   final VoidCallback onComment;
   final VoidCallback onDismiss;
+
+  /// Null when the document forbids copying, which hides the button.
+  final VoidCallback? onCopy;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +41,7 @@ class SelectionActionBar extends StatelessWidget {
     // colours scroll sideways and the actions drop their labels when space
     // runs short.
     final available = MediaQuery.sizeOf(context).width - 24;
-    final compact = available < 620;
+    final compact = available < 760;
 
     return Material(
       elevation: 6,
@@ -88,6 +92,13 @@ class SelectionActionBar extends StatelessWidget {
                 compact: compact,
                 onPressed: onComment,
               ),
+              if (onCopy != null)
+                _Action(
+                  icon: Icons.copy_all_outlined,
+                  label: 'Salin',
+                  compact: compact,
+                  onPressed: onCopy!,
+                ),
               IconButton(
                 iconSize: 18,
                 tooltip: 'Batalkan pilihan',
