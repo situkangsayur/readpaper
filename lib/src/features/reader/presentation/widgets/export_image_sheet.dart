@@ -49,6 +49,13 @@ class _ExportSheetState extends State<_ExportSheet> {
     (scale: 4, label: 'Cetak (288 dpi)'),
   ];
 
+  String get _subtitle {
+    if (!_whole) return 'Hanya halaman ${widget.currentPage}';
+    return _format == PageImageFormat.pdf
+        ? 'Satu PDF berisi ${widget.pageCount} halaman'
+        : '${widget.pageCount} berkas, satu per halaman';
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
@@ -59,9 +66,13 @@ class _ExportSheetState extends State<_ExportSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Simpan halaman sebagai gambar', style: text.titleMedium),
+            Text('Simpan salinan beranotasi', style: text.titleMedium),
             const SizedBox(height: 4),
-            Text('Stabilo, garis bawah, dan coretan ikut tergambar.', style: text.bodySmall),
+            Text(
+              'Stabilo, garis bawah, dan coretan ikut tergambar. '
+              'Berkas aslinya tidak disentuh.',
+              style: text.bodySmall,
+            ),
             const SizedBox(height: 16),
 
             Text('Format', style: text.labelLarge),
@@ -94,12 +105,18 @@ class _ExportSheetState extends State<_ExportSheet> {
               value: _whole,
               onChanged: widget.pageCount > 1 ? (v) => setState(() => _whole = v) : null,
               title: const Text('Seluruh dokumen'),
-              subtitle: Text(
-                _whole
-                    ? '${widget.pageCount} berkas, satu per halaman'
-                    : 'Hanya halaman ${widget.currentPage}',
-              ),
+              subtitle: Text(_subtitle),
             ),
+
+            if (_format == PageImageFormat.pdf)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Halaman disimpan sebagai gambar di dalam PDF, jadi teksnya '
+                  'tidak bisa dicari atau disalin lagi di salinan itu.',
+                  style: text.bodySmall,
+                ),
+              ),
 
             if (_whole && widget.pageCount > 40)
               Padding(

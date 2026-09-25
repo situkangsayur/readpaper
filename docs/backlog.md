@@ -230,9 +230,25 @@ merusak berkas aslinya.
       koordinat halaman, ukuran & warna font bisa diatur. Zotero punya tipe
       anotasi `text`; yang sekarang dipakai ReadPaper untuk catatan lepas, jadi
       formatnya sudah kompatibel.
-- [ ] **Simpan sebagai PDF baru** — halaman + coretan dirender ke berkas baru
-      lewat `FPDFPage_CreateAnnot` / `FPDFAnnot_AddInkStroke` / `encodePdf`,
-      berkas asli tidak disentuh.
+- [~] **Simpan sebagai PDF baru** — sudah ada, tapi *rata*: halaman dirender
+      beserta anotasinya lalu ditaruh sebagai gambar di dalam PDF baru, dengan
+      ukuran halaman asli dipertahankan. Berkas asli tidak disentuh sama
+      sekali (hanya dibaca). Penulisnya ditulis sendiri (~130 baris,
+      `simple_pdf_writer.dart`) karena yang dibutuhkan cuma satu XObject
+      gambar per halaman; JPEG-nya disisipkan apa adanya sebagai `DCTDecode`.
+      Diuji: `pdfinfo` membacanya PDF 1.4 A4 yang sah, poppler merendernya
+      lengkap dengan stabilo dan ink.
+      **Yang belum**: lapisan teksnya hilang, jadi salinan itu tidak bisa
+      dicari atau disalin. Versi yang mempertahankan teks harus menulis
+      anotasi PDF sungguhan lewat `FPDFPage_CreateAnnot` /
+      `FPDFAnnot_AddInkStroke` / `FPDF_SaveAsCopy`.
+- [ ] **Bahaya yang menghalangi ekspor PDF yang mempertahankan teks**: PDFium
+      bukan thread-safe dan pdfrx menjalankannya di isolate-nya sendiri, jadi
+      menulis anotasi dari isolate lain bisa merusak proses — bukan sekadar
+      melempar eksepsi. Perlu diputuskan lebih dulu: memakai handle dan worker
+      milik pdfrx (tidak dipublikasikan), atau menulis *incremental update*
+      PDF sendiri di Dart murni — yang justru punya sifat bagus: berkas asli
+      tetap menjadi awalan byte-for-byte dari berkas baru.
 - [ ] **Resave** ke berkas yang sama, dengan salinan `.orig.pdf` disimpan lebih dulu.
 - [x] **Ekspor halaman sebagai PNG / JPG**, lengkap dengan stabilo, garis
       bawah, dan coretan — digambar dengan painter yang sama seperti di layar,

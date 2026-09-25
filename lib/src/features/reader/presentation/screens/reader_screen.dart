@@ -319,6 +319,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         : <int>[_currentPage];
     final base = _fileStem(widget.title);
 
+    if (choice.format == PageImageFormat.pdf) {
+      await _exportPdf(pages: pages, base: base, scale: choice.scale);
+      return;
+    }
+
     var saved = 0;
     try {
       for (final pageNumber in pages) {
@@ -348,6 +353,38 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
 
     _say(saved == 0 ? 'Tidak ada yang disimpan' : '$saved berkas disimpan');
+  }
+
+  /// Writes the chosen pages into one annotated PDF.
+  Future<void> _exportPdf({
+    required List<int> pages,
+    required String base,
+    required double scale,
+  }) async {
+    _say(pages.length == 1 ? 'Menyiapkan PDF…' : 'Menyiapkan PDF ${pages.length} halaman…');
+    try {
+      final bytes = await exportPagesAsPdf(
+        pages: <PdfPage>[for (final n in pages) _controller.pages[n - 1]],
+        annotationsFor: _onPage,
+        scale: scale,
+      );
+      if (!mounted) return;
+      final uri = await FilePicker.saveFile(
+        fileName: '$base-beranotasi.pdf',
+        bytes: bytes,
+        mimeType: 'application/pdf',
+        dialogTitle: 'Simpan salinan beranotasi',
+      );
+      _say(uri == null ? 'Tidak jadi disimpan' : 'PDF disimpan (${_size(bytes.length)})');
+    } catch (e) {
+      _say('Gagal membuat PDF: $e');
+    }
+  }
+
+  static String _size(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).round()} kB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
   /// A file name that survives every platform's rules.
@@ -453,7 +490,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             },
           ),
           IconButton(
-            tooltip: 'Simpan halaman sebagai gambar',
+            tooltip: 'Simpan salinan beranotasi (PNG, JPG, PDF)',
             icon: const Icon(Icons.image_outlined),
             onPressed: _loading ? null : _exportImages,
           ),

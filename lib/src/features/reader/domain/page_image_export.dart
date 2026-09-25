@@ -6,19 +6,31 @@ import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:pdfrx/pdfrx.dart';
 
+import '../../../core/utils/simple_pdf_writer.dart';
 import '../../library/domain/entities/zotero_annotation.dart';
 import '../presentation/widgets/annotation_overlay_painter.dart';
 
 /// What a page is saved as.
 enum PageImageFormat {
   png('PNG', 'png', 'image/png'),
-  jpg('JPG', 'jpg', 'image/jpeg');
+  jpg('JPG', 'jpg', 'image/jpeg'),
+
+  /// One PDF holding the chosen pages as pictures.
+  ///
+  /// The original file is never touched, so this is the "scribble on a copy"
+  /// case. The cost is that the exported pages are images: the text layer is
+  /// gone, so the copy cannot be searched or selected. The export that keeps
+  /// the text and writes real PDF annotations is a separate job — see
+  /// docs/anotasi-ekspor-pdf.md.
+  pdf('PDF', 'pdf', 'application/pdf');
 
   const PageImageFormat(this.label, this.extension, this.mimeType);
 
   final String label;
   final String extension;
   final String mimeType;
+
+  bool get isImage => this != pdf;
 }
 
 /// Renders one page, draws its markers and ink on top, and encodes it.
@@ -69,11 +81,47 @@ Future<Uint8List> exportPageImage({
   try {
     return switch (format) {
       PageImageFormat.png => await _encodePng(composed),
-      PageImageFormat.jpg => await _encodeJpg(composed, jpegQuality),
+      PageImageFormat.jpg || PageImageFormat.pdf => await _encodeJpg(composed, jpegQuality),
     };
   } finally {
     composed.dispose();
   }
+}
+
+/// Renders the given pages and puts them in one PDF, markers included.
+///
+/// The pages are JPEGs embedded untouched, so the file is about the size of
+/// the images. The source document is only read, never written: the original
+/// keeps every scribble off it.
+Future<Uint8List> exportPagesAsPdf({
+  required List<PdfPage> pages,
+  required List<ZoteroAnnotation> Function(int pageNumber) annotationsFor,
+  double scale = 2,
+  int jpegQuality = 88,
+  void Function(int done, int total)? onProgress,
+}) async {
+  final out = <PdfImagePage>[];
+  for (var i = 0; i < pages.length; i++) {
+    final page = pages[i];
+    final jpeg = await exportPageImage(
+      page: page,
+      annotations: annotationsFor(page.pageNumber),
+      format: PageImageFormat.jpg,
+      scale: scale,
+      jpegQuality: jpegQuality,
+    );
+    out.add(
+      PdfImagePage(
+        jpeg: jpeg,
+        pixelWidth: (page.width * scale).round(),
+        pixelHeight: (page.height * scale).round(),
+        widthPt: page.width,
+        heightPt: page.height,
+      ),
+    );
+    onProgress?.call(i + 1, pages.length);
+  }
+  return writeImagePdf(out);
 }
 
 Future<ui.Image> _imageFromBgra(Uint8List pixels, int width, int height) {
