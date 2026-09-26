@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:pdfrx/pdfrx.dart';
 
 import '../../library/domain/entities/zotero_annotation.dart';
+import 'annotation_move.dart';
 
 /// Conversions between Zotero annotation coordinates and pdfrx/Flutter ones.
 ///
@@ -42,7 +43,11 @@ class AnnotationGeometry {
     required PdfPoint point,
     double margin = 2,
   }) {
-    for (final rect in annotation.rects) {
+    // Tinta — coretan dan tanda tangan — tidak menyimpan rects sama sekali di
+    // format Zotero. Sebelum ini artinya tidak pernah bisa dipilih: ditekan
+    // di mana pun tidak terjadi apa-apa, jadi tidak bisa dipindah maupun
+    // dihapus dari halaman.
+    for (final rect in AnnotationMove.rectsOf(annotation)) {
       if (point.x >= rect.left - margin &&
           point.x <= rect.right + margin &&
           point.y >= rect.bottom - margin &&

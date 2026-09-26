@@ -21,7 +21,9 @@ import '../../../library/domain/entities/zotero_item.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/annotation_geometry.dart';
+import '../../domain/annotation_move.dart';
 import '../widgets/annotation_editor.dart';
+import '../widgets/annotation_move_layer.dart';
 import '../widgets/annotation_overlay_painter.dart';
 import '../../domain/page_image_export.dart';
 import '../widgets/annotation_sidebar.dart';
@@ -527,6 +529,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     await _persist(annotation, isNew: true, undoable: true);
   }
 
+  /// Langkah-langkah yang masih bisa diurungkan, yang terbaru di belakang.
+  ///
+  /// Sebelumnya urungkan hanya ada selama beberapa detik di dalam snackbar —
+  /// dan tidak ada sama sekali pada PDF yang dibuka lepas, yang justru tempat
+  /// tanda tangan dan isian formulir dipakai. Sekali salah taruh, satu-satunya
+  /// jalan adalah mencarinya di daftar dan menghapusnya.
+  final List<_UndoStep> _undoSteps = <_UndoStep>[];
+
+  void _pushUndo(String label, Future<void> Function() action) {
+    setState(() {
+      _undoSteps.add(_UndoStep(label, action));
+      // Dua puluh langkah sudah lebih dari yang diingat siapa pun.
+      if (_undoSteps.length > 20) _undoSteps.removeAt(0);
+    });
+  }
+
+  Future<void> _undoLast() async {
+    if (_undoSteps.isEmpty) return;
+    final step = _undoSteps.removeLast();
+    setState(() {});
+    await step.action();
+    if (mounted) _say('Diurungkan: ${step.label}');
+  }
+
   /// True when writing back over [widget.filePath] would achieve nothing.
   ///
   /// Android's file picker hands the app a **copy in its own cache**, not the
@@ -858,6 +884,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       _pendingSignature = null;
                     }
                   }),
+                ),
+                IconButton(
+                  tooltip: _undoSteps.isEmpty
+                      ? 'Belum ada yang bisa diurungkan'
+                      : 'Urungkan: ${_undoSteps.last.label}',
+                  icon: const Icon(Icons.undo),
+                  onPressed: _undoSteps.isEmpty ? null : _undoLast,
                 ),
                 IconButton(
                   tooltip: 'Tanda tangan',
@@ -1253,6 +1286,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             ),
           ),
         ),
+        // Anotasi yang sedang dipilih bisa digeser, selama tidak ada alat
+        // lain yang aktif — dua hal yang menerima seretan di tempat yang sama
+        // akan saling merebut.
+        if (!_penMode && !_markerMode)
+          ..._moveLayersFor(page: page, pageRect: pageRect),
         if (_penMode)
           Positioned.fill(
             child: InkCaptureLayer(
@@ -1268,10 +1306,94 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             ),
           ),
       ],
+      // Bilah gulir yang bisa diseret: paper 40 halaman tidak pantas
+      // dijelajahi dengan sapuan jari satu layar demi satu layar.
+      viewerOverlayBuilder: (context, size, handleLinkTap) => <Widget>[
+        PdfViewerScrollThumb(
+          controller: _controller,
+          thumbSize: const Size(46, 38),
+          thumbBuilder: (context, thumbSize, pageNumber, controller) => Material(
+            color: Theme.of(context).colorScheme.secondary,
+            borderRadius: BorderRadius.circular(6),
+            child: Center(
+              child: Text(
+                '${pageNumber ?? 1}',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSecondary,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
       onGeneralTap: _handleTap,
       buildContextMenu: _buildContextMenu,
     ),
   );
+
+  /// Kotak geser untuk anotasi terpilih yang ada di halaman ini.
+  List<Widget> _moveLayersFor({required PdfPage page, required Rect pageRect}) {
+    final key = _selectedAnnotationKey;
+    if (key == null) return const <Widget>[];
+
+    final annotation = _onPage(page.pageNumber).where((a) => a.key == key).firstOrNull;
+    if (annotation == null) return const <Widget>[];
+
+    final rects = AnnotationMove.rectsOf(annotation);
+    if (rects.isEmpty) return const <Widget>[];
+
+    final scaleX = pageRect.width / page.width;
+    final scaleY = pageRect.height / page.height;
+
+    var bounds = Rect.zero;
+    for (final rect in rects) {
+      final canvas = Rect.fromLTRB(
+        rect.left * scaleX,
+        (page.height - rect.top) * scaleY,
+        rect.right * scaleX,
+        (page.height - rect.bottom) * scaleY,
+      );
+      bounds = bounds == Rect.zero ? canvas : bounds.expandToInclude(canvas);
+    }
+
+    return <Widget>[
+      AnnotationMoveLayer(
+        key: ValueKey<String>('geser-$key-${annotation.dateModified}'),
+        bounds: bounds,
+        onDelete: () => _deleteAnnotation(annotation),
+        onMoved: (delta) => _moveAnnotation(
+          annotation,
+          page: page,
+          dx: delta.dx / scaleX,
+          dy: -delta.dy / scaleY,
+        ),
+      ),
+    ];
+  }
+
+  /// Memindahkan anotasi, dan mencatatnya sebagai langkah yang bisa
+  /// diurungkan.
+  Future<void> _moveAnnotation(
+    ZoteroAnnotation annotation, {
+    required PdfPage page,
+    required double dx,
+    required double dy,
+  }) async {
+    final moved = AnnotationMove.shift(
+      annotation,
+      dx: dx,
+      dy: dy,
+      pageWidth: page.width,
+      pageHeight: page.height,
+    );
+    if (identical(moved, annotation)) return;
+
+    _pushUndo('memindahkan anotasi', () async {
+      await _persist(annotation, isNew: false, recordUndo: false);
+    });
+    await _persist(moved, isNew: false, recordUndo: false);
+  }
 
   // ------------------------------------------------------------------ gestures
 
@@ -1547,6 +1669,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
     if (confirmed != true) return;
 
+    // `recordUndo: false`: mengembalikannya bukan langkah baru yang perlu
+    // diurungkan lagi.
+    _pushUndo(
+      'menghapus anotasi',
+      () => _persist(annotation, isNew: true, recordUndo: false),
+    );
+    await _removeAnnotation(annotation);
+  }
+
+  /// Menghapus tanpa bertanya. Dipakai penghapusan yang sudah disetujui dan
+  /// oleh urungkan.
+  Future<void> _removeAnnotation(ZoteroAnnotation annotation) async {
+    final item = _detail?.item;
+
     if (widget.isStandalone) {
       setState(() {
         _annotations = _annotations.where((a) => a.key != annotation.key).toList();
@@ -1555,6 +1691,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       });
       return;
     }
+    if (item == null) return;
 
     final removed = await ref
         .read(workspaceControllerProvider.notifier)
@@ -1578,7 +1715,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     ZoteroAnnotation annotation, {
     required bool isNew,
     bool undoable = false,
+    bool recordUndo = true,
   }) async {
+    if (isNew && recordUndo) {
+      _pushUndo('menambah ${annotation.type.wire}', () => _removeAnnotation(annotation));
+    }
     if (widget.isStandalone) {
       setState(() {
         _annotations = <ZoteroAnnotation>[
@@ -1767,4 +1908,13 @@ class _ReadingChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Satu langkah yang bisa diurungkan.
+class _UndoStep {
+  const _UndoStep(this.label, this.action);
+
+  /// Disebut apa saat diurungkan, supaya yang menekan tahu apa yang kembali.
+  final String label;
+  final Future<void> Function() action;
 }

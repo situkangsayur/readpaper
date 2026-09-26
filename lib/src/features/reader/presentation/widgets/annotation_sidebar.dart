@@ -128,19 +128,20 @@ class _AnnotationCard extends StatelessWidget {
                 ],
               ),
             ),
+            // Sasaran jari, bukan sasaran tetikus: 16 piksel terlalu kecil
+            // untuk ditekan di tablet tanpa meleset ke kartu di sebelahnya.
             Column(
               children: <Widget>[
                 IconButton(
-                  iconSize: 16,
-                  visualDensity: VisualDensity.compact,
+                  iconSize: 22,
                   tooltip: 'Ubah komentar / warna',
                   icon: const Icon(Icons.edit_note),
                   onPressed: onEdit,
                 ),
                 IconButton(
-                  iconSize: 16,
-                  visualDensity: VisualDensity.compact,
+                  iconSize: 22,
                   tooltip: 'Hapus',
+                  color: Theme.of(context).colorScheme.error,
                   icon: const Icon(Icons.delete_outline),
                   onPressed: onDelete,
                 ),
