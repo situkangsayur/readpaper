@@ -1,4 +1,7 @@
+import 'package:collection/collection.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../reader/presentation/screens/reader_screen.dart';
@@ -182,6 +185,35 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
                 setState(() {});
               },
             ),
+          ),
+          IconButton(
+            tooltip: 'Buka PDF dari perangkat ini',
+            icon: const Icon(Icons.file_open_outlined, size: 18),
+            onPressed: () async {
+              // Any PDF, not only the library's: signing a form or marking up
+              // a file someone sent is the same job, and there is no reason
+              // to make it a different app.
+              final picked = await FilePicker.pickFiles(
+                type: FileType.custom,
+                allowedExtensions: <String>['pdf'],
+                dialogTitle: 'Pilih PDF',
+              );
+              final path = picked.singleOrNull?.path;
+              if (path == null || !context.mounted) return;
+              await Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ReaderScreen(
+                    itemKey: '',
+                    // Empty means standalone: nothing is written back to a
+                    // Zotero item, and saving produces a PDF instead.
+                    itemFilePath: '',
+                    attachmentKey: '',
+                    filePath: path,
+                    title: p.basenameWithoutExtension(path),
+                  ),
+                ),
+              );
+            },
           ),
           IconButton(
             tooltip: 'Telusuri berdasarkan pengarang',

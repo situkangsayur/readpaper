@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -25,6 +29,7 @@ import '../widgets/export_image_sheet.dart';
 import '../widgets/ink_capture_layer.dart';
 import '../widgets/navigation_sheet.dart';
 import '../widgets/page_tint.dart';
+import '../widgets/signature_pad.dart';
 import '../widgets/selection_action_bar.dart';
 
 /// Reads one PDF attachment: text selection, coloured markers and comments,
@@ -49,6 +54,13 @@ class ReaderScreen extends ConsumerStatefulWidget {
 
   /// Author and year, kept only so the history list can show them.
   final String subtitle;
+
+  /// Opened as a loose file rather than from the library.
+  ///
+  /// There is no Zotero item to write into, so markers, ink and notes live in
+  /// memory until the file is saved as a new PDF. Everything else about the
+  /// reader is the same.
+  bool get isStandalone => itemFilePath.isEmpty;
 
   @override
   ConsumerState<ReaderScreen> createState() => _ReaderScreenState();
@@ -110,6 +122,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// The library this paper belongs to, captured once it is known.
   String? _profileId;
 
+  /// True when a standalone file has changes not yet written to disk.
+  bool _unsaved = false;
+
+  /// A signature drawn on the pad, waiting for a tap to say where it goes.
+  List<InkPath>? _pendingSignature;
+
+  /// Armed by the text button: the next tap opens a box to type into.
+  bool _textMode = false;
+
   /// Hides everything but the page.
   bool _readingMode = false;
 
@@ -162,6 +183,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   Future<void> _load() async {
+    if (widget.isStandalone) {
+      // Nothing to read: a loose PDF carries no Zotero annotations, and the
+      // ones made here are held in memory.
+      if (mounted) setState(() => _loading = false);
+      return;
+    }
     try {
       final detail = await ref.read(libraryRepositoryProvider).loadItem(widget.itemFilePath);
       if (!mounted) return;
@@ -446,6 +473,164 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     await _controller.goToPage(pageNumber: target.pageNumber!);
   }
 
+  // -------------------------------------------------- tanda tangan & simpan
+
+  /// Opens the pad, then waits for a tap to say where the signature goes.
+  Future<void> _drawSignature() async {
+    final strokes = await showSignaturePad(context);
+    if (strokes == null || !mounted) return;
+    setState(() {
+      _pendingSignature = strokes;
+      _markerMode = false;
+      _noteMode = false;
+      _penMode = false;
+      _textMode = false;
+    });
+    _say('Ketuk halaman di tempat tanda tangannya ditaruh');
+  }
+
+  Future<void> _placeSignatureAt({
+    required PdfPage page,
+    required PdfPoint point,
+    required List<InkPath> signature,
+  }) async {
+    // A signature about a third of the page wide reads right on A4 and still
+    // fits in the space a form leaves for one.
+    final width = page.width * 0.32;
+    final placed = placeSignature(signature, x: point.x, y: point.y, width: width);
+
+    var top = 0.0;
+    for (final stroke in placed) {
+      for (var i = 0; i < stroke.length; i++) {
+        if (stroke.yAt(i) > top) top = stroke.yAt(i);
+      }
+    }
+
+    final annotation = ZoteroAnnotation(
+      key: ZoteroKey.generate(),
+      parentItemKey: widget.attachmentKey,
+      type: AnnotationType.ink,
+      color: AnnotationPalette.ink,
+      pageIndex: page.pageNumber - 1,
+      paths: placed,
+      inkWidth: 1.4,
+      pageLabel: '${page.pageNumber}',
+      sortIndex: ZoteroAnnotation.buildSortIndex(
+        pageIndex: page.pageNumber - 1,
+        textOffset: 0,
+        topFromPageTop: page.height - top,
+      ),
+      authorName: '',
+      dateAdded: DateTime.now(),
+      dateModified: DateTime.now(),
+    );
+    await _persist(annotation, isNew: true, undoable: true);
+  }
+
+  /// True when writing back over [widget.filePath] would achieve nothing.
+  ///
+  /// Android's file picker hands the app a **copy in its own cache**, not the
+  /// file the person chose. Overwriting that copy looks like it worked and
+  /// changes nothing they can see, so on Android saving always goes through
+  /// the system's save dialog instead.
+  bool get _canWriteInPlace {
+    if (Platform.isAndroid || Platform.isIOS) return false;
+    final path = widget.filePath;
+    return !path.contains('/cache/') && !path.contains('/file_picker/');
+  }
+
+  /// Saves the annotated PDF wherever the platform allows.
+  Future<void> _savePdf() => _canWriteInPlace ? _saveOverOriginal() : _savePdfThroughDialog();
+
+  /// Writes the PDF through the system save dialog.
+  Future<void> _savePdfThroughDialog() async {
+    _say('Menyiapkan PDF…');
+    try {
+      final bytes = await _annotatedPdf();
+      if (!mounted) return;
+      final uri = await FilePicker.saveFile(
+        fileName: '${_fileStem(widget.title)}-terisi.pdf',
+        bytes: bytes,
+        mimeType: 'application/pdf',
+        dialogTitle: 'Simpan PDF',
+      );
+      if (uri == null) {
+        _say('Tidak jadi disimpan');
+        return;
+      }
+      setState(() => _unsaved = false);
+      _say('PDF disimpan (${_size(bytes.length)})');
+    } catch (e) {
+      _say('Gagal menyimpan: $e');
+    }
+  }
+
+  /// Writes the annotated document back over the file that was opened.
+  ///
+  /// The original is copied to `<nama>.asli.pdf` first. Flattening is not
+  /// reversible, so the untouched version has to survive somewhere.
+  Future<void> _saveOverOriginal() async {
+    final source = File(widget.filePath);
+    final backup = File('${widget.filePath.replaceAll(RegExp(r'\.pdf$'), '')}.asli.pdf');
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Simpan ke berkas ini?'),
+        content: Text(
+          'Anotasi akan digambar menjadi bagian halaman, jadi tidak bisa '
+          'disunting lagi setelah ini.\n\n'
+          'Versi aslinya disimpan sebagai ${p.basename(backup.path)}.',
+        ),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final bytes = await _annotatedPdf();
+      if (!backup.existsSync()) await source.copy(backup.path);
+      await source.writeAsBytes(bytes);
+      if (!mounted) return;
+      setState(() => _unsaved = false);
+      _say('Tersimpan (asli: ${p.basename(backup.path)})');
+    } catch (e) {
+      _say('Gagal menyimpan: $e');
+    }
+  }
+
+  /// Renders every page with its annotations into one PDF.
+  Future<Uint8List> _annotatedPdf() =>
+      exportPagesAsPdf(pages: _controller.pages, annotationsFor: _onPage, scale: 2);
+
+  Future<void> _shareAnnotated() async {
+    _say('Menyiapkan berkas…');
+    try {
+      final bytes = await _annotatedPdf();
+      // Shared from a temporary copy so the original is never handed out by
+      // accident, and so an unsaved document can still be sent.
+      final dir = await getTemporaryDirectory();
+      final file = File(p.join(dir.path, '${_fileStem(widget.title)}.pdf'));
+      await file.writeAsBytes(bytes);
+      if (!mounted) return;
+      await SharePlus.instance.share(
+        ShareParams(
+          files: <XFile>[XFile(file.path, mimeType: 'application/pdf')],
+          subject: widget.title,
+          text: widget.title,
+        ),
+      );
+    } catch (e) {
+      _say('Gagal membagikan: $e');
+    }
+  }
+
   // ------------------------------------------------------------- ekspor
 
   /// Saves the page — or every page — as PNG or JPG, markers included.
@@ -584,6 +769,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Text(
+                            '${_unsaved ? '• ' : ''}'
                             '${_annotations.length} anotasi · halaman $_currentPage'
                             '${_controller.isReady ? ' dari ${_controller.pages.length}' : ''}',
                             style: Theme.of(context).textTheme.labelSmall,
@@ -655,6 +841,73 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     setState(() => _color = value);
                     ref.read(workspaceControllerProvider.notifier).setLastAnnotationColor(value);
                   },
+                ),
+                IconButton(
+                  tooltip: _textMode
+                      ? 'Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)'
+                      : 'Isi teks di halaman — untuk mengisi formulir',
+                  isSelected: _textMode,
+                  selectedIcon: const Icon(Icons.text_fields),
+                  icon: const Icon(Icons.text_fields_outlined),
+                  onPressed: () => setState(() {
+                    _textMode = !_textMode;
+                    if (_textMode) {
+                      _markerMode = false;
+                      _noteMode = false;
+                      _penMode = false;
+                      _pendingSignature = null;
+                    }
+                  }),
+                ),
+                IconButton(
+                  tooltip: 'Tanda tangan',
+                  isSelected: _pendingSignature != null,
+                  selectedIcon: const Icon(Icons.draw),
+                  icon: const Icon(Icons.gesture),
+                  onPressed: _loading ? null : _drawSignature,
+                ),
+                PopupMenuButton<String>(
+                  tooltip: 'Simpan dan bagikan',
+                  icon: const Icon(Icons.ios_share),
+                  onSelected: (choice) => switch (choice) {
+                    'simpan' => _savePdf(),
+                    'simpan-sebagai' => _exportImages(),
+                    _ => _shareAnnotated(),
+                  },
+                  itemBuilder: (_) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'simpan',
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.save_outlined),
+                        title: Text(_canWriteInPlace ? 'Simpan ke berkas ini' : 'Simpan PDF'),
+                        subtitle: Text(
+                          _canWriteInPlace ? 'yang asli disalin dulu' : 'pilih tempatnya sendiri',
+                        ),
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'simpan-sebagai',
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.save_as_outlined),
+                        title: Text('Simpan sebagai…'),
+                        subtitle: Text('PDF, PNG, atau JPG'),
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'bagikan',
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.share_outlined),
+                        title: Text('Bagikan'),
+                        subtitle: Text('chat, surel, atau aplikasi lain'),
+                      ),
+                    ),
+                  ],
                 ),
                 IconButton(
                   tooltip: 'Warna halaman: ${_tint.label}',
@@ -1049,6 +1302,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       }
     }
 
+    final signature = _pendingSignature;
+    if (signature != null && details.type == PdfViewerGeneralTapType.tap) {
+      setState(() => _pendingSignature = null);
+      _placeSignatureAt(page: hit.page, point: hit.offset, signature: signature);
+      return true;
+    }
+
+    if (_textMode && details.type == PdfViewerGeneralTapType.tap) {
+      setState(() => _textMode = false);
+      _createNoteAt(page: hit.page, point: hit.offset, asText: true);
+      return true;
+    }
+
     if (_noteMode && details.type == PdfViewerGeneralTapType.tap) {
       setState(() => _noteMode = false);
       _createNoteAt(page: hit.page, point: hit.offset);
@@ -1179,17 +1445,35 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   /// Long-press on empty space drops a Zotero `text` note on the page.
-  Future<void> _createNoteAt({required PdfPage page, required PdfPoint point}) async {
+  /// Puts a text box on the page.
+  ///
+  /// [asText] is the form-filling case: the words are drawn onto the page
+  /// rather than shown as a sticky note, which is what makes it possible to
+  /// fill in a PDF that has no form fields of its own.
+  Future<void> _createNoteAt({
+    required PdfPage page,
+    required PdfPoint point,
+    bool asText = false,
+  }) async {
     final result = await showAnnotationEditor(
       context,
-      initialColor: _color,
-      title: 'Catatan di halaman ${page.pageNumber}',
+      initialColor: asText ? AnnotationPalette.ink : _color,
+      title: asText
+          ? 'Isi teks di halaman ${page.pageNumber}'
+          : 'Catatan di halaman ${page.pageNumber}',
+      fieldLabel: asText ? 'Teks' : 'Komentar',
+      fieldHint: asText ? 'Yang ditulis di halaman…' : 'Catatan untuk bagian ini…',
     );
     if (result == null || result.action != AnnotationEditorAction.save) return;
     if (result.comment.trim().isEmpty) return;
 
-    const noteWidth = 150.0;
-    const noteHeight = 16.0;
+    // The box has to fit what was typed, or a long answer would be clipped
+    // at the edge of a fixed rectangle and look like it was lost.
+    const fontSize = 12.0;
+    final lines = result.comment.split('\n');
+    final longest = lines.fold<int>(0, (m, l) => l.length > m ? l.length : m);
+    final noteWidth = asText ? (longest * fontSize * 0.52).clamp(40.0, page.width) : 150.0;
+    final noteHeight = asText ? lines.length * fontSize * 1.18 : 16.0;
     final rect = AnnotationRect(point.x, point.y - noteHeight, point.x + noteWidth, point.y);
 
     final annotation = ZoteroAnnotation(
@@ -1206,7 +1490,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         textOffset: 0,
         topFromPageTop: page.height - rect.top,
       ),
-      rawPosition: const <String, dynamic>{'fontSize': 14, 'rotation': 0},
+      rawPosition: const <String, dynamic>{'fontSize': fontSize, 'rotation': 0},
       dateAdded: DateTime.now(),
       dateModified: DateTime.now(),
     );
@@ -1263,6 +1547,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
     if (confirmed != true) return;
 
+    if (widget.isStandalone) {
+      setState(() {
+        _annotations = _annotations.where((a) => a.key != annotation.key).toList();
+        _unsaved = true;
+        _selectedAnnotationKey = null;
+      });
+      return;
+    }
+
     final removed = await ref
         .read(workspaceControllerProvider.notifier)
         .deleteAnnotation(item: item, annotation: annotation);
@@ -1286,6 +1579,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     required bool isNew,
     bool undoable = false,
   }) async {
+    if (widget.isStandalone) {
+      setState(() {
+        _annotations = <ZoteroAnnotation>[
+          for (final a in _annotations)
+            if (a.key != annotation.key) a,
+          annotation,
+        ];
+        _unsaved = true;
+        _selectedAnnotationKey = annotation.key;
+      });
+      _say(undoable ? 'Ditambahkan — belum disimpan ke berkas' : 'Ditambahkan');
+      return;
+    }
+
     final item = _detail?.item;
     if (item == null) return;
     final saved = await ref
