@@ -54,6 +54,16 @@ class AnnotationOverlayPainter extends CustomPainter {
         case AnnotationType.note || AnnotationType.text:
           for (final rect in annotation.rects) {
             final local = _toLocal(rect, scaleX, scaleY);
+            final content = annotation.comment.trim();
+
+            // A `text` annotation carrying words is someone filling in a form
+            // or labelling a figure, so the words are drawn. An empty one is
+            // a sticky note, and stays a coloured marker.
+            if (annotation.type == AnnotationType.text && content.isNotEmpty) {
+              _drawText(canvas, content, local, annotation, color, scaleX, scaleY, isSelected);
+              continue;
+            }
+
             final box = RRect.fromRectAndRadius(local.inflate(1), Radius.circular(2 * scaleX));
             canvas.drawRRect(box, Paint()..color = color.withValues(alpha: 0.28));
             canvas.drawRRect(
@@ -131,6 +141,46 @@ class AnnotationOverlayPainter extends CustomPainter {
       result = result.expandToInclude(_toLocal(rect, scaleX, scaleY));
     }
     return result;
+  }
+
+  /// Paints the words of a filled-in text box onto the page.
+  ///
+  /// The font size is the one stored with the annotation, scaled the same way
+  /// the page is, so what is on screen is what lands in an exported PDF.
+  void _drawText(
+    Canvas canvas,
+    String content,
+    Rect local,
+    ZoteroAnnotation annotation,
+    Color color,
+    double scaleX,
+    double scaleY,
+    bool isSelected,
+  ) {
+    final fontSize = ((annotation.rawPosition?['fontSize'] as num?)?.toDouble() ?? 12) * scaleY;
+
+    // Only a hint of a box: a form that has been filled in should read as
+    // filled in, not as covered in stickers.
+    if (isSelected) {
+      canvas.drawRect(
+        local.inflate(2),
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5 * scaleX,
+      );
+    }
+
+    final painter = TextPainter(
+      text: TextSpan(
+        text: content,
+        style: TextStyle(color: color, fontSize: fontSize, height: 1.15),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: null,
+    )..layout(maxWidth: local.width <= 1 ? double.infinity : local.width);
+
+    painter.paint(canvas, Offset(local.left, local.top));
   }
 
   @override

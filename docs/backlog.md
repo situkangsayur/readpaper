@@ -582,6 +582,60 @@ yang bisa diikuti; yang bisa dicontoh hanya tata letak dan alur kerjanya.
 
 ---
 
+## Fase 13 — PDF lepas: buka, isi, tanda tangani, bagikan
+
+Diminta sebagai prioritas tinggi. Menandai PDF yang dikirim orang, mengisi
+formulir, dan menandatanganinya adalah pekerjaan yang sama dengan membaca
+paper — tidak ada alasan itu jadi aplikasi lain.
+
+- [x] **Buka PDF apa pun** dari perangkat, lewat tombol di daftar paper.
+      Anotasinya ditahan di memori karena tidak ada item Zotero untuk
+      ditulisi; selebihnya pembacanya sama persis
+- [x] **Isi teks di halaman** (tombol Tt) — untuk mengisi formulir PDF yang
+      tidak punya field sendiri. Kotaknya mengikuti panjang teks supaya
+      jawaban panjang tidak terpotong
+- [x] **Papan tanda tangan**: ditulis besar di lembar bersih lalu diperkecil
+      ke tempatnya. Menandatangani langsung di halaman pada skala aslinya
+      menghasilkan coretan gemetar, dan salah sedikit berarti mengurungkan
+      di atas dokumen
+- [x] **Simpan PDF** dan **Simpan sebagai…** (PDF, PNG, JPG)
+- [x] **Bagikan** ke chat, surel, atau aplikasi lain
+- [ ] **Tambahkan ke koleksi tertentu supaya ikut sync GitHub** — diminta,
+      belum dikerjakan. Ini bukan tempelan: perlu membuat berkas item Zotero
+      baru, menyalin PDF-nya ke `attachments/`, dan menyunting
+      `collections.json`, semuanya **byte-for-byte** seperti tulisan plugin
+      `zotero-github-sync`. Format itu sudah diuji ketat untuk *menyunting*
+      item; *membuat* item baru adalah jalur yang belum pernah ditempuh dan
+      pantas mendapat uji round-trip sendiri sebelum menyentuh library
+      sungguhan
+- [ ] Sunting kembali teks yang sudah ditaruh (sekarang harus dihapus lalu
+      dibuat ulang)
+- [ ] Simpan tanda tangan supaya tidak perlu digambar ulang tiap kali
+
+### Batasan Android yang ditemukan saat menguji
+
+- [x] **"Simpan ke berkas ini" mustahil di Android.** Pemilih berkas Android
+      menyerahkan **salinan di cache aplikasi**, bukan berkas yang dipilih;
+      menimpanya terlihat berhasil dan tidak mengubah apa pun yang bisa
+      dilihat pengguna. Karena itu di Android penyimpanan selalu lewat dialog
+      sistem, dan menu pun berbunyi "Simpan PDF — pilih tempatnya sendiri".
+      Di desktop, menulis di tempat tetap dilakukan dengan menyalin yang asli
+      lebih dulu
+
+### Bug lama yang ikut ketahuan
+
+- [x] **Dialog komentar/catatan rusak sejak lama dan merender kotak abu-abu
+      kosong.** Penyebabnya `const Spacer()` di dalam `AlertDialog.actions`,
+      yang dirender `OverflowBar` dan tidak menerima `Expanded` — melempar
+      eksepsi pada setiap build. Artinya "Stabilo + komentar", catatan, dan
+      penyuntingan anotasi **tidak pernah benar-benar bisa dipakai**.
+      Sekarang ada empat widget test yang menjaganya, termasuk satu yang
+      memastikan tombol Simpan masih bisa diketuk pada layar pendek —
+      keadaan yang terjadi persis ketika papan tik naik.
+
+
+---
+
 ## Lisensi & tata kelola
 
 - [x] **AGPL-3.0-or-later** dipasang sebagai lisensi (`LICENSE`). Dipilih karena
