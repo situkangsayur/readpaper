@@ -1635,6 +1635,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       await _deleteAnnotation(annotation);
       return;
     }
+    // Menyunting komentar atau warna juga bisa diurungkan: yang sudah
+    // ditulis sebelumnya tidak boleh hilang hanya karena salah tekan.
+    _pushUndo(
+      'mengubah anotasi',
+      () => _persist(annotation, isNew: false, recordUndo: false),
+    );
     await _persist(
       annotation.copyWith(
         comment: result.comment,
@@ -1642,6 +1648,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         dateModified: DateTime.now(),
       ),
       isNew: false,
+      recordUndo: false,
     );
   }
 
@@ -1756,7 +1763,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           // A sweep that grabbed the wrong line should cost one tap to undo,
           // not a trip through the sidebar.
           action: saved && undoable
-              ? SnackBarAction(label: 'Urungkan', onPressed: () => _deleteAnnotation(annotation))
+              // Lewat tumpukan yang sama dengan tombol Urungkan, supaya
+              // keduanya tidak pernah berbeda pendapat.
+              ? SnackBarAction(label: 'Urungkan', onPressed: _undoLast)
               : null,
         ),
       );
