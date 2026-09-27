@@ -663,6 +663,104 @@ paper — tidak ada alasan itu jadi aplikasi lain.
 
 ---
 
+## Fase 14 — Papan tulis, presentasi, dan berkas lepas
+
+Diminta 2026-09-28, sebagai satu kumpulan. Benang merahnya satu: ReadPaper
+selama ini hanya bisa *membaca* apa yang sudah ada di library Zotero. Yang
+diminta adalah membuat, mencoret, menyusun, dan menyimpan — tanpa
+mengganggu struktur Zotero yang formatnya dijaga ketat.
+
+Ukuran APK dinyatakan bukan halangan ("size tidak masalah jika memang harus
+besar"), tetapi yang lebih kecil tetap lebih baik.
+
+### Menyajikan dan mencoret
+
+- [ ] **Mode presentasi**: satu halaman penuh layar, maju-mundur dengan
+      ketukan atau tombol, tanpa bilah apa pun. Berbeda dari mode baca yang
+      sudah ada: di sini halaman dipasang pas layar dan peralihannya yang
+      penting
+- [ ] **Coret-coret saat menyajikan** — pena sudah ada, yang kurang adalah
+      bisa dipakai tanpa keluar dari mode presentasi, dan dihapus cepat
+      setelah satu halaman lewat
+- [ ] **Halaman kosong baru** untuk dicoreti, disisipkan di antara halaman
+      PDF atau di akhirnya. Disimpan jadi berkas baru berisi halaman asli
+      **dan** halaman tambahannya — papan tulis yang menempel pada dokumennya
+
+### Papan tulis sebagai jenis berkas sendiri
+
+- [ ] **Papan tulis berhalaman**: putih, hitam, atau warna apa pun, berlembar
+      banyak, bisa dicoreti, lalu **dikonversi ke PDF atau gambar**
+- [ ] Papan tulis baru dibuat dari panel berkas, sebelum ada PDF-nya sama
+      sekali
+
+### Panel berkas di samping koleksi
+
+- [ ] Sisi kanan dibagi dua: **pohon koleksi** (seperti sekarang) dan
+      **penjelajah berkas** untuk yang dibuka, disimpan, atau disimpan-sebagai
+- [ ] **Seret dan lepas** dari penjelajah berkas ke koleksi, dan antar koleksi
+- [ ] Di penjelajah berkas: berkas baru, proyek baru, papan tulis baru, folder
+      baru, masuk/keluar folder, dan buka folder kerja lain
+- [ ] Ini yang membuat butir "tambahkan ke koleksi supaya ikut sync" di Fase 13
+      benar-benar terpakai — jalannya lewat seret dan lepas, bukan menu
+
+### Dua jenis akar koleksi
+
+- [ ] **Pohon koleksi boleh punya lebih dari satu akar**, dan tiap akar punya
+      jenis: **paper** atau **catatan**
+- [ ] Catatan disimpan di **direktori terpisah** di dalam repositori, bukan di
+      dalam struktur Zotero. Alasannya tegas: item Zotero punya properti
+      rujukan dan bibliografi yang tidak berlaku untuk catatan, dan formatnya
+      dijaga byte-for-byte oleh plugin `zotero-github-sync`. Zotero sendiri
+      tidak mengenal catatan lepas semacam ini — ReadPaper mengenalnya, dan
+      itu yang membuatnya berguna
+- [ ] Menyimpan catatan **wajib** ke akar berjenis catatan; menolak dengan
+      penjelasan kalau yang dipilih akar paper
+
+### Markdown
+
+- [ ] **Baca dan sunting Markdown**, termasuk **Mermaid** — ditampilkan
+      sebagai diagram dan bisa disunting
+- [ ] **Berkas baru** yang bisa disimpan sebagai **PDF atau Markdown**
+- [ ] **Markdown → PDF** dan **PDF → Markdown**
+
+### Mengubah tulisan tangan jadi teks
+
+- [ ] **Terjemahkan dokumen tulisan tangan** — PDF hasil pindaian atau tulisan
+      tangan diubah jadi dokumen digital: teksnya jadi teks, gambarnya ikut
+      diterjemahkan, keluarannya PDF atau Markdown. Ini yang paling berat di
+      daftar ini dan pantas jadi tahap sendiri: butuh OCR tulisan tangan yang
+      layak, dan keputusan apakah berjalan di perangkat atau lewat layanan
+      (bandingkan pertimbangan yang sama di Fase 12)
+
+### Cetak dan integrasi sistem
+
+- [ ] **Cetak**: ke printer, atau ke PDF kalau tidak ada printer
+- [ ] **ReadPaper jadi aplikasi pembuka PDF bawaan** — intent filter Android
+      untuk `application/pdf`, dengan jalur "buka" yang sudah ada di Fase 13
+
+### Anotasi yang bisa diatur ulang
+
+- [x] Tanda tangan, coretan, dan catatan bisa **dipindah** (2026-09-27)
+- [ ] ...dan bisa **diubah ukurannya** serta **diputar**. Ukuran dan putaran
+      perlu penyimpanan sendiri: format ink Zotero hanya menyimpan titik, jadi
+      memutar berarti menulis ulang titik-titiknya — yang berarti memutar dua
+      kali kehilangan ketelitian. Perlu diputuskan apakah sudut disimpan
+      terpisah di `rawPosition` atau titiknya memang ditulis ulang
+
+### Urutan yang disarankan
+
+1. Mode presentasi + coret-coret + halaman kosong (paling dekat dengan yang
+   sudah ada, dan paling sering dipakai)
+2. Panel berkas + seret ke koleksi (membuka jalan untuk sisa daftarnya)
+3. Papan tulis berhalaman → PDF/gambar
+4. Dua jenis akar koleksi + catatan di direktori terpisah
+5. Markdown baca/sunting/Mermaid + konversi dua arah
+6. Cetak + pembuka PDF bawaan
+7. Ubah ukuran dan putar anotasi
+8. OCR tulisan tangan
+
+---
+
 ## Lintas fase — utang teknis
 
 - [x] Uji unit parser Zotero + penulis anotasi (round-trip JSON byte-for-byte)
