@@ -675,16 +675,22 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 
 ### Menyajikan dan mencoret
 
-- [ ] **Mode presentasi**: satu halaman penuh layar, maju-mundur dengan
-      ketukan atau tombol, tanpa bilah apa pun. Berbeda dari mode baca yang
-      sudah ada: di sini halaman dipasang pas layar dan peralihannya yang
-      penting
-- [ ] **Coret-coret saat menyajikan** — pena sudah ada, yang kurang adalah
-      bisa dipakai tanpa keluar dari mode presentasi, dan dihapus cepat
-      setelah satu halaman lewat
-- [ ] **Halaman kosong baru** untuk dicoreti, disisipkan di antara halaman
-      PDF atau di akhirnya. Disimpan jadi berkas baru berisi halaman asli
-      **dan** halaman tambahannya — papan tulis yang menempel pada dokumennya
+- [x] **Mode presentasi** (2026-09-28): satu halaman penuh layar, maju-mundur
+      dengan ketukan di tepi kiri/kanan atau tombol. Halamannya dipasang
+      seluruhnya (`PdfPageAnchor.all`), bukan selebar layar — yang menyajikan
+      dilihat dari jauh, dan halaman yang terpotong di bawah adalah kalimat
+      yang hilang
+- [x] **Coret-coret saat menyajikan** (2026-09-28): pena bisa dinyalakan dari
+      dalam mode menyajikan, dan saat aktif ketukan tepi tidak lagi mengganti
+      halaman — satu coretan tidak boleh berubah jadi pindah halaman
+- [ ] Hapus cepat coretan setelah satu halaman lewat
+- [x] **Halaman kosong baru** untuk dicoreti, ditambahkan di akhir dokumen
+      (2026-09-28). Halaman aslinya disalin sebagai objek PDF lewat pdfium,
+      bukan digambar ulang jadi gambar: teksnya tetap bisa dicari dan
+      disalin, dan berkasnya tidak membengkak. Yang tampil sejak itu adalah
+      salinan kerja; berkas aslinya tidak disentuh sampai disimpan
+- [ ] Menyisipkan di tengah, bukan hanya di akhir — perlu menggeser nomor
+      halaman anotasi yang sudah ada
 
 ### Papan tulis sebagai jenis berkas sendiri
 

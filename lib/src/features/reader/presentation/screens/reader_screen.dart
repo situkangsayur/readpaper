@@ -137,6 +137,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// Hides everything but the page.
   bool _readingMode = false;
 
+  /// Mode menyajikan: satu halaman penuh layar, maju-mundur dengan ketukan.
+  ///
+  /// Berbeda dari mode baca. Mode baca menyembunyikan bilah supaya yang
+  /// tersisa adalah halamannya; mode menyajikan mengubah cara berpindah —
+  /// yang menyajikan berdiri di depan orang, tidak sedang menggulir dengan
+  /// hati-hati, dan satu ketukan di tepi layar harus berarti satu halaman.
+  bool _presentMode = false;
+
   /// Tint applied over the page while reading.
   PageTint _tint = PageTint.none;
 
@@ -377,6 +385,50 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   // ------------------------------------------------------- mode baca
+
+  /// Masuk atau keluar dari mode menyajikan.
+  void _togglePresent() {
+    setState(() {
+      _presentMode = !_presentMode;
+      if (_presentMode) {
+        _readingMode = false;
+        _markerMode = false;
+        _noteMode = false;
+        _textMode = false;
+        _showSidebar = false;
+        _pendingSignature = null;
+      }
+    });
+    SystemChrome.setEnabledSystemUIMode(
+      _presentMode ? SystemUiMode.immersive : SystemUiMode.edgeToEdge,
+    );
+    if (_presentMode) {
+      // Satu putaran bingkai supaya tata letaknya sudah tanpa bilah saat
+      // ukurannya dihitung; kalau tidak, halamannya pas ke layar yang lama.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _fitCurrentPage());
+    }
+  }
+
+  /// Memasang halaman yang sedang dilihat pas di layar.
+  ///
+  /// `PdfPageAnchor.all` memaksa seluruh halaman masuk — bukan lebarnya saja.
+  /// Menyajikan berarti orang melihat dari jauh; halaman yang terpotong di
+  /// bawah adalah kalimat yang hilang.
+  Future<void> _fitCurrentPage() async {
+    if (!_controller.isReady) return;
+    await _controller.goToPage(pageNumber: _currentPage, anchor: PdfPageAnchor.all);
+  }
+
+  /// Pindah [delta] halaman, berhenti di ujungnya.
+  Future<void> _stepPage(int delta) async {
+    if (!_controller.isReady) return;
+    final target = _currentPage + delta;
+    if (target < 1 || target > _controller.pages.length) return;
+    await _controller.goToPage(
+      pageNumber: target,
+      anchor: _presentMode ? PdfPageAnchor.all : null,
+    );
+  }
 
   /// Hides every bar and panel, leaving the page.
   void _toggleReadingMode() {
@@ -840,7 +892,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: _readingMode
+      appBar: (_readingMode || _presentMode)
           ? null
           : AppBar(
               title: Column(
@@ -952,6 +1004,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       _pendingSignature = null;
                     }
                   }),
+                ),
+                IconButton(
+                  tooltip: 'Sajikan — satu halaman penuh layar',
+                  icon: const Icon(Icons.slideshow_outlined),
+                  onPressed: _togglePresent,
                 ),
                 IconButton(
                   tooltip: _undoSteps.isEmpty
@@ -1079,7 +1136,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       ),
                     ),
                   ),
-                if (_showCoach && !_markerMode && !_noteMode && !_readingMode)
+                if (_showCoach && !_markerMode && !_noteMode && !_readingMode && !_presentMode)
                   Material(
                     color: scheme.surfaceContainerHighest,
                     child: Padding(
@@ -1222,7 +1279,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   child: Row(
                     children: <Widget>[
                       Expanded(child: _buildViewer(scheme)),
-                      if (_showSidebar && isWide && !_readingMode) ...<Widget>[
+                      if (_showSidebar && isWide && !_readingMode && !_presentMode) ...<Widget>[
                         const VerticalDivider(width: 1),
                         SizedBox(
                           width: 320,
@@ -1272,6 +1329,64 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               : ColorFiltered(colorFilter: _tint.filter!, child: _buildPdf(scheme)),
         ),
       ),
+      // Menyajikan: separuh kiri mundur, separuh kanan maju. Hanya saat pena
+      // tidak aktif — kalau tidak, satu coretan berubah jadi ganti halaman.
+      if (_presentMode && !_penMode) ...<Widget>[
+        Positioned(
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 96,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => _stepPage(-1),
+          ),
+        ),
+        Positioned(
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: 96,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () => _stepPage(1),
+          ),
+        ),
+      ],
+      if (_presentMode)
+        Positioned(
+          top: 8,
+          right: 8,
+          child: SafeArea(
+            child: Row(
+              children: <Widget>[
+                _ReadingChip(
+                  icon: _penMode ? Icons.draw : Icons.draw_outlined,
+                  tooltip: _penMode ? 'Selesai menggambar' : 'Coret-coret di halaman',
+                  onTap: _togglePen,
+                ),
+                const SizedBox(width: 8),
+                _ReadingChip(
+                  icon: Icons.chevron_left,
+                  tooltip: 'Halaman sebelumnya',
+                  onTap: () => _stepPage(-1),
+                ),
+                const SizedBox(width: 8),
+                _ReadingChip(
+                  icon: Icons.chevron_right,
+                  tooltip: 'Halaman berikutnya',
+                  onTap: () => _stepPage(1),
+                ),
+                const SizedBox(width: 8),
+                _ReadingChip(
+                  icon: Icons.close_fullscreen,
+                  tooltip: 'Keluar dari mode menyajikan',
+                  onTap: _togglePresent,
+                ),
+              ],
+            ),
+          ),
+        ),
       // In reading mode the bar is gone, so the way back has to be on the
       // page itself — and small enough not to become part of the page.
       if (_readingMode)
