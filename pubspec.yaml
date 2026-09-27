@@ -19,6 +19,8 @@ dependencies:
   # Same PDFium module pdfrx loads; used to write ink annotations into an
   # exported copy of a paper.
   pdfium_dart: ^0.2.5
+  # Dipakai langsung untuk menyunting halaman PDF lewat pdfium.
+  ffi: ^2.1.3
 
   # Network (backend sinkronisasi Android lewat GitHub REST API)
   http: ^1.6.0

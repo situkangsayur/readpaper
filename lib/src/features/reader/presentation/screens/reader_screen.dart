@@ -21,6 +21,7 @@ import '../../../library/domain/entities/zotero_item.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/annotation_geometry.dart';
+import '../../data/pdf_page_editor.dart';
 import '../../domain/annotation_move.dart';
 import '../widgets/annotation_editor.dart';
 import '../widgets/annotation_move_layer.dart';
@@ -529,6 +530,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     await _persist(annotation, isNew: true, undoable: true);
   }
 
+  /// Berkas yang sedang ditampilkan.
+  ///
+  /// Biasanya sama dengan yang dibuka. Berbeda begitu halaman kosong
+  /// ditambahkan: yang tampil sejak itu adalah salinan kerja yang memuat
+  /// halaman tambahan, sementara berkas aslinya tidak disentuh sampai
+  /// pengguna menyimpannya sendiri.
+  String? _workingPath;
+
+  String get _path => _workingPath ?? widget.filePath;
+
   /// Langkah-langkah yang masih bisa diurungkan, yang terbaru di belakang.
   ///
   /// Sebelumnya urungkan hanya ada selama beberapa detik di dalam snackbar —
@@ -591,12 +602,69 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
   }
 
+  /// Menambahkan halaman kosong untuk dicoreti, seperti papan tulis yang
+  /// menempel pada dokumennya.
+  ///
+  /// Halamannya disalin sebagai objek PDF, bukan digambar ulang jadi gambar:
+  /// teks paper aslinya tetap bisa dicari dan disalin. Ditambahkan di akhir
+  /// supaya nomor halaman anotasi yang sudah ada tidak bergeser.
+  Future<void> _addBlankPages() async {
+    final count = await showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Tambah halaman kosong'),
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.fromLTRB(24, 0, 24, 12),
+            child: Text(
+              'Ditambahkan di akhir dokumen, seukuran halaman pertamanya. '
+              'Berkas aslinya tidak disentuh — yang berubah adalah salinan '
+              'kerja, sampai Anda menyimpannya.',
+            ),
+          ),
+          for (final n in <int>[1, 2, 5])
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(n),
+              child: Text('$n halaman'),
+            ),
+        ],
+      ),
+    );
+    if (count == null || !mounted) return;
+
+    try {
+      final dir = await Directory(
+        p.join((await getTemporaryDirectory()).path, 'papan'),
+      ).create(recursive: true);
+      final stem = p.basenameWithoutExtension(_path);
+      final target = p.join(dir.path, '$stem-papan-${DateTime.now().millisecondsSinceEpoch}.pdf');
+
+      await PdfPageEditor.addBlankPages(source: _path, target: target, count: count);
+
+      final before = _controller.pages.length;
+      if (!mounted) return;
+      setState(() {
+        _workingPath = target;
+        _unsaved = true;
+      });
+      _say('$count halaman kosong ditambahkan — simpan lewat menu bagikan');
+      // Langsung ke halaman kosong pertamanya: yang menambahkannya hendak
+      // menulis di sana sekarang, bukan mencarinya dulu.
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      if (_controller.isReady && before + 1 <= _controller.pages.length) {
+        await _controller.goToPage(pageNumber: before + 1);
+      }
+    } on Object catch (e) {
+      if (mounted) _say('Gagal menambah halaman: $e');
+    }
+  }
+
   /// Writes the annotated document back over the file that was opened.
   ///
   /// The original is copied to `<nama>.asli.pdf` first. Flattening is not
   /// reversible, so the untouched version has to survive somewhere.
   Future<void> _saveOverOriginal() async {
-    final source = File(widget.filePath);
+    final source = File(_path);
     final backup = File('${widget.filePath.replaceAll(RegExp(r'\.pdf$'), '')}.asli.pdf');
 
     final confirmed = await showDialog<bool>(
@@ -905,9 +973,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   onSelected: (choice) => switch (choice) {
                     'simpan' => _savePdf(),
                     'simpan-sebagai' => _exportImages(),
+                    'halaman-kosong' => _addBlankPages(),
                     _ => _shareAnnotated(),
                   },
                   itemBuilder: (_) => <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(
+                      value: 'halaman-kosong',
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.note_add_outlined),
+                        title: Text('Tambah halaman kosong'),
+                        subtitle: Text('papan tulis di akhir dokumen'),
+                      ),
+                    ),
+                    const PopupMenuDivider(),
                     PopupMenuItem<String>(
                       value: 'simpan',
                       child: ListTile(
@@ -1252,7 +1332,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   );
 
   Widget _buildPdf(ColorScheme scheme) => PdfViewer.file(
-    widget.filePath,
+    _path,
+    // Berkasnya berganti saat halaman kosong ditambahkan, dan penampilnya
+    // harus benar-benar memuat ulang, bukan memakai halaman yang sudah ada.
+    key: ValueKey<String>(_path),
     controller: _controller,
     params: PdfViewerParams(
       backgroundColor: _tint.background ?? AppTheme.readerBackground(scheme),
