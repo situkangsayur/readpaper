@@ -42,16 +42,56 @@ class BoardStroke {
   }
 }
 
+/// Arah kertas papan tulis.
+///
+/// Dua-duanya perlu, dan bukan karena selera: menulis catatan rapat berbaris
+/// ke bawah muat di kertas tegak, sementara menggambar alur atau tabel di
+/// depan orang butuh kertas mendatar — di kertas tegak, gambarnya mentok di
+/// tepi kanan sebelum ceritanya selesai.
+enum BoardOrientation {
+  tegak('Tegak'),
+  mendatar('Mendatar');
+
+  const BoardOrientation(this.label);
+
+  final String label;
+
+  BoardOrientation get lain => this == tegak ? mendatar : tegak;
+
+  /// Ukuran lembarnya dalam titik PDF.
+  Size get size => this == tegak
+      ? const Size(BoardSize.width, BoardSize.height)
+      : const Size(BoardSize.height, BoardSize.width);
+}
+
 /// Satu lembar papan tulis.
 @immutable
 class BoardPage {
-  const BoardPage({required this.background, this.strokes = const <BoardStroke>[]});
+  const BoardPage({
+    required this.background,
+    this.strokes = const <BoardStroke>[],
+    this.orientation = BoardOrientation.tegak,
+  });
 
   final Color background;
   final List<BoardStroke> strokes;
 
-  BoardPage copyWith({Color? background, List<BoardStroke>? strokes}) =>
-      BoardPage(background: background ?? this.background, strokes: strokes ?? this.strokes);
+  /// Arah kertas lembar **ini**, bukan seluruh papan: satu papan boleh
+  /// mencampur, karena satu penjelasan bisa butuh daftar tegak dan bagan
+  /// mendatar sekaligus.
+  final BoardOrientation orientation;
+
+  Size get size => orientation.size;
+
+  BoardPage copyWith({
+    Color? background,
+    List<BoardStroke>? strokes,
+    BoardOrientation? orientation,
+  }) => BoardPage(
+    background: background ?? this.background,
+    strokes: strokes ?? this.strokes,
+    orientation: orientation ?? this.orientation,
+  );
 
   BoardPage withStroke(BoardStroke stroke) => copyWith(strokes: <BoardStroke>[...strokes, stroke]);
 
@@ -62,12 +102,39 @@ class BoardPage {
         if (stroke.distanceTo(point) > radius) stroke,
     ],
   );
+
+  /// Memutar kertasnya seperempat putaran, **beserta coretannya**.
+  ///
+  /// Memutar kertas tanpa memutar isinya berarti coretan yang tadinya di
+  /// dalam kertas tegak mendadak keluar dari tepi kertas mendatar — hilang
+  /// dari pandangan tanpa pernah dihapus. Memutar keduanya tidak kehilangan
+  /// apa pun, tidak mengubah bentuk goresan sedikit pun, dan bisa dibalik
+  /// dengan memutar tiga kali lagi.
+  BoardPage turned() {
+    final from = size;
+    return BoardPage(
+      background: background,
+      orientation: orientation.lain,
+      strokes: <BoardStroke>[
+        for (final stroke in strokes)
+          BoardStroke(
+            // Searah jarum jam: yang di kiri atas pindah ke kanan atas.
+            points: <Offset>[
+              for (final point in stroke.points) Offset(from.height - point.dy, point.dx),
+            ],
+            color: stroke.color,
+            width: stroke.width,
+          ),
+      ],
+    );
+  }
 }
 
 /// Ukuran lembar papan tulis, dalam titik PDF.
 ///
-/// A4 tegak, sama dengan kertas yang keluar dari pencetak mana pun — supaya
-/// papan tulis yang dicetak atau digabung dengan paper tidak berbeda ukuran.
+/// A4, sama dengan kertas yang keluar dari pencetak mana pun — supaya papan
+/// tulis yang dicetak atau digabung dengan paper tidak berbeda ukuran. Sisi
+/// mana yang jadi lebar ditentukan [BoardOrientation].
 class BoardSize {
   const BoardSize._();
 

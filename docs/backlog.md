@@ -977,6 +977,93 @@ hanya bagian yang mengubah tinta jadi komponen lain, bukan seluruh dokumennya.
 
 ---
 
+## Fase 16 — Menulis yang terasa enak
+
+Diminta 2026-09-29, semuanya dari mencoba yang sudah jadi. Bukan fitur besar
+melainkan hal-hal yang membuat alatnya benar-benar dipakai.
+
+### Kertas dan warna
+
+- [x] **Kertas papan tulis bisa tegak dan mendatar** (2026-09-29), per lembar —
+      satu papan boleh mencampur, karena satu penjelasan bisa butuh daftar
+      tegak dan bagan mendatar sekaligus. Arahnya dipilih saat membuat papan
+      dan bisa diputar kapan saja. Memutar kertas **membawa coretannya**:
+      memutar kertas tanpa memutar isinya berarti coretan yang tadinya di dalam
+      kertas mendadak keluar dari tepi — hilang tanpa pernah dihapus
+- [x] **Alternatif warna lebih banyak** (2026-09-29): empat belas warna
+      bernama, satu daftar yang sama untuk papan tulis dan buku catatan.
+      Namanya ikut disebut karena bulatan warna saja sulit dibedakan di layar
+      kecil — apalagi hijau dan hijau muda
+- [ ] Arah kertas untuk **buku catatan** juga (sekarang masih A4 tegak saja)
+
+### Bangun, panah, dan penghubung
+
+- [x] **Bangun dua dimensi**: kotak, bulat, belah ketupat, segitiga, garis,
+      dan **panah** (2026-09-29). Ada di papan tulis (jadi goresan) dan di buku
+      catatan (jadi komponen yang bisa digeser, diubah ukuran, diputar)
+- [x] Bangun di buku catatan **tidak menyimpan titik**: bentuknya dihitung
+      ulang dari kotaknya, jadi diubah ukurannya tetap rapi — bukan
+      titik-titik lama yang ditarik melar (2026-09-29)
+- [x] **Menghubungkan satu objek dengan objek lain** (2026-09-29): ketuk benda
+      pertama, ketuk benda kedua. Yang disimpan **rujukan kedua ujungnya**,
+      bukan koordinat — menyimpan koordinat berarti garisnya tertinggal di
+      tempat lama begitu bendanya digeser, dan penghubung yang tidak mengikuti
+      bukan penghubung. Ujungnya berhenti di tepi kedua benda, bukan di
+      tengahnya
+- [x] Membuang sebuah benda ikut membuang penghubung yang menempel padanya, dan
+      penghubung yang ujungnya hilang dibuang saat berkasnya dibaca — bisa
+      terjadi setelah dua orang menyunting catatan yang sama (2026-09-29)
+
+### Stylus
+
+- [x] **Goresan dihaluskan** (2026-09-29) dengan kurva kuadratik yang melewati
+      titik tengah antar titik. Titik dari layar selalu bersudut — jari dan
+      stylus melaporkan posisinya beberapa puluh kali per detik — dan garis
+      lurus di antaranya membuat tulisan terlihat patah-patah, paling terasa
+      pada huruf melingkar dan tanda tangan. Kurva yang sama dipakai di layar,
+      di PNG, dan di PDF, jadi cetakannya tidak pernah berbeda
+- [x] **Penolak telapak tangan** (2026-09-29): sakelar "jari boleh menggambar".
+      Dimatikan berarti hanya stylus yang menggambar — dan itulah penolak
+      telapak tangan yang sebenarnya, karena sentuhan tangan tidak pernah
+      sampai ke kanvas. Tetikus tetap diizinkan, supaya layar tanpa stylus
+      tetap bisa dipakai
+- [ ] Tebal goresan mengikuti tekanan stylus
+
+### Menata koleksi
+
+- [x] **Seret catatan antar koleksi** di pohon (2026-09-29), dan **seret item
+      paper antar koleksi** juga — keanggotaan koleksi Zotero tersimpan di
+      dalam berkas itemnya (`zotero.collections` dan `meta.collections`), dan
+      keduanya ikut diperbarui
+- [x] Lepasan yang tidak pantas **ditolak dengan penjelasan**: catatan ke akar
+      paper, paper ke akar catatan, berkas bukan-PDF ke akar paper
+      (2026-09-29)
+- [x] **Sub-koleksi bisa dibuat langsung** dari tombol di barisnya (2026-09-29).
+      Sebelumnya hanya lewat tekan-lama, dan yang tidak pernah menekan lama
+      tidak pernah menemukannya — itu memang yang terjadi
+- [ ] Membuat koleksi **paper** baru dari dalam aplikasi. Belum dikerjakan
+      karena itu berarti menulis `collections.json`, satu-satunya berkas
+      struktur Zotero yang sejauh ini tidak pernah disentuh ReadPaper —
+      keputusannya perlu diambil sadar-sadar, bukan disambil
+
+### Pembaca
+
+- [x] **Bilah pembaca tidak lagi bertumpuk** (2026-09-29). Di layar sempit
+      tombolnya pindah ke baris sendiri di bawah judul: AppBar memberi judulnya
+      kotak tetap, dan keterangan dokumen — jumlah anotasi dan nomor halaman —
+      tertutup tombol-tombol di atasnya
+- [x] **Tambah lembar kosong jadi tombol tetap**, bukan hanya di dalam menu
+      simpan (2026-09-29): yang mau menambah lembar catatan tidak sedang
+      berpikir tentang menyimpan
+- [x] **PDF jadi buku catatan** (2026-09-29): tiap halaman jadi alas satu
+      lembar, plus lembar kosong di belakang untuk catatan tambahan, dan
+      seluruhnya bisa disunting lagi lalu disimpan sebagai PDF atau Markdown.
+      Halamannya jadi gambar, dan itu memang harga yang dibayar — teks PDF
+      tidak bisa jadi komponen teks tanpa pengenalan tata letak yang belum ada.
+      Yang mau teksnya ikut terbaca memakai "Ubah ke Markdown"
+
+---
+
 ## Lintas fase — utang teknis
 
 - [x] Uji unit parser Zotero + penulis anotasi (round-trip JSON byte-for-byte)

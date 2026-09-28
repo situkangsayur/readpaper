@@ -209,6 +209,40 @@ jadi keduanya cara membagikan — bukan pengganti.
 Yang belum ada: mengubah tulisan tangan jadi teks dan diagram. Wadahnya sudah
 berdiri, jadi yang tersisa hanya bagian pengenalannya.
 
+## Menggambar: satu perhitungan, banyak keluaran
+
+Tiga hal yang dulu tiap layar hitung sendiri sekarang tinggal di satu tempat,
+karena dua perhitungan yang terpisah akan berbeda perlahan-lahan dan hasil
+cetakannya tidak lagi cocok dengan yang terlihat:
+
+| Di mana | Apa | Dipakai |
+| --- | --- | --- |
+| `core/utils/ink_smoothing.dart` | Kurva penghalus goresan | Kanvas, PNG, PDF |
+| `core/utils/shape_geometry.dart` | Bangun 2D dan ujung penghubung | Papan tulis, buku catatan, PDF |
+| `core/utils/ink_palette.dart` | Empat belas warna bernama | Papan tulis, buku catatan |
+| `markdown/data/mermaid_pdf.dart` | Diagram Mermaid di PDF | Ekspor Markdown, ekspor catatan |
+
+Goresan dihaluskan dengan kurva kuadratik yang melewati **titik tengah** antar
+titik, dengan titik aslinya sebagai kendali: melengkung mulus tanpa melenceng
+dari yang ditulis, dan cukup murah untuk dihitung ulang setiap bingkai. PDF
+menerima bentuk kubiknya — kurva yang sama persis, bukan yang mirip.
+
+Penolak telapak tangan bukan tebak-tebakan luas sentuhan: `GestureDetector`
+diberi `supportedDevices` berisi stylus saja, jadi sentuhan tangan tidak pernah
+sampai ke kanvas. Tetikus tetap diizinkan supaya layar tanpa stylus tetap bisa
+dipakai.
+
+Penghubung antar objek menyimpan **rujukan kedua ujungnya**, bukan koordinat.
+Menyimpan koordinat berarti garisnya tertinggal begitu bendanya digeser, dan
+penghubung yang tidak mengikuti bukan penghubung. Membuang sebuah benda ikut
+membuang penghubungnya, dan penghubung yang ujungnya hilang dibuang saat
+berkasnya dibaca — keadaan yang bisa muncul setelah dua salinan catatan
+digabung.
+
+Bangun 2D juga tidak menyimpan titik: bentuknya dihitung ulang dari kotaknya
+setiap kali digambar, jadi bangun yang diubah ukurannya tetap rapi alih-alih
+terlihat ditarik melar.
+
 ## Koordinat anotasi
 
 Zotero menyimpan persegi anotasi sebagai `[x1, y1, x2, y2]` dalam satuan poin

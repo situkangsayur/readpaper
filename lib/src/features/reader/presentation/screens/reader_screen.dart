@@ -1107,6 +1107,261 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     // until the window is genuinely wide.
     final isWide = LayoutSize.of(context) == LayoutSize.expanded;
 
+    final tools = <Widget>[
+    // Labelled on purpose: a bare icon left people swiping at the page
+    // and wondering why nothing was marked.
+    if (isTouchPlatform)
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: FilledButton.tonalIcon(
+          style: FilledButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            backgroundColor: _markerMode ? colorFromHex(_color) : null,
+            foregroundColor: _markerMode ? Colors.black87 : null,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+          ),
+          onPressed: () => setState(() {
+            _markerMode = !_markerMode;
+            if (_markerMode) {
+              _noteMode = false;
+              _penMode = false;
+            }
+          }),
+          icon: Icon(
+            _markerMode ? Icons.border_color : Icons.border_color_outlined,
+            size: 18,
+          ),
+          label: Text(_markerMode ? 'Menandai' : 'Tandai'),
+        ),
+      ),
+    IconButton(
+      tooltip: _noteMode
+          ? 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)'
+          : 'Tempel catatan di halaman',
+      isSelected: _noteMode,
+      selectedIcon: const Icon(Icons.sticky_note_2),
+      icon: const Icon(Icons.sticky_note_2_outlined),
+      onPressed: () => setState(() {
+        _noteMode = !_noteMode;
+        if (_noteMode) {
+          _markerMode = false;
+          _penMode = false;
+        }
+      }),
+    ),
+    IconButton(
+      tooltip: _penMode ? 'Selesai menggambar' : 'Tulis atau gambar di halaman',
+      isSelected: _penMode,
+      selectedIcon: const Icon(Icons.draw),
+      icon: const Icon(Icons.draw_outlined),
+      onPressed: _togglePen,
+    ),
+    _ColorButton(
+      color: _color,
+      onSelected: (value) {
+        setState(() => _color = value);
+        ref.read(workspaceControllerProvider.notifier).setLastAnnotationColor(value);
+      },
+    ),
+    IconButton(
+      tooltip: _textMode
+          ? 'Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)'
+          : 'Isi teks di halaman — untuk mengisi formulir',
+      isSelected: _textMode,
+      selectedIcon: const Icon(Icons.text_fields),
+      icon: const Icon(Icons.text_fields_outlined),
+      onPressed: () => setState(() {
+        _textMode = !_textMode;
+        if (_textMode) {
+          _markerMode = false;
+          _noteMode = false;
+          _penMode = false;
+          _pendingSignature = null;
+        }
+      }),
+    ),
+    IconButton(
+      tooltip: _keepScreenOn
+          ? 'Layar tetap menyala — tekan untuk mematikan'
+          : 'Biarkan layar menyala selama membaca',
+      isSelected: _keepScreenOn,
+      selectedIcon: const Icon(Icons.lightbulb),
+      icon: const Icon(Icons.lightbulb_outline),
+      onPressed: () async {
+        final value = !_keepScreenOn;
+        await _applyKeepScreenOn(value);
+        // Diingat untuk pembacaan berikutnya: yang menyalakannya
+        // sekali biasanya menginginkannya selalu.
+        await _workspace.setKeepScreenOn(value);
+        if (mounted) {
+          _say(
+            value
+                ? 'Layar akan tetap menyala selama membaca'
+                : 'Layar kembali mati sendiri',
+          );
+        }
+      },
+    ),
+    IconButton(
+      tooltip: 'Sajikan — satu halaman penuh layar',
+      icon: const Icon(Icons.slideshow_outlined),
+      onPressed: _togglePresent,
+    ),
+    IconButton(
+      tooltip: _undoSteps.isEmpty
+          ? 'Belum ada yang bisa diurungkan'
+          : 'Urungkan: ${_undoSteps.last.label}',
+      icon: const Icon(Icons.undo),
+      onPressed: _undoSteps.isEmpty ? null : _undoLast,
+    ),
+    IconButton(
+      tooltip: 'Tanda tangan',
+      isSelected: _pendingSignature != null,
+      selectedIcon: const Icon(Icons.draw),
+      icon: const Icon(Icons.gesture),
+      onPressed: _loading ? null : _drawSignature,
+    ),
+    PopupMenuButton<String>(
+      tooltip: 'Simpan dan bagikan',
+      icon: const Icon(Icons.ios_share),
+      onSelected: (choice) => switch (choice) {
+        'simpan' => _savePdf(),
+        'simpan-sebagai' => _exportImages(),
+        'halaman-kosong' => _addBlankPages(),
+        'cetak' => _print(),
+        'ke-markdown' => _convertToMarkdown(),
+        'ke-koleksi' => _addToCollection(),
+        _ => _shareAnnotated(),
+      },
+      itemBuilder: (_) => <PopupMenuEntry<String>>[
+        if (widget.isStandalone)
+          const PopupMenuItem<String>(
+            value: 'ke-koleksi',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.library_add_outlined),
+              title: Text('Tambahkan ke koleksi…'),
+              subtitle: Text('masuk library dan ikut tersinkron'),
+            ),
+          ),
+        const PopupMenuItem<String>(
+          value: 'cetak',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.print_outlined),
+            title: Text('Cetak…'),
+            subtitle: Text('ke pencetak, atau simpan sebagai PDF'),
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'ke-markdown',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.notes_outlined),
+            title: Text('Ubah ke Markdown'),
+            subtitle: Text('teksnya jadi dokumen yang bisa disunting'),
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'ke-catatan',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.auto_stories_outlined),
+            title: Text('Jadikan buku catatan'),
+            subtitle: Text('halamannya jadi alas, bisa disunting lagi'),
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'halaman-kosong',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.note_add_outlined),
+            title: Text('Tambah halaman kosong'),
+            subtitle: Text('papan tulis di akhir dokumen'),
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'simpan',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.save_outlined),
+            title: Text(_canWriteInPlace ? 'Simpan ke berkas ini' : 'Simpan PDF'),
+            subtitle: Text(
+              _canWriteInPlace ? 'yang asli disalin dulu' : 'pilih tempatnya sendiri',
+            ),
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'simpan-sebagai',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.save_as_outlined),
+            title: Text('Simpan sebagai…'),
+            subtitle: Text('PDF, PNG, atau JPG'),
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'bagikan',
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.share_outlined),
+            title: Text('Bagikan'),
+            subtitle: Text('chat, surel, atau aplikasi lain'),
+          ),
+        ),
+      ],
+    ),
+    IconButton(
+      tooltip: 'Warna halaman: ${_tint.label}',
+      icon: Icon(_tint.icon),
+      onPressed: _cycleTint,
+    ),
+    IconButton(
+      tooltip: 'Mode baca — sembunyikan semua bilah',
+      icon: const Icon(Icons.fullscreen),
+      onPressed: _loading ? null : _toggleReadingMode,
+    ),
+    IconButton(
+      tooltip: 'Simpan salinan beranotasi (PNG, JPG, PDF)',
+      icon: const Icon(Icons.image_outlined),
+      onPressed: _loading ? null : _exportImages,
+    ),
+    IconButton(
+      tooltip: 'Perkecil',
+      icon: const Icon(Icons.zoom_out),
+      onPressed: () => _controller.zoomDown(),
+    ),
+    IconButton(
+      tooltip: 'Perbesar',
+      icon: const Icon(Icons.zoom_in),
+      onPressed: () => _controller.zoomUp(),
+    ),
+    IconButton(
+      tooltip: 'Panel anotasi',
+      icon: Badge(
+        isLabelVisible: !isWide && _annotations.isNotEmpty,
+        label: Text('${_annotations.length}'),
+        child: Icon(
+          _showSidebar && isWide ? Icons.view_sidebar : Icons.view_sidebar_outlined,
+        ),
+      ),
+      // Wide layouts dock the panel; a phone opens it as a drawer.
+      onPressed: isWide
+          ? () => setState(() => _showSidebar = !_showSidebar)
+          : () => _scaffoldKey.currentState?.openEndDrawer(),
+    ),
+    const SizedBox(width: 4),
+    ];
+
     return Scaffold(
       key: _scaffoldKey,
       appBar: (_readingMode || _presentMode)
@@ -1149,250 +1404,24 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   ),
                 ],
               ),
-              actions: <Widget>[
-                // Labelled on purpose: a bare icon left people swiping at the page
-                // and wondering why nothing was marked.
-                if (isTouchPlatform)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: FilledButton.tonalIcon(
-                      style: FilledButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        backgroundColor: _markerMode ? colorFromHex(_color) : null,
-                        foregroundColor: _markerMode ? Colors.black87 : null,
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                      onPressed: () => setState(() {
-                        _markerMode = !_markerMode;
-                        if (_markerMode) {
-                          _noteMode = false;
-                          _penMode = false;
-                        }
-                      }),
-                      icon: Icon(
-                        _markerMode ? Icons.border_color : Icons.border_color_outlined,
-                        size: 18,
-                      ),
-                      label: Text(_markerMode ? 'Menandai' : 'Tandai'),
-                    ),
-                  ),
-                IconButton(
-                  tooltip: _noteMode
-                      ? 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)'
-                      : 'Tempel catatan di halaman',
-                  isSelected: _noteMode,
-                  selectedIcon: const Icon(Icons.sticky_note_2),
-                  icon: const Icon(Icons.sticky_note_2_outlined),
-                  onPressed: () => setState(() {
-                    _noteMode = !_noteMode;
-                    if (_noteMode) {
-                      _markerMode = false;
-                      _penMode = false;
-                    }
-                  }),
-                ),
-                IconButton(
-                  tooltip: _penMode ? 'Selesai menggambar' : 'Tulis atau gambar di halaman',
-                  isSelected: _penMode,
-                  selectedIcon: const Icon(Icons.draw),
-                  icon: const Icon(Icons.draw_outlined),
-                  onPressed: _togglePen,
-                ),
-                _ColorButton(
-                  color: _color,
-                  onSelected: (value) {
-                    setState(() => _color = value);
-                    ref.read(workspaceControllerProvider.notifier).setLastAnnotationColor(value);
-                  },
-                ),
-                IconButton(
-                  tooltip: _textMode
-                      ? 'Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)'
-                      : 'Isi teks di halaman — untuk mengisi formulir',
-                  isSelected: _textMode,
-                  selectedIcon: const Icon(Icons.text_fields),
-                  icon: const Icon(Icons.text_fields_outlined),
-                  onPressed: () => setState(() {
-                    _textMode = !_textMode;
-                    if (_textMode) {
-                      _markerMode = false;
-                      _noteMode = false;
-                      _penMode = false;
-                      _pendingSignature = null;
-                    }
-                  }),
-                ),
-                IconButton(
-                  tooltip: _keepScreenOn
-                      ? 'Layar tetap menyala — tekan untuk mematikan'
-                      : 'Biarkan layar menyala selama membaca',
-                  isSelected: _keepScreenOn,
-                  selectedIcon: const Icon(Icons.lightbulb),
-                  icon: const Icon(Icons.lightbulb_outline),
-                  onPressed: () async {
-                    final value = !_keepScreenOn;
-                    await _applyKeepScreenOn(value);
-                    // Diingat untuk pembacaan berikutnya: yang menyalakannya
-                    // sekali biasanya menginginkannya selalu.
-                    await _workspace.setKeepScreenOn(value);
-                    if (mounted) {
-                      _say(
-                        value
-                            ? 'Layar akan tetap menyala selama membaca'
-                            : 'Layar kembali mati sendiri',
-                      );
-                    }
-                  },
-                ),
-                IconButton(
-                  tooltip: 'Sajikan — satu halaman penuh layar',
-                  icon: const Icon(Icons.slideshow_outlined),
-                  onPressed: _togglePresent,
-                ),
-                IconButton(
-                  tooltip: _undoSteps.isEmpty
-                      ? 'Belum ada yang bisa diurungkan'
-                      : 'Urungkan: ${_undoSteps.last.label}',
-                  icon: const Icon(Icons.undo),
-                  onPressed: _undoSteps.isEmpty ? null : _undoLast,
-                ),
-                IconButton(
-                  tooltip: 'Tanda tangan',
-                  isSelected: _pendingSignature != null,
-                  selectedIcon: const Icon(Icons.draw),
-                  icon: const Icon(Icons.gesture),
-                  onPressed: _loading ? null : _drawSignature,
-                ),
-                PopupMenuButton<String>(
-                  tooltip: 'Simpan dan bagikan',
-                  icon: const Icon(Icons.ios_share),
-                  onSelected: (choice) => switch (choice) {
-                    'simpan' => _savePdf(),
-                    'simpan-sebagai' => _exportImages(),
-                    'halaman-kosong' => _addBlankPages(),
-                    'cetak' => _print(),
-                    'ke-markdown' => _convertToMarkdown(),
-                    'ke-koleksi' => _addToCollection(),
-                    _ => _shareAnnotated(),
-                  },
-                  itemBuilder: (_) => <PopupMenuEntry<String>>[
-                    if (widget.isStandalone)
-                      const PopupMenuItem<String>(
-                        value: 'ke-koleksi',
-                        child: ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(Icons.library_add_outlined),
-                          title: Text('Tambahkan ke koleksi…'),
-                          subtitle: Text('masuk library dan ikut tersinkron'),
-                        ),
-                      ),
-                    const PopupMenuItem<String>(
-                      value: 'cetak',
-                      child: ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.print_outlined),
-                        title: Text('Cetak…'),
-                        subtitle: Text('ke pencetak, atau simpan sebagai PDF'),
-                      ),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'ke-markdown',
-                      child: ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.notes_outlined),
-                        title: Text('Ubah ke Markdown'),
-                        subtitle: Text('teksnya jadi dokumen yang bisa disunting'),
-                      ),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'halaman-kosong',
-                      child: ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.note_add_outlined),
-                        title: Text('Tambah halaman kosong'),
-                        subtitle: Text('papan tulis di akhir dokumen'),
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem<String>(
-                      value: 'simpan',
-                      child: ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.save_outlined),
-                        title: Text(_canWriteInPlace ? 'Simpan ke berkas ini' : 'Simpan PDF'),
-                        subtitle: Text(
-                          _canWriteInPlace ? 'yang asli disalin dulu' : 'pilih tempatnya sendiri',
+              // Di layar sempit tombolnya pindah ke baris sendiri di bawah judul.
+              // Sebelumnya semuanya berdesakan di kanan judul, dan AppBar
+              // memberi judul kotak tetap: keterangan dokumen — jumlah anotasi
+              // dan nomor halaman — tertutup tombol-tombol di atasnya.
+              actions: isWide ? tools : const <Widget>[],
+              bottom: isWide
+                  ? null
+                  : PreferredSize(
+                      preferredSize: const Size.fromHeight(50),
+                      child: SizedBox(
+                        height: 50,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(children: tools),
                         ),
                       ),
                     ),
-                    const PopupMenuItem<String>(
-                      value: 'simpan-sebagai',
-                      child: ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.save_as_outlined),
-                        title: Text('Simpan sebagai…'),
-                        subtitle: Text('PDF, PNG, atau JPG'),
-                      ),
-                    ),
-                    const PopupMenuItem<String>(
-                      value: 'bagikan',
-                      child: ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.share_outlined),
-                        title: Text('Bagikan'),
-                        subtitle: Text('chat, surel, atau aplikasi lain'),
-                      ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  tooltip: 'Warna halaman: ${_tint.label}',
-                  icon: Icon(_tint.icon),
-                  onPressed: _cycleTint,
-                ),
-                IconButton(
-                  tooltip: 'Mode baca — sembunyikan semua bilah',
-                  icon: const Icon(Icons.fullscreen),
-                  onPressed: _loading ? null : _toggleReadingMode,
-                ),
-                IconButton(
-                  tooltip: 'Simpan salinan beranotasi (PNG, JPG, PDF)',
-                  icon: const Icon(Icons.image_outlined),
-                  onPressed: _loading ? null : _exportImages,
-                ),
-                IconButton(
-                  tooltip: 'Perkecil',
-                  icon: const Icon(Icons.zoom_out),
-                  onPressed: () => _controller.zoomDown(),
-                ),
-                IconButton(
-                  tooltip: 'Perbesar',
-                  icon: const Icon(Icons.zoom_in),
-                  onPressed: () => _controller.zoomUp(),
-                ),
-                IconButton(
-                  tooltip: 'Panel anotasi',
-                  icon: Badge(
-                    isLabelVisible: !isWide && _annotations.isNotEmpty,
-                    label: Text('${_annotations.length}'),
-                    child: Icon(
-                      _showSidebar && isWide ? Icons.view_sidebar : Icons.view_sidebar_outlined,
-                    ),
-                  ),
-                  // Wide layouts dock the panel; a phone opens it as a drawer.
-                  onPressed: isWide
-                      ? () => setState(() => _showSidebar = !_showSidebar)
-                      : () => _scaffoldKey.currentState?.openEndDrawer(),
-                ),
-                const SizedBox(width: 4),
-              ],
             ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

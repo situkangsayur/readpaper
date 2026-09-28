@@ -3,6 +3,8 @@ import 'dart:ui';
 
 import 'package:meta/meta.dart';
 
+import '../../../core/utils/shape_geometry.dart';
+
 /// Ukuran lembar catatan dalam titik PDF (A4 tegak).
 class NoteSheet {
   const NoteSheet._();
@@ -112,7 +114,7 @@ class NoteStroke {
 }
 
 /// Jenis komponen, dipakai saat membaca berkas.
-enum NoteComponentKind { ink, text, image, diagram }
+enum NoteComponentKind { ink, text, image, diagram, shape, connector }
 
 /// Satu benda di atas lembar: tinta, teks, gambar, atau diagram.
 ///
@@ -220,6 +222,27 @@ sealed class NoteComponent {
         color: color,
         source: json['source'] as String? ?? '',
       ),
+      'shape' => NoteShape(
+        id: id,
+        position: position,
+        size: size,
+        rotation: rotation,
+        opacity: opacity,
+        color: color,
+        shape: ShapeKind.parse(json['shape'] as String? ?? 'kotak'),
+        strokeWidth: (json['strokeWidth'] as num?)?.toDouble() ?? 2,
+      ),
+      'connector' => NoteConnector(
+        id: id,
+        position: position,
+        size: size,
+        rotation: rotation,
+        opacity: opacity,
+        color: color,
+        fromId: json['fromId'] as String? ?? '',
+        toId: json['toId'] as String? ?? '',
+        arrow: json['arrow'] as bool? ?? true,
+      ),
       _ => NoteInk(
         id: id,
         position: position,
@@ -279,6 +302,126 @@ class NoteInk extends NoteComponent {
   Map<String, dynamic> toJson() => <String, dynamic>{
     ..._base,
     'strokes': <dynamic>[for (final stroke in strokes) stroke.toJson()],
+  };
+}
+
+/// Bangun dua dimensi: kotak, bulat, belah ketupat, segitiga, garis, panah.
+@immutable
+class NoteShape extends NoteComponent {
+  const NoteShape({
+    required super.id,
+    required super.position,
+    required super.size,
+    required this.shape,
+    this.strokeWidth = 2,
+    super.rotation,
+    super.opacity,
+    super.color,
+  });
+
+  final ShapeKind shape;
+  final double strokeWidth;
+
+  @override
+  NoteComponentKind get kind => NoteComponentKind.shape;
+
+  /// Garis-garisnya dalam koordinat lokal, dihitung dari ukuran sekarang.
+  ///
+  /// Tidak disimpan: bangun yang diubah ukurannya harus tetap rapi, dan itu
+  /// hanya mungkin kalau bentuknya dihitung ulang dari ukurannya — bukan
+  /// titik-titik lama yang ditarik melar.
+  List<List<Offset>> get outline => ShapeGeometry.outline(shape, size);
+
+  @override
+  NoteShape copyWith({
+    Offset? position,
+    Size? size,
+    double? rotation,
+    double? opacity,
+    int? color,
+    ShapeKind? shape,
+    double? strokeWidth,
+  }) => NoteShape(
+    id: id,
+    position: position ?? this.position,
+    size: size ?? this.size,
+    rotation: rotation ?? this.rotation,
+    opacity: opacity ?? this.opacity,
+    color: color ?? this.color,
+    shape: shape ?? this.shape,
+    strokeWidth: strokeWidth ?? this.strokeWidth,
+  );
+
+  @override
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    ..._base,
+    'shape': shape.name,
+    'strokeWidth': NoteComponent._r(strokeWidth),
+  };
+}
+
+/// Garis yang **menghubungkan dua komponen**.
+///
+/// Yang disimpan adalah kedua ujungnya sebagai rujukan, bukan koordinat:
+/// menyimpan koordinat berarti garisnya tertinggal di tempat lama begitu
+/// bendanya digeser, dan penghubung yang tidak mengikuti bukan penghubung.
+@immutable
+class NoteConnector extends NoteComponent {
+  const NoteConnector({
+    required super.id,
+    required this.fromId,
+    required this.toId,
+    this.arrow = true,
+    this.strokeWidth = 1.8,
+    super.position = Offset.zero,
+    super.size = const Size(1, 1),
+    super.rotation,
+    super.opacity,
+    super.color,
+  });
+
+  final String fromId;
+  final String toId;
+
+  /// Bermata panah di ujung tujuannya.
+  final bool arrow;
+
+  final double strokeWidth;
+
+  @override
+  NoteComponentKind get kind => NoteComponentKind.connector;
+
+  @override
+  NoteConnector copyWith({
+    Offset? position,
+    Size? size,
+    double? rotation,
+    double? opacity,
+    int? color,
+    String? fromId,
+    String? toId,
+    bool? arrow,
+    double? strokeWidth,
+  }) => NoteConnector(
+    id: id,
+    position: position ?? this.position,
+    size: size ?? this.size,
+    rotation: rotation ?? this.rotation,
+    opacity: opacity ?? this.opacity,
+    color: color ?? this.color,
+    fromId: fromId ?? this.fromId,
+    toId: toId ?? this.toId,
+    arrow: arrow ?? this.arrow,
+    strokeWidth: strokeWidth ?? this.strokeWidth,
+  );
+
+  @override
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    ..._base,
+    'fromId': fromId,
+    'toId': toId,
+    'arrow': arrow,
+    'strokeWidth': NoteComponent._r(strokeWidth),
   };
 }
 
@@ -431,11 +574,25 @@ class NotePage {
       (r) => r.name == (json['rule'] as String? ?? 'polos'),
       orElse: () => NotePageRule.polos,
     ),
-    components: <NoteComponent>[
+    components: _pruned(<NoteComponent>[
       for (final entry in (json['components'] as List? ?? const <dynamic>[]))
         if (entry is Map) NoteComponent.fromJson(entry.cast<String, dynamic>()),
-    ],
+    ]),
   );
+
+  /// Membuang penghubung yang salah satu ujungnya tidak ada di berkasnya.
+  ///
+  /// Bisa terjadi setelah dua orang menyunting catatan yang sama lalu
+  /// hasilnya digabung: benda yang dirujuk hilang, garisnya tertinggal.
+  static List<NoteComponent> _pruned(List<NoteComponent> components) {
+    final ids = <String>{for (final component in components) component.id};
+    return <NoteComponent>[
+      for (final component in components)
+        if (component is! NoteConnector ||
+            (ids.contains(component.fromId) && ids.contains(component.toId)))
+          component,
+    ];
+  }
 
   /// Urutannya juga urutan gambarnya: yang belakangan ada di atas.
   final List<NoteComponent> components;
@@ -450,12 +607,57 @@ class NotePage {
         rule: rule ?? this.rule,
       );
 
+  NoteComponent? byId(String id) {
+    for (final component in components) {
+      if (component.id == id) return component;
+    }
+    return null;
+  }
+
+  /// Kedua ujung sebuah penghubung, dihitung dari kotak benda yang
+  /// dihubungkannya. Null kalau salah satu ujungnya sudah tidak ada.
+  (Offset, Offset)? endsOf(NoteConnector connector) {
+    final from = byId(connector.fromId);
+    final to = byId(connector.toId);
+    if (from == null || to == null) return null;
+    return ShapeGeometry.between(from.bounds, to.bounds);
+  }
+
+  /// Tanpa komponen [id], **beserta penghubung yang menempel padanya**.
+  ///
+  /// Penghubung yang salah satu ujungnya hilang bukan penghubung lagi; yang
+  /// tertinggal hanya garis menggantung yang tidak bisa dijelaskan.
+  NotePage without(String id) => copyWith(
+    components: <NoteComponent>[
+      for (final component in components)
+        if (component.id != id &&
+            !(component is NoteConnector &&
+                (component.fromId == id || component.toId == id)))
+          component,
+    ],
+  );
+
   /// Komponen paling atas yang kena di [point].
   NoteComponent? hitTest(Offset point) {
     for (final component in components.reversed) {
+      // Penghubung diuji ke garisnya, bukan ke kotaknya: kotaknya semu dan
+      // selalu 1×1, jadi tidak pernah kena.
+      if (component is NoteConnector) {
+        final ends = endsOf(component);
+        if (ends != null && _nearSegment(point, ends.$1, ends.$2) <= 8) return component;
+        continue;
+      }
       if (_inside(component, point)) return component;
     }
     return null;
+  }
+
+  static double _nearSegment(Offset p, Offset a, Offset b) {
+    final ab = b - a;
+    final lengthSquared = ab.dx * ab.dx + ab.dy * ab.dy;
+    if (lengthSquared == 0) return (p - a).distance;
+    final t = (((p.dx - a.dx) * ab.dx + (p.dy - a.dy) * ab.dy) / lengthSquared).clamp(0.0, 1.0);
+    return (p - Offset(a.dx + ab.dx * t, a.dy + ab.dy * t)).distance;
   }
 
   /// Uji kena yang ikut memperhitungkan sudut putar komponennya: titiknya

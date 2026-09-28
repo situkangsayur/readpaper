@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/utils/layout_size.dart';
+import '../../../../shared/widgets/tree_drag.dart';
 import '../../../notes/domain/note_entities.dart';
+import '../../../notes/domain/note_target.dart';
 import '../../../notes/presentation/controllers/notes_controller.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/library_index.dart';
@@ -48,7 +50,7 @@ class CollectionTreePane extends ConsumerWidget {
         onToggle: () => expandedController.toggle(paperRootNodeKey),
         onTap: () => selectionController.select(const LibrarySelection.all()),
         // Melepas di sini berarti "masuk library, tanpa koleksi".
-        onDropFile: (path) => _dropIntoCollection(context, ref, path, null, index.library.name),
+        onDrop: (drag) => _dropIntoPapers(context, ref, drag, null, index.library.name),
       ),
     ];
 
@@ -80,7 +82,7 @@ class CollectionTreePane extends ConsumerWidget {
             isExpanded: isExpanded,
             onToggle: () => expandedController.toggle(node.key),
             onTap: () => selectionController.select(LibrarySelection.collection(node.key)),
-            onDropFile: (path) => _dropIntoCollection(context, ref, path, node.key, node.name),
+            onDrop: (drag) => _dropIntoPapers(context, ref, drag, node.key, node.name),
           ),
         );
         if (!isExpanded) return;
@@ -108,7 +110,7 @@ class CollectionTreePane extends ConsumerWidget {
         isExpanded: notesOpen,
         onToggle: () => expandedController.toggle(notesRootNodeKey),
         onTap: () => selectionController.select(const LibrarySelection.notes()),
-        onDropFile: (path) => _dropIntoNotes(context, ref, path, null, 'Catatan'),
+        onDrop: (drag) => _dropIntoNotes(context, ref, drag, null, 'Catatan'),
         trailing: IconButton(
           tooltip: 'Koleksi catatan baru',
           iconSize: 16,
@@ -131,7 +133,7 @@ class CollectionTreePane extends ConsumerWidget {
             depth: 1,
             selected: selection.kind == SelectionKind.notesUnfiled,
             onTap: () => selectionController.select(const LibrarySelection.notesUnfiled()),
-            onDropFile: (path) => _dropIntoNotes(context, ref, path, null, 'Catatan'),
+            onDrop: (drag) => _dropIntoNotes(context, ref, drag, null, 'Catatan'),
           ),
         );
       }
@@ -155,8 +157,9 @@ class CollectionTreePane extends ConsumerWidget {
             onTap: () =>
                 selectionController.select(LibrarySelection.noteCollection(collection.key)),
             onLongPress: () => _noteCollectionMenu(context, ref, collection),
-            onDropFile: (path) =>
-                _dropIntoNotes(context, ref, path, collection.key, collection.name),
+            onAddChild: () => _newNoteCollection(context, ref, parentKey: collection.key),
+            onDrop: (drag) =>
+                _dropIntoNotes(context, ref, drag, collection.key, collection.name),
           ),
         );
         if (!isExpanded) return;
@@ -276,8 +279,9 @@ class _TreeRow extends StatelessWidget {
     this.isRoot = false,
     this.onToggle,
     this.onLongPress,
-    this.onDropFile,
+    this.onDrop,
     this.trailing,
+    this.onAddChild,
   });
 
   final String label;
@@ -295,18 +299,23 @@ class _TreeRow extends StatelessWidget {
   final VoidCallback? onToggle;
   final VoidCallback? onLongPress;
 
-  /// Dipanggil saat sebuah berkas dilepas di atas baris ini.
-  final void Function(String path)? onDropFile;
+  /// Dipanggil saat sesuatu dilepas di atas baris ini.
+  final void Function(TreeDrag drag)? onDrop;
 
   final Widget? trailing;
+
+  /// Membuat sub-koleksi di bawah baris ini. Muncul sebagai tombol tetap,
+  /// bukan hanya di menu tekan-lama: yang tidak pernah menekan lama tidak
+  /// pernah menemukannya, dan itu memang yang terjadi.
+  final VoidCallback? onAddChild;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     // Sasaran lepas untuk berkas yang diseret dari panel berkas di bawah.
-    return DragTarget<String>(
-      onWillAcceptWithDetails: (_) => onDropFile != null,
-      onAcceptWithDetails: (details) => onDropFile?.call(details.data),
+    return DragTarget<TreeDrag>(
+      onWillAcceptWithDetails: (_) => onDrop != null,
+      onAcceptWithDetails: (details) => onDrop?.call(details.data),
       builder: (context, candidate, rejected) => InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
@@ -359,6 +368,16 @@ class _TreeRow extends StatelessWidget {
                   '$count',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.outline),
                 ),
+              if (onAddChild != null)
+                IconButton(
+                  tooltip: 'Sub-koleksi baru di sini',
+                  iconSize: 15,
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.add),
+                  onPressed: onAddChild,
+                ),
               ?trailing,
             ],
           ),
@@ -368,99 +387,135 @@ class _TreeRow extends StatelessWidget {
   }
 }
 
-/// Memasukkan berkas yang dilepas ke sebuah koleksi paper.
+/// Menerima lepasan di akar paper: berkas baru, atau item yang dipindahkan.
 ///
-/// Judulnya diambil dari nama berkas — yang menyeretnya sedang menata, bukan
-/// sedang mengisi formulir metadata; namanya bisa diperbaiki kemudian.
-Future<void> _dropIntoCollection(
+/// Catatan ditolak di sini. Akar paper berisi item Zotero, dan catatan tidak
+/// punya rujukan maupun bibliografi untuk jadi salah satunya — penolakannya
+/// menyebutkan itu, bukan sekadar berkata tidak bisa.
+Future<void> _dropIntoPapers(
   BuildContext context,
   WidgetRef ref,
-  String path,
+  TreeDrag drag,
   String? collectionKey,
   String collectionName,
 ) async {
   final messenger = ScaffoldMessenger.of(context);
 
-  // Akar paper hanya menerima PDF. Item Zotero adalah paper dengan lampiran
-  // PDF; berkas lain yang dipaksa masuk ke sana akan jadi item yang tidak
-  // bisa dibuka Zotero. Yang bukan PDF tempatnya di akar catatan, dan
-  // penolakannya harus menyebutkan itu — bukan sekadar berkata tidak bisa.
-  if (p.extension(path).toLowerCase() != '.pdf') {
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            'Akar paper hanya menerima PDF, karena isinya item Zotero dengan '
-            'lampiran PDF. Lepas ${p.basename(path)} di akar "Catatan".',
-          ),
-          duration: const Duration(seconds: 6),
-        ),
-      );
-    return;
-  }
-
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text('Memasukkan ke $collectionName…')));
-
-  final created = await ref
-      .read(workspaceControllerProvider.notifier)
-      .addPdfToLibrary(
-        pdfPath: path,
-        title: p.basenameWithoutExtension(path),
-        collectionKey: collectionKey,
-      );
-  if (!context.mounted) return;
-  messenger
+  void say(String message, {bool panjang = false}) => messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        content: Text(
-          created == null
-              ? (ref.read(workspaceControllerProvider).error ?? 'Gagal memasukkan berkas')
-              : 'Masuk ke $collectionName',
-        ),
+        content: Text(message),
+        duration: Duration(seconds: panjang ? 6 : 3),
       ),
     );
+
+  switch (drag) {
+    case NoteDrag():
+      say(NoteTarget.refusalMessage, panjang: true);
+
+    case ItemDrag():
+      final item = ref.read(workspaceControllerProvider).index?.items[drag.itemKey];
+      if (item == null) return;
+      say('Memindahkan ke $collectionName…');
+      final ok = await ref
+          .read(workspaceControllerProvider.notifier)
+          .moveItemToCollection(item: item, collectionKey: collectionKey);
+      if (!context.mounted) return;
+      say(
+        ok
+            ? 'Pindah ke $collectionName'
+            : (ref.read(workspaceControllerProvider).error ?? 'Gagal memindahkan'),
+      );
+
+    case FileDrag():
+      // Akar paper hanya menerima PDF. Item Zotero adalah paper dengan
+      // lampiran PDF; berkas lain yang dipaksa masuk akan jadi item yang tidak
+      // bisa dibuka Zotero.
+      if (p.extension(drag.path).toLowerCase() != '.pdf') {
+        say(
+          'Akar paper hanya menerima PDF, karena isinya item Zotero dengan '
+          'lampiran PDF. Lepas ${p.basename(drag.path)} di akar "Catatan".',
+          panjang: true,
+        );
+        return;
+      }
+      say('Memasukkan ke $collectionName…');
+      final created = await ref
+          .read(workspaceControllerProvider.notifier)
+          .addPdfToLibrary(
+            pdfPath: drag.path,
+            title: p.basenameWithoutExtension(drag.path),
+            collectionKey: collectionKey,
+          );
+      if (!context.mounted) return;
+      say(
+        created == null
+            ? (ref.read(workspaceControllerProvider).error ?? 'Gagal memasukkan berkas')
+            : 'Masuk ke $collectionName',
+      );
+  }
 }
 
-/// Memasukkan berkas yang dilepas ke akar catatan.
+/// Menerima lepasan di akar catatan: berkas apa pun, atau catatan yang
+/// dipindahkan antar koleksi.
 ///
-/// Apa pun jenisnya: catatan bisa berupa PDF papan tulis, markdown, atau
-/// gambar hasil pindaian. Yang membedakannya dari paper bukan formatnya,
-/// melainkan tempatnya.
+/// Apa pun jenis berkasnya boleh: catatan bisa berupa PDF papan tulis,
+/// markdown, buku catatan, atau gambar pindaian. Yang membedakannya dari paper
+/// bukan formatnya, melainkan tempatnya.
 Future<void> _dropIntoNotes(
   BuildContext context,
   WidgetRef ref,
-  String path,
+  TreeDrag drag,
   String? collectionKey,
   String collectionName,
 ) async {
   final messenger = ScaffoldMessenger.of(context);
-  messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text('Memasukkan ke $collectionName…')));
-
-  final key = await ref
-      .read(notesControllerProvider.notifier)
-      .addFile(
-        sourcePath: path,
-        title: p.basenameWithoutExtension(path),
-        collectionKey: collectionKey,
-      );
-  if (!context.mounted) return;
-  messenger
+  void say(String message, {bool panjang = false}) => messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        content: Text(
-          key == null
-              ? (ref.read(notesErrorProvider) ?? 'Gagal menyimpan catatan')
-              : 'Masuk ke $collectionName',
-        ),
+        content: Text(message),
+        duration: Duration(seconds: panjang ? 6 : 3),
       ),
     );
+
+  switch (drag) {
+    case ItemDrag():
+      say(
+        'Paper tinggal di akar paper: item Zotero punya rujukan dan '
+        'bibliografi yang dijaga plugin sinkronisasi, dan folder catatan tidak '
+        'mengenalnya. Yang bisa dipindahkan ke sini adalah catatan.',
+        panjang: true,
+      );
+
+    case NoteDrag():
+      final moved = await ref
+          .read(notesControllerProvider.notifier)
+          .fileInto(itemKey: drag.noteKey, collectionKey: collectionKey);
+      if (!context.mounted) return;
+      say(
+        moved == null
+            ? (ref.read(notesErrorProvider) ?? 'Gagal memindahkan catatan')
+            : 'Pindah ke $collectionName',
+      );
+
+    case FileDrag():
+      say('Memasukkan ke $collectionName…');
+      final key = await ref
+          .read(notesControllerProvider.notifier)
+          .addFile(
+            sourcePath: drag.path,
+            title: p.basenameWithoutExtension(drag.path),
+            collectionKey: collectionKey,
+          );
+      if (!context.mounted) return;
+      say(
+        key == null
+            ? (ref.read(notesErrorProvider) ?? 'Gagal menyimpan catatan')
+            : 'Masuk ke $collectionName',
+      );
+  }
 }
 
 Future<void> _newNoteCollection(

@@ -433,6 +433,49 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  /// Memindahkan sebuah item ke koleksi lain — jalur seret-dan-lepas di pohon.
+  ///
+  /// [collectionKey] null berarti dikeluarkan dari semua koleksi.
+  Future<bool> moveItemToCollection({
+    required ZoteroItem item,
+    required String? collectionKey,
+  }) async {
+    final library = state.library;
+    final profile = state.profile;
+    final index = state.index;
+    if (library == null || profile == null || index == null) {
+      state = state.copyWith(error: 'Tidak ada library aktif.');
+      return false;
+    }
+    final collection = collectionKey == null ? null : index.collections[collectionKey];
+    if (collectionKey != null && collection == null) {
+      state = state.copyWith(error: 'Koleksi tujuan tidak ada lagi.');
+      return false;
+    }
+
+    try {
+      await ref
+          .read(libraryRepositoryProvider)
+          .setItemCollections(
+            libraryDir: library.directoryPath,
+            itemFilePath: item.filePath,
+            collectionKeys: <String>[?collectionKey],
+            collectionPaths: <String>[?collection?.path],
+          );
+      await _commitAnnotation(
+        profile: profile,
+        message: collection == null
+            ? 'Keluarkan dari koleksi: ${item.title}'
+            : 'Pindahkan ke ${collection.name}: ${item.title}',
+      );
+      await reloadLibrary();
+      return true;
+    } on Object catch (e) {
+      state = state.copyWith(error: 'Gagal memindahkan: $e');
+      return false;
+    }
+  }
+
   /// Membuang sebuah item dari library, beserta lampiran dan catatannya.
   Future<bool> deleteItem(ZoteroItem item) async {
     final library = state.library;

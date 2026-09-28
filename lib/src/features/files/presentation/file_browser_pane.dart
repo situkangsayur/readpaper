@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../core/utils/layout_size.dart';
+import '../../../shared/widgets/tree_drag.dart';
 import '../../markdown/presentation/screens/markdown_editor_screen.dart';
 import '../../notebook/data/note_document_store.dart';
 import '../../notebook/presentation/screens/notebook_screen.dart';
@@ -193,37 +194,61 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     final dir = _dir;
     if (dir == null) return;
 
+    // Arah kertas dipilih di sini juga, bukan hanya di dalam papannya: yang
+    // mau menggambar bagan mendatar tahu itu sebelum mulai, dan memutar kertas
+    // setelah menggambar selalu lebih merepotkan daripada memilihnya dulu.
+    var orientation = BoardOrientation.tegak;
     final chosen = await showModalBottomSheet<Color>(
       context: context,
       showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          children: <Widget>[
-            Text('Papan tulis baru', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
-            Text(
-              'Berlembar-lembar, bisa dicoreti, lalu disimpan sebagai PDF di '
-              'folder ini.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            for (final option in BoardBackgrounds.all)
-              ListTile(
-                leading: Container(
-                  width: 34,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: option.color,
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-                title: Text(option.name),
-                onTap: () => Navigator.of(context).pop(option.color),
+      builder: (sheet) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            children: <Widget>[
+              Text('Papan tulis baru', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                'Berlembar-lembar, bisa dicoreti, lalu disimpan sebagai PDF di '
+                'folder ini.',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
-          ],
+              const SizedBox(height: 12),
+              SegmentedButton<BoardOrientation>(
+                showSelectedIcon: false,
+                segments: const <ButtonSegment<BoardOrientation>>[
+                  ButtonSegment<BoardOrientation>(
+                    value: BoardOrientation.tegak,
+                    icon: Icon(Icons.crop_portrait, size: 18),
+                    label: Text('Tegak'),
+                  ),
+                  ButtonSegment<BoardOrientation>(
+                    value: BoardOrientation.mendatar,
+                    icon: Icon(Icons.crop_landscape, size: 18),
+                    label: Text('Mendatar'),
+                  ),
+                ],
+                selected: <BoardOrientation>{orientation},
+                onSelectionChanged: (value) => setSheetState(() => orientation = value.first),
+              ),
+              const SizedBox(height: 12),
+              for (final option in BoardBackgrounds.all)
+                ListTile(
+                  leading: Container(
+                    width: 34,
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: option.color,
+                      border: Border.all(color: Theme.of(context).dividerColor),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  title: Text(option.name),
+                  onTap: () => Navigator.of(sheet).pop(option.color),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -231,7 +256,11 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
 
     final saved = await Navigator.of(context).push<String>(
       MaterialPageRoute<String>(
-        builder: (_) => WhiteboardScreen(background: chosen, saveDir: dir.path),
+        builder: (_) => WhiteboardScreen(
+          background: chosen,
+          saveDir: dir.path,
+          orientation: orientation,
+        ),
       ),
     );
     await _open(dir);
@@ -603,8 +632,8 @@ class _EntryRow extends StatelessWidget {
     // padahal ada isinya — tapi tidak menawarkan sesuatu yang belum ada.
     if (!isPdf) return row;
 
-    return LongPressDraggable<String>(
-      data: file.path,
+    return LongPressDraggable<TreeDrag>(
+      data: FileDrag(path: file.path, label: name),
       dragAnchorStrategy: pointerDragAnchorStrategy,
       feedback: Material(
         elevation: 6,

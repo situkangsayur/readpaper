@@ -123,6 +123,36 @@ class ZoteroWriter {
     return touched;
   }
 
+  /// Memindahkan sebuah item ke koleksi lain.
+  ///
+  /// Zotero menyimpan keanggotaan koleksi **di dalam berkas itemnya**, bukan di
+  /// `collections.json` — dua tempat: kuncinya di `zotero.collections` dan
+  /// jalur namanya di `meta.collections`. Keduanya harus ikut, karena yang
+  /// pertama dipakai Zotero saat mengimpor dan yang kedua dipakai manusia yang
+  /// membaca repositorinya.
+  ///
+  /// Daftar kosong berarti item tanpa koleksi, dan itu sah.
+  Future<List<String>> setItemCollections({
+    required String itemFilePath,
+    required String libraryDir,
+    required List<String> collectionKeys,
+    required List<String> collectionPaths,
+  }) async {
+    final json = await _readItem(itemFilePath);
+
+    final zotero = (json['zotero'] as Map?)?.cast<String, dynamic>();
+    if (zotero == null) {
+      throw LibraryFailure('Berkas item tidak punya bagian zotero', details: itemFilePath);
+    }
+    zotero['collections'] = <dynamic>[...collectionKeys];
+    zotero['dateModified'] = _stamp(DateTime.now());
+
+    final meta = (json['meta'] as Map?)?.cast<String, dynamic>();
+    if (meta != null) meta['collections'] = <dynamic>[...collectionPaths];
+
+    return _persist(json: json, itemFilePath: itemFilePath, libraryDir: libraryDir);
+  }
+
   Future<Map<String, dynamic>> _readItem(String itemFilePath) async {
     final file = File(itemFilePath);
     if (!file.existsSync()) {

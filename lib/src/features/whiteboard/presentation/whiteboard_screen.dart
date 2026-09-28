@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -7,6 +8,9 @@ import 'package:path/path.dart' as p;
 import '../../library/presentation/controllers/library_controllers.dart';
 import '../../notes/domain/note_target.dart';
 import '../../notes/presentation/controllers/notes_controller.dart';
+import '../../../core/utils/ink_palette.dart';
+import '../../../core/utils/shape_geometry.dart';
+import '../../../core/utils/ink_smoothing.dart';
 import '../data/board_export.dart';
 import '../domain/board.dart';
 
@@ -17,9 +21,19 @@ import '../domain/board.dart';
 /// menempel pada paper. Ini dimulai dari tidak ada apa-apa: menjelaskan
 /// sesuatu di depan orang, mencatat rapat, menghitung di sisi kertas.
 class WhiteboardScreen extends ConsumerStatefulWidget {
-  const WhiteboardScreen({required this.background, required this.saveDir, this.name, super.key});
+  const WhiteboardScreen({
+    required this.background,
+    required this.saveDir,
+    this.orientation = BoardOrientation.tegak,
+    this.name,
+    super.key,
+  });
 
   final Color background;
+
+  /// Arah kertas lembar pertama; lembar berikutnya mengikuti lembar yang
+  /// sedang dibuka.
+  final BoardOrientation orientation;
 
   /// Folder tempat PDF-nya disimpan — folder kerja panel berkas, supaya
   /// hasilnya langsung terlihat dan bisa diseret ke koleksi.
@@ -32,13 +46,23 @@ class WhiteboardScreen extends ConsumerStatefulWidget {
 }
 
 class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
-  late List<BoardPage> _pages = <BoardPage>[BoardPage(background: widget.background)];
+  late List<BoardPage> _pages = <BoardPage>[
+    BoardPage(background: widget.background, orientation: widget.orientation),
+  ];
   int _current = 0;
 
   late Color _pen = BoardBackgrounds.penFor(widget.background);
   double _width = 2.5;
   bool _erasing = false;
   bool _saved = false;
+
+  /// Boleh menggambar dengan jari. Dimatikan berarti hanya stylus — dan itulah
+  /// penolak telapak tangan yang sebenarnya: tangan yang bertumpu di kertas
+  /// tidak meninggalkan garis karena sentuhannya tidak sampai ke kanvas.
+  bool _finger = true;
+
+  /// Bangun yang sedang disisipkan; null berarti tangan bebas.
+  ShapeKind? _shape;
 
   BoardPage get _page => _pages[_current];
 
@@ -48,7 +72,12 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
 
   void _addPage() {
     setState(() {
-      _pages = <BoardPage>[..._pages, BoardPage(background: widget.background)];
+      _pages = <BoardPage>[
+        ..._pages,
+        // Arah kertasnya ikut lembar yang sedang dibuka: yang sedang
+        // menggambar bagan mendatar hampir selalu butuh satu lagi.
+        BoardPage(background: widget.background, orientation: _page.orientation),
+      ];
       _current = _pages.length - 1;
     });
   }
@@ -58,11 +87,31 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
     _replace(_page.copyWith(strokes: _page.strokes.sublist(0, _page.strokes.length - 1)));
   }
 
+  /// Memutar kertas lembar ini seperempat putaran.
+  ///
+  /// Coretannya ikut berputar, jadi tidak ada yang keluar dari tepi kertas dan
+  /// hilang dari pandangan. Memutar lagi tiga kali mengembalikannya persis.
+  void _turnPage() {
+    final turned = _page.turned();
+    _replace(turned);
+    if (_page.strokes.isEmpty) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            'Kertas jadi ${turned.orientation.label.toLowerCase()} — '
+            'coretannya ikut berputar, tidak ada yang hilang.',
+          ),
+        ),
+      );
+  }
+
   Future<void> _deletePage() async {
     if (_pages.length == 1) {
       // Papan satu lembar tidak dihapus, dikosongkan: menutup layar karena
       // menekan hapus bukan yang dimaksud siapa pun.
-      _replace(BoardPage(background: widget.background));
+      _replace(BoardPage(background: widget.background, orientation: _page.orientation));
       return;
     }
     setState(() {
@@ -201,7 +250,8 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
             children: <Widget>[
               Text(widget.name?.isNotEmpty ?? false ? widget.name! : 'Papan tulis'),
               Text(
-                'Lembar ${_current + 1} dari ${_pages.length}',
+                'Lembar ${_current + 1} dari ${_pages.length} · '
+                'kertas ${_page.orientation.label.toLowerCase()}',
                 style: Theme.of(context).textTheme.labelSmall,
               ),
             ],
@@ -216,12 +266,64 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
                 _erasing = false;
               }),
             ),
+            PopupMenuButton<String>(
+              tooltip: _shape == null ? 'Tangan bebas' : 'Bangun: ${_shape!.label}',
+              icon: Icon(
+                _shape == null ? Icons.gesture : _shapeIcon(_shape!),
+                color: _shape == null ? null : Theme.of(context).colorScheme.primary,
+              ),
+              onSelected: (value) => setState(() {
+                _shape = value == 'bebas' ? null : ShapeKind.parse(value);
+                _erasing = false;
+              }),
+              itemBuilder: (_) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(
+                  value: 'bebas',
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.gesture),
+                    title: Text('Tangan bebas'),
+                  ),
+                ),
+                for (final kind in ShapeKind.values)
+                  PopupMenuItem<String>(
+                    value: kind.name,
+                    child: ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(_shapeIcon(kind)),
+                      title: Text(kind.label),
+                    ),
+                  ),
+              ],
+            ),
+            IconButton(
+              tooltip: _finger
+                  ? 'Jari boleh menggambar — ketuk untuk hanya stylus'
+                  : 'Hanya stylus yang menggambar — telapak tangan diabaikan',
+              isSelected: !_finger,
+              selectedIcon: const Icon(Icons.draw),
+              icon: const Icon(Icons.touch_app_outlined),
+              onPressed: () => setState(() => _finger = !_finger),
+            ),
             IconButton(
               tooltip: _erasing ? 'Penghapus aktif' : 'Penghapus — sentuh goresan',
               isSelected: _erasing,
               selectedIcon: const Icon(Icons.auto_fix_normal),
               icon: const Icon(Icons.auto_fix_off),
               onPressed: () => setState(() => _erasing = !_erasing),
+            ),
+            IconButton(
+              tooltip: _page.orientation == BoardOrientation.tegak
+                  ? 'Kertas tegak — ketuk untuk memutar jadi mendatar'
+                  : 'Kertas mendatar — ketuk untuk memutar jadi tegak',
+              icon: Icon(
+                _page.orientation == BoardOrientation.tegak
+                    ? Icons.crop_portrait
+                    : Icons.crop_landscape,
+              ),
+              onPressed: _turnPage,
             ),
             IconButton(
               tooltip: 'Urungkan goresan terakhir',
@@ -254,7 +356,7 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: AspectRatio(
-                    aspectRatio: BoardSize.width / BoardSize.height,
+                    aspectRatio: _page.size.width / _page.size.height,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         boxShadow: <BoxShadow>[
@@ -262,6 +364,8 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
                         ],
                       ),
                       child: _BoardCanvas(
+                        finger: _finger,
+                        shape: _shape,
                         page: _page,
                         penColor: _pen,
                         penWidth: _width,
@@ -293,10 +397,18 @@ class _BoardCanvas extends StatefulWidget {
     required this.penColor,
     required this.penWidth,
     required this.erasing,
+    required this.finger,
+    required this.shape,
     required this.onChanged,
   });
 
   final BoardPage page;
+
+  /// Jari boleh menggambar; kalau tidak, hanya stylus.
+  final bool finger;
+
+  /// Bangun yang disisipkan saat diseret; null berarti tangan bebas.
+  final ShapeKind? shape;
   final Color penColor;
   final double penWidth;
   final bool erasing;
@@ -310,8 +422,26 @@ class _BoardCanvasState extends State<_BoardCanvas> {
   final List<Offset> _live = <Offset>[];
   Size _size = Size.zero;
 
-  Offset _toBoard(Offset local) =>
-      Offset(local.dx / _size.width * BoardSize.width, local.dy / _size.height * BoardSize.height);
+  Offset _toBoard(Offset local) => Offset(
+    local.dx / _size.width * widget.page.size.width,
+    local.dy / _size.height * widget.page.size.height,
+  );
+
+  /// Garis-garis bangun yang sedang ditarik, dalam koordinat lembar.
+  List<List<Offset>> _shapeLines(Offset from, Offset to) {
+    final kind = widget.shape;
+    if (kind == null) return const <List<Offset>>[];
+    // Garis dan panah mengikuti arah tarikan; bangun lain dinormalkan jadi
+    // kotak, supaya menarik ke kiri atas pun menghasilkan bangun yang benar.
+    final berarah = kind == ShapeKind.garis || kind == ShapeKind.panah;
+    final box = Rect.fromPoints(from, to);
+    final origin = berarah ? from : box.topLeft;
+    final extent = berarah ? Size(to.dx - from.dx, to.dy - from.dy) : box.size;
+    return <List<Offset>>[
+      for (final line in ShapeGeometry.outline(kind, extent))
+        <Offset>[for (final point in line) point + origin],
+    ];
+  }
 
   void _down(Offset local) {
     if (widget.erasing) {
@@ -343,6 +473,21 @@ class _BoardCanvasState extends State<_BoardCanvas> {
       setState(_live.clear);
       return;
     }
+
+    final kind = widget.shape;
+    if (kind != null) {
+      final lines = _shapeLines(_live.first, _live.last);
+      var page = widget.page;
+      for (final line in lines) {
+        page = page.withStroke(
+          BoardStroke(points: line, color: widget.penColor, width: widget.penWidth),
+        );
+      }
+      widget.onChanged(page);
+      setState(_live.clear);
+      return;
+    }
+
     widget.onChanged(
       widget.page.withStroke(
         BoardStroke(points: List<Offset>.of(_live), color: widget.penColor, width: widget.penWidth),
@@ -357,6 +502,14 @@ class _BoardCanvasState extends State<_BoardCanvas> {
       _size = constraints.biggest;
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
+        // Tetikus ikut, supaya layar tanpa stylus tetap bisa dipakai.
+        supportedDevices: widget.finger
+            ? null
+            : const <PointerDeviceKind>{
+                PointerDeviceKind.stylus,
+                PointerDeviceKind.invertedStylus,
+                PointerDeviceKind.mouse,
+              },
         onPanStart: (d) => _down(d.localPosition),
         onPanUpdate: (d) => _move(d.localPosition),
         onPanEnd: (_) => _up(),
@@ -366,6 +519,12 @@ class _BoardCanvasState extends State<_BoardCanvas> {
           painter: _BoardPainter(
             page: widget.page,
             live: _live,
+            // Bangun yang sedang ditarik digambar dengan perhitungan yang sama
+            // dengan bangun yang sudah jadi, jadi yang terlihat saat menarik
+            // sama dengan yang mendarat.
+            preview: widget.shape == null || _live.length < 2
+                ? const <List<Offset>>[]
+                : _shapeLines(_live.first, _live.last),
             penColor: widget.penColor,
             penWidth: widget.penWidth,
           ),
@@ -381,27 +540,31 @@ class _BoardPainter extends CustomPainter {
     required this.live,
     required this.penColor,
     required this.penWidth,
+    this.preview = const <List<Offset>>[],
   });
 
   final BoardPage page;
   final List<Offset> live;
+
+  /// Garis bangun yang sedang ditarik.
+  final List<List<Offset>> preview;
   final Color penColor;
   final double penWidth;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final scaleX = size.width / BoardSize.width;
-    final scaleY = size.height / BoardSize.height;
+    final scaleX = size.width / page.size.width;
+    final scaleY = size.height / page.size.height;
     canvas.drawRect(Offset.zero & size, Paint()..color = page.background);
 
     void drawStroke(List<Offset> points, Color color, double width) {
       if (points.length < 2) return;
-      final path = Path();
-      for (var i = 0; i < points.length; i++) {
-        final x = points[i].dx * scaleX;
-        final y = points[i].dy * scaleY;
-        i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
-      }
+      // Dihaluskan, bukan disambung garis lurus: tulisan tangan yang
+      // disambung lurus terlihat patah-patah, paling terasa pada huruf
+      // melingkar dan tanda tangan.
+      final path = InkSmoothing.path(<Offset>[
+        for (final point in points) Offset(point.dx * scaleX, point.dy * scaleY),
+      ]);
       canvas.drawPath(
         path,
         Paint()
@@ -416,7 +579,13 @@ class _BoardPainter extends CustomPainter {
     for (final stroke in page.strokes) {
       drawStroke(stroke.points, stroke.color, stroke.width);
     }
-    drawStroke(live, penColor, penWidth);
+    if (preview.isEmpty) {
+      drawStroke(live, penColor, penWidth);
+      return;
+    }
+    for (final line in preview) {
+      drawStroke(line, penColor, penWidth);
+    }
   }
 
   @override
@@ -504,6 +673,15 @@ class _WidthButton extends StatelessWidget {
   );
 }
 
+IconData _shapeIcon(ShapeKind kind) => switch (kind) {
+  ShapeKind.kotak => Icons.crop_square,
+  ShapeKind.bulat => Icons.circle_outlined,
+  ShapeKind.belahKetupat => Icons.change_history,
+  ShapeKind.segitiga => Icons.details,
+  ShapeKind.garis => Icons.horizontal_rule,
+  ShapeKind.panah => Icons.arrow_right_alt,
+};
+
 class _PenColorButton extends StatelessWidget {
   const _PenColorButton({required this.color, required this.background, required this.onSelected});
 
@@ -511,14 +689,8 @@ class _PenColorButton extends StatelessWidget {
   final Color background;
   final ValueChanged<Color> onSelected;
 
-  static const List<Color> _choices = <Color>[
-    Color(0xFF1B1C18),
-    Color(0xFFF5F5F5),
-    Color(0xFFE53935),
-    Color(0xFF1E88E5),
-    Color(0xFF43A047),
-    Color(0xFFFDD835),
-  ];
+  /// Palet bersama dengan buku catatan.
+  static const List<({String name, Color color})> _choices = InkPalette.all;
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<Color>(
@@ -528,7 +700,7 @@ class _PenColorButton extends StatelessWidget {
     itemBuilder: (_) => <PopupMenuEntry<Color>>[
       for (final choice in _choices)
         PopupMenuItem<Color>(
-          value: choice,
+          value: choice.color,
           child: Row(
             children: <Widget>[
               // Contoh warnanya digambar di atas warna papan, karena di
@@ -540,10 +712,14 @@ class _PenColorButton extends StatelessWidget {
                   color: background,
                   border: Border.all(color: Theme.of(context).dividerColor),
                 ),
-                child: Center(child: Icon(Icons.edit, size: 13, color: choice)),
+                child: Center(child: Icon(Icons.edit, size: 13, color: choice.color)),
               ),
               const SizedBox(width: 10),
-              if (choice == color) const Icon(Icons.check, size: 16),
+              Text(choice.name),
+              if (choice.color == color) ...<Widget>[
+                const SizedBox(width: 8),
+                const Icon(Icons.check, size: 16),
+              ],
             ],
           ),
         ),

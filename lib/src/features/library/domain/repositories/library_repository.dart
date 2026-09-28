@@ -42,6 +42,14 @@ abstract class LibraryRepository {
   /// Membuang item beserta lampiran dan catatannya.
   Future<List<String>> removeItem({required String libraryDir, required String itemFilePath});
 
+  /// Memindahkan item ke koleksi lain; daftar kosong berarti tanpa koleksi.
+  Future<List<String>> setItemCollections({
+    required String libraryDir,
+    required String itemFilePath,
+    required List<String> collectionKeys,
+    required List<String> collectionPaths,
+  });
+
   Future<List<String>> saveAnnotation({
     required String itemFilePath,
     required String libraryDir,

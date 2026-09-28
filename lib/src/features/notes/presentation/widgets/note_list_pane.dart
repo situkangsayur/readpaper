@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../library/domain/entities/library_index.dart';
+import '../../../../shared/widgets/tree_drag.dart';
 import '../../../library/presentation/controllers/library_controllers.dart';
 import '../../../markdown/presentation/screens/markdown_editor_screen.dart';
 import '../../../notebook/data/note_document_store.dart';
@@ -131,7 +132,33 @@ class _NoteTile extends StatelessWidget {
   final VoidCallback onMenu;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => LongPressDraggable<TreeDrag>(
+    // Ditekan lama untuk dipindahkan ke koleksi lain di pohon.
+    data: NoteDrag(noteKey: note.key, label: note.title),
+    dragAnchorStrategy: pointerDragAnchorStrategy,
+    feedback: Material(
+      elevation: 6,
+      borderRadius: BorderRadius.circular(8),
+      color: Theme.of(context).colorScheme.primaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Icon(Icons.sticky_note_2_outlined, size: 16),
+            const SizedBox(width: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 220),
+              child: Text(note.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+          ],
+        ),
+      ),
+    ),
+    child: _tile(context),
+  );
+
+  Widget _tile(BuildContext context) {
     final icon = note.isNotebook
         ? Icons.auto_stories_outlined
         : switch (note.extension) {

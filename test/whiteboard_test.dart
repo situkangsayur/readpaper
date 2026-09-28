@@ -83,4 +83,97 @@ void main() {
       expect(BoardSize.height, closeTo(841.89, 0.01));
     });
   });
+
+  group('arah kertas', () {
+    test('mendatar menukar sisi panjang dan pendeknya', () {
+      expect(BoardOrientation.tegak.size.width, closeTo(595.28, 0.01));
+      expect(BoardOrientation.tegak.size.height, closeTo(841.89, 0.01));
+      expect(BoardOrientation.mendatar.size.width, closeTo(841.89, 0.01));
+      expect(BoardOrientation.mendatar.size.height, closeTo(595.28, 0.01));
+      expect(BoardOrientation.tegak.lain, BoardOrientation.mendatar);
+    });
+
+    test('memutar kertas membawa coretannya, tidak ada yang keluar tepi', () {
+      // Memutar kertas tanpa memutar isinya berarti coretan yang tadinya di
+      // dalam kertas mendadak keluar dari tepi — hilang tanpa pernah dihapus.
+      const page = BoardPage(
+        background: Color(0xFFFFFFFF),
+        strokes: <BoardStroke>[
+          BoardStroke(
+            points: <Offset>[Offset(10, 800), Offset(100, 820)],
+            color: Color(0xFF000000),
+            width: 2,
+          ),
+        ],
+      );
+
+      final turned = page.turned();
+      expect(turned.orientation, BoardOrientation.mendatar);
+      for (final point in turned.strokes.single.points) {
+        expect(point.dx, inInclusiveRange(0, turned.size.width));
+        expect(point.dy, inInclusiveRange(0, turned.size.height));
+      }
+    });
+
+    test('memutar empat kali kembali persis ke asalnya', () {
+      const page = BoardPage(
+        background: Color(0xFFFFFFFF),
+        strokes: <BoardStroke>[
+          BoardStroke(
+            points: <Offset>[Offset(12.5, 33.25), Offset(400, 700)],
+            color: Color(0xFF000000),
+            width: 3,
+          ),
+        ],
+      );
+
+      var turned = page;
+      for (var i = 0; i < 4; i++) {
+        turned = turned.turned();
+      }
+      expect(turned.orientation, page.orientation);
+      for (var i = 0; i < page.strokes.single.points.length; i++) {
+        expect(turned.strokes.single.points[i].dx, closeTo(page.strokes.single.points[i].dx, 1e-9));
+        expect(turned.strokes.single.points[i].dy, closeTo(page.strokes.single.points[i].dy, 1e-9));
+      }
+    });
+
+    test('bentuk goresan tidak berubah saat kertasnya diputar', () {
+      const page = BoardPage(
+        background: Color(0xFFFFFFFF),
+        strokes: <BoardStroke>[
+          BoardStroke(
+            points: <Offset>[Offset(100, 100), Offset(200, 100), Offset(200, 160)],
+            color: Color(0xFF000000),
+            width: 2,
+          ),
+        ],
+      );
+      final before = page.strokes.single.points;
+      final after = page.turned().strokes.single.points;
+      for (var i = 1; i < before.length; i++) {
+        expect(
+          (after[i] - after[i - 1]).distance,
+          closeTo((before[i] - before[i - 1]).distance, 1e-9),
+        );
+      }
+    });
+
+    test('warna dan tebal goresan ikut utuh', () {
+      const page = BoardPage(
+        background: Color(0xFF12372A),
+        strokes: <BoardStroke>[
+          BoardStroke(
+            points: <Offset>[Offset(10, 10), Offset(20, 20)],
+            color: Color(0xFFE53935),
+            width: 4.5,
+          ),
+        ],
+      );
+      final turned = page.turned();
+      expect(turned.background, const Color(0xFF12372A));
+      expect(turned.strokes.single.color, const Color(0xFFE53935));
+      expect(turned.strokes.single.width, 4.5);
+    });
+  });
 }

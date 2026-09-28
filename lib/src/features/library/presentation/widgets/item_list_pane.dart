@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/entities/zotero_item.dart';
+import '../../../../shared/widgets/tree_drag.dart';
 import '../controllers/library_controllers.dart';
 import 'creator_facet_sheet.dart';
 import 'recent_papers_card.dart';
@@ -271,6 +272,36 @@ class _ItemTile extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final attachment = item.primaryReadable;
 
+    // Ditekan lama untuk diseret ke koleksi lain di pohon. Tekan lama, bukan
+    // seret langsung: daftar ini digulir dengan seretan, dan yang menggulir
+    // tidak sedang memindahkan apa pun.
+    return LongPressDraggable<TreeDrag>(
+      data: ItemDrag(itemKey: item.key, label: item.title),
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      feedback: Material(
+        elevation: 6,
+        borderRadius: BorderRadius.circular(8),
+        color: scheme.primaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(itemTypeIcon(item.itemType), size: 16),
+              const SizedBox(width: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 220),
+                child: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+              ),
+            ],
+          ),
+        ),
+      ),
+      child: _body(context, scheme, attachment),
+    );
+  }
+
+  Widget _body(BuildContext context, ColorScheme scheme, ZoteroAttachment? attachment) {
     return InkWell(
       onTap: onTap,
       child: Container(

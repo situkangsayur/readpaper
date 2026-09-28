@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -14,11 +15,13 @@ import '../../data/note_document_store.dart';
 import '../../data/note_export.dart';
 import '../../domain/note_document.dart';
 import '../../domain/note_history.dart';
+import '../../../../core/utils/ink_palette.dart';
+import '../../../../core/utils/shape_geometry.dart';
 import '../widgets/component_frame.dart';
 import '../widgets/note_canvas.dart';
 
 /// Alat yang sedang dipegang.
-enum NoteTool { pena, hapusGoresan, hapusSebagian, pilih, teks, gambar, diagram }
+enum NoteTool { pena, hapusGoresan, hapusSebagian, pilih, bangun, hubung, teks, gambar, diagram }
 
 /// Buku catatan: berlembar-lembar, ditulis dengan stylus, isinya komponen yang
 /// masih bisa disentuh satu per satu.
@@ -54,6 +57,33 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   String? _selectedId;
   List<Offset> _live = const <Offset>[];
   Offset? _eraserAt;
+
+  /// Bangun yang sedang dipilih untuk disisipkan.
+  ShapeKind _shape = ShapeKind.kotak;
+
+  /// Sudut tarik bangun yang sedang dibuat: dari mana ke mana.
+  Offset? _shapeFrom;
+  Offset? _shapeTo;
+
+  /// Benda pertama yang sudah diketuk dengan alat penghubung.
+  String? _connectFrom;
+
+  /// Boleh menggambar dengan jari.
+  ///
+  /// Dimatikan berarti hanya stylus yang menggambar — dan itulah penolak
+  /// telapak tangan yang sebenarnya: tangan yang bertumpu di kertas tidak
+  /// meninggalkan garis, karena sentuhannya tidak pernah sampai ke kanvas.
+  bool _finger = true;
+
+  /// Yang boleh menggambar. Tetikus ikut, supaya di layar tanpa stylus —
+  /// termasuk saat diuji — kanvasnya tetap bisa dipakai.
+  Set<PointerDeviceKind>? get _drawWith => _finger
+      ? null
+      : const <PointerDeviceKind>{
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.invertedStylus,
+          PointerDeviceKind.mouse,
+        };
 
   /// Satu gerakan tangan = satu langkah urungkan, bukan satu per piksel.
   bool _touchedThisGesture = false;
@@ -118,7 +148,13 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       case NoteTool.hapusSebagian:
         setState(() => _eraserAt = sheetPoint);
         _erase(sheetPoint);
+      case NoteTool.bangun:
+        setState(() {
+          _shapeFrom = sheetPoint;
+          _shapeTo = sheetPoint;
+        });
       case NoteTool.pilih:
+      case NoteTool.hubung:
       case NoteTool.teks:
       case NoteTool.gambar:
       case NoteTool.diagram:
@@ -137,7 +173,10 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       case NoteTool.hapusSebagian:
         setState(() => _eraserAt = sheetPoint);
         _erase(sheetPoint);
+      case NoteTool.bangun:
+        setState(() => _shapeTo = sheetPoint);
       case NoteTool.pilih:
+      case NoteTool.hubung:
       case NoteTool.teks:
       case NoteTool.gambar:
       case NoteTool.diagram:
@@ -148,14 +187,78 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   void _onPanEnd() {
     if (_tool == NoteTool.pena && _live.length > 1) {
       _commitStroke();
+    } else if (_tool == NoteTool.bangun) {
+      _commitShape();
     } else if (_touchedThisGesture) {
       setState(() => _history.push(_document));
     }
     setState(() {
       _live = const <Offset>[];
       _eraserAt = null;
+      _shapeFrom = null;
+      _shapeTo = null;
       _touchedThisGesture = false;
     });
+  }
+
+  /// Menjadikan bangun yang baru ditarik sebuah komponen.
+  ///
+  /// Seretan yang terlalu kecil diabaikan: itu ketukan yang tidak sengaja,
+  /// dan bangun setitik hanya jadi sampah di lembar.
+  void _commitShape() {
+    final from = _shapeFrom;
+    final to = _shapeTo;
+    if (from == null || to == null) return;
+    final box = Rect.fromPoints(from, to);
+    if (box.width < 6 && box.height < 6) return;
+
+    // Garis dan panah memakai arah tarikannya, jadi ujungnya tidak boleh
+    // dinormalkan jadi kotak — panah ke kiri atas harus tetap menunjuk ke
+    // kiri atas.
+    final berarah = _shape == ShapeKind.garis || _shape == ShapeKind.panah;
+    _replaceComponents(<NoteComponent>[
+      ..._sheet.components,
+      NoteShape(
+        id: _freshId('bangun'),
+        position: berarah ? from : box.topLeft,
+        size: berarah
+            ? Size(to.dx - from.dx, to.dy - from.dy)
+            : Size(math.max(box.width, 6), math.max(box.height, 6)),
+        shape: _shape,
+        strokeWidth: _penWidth,
+        color: _pen.toARGB32(),
+      ),
+    ]);
+  }
+
+  /// Menghubungkan dua benda: ketuk yang pertama, lalu yang kedua.
+  void _connect(Offset sheetPoint) {
+    final hit = _sheet.hitTest(sheetPoint);
+    if (hit == null || hit is NoteConnector) {
+      setState(() => _connectFrom = null);
+      return;
+    }
+    final first = _connectFrom;
+    if (first == null) {
+      setState(() => _connectFrom = hit.id);
+      _say('Sekarang ketuk benda yang kedua.');
+      return;
+    }
+    if (first == hit.id) {
+      setState(() => _connectFrom = null);
+      return;
+    }
+    _replaceComponents(<NoteComponent>[
+      ..._sheet.components,
+      NoteConnector(
+        id: _freshId('hubung'),
+        fromId: first,
+        toId: hit.id,
+        color: _pen.toARGB32(),
+        strokeWidth: math.max(1.2, _penWidth * 0.7),
+      ),
+    ]);
+    setState(() => _connectFrom = null);
   }
 
   /// Menjadikan goresan yang baru ditarik sebuah komponen.
@@ -304,6 +407,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
         _update(component.copyWith(source: source), commit: true);
       case NoteImage():
       case NoteInk():
+      case NoteShape():
+      case NoteConnector():
       case null:
         break;
     }
@@ -312,10 +417,9 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   void _deleteSelected() {
     final id = _selectedId;
     if (id == null) return;
-    _replaceComponents(<NoteComponent>[
-      for (final component in _sheet.components)
-        if (component.id != id) component,
-    ]);
+    // `without` ikut membuang penghubung yang menempel: garis yang salah satu
+    // ujungnya hilang bukan penghubung lagi.
+    _apply(_document.replacePage(_page, _sheet.without(id)));
     setState(() => _selectedId = null);
   }
 
@@ -619,10 +723,21 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
               pen: _pen,
               penWidth: _penWidth,
               eraserRadius: _eraserRadius,
+              shape: _shape,
+              finger: _finger,
               selected: _selected,
               onTool: (tool) => setState(() {
                 _tool = tool;
                 if (tool != NoteTool.pilih) _selectedId = null;
+                if (tool != NoteTool.hubung) _connectFrom = null;
+              }),
+              onFinger: (value) => setState(() => _finger = value),
+              onShape: (kind) => setState(() {
+                _shape = kind;
+                // Memilih bangun berarti mau menggambarnya: alatnya ikut
+                // berpindah, supaya tidak perlu dua ketukan untuk satu maksud.
+                _tool = NoteTool.bangun;
+                _selectedId = null;
               }),
               onPen: (color) => setState(() => _pen = color),
               onPenWidth: (width) => setState(() => _penWidth = width),
@@ -674,11 +789,13 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       // gerakan dan komponennya tidak pernah bisa digeser.
       final menggambar = _tool == NoteTool.pena ||
           _tool == NoteTool.hapusGoresan ||
-          _tool == NoteTool.hapusSebagian;
+          _tool == NoteTool.hapusSebagian ||
+          _tool == NoteTool.bangun;
 
       return Center(
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
+          supportedDevices: _drawWith,
           onTapUp: (details) => _onTap(details.localPosition / scale),
           onPanStart: menggambar ? (details) => _onPanStart(details.localPosition / scale) : null,
           onPanUpdate: menggambar ? (details) => _onPanUpdate(details.localPosition / scale) : null,
@@ -699,6 +816,10 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                 liveWidth: _penWidth,
                 eraserAt: _eraserAt,
                 eraserRadius: _eraserRadius,
+                previewShape: _shapeFrom == null || _shapeTo == null
+                    ? null
+                    : (kind: _shape, from: _shapeFrom!, to: _shapeTo!),
+                connectFromId: _connectFrom,
               ),
               if (selected != null && _tool == NoteTool.pilih)
                 ComponentFrame(
@@ -736,12 +857,15 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     switch (_tool) {
       case NoteTool.pilih:
         setState(() => _selectedId = _sheet.hitTest(sheetPoint)?.id);
+      case NoteTool.hubung:
+        _connect(sheetPoint);
       case NoteTool.teks:
         _addText(sheetPoint);
       case NoteTool.diagram:
         _addDiagram(sheetPoint);
       case NoteTool.gambar:
         _addImage(sheetPoint);
+      case NoteTool.bangun:
       case NoteTool.pena:
       case NoteTool.hapusGoresan:
       case NoteTool.hapusSebagian:
@@ -757,8 +881,12 @@ class _Tools extends StatelessWidget {
     required this.pen,
     required this.penWidth,
     required this.eraserRadius,
+    required this.shape,
+    required this.finger,
     required this.selected,
     required this.onTool,
+    required this.onShape,
+    required this.onFinger,
     required this.onPen,
     required this.onPenWidth,
     required this.onEraser,
@@ -770,22 +898,21 @@ class _Tools extends StatelessWidget {
   final Color pen;
   final double penWidth;
   final double eraserRadius;
+  final ShapeKind shape;
+  final bool finger;
   final NoteComponent? selected;
   final ValueChanged<NoteTool> onTool;
+  final ValueChanged<ShapeKind> onShape;
+  final ValueChanged<bool> onFinger;
   final ValueChanged<Color> onPen;
   final ValueChanged<double> onPenWidth;
   final ValueChanged<double> onEraser;
   final ValueChanged<Color> onColor;
   final ValueChanged<double> onOpacity;
 
-  static const List<Color> palette = <Color>[
-    Color(0xFF1A1A1A),
-    Color(0xFF1565C0),
-    Color(0xFFC62828),
-    Color(0xFF2E7D32),
-    Color(0xFFF9A825),
-    Color(0xFF6A1B9A),
-  ];
+  /// Palet bersama dengan papan tulis: satu daftar, supaya warna yang dipakai
+  /// di catatan dan di papan tulis sama namanya dan sama nilainya.
+  static const List<({String name, Color color})> palette = InkPalette.all;
 
   @override
   Widget build(BuildContext context) => Material(
@@ -816,6 +943,36 @@ class _Tools extends StatelessWidget {
             tool: tool,
             onTool: onTool,
           ),
+          PopupMenuButton<ShapeKind>(
+            tooltip: 'Bangun: ${shape.label}',
+            onSelected: onShape,
+            icon: Icon(
+              _shapeIcon(shape),
+              color: tool == NoteTool.bangun
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+            ),
+            itemBuilder: (_) => <PopupMenuEntry<ShapeKind>>[
+              for (final kind in ShapeKind.values)
+                PopupMenuItem<ShapeKind>(
+                  value: kind,
+                  child: Row(
+                    children: <Widget>[
+                      Icon(_shapeIcon(kind), size: 18),
+                      const SizedBox(width: 10),
+                      Text(kind.label),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+          _Tool(
+            icon: Icons.linear_scale,
+            label: 'Hubungkan dua benda',
+            value: NoteTool.hubung,
+            tool: tool,
+            onTool: onTool,
+          ),
           const VerticalDivider(width: 12),
           _Tool(
             icon: Icons.title,
@@ -839,19 +996,31 @@ class _Tools extends StatelessWidget {
             onTool: onTool,
           ),
           const VerticalDivider(width: 12),
+          IconButton(
+            tooltip: finger
+                ? 'Jari boleh menggambar — ketuk untuk hanya stylus'
+                : 'Hanya stylus yang menggambar — telapak tangan diabaikan',
+            isSelected: !finger,
+            iconSize: 20,
+            icon: Icon(finger ? Icons.touch_app_outlined : Icons.draw),
+            style: IconButton.styleFrom(
+              backgroundColor: finger ? null : Theme.of(context).colorScheme.primaryContainer,
+            ),
+            onPressed: () => onFinger(!finger),
+          ),
           PopupMenuButton<Color>(
             tooltip: selected == null ? 'Warna pena' : 'Warna komponen',
             icon: Icon(Icons.circle, color: selected == null ? pen : Color(selected!.color)),
             onSelected: selected == null ? onPen : onColor,
             itemBuilder: (_) => <PopupMenuEntry<Color>>[
-              for (final color in palette)
+              for (final option in palette)
                 PopupMenuItem<Color>(
-                  value: color,
+                  value: option.color,
                   child: Row(
                     children: <Widget>[
-                      Icon(Icons.circle, color: color, size: 18),
-                      const SizedBox(width: 8),
-                      const Text('Warna'),
+                      Icon(Icons.circle, color: option.color, size: 18),
+                      const SizedBox(width: 10),
+                      Text(option.name),
                     ],
                   ),
                 ),
@@ -894,6 +1063,15 @@ class _Tools extends StatelessWidget {
     ),
   );
 }
+
+IconData _shapeIcon(ShapeKind kind) => switch (kind) {
+  ShapeKind.kotak => Icons.crop_square,
+  ShapeKind.bulat => Icons.circle_outlined,
+  ShapeKind.belahKetupat => Icons.change_history,
+  ShapeKind.segitiga => Icons.details,
+  ShapeKind.garis => Icons.horizontal_rule,
+  ShapeKind.panah => Icons.arrow_right_alt,
+};
 
 class _Tool extends StatelessWidget {
   const _Tool({

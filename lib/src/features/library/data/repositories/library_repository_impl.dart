@@ -79,6 +79,19 @@ class LibraryRepositoryImpl implements LibraryRepository {
       writer.deleteItem(libraryDir: libraryDir, itemFilePath: itemFilePath);
 
   @override
+  Future<List<String>> setItemCollections({
+    required String libraryDir,
+    required String itemFilePath,
+    required List<String> collectionKeys,
+    required List<String> collectionPaths,
+  }) => const ZoteroWriter().setItemCollections(
+    itemFilePath: itemFilePath,
+    libraryDir: libraryDir,
+    collectionKeys: collectionKeys,
+    collectionPaths: collectionPaths,
+  );
+
+  @override
   Future<CreatedItem> addPdfAsItem({
     required String libraryDir,
     required String libraryName,

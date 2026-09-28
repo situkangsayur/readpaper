@@ -106,8 +106,10 @@ void main() {
       ]);
       final md = await NoteExport.toMarkdown(document, assetDir: dir.path);
 
-      expect(md, contains('![tulisan tangan](tinta-1-1.png)'));
-      final png = File(p.join(dir.path, 'tinta-1-1.png'));
+      // Satu PNG per lembar, bukan per benda: penghubung membentang antara
+      // dua benda, jadi memotongnya per benda akan memutus garisnya.
+      expect(md, contains('![tulisan tangan](tinta-1.png)'));
+      final png = File(p.join(dir.path, 'tinta-1.png'));
       expect(png.existsSync(), isTrue);
       expect(png.lengthSync(), greaterThan(100));
       expect(png.readAsBytesSync().sublist(1, 4), <int>[0x50, 0x4E, 0x47]);
@@ -165,9 +167,11 @@ void main() {
       final raw = textOf(bytes);
       expect(raw.contains('/DCTDecode'), isFalse);
       expect(raw.contains('/FlateDecode') || raw.contains('stream'), isTrue);
-      // Operator garis PDF: `m` pindah, `l` tarik, `S` gores.
+      // Operator jalur PDF: `m` pindah, `c` kurva kubik — tinta digambar
+      // sebagai kurva yang sama dengan yang terlihat di layar, bukan garis
+      // patah.
       expect(RegExp(r'\d+(\.\d+)? \d+(\.\d+)? m').hasMatch(raw), isTrue);
-      expect(RegExp(r'\d+(\.\d+)? \d+(\.\d+)? l').hasMatch(raw), isTrue);
+      expect(RegExp(r'\d+(\.\d+)? \d+(\.\d+)? c').hasMatch(raw), isTrue);
     });
 
     test('gambar yang hilang disebutkan, bukan dilewati diam-diam', () async {

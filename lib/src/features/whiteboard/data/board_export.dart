@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/painting.dart';
 import 'package:image/image.dart' as img;
 
+import '../../../core/utils/ink_smoothing.dart';
 import '../../../core/utils/simple_pdf_writer.dart';
 import '../domain/board.dart';
 
@@ -23,8 +24,8 @@ class BoardExport {
 
   /// Menggambar satu lembar menjadi gambar.
   static Future<ui.Image> render(BoardPage page) async {
-    final width = (BoardSize.width * scale).round();
-    final height = (BoardSize.height * scale).round();
+    final width = (page.size.width * scale).round();
+    final height = (page.size.height * scale).round();
 
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
@@ -35,11 +36,10 @@ class BoardExport {
 
     for (final stroke in page.strokes) {
       if (stroke.isEmpty) continue;
-      final path = Path();
-      for (var i = 0; i < stroke.points.length; i++) {
-        final point = stroke.points[i] * scale;
-        i == 0 ? path.moveTo(point.dx, point.dy) : path.lineTo(point.dx, point.dy);
-      }
+      // Kurva yang sama dengan yang terlihat di layar.
+      final path = InkSmoothing.path(<Offset>[
+        for (final point in stroke.points) point * scale,
+      ]);
       canvas.drawPath(
         path,
         Paint()
@@ -64,8 +64,11 @@ class BoardExport {
           jpeg: await _jpeg(image, quality),
           pixelWidth: image.width,
           pixelHeight: image.height,
-          widthPt: BoardSize.width,
-          heightPt: BoardSize.height,
+          // Per lembar, bukan satu ukuran untuk semuanya: satu papan boleh
+          // mencampur kertas tegak dan mendatar, dan PDF memang mengizinkan
+          // tiap halaman punya ukurannya sendiri.
+          widthPt: page.size.width,
+          heightPt: page.size.height,
         ),
       );
       image.dispose();
