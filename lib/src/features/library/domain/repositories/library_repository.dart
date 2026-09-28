@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import '../../data/datasources/zotero_writer.dart' show CreatedItem;
 import '../entities/library_index.dart';
 import '../entities/zotero_annotation.dart';
 import '../entities/zotero_item.dart';
@@ -27,6 +28,17 @@ abstract class LibraryRepository {
   bool isLfsPointer(File file);
 
   /// Writes (or replaces) an annotation. Returns the files that changed.
+  /// Memasukkan sebuah PDF lepas ke dalam library sebagai item baru.
+  Future<CreatedItem> addPdfAsItem({
+    required String libraryDir,
+    required String libraryName,
+    required int libraryId,
+    required String pdfPath,
+    required String title,
+    String? collectionKey,
+    String? collectionPath,
+  });
+
   Future<List<String>> saveAnnotation({
     required String itemFilePath,
     required String libraryDir,

@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../../core/errors/failure.dart';
 import '../../../../core/utils/formatting.dart';
+import '../../../../core/utils/zotero_key.dart';
 import '../../domain/entities/zotero_annotation.dart';
 import 'zotero_fs_datasource.dart';
 import 'zotero_json.dart';
@@ -110,6 +111,177 @@ class ZoteroWriter {
     }
   }
 
+  /// Membuat item baru dari sebuah berkas PDF, lengkap dengan lampirannya.
+  ///
+  /// Inilah yang membuat "tambahkan ke koleksi" mungkin: PDF yang dibuka
+  /// lepas — formulir yang ditandatangani, catatan rapat, paper yang dikirim
+  /// lewat pesan — bisa masuk ke library dan ikut tersinkron.
+  ///
+  /// Formatnya mengikuti tulisan `zotero-github-sync` persis: berkas item di
+  /// `items/<XX>/<KEY>.json`, lampiran di `attachments/<XX>/<KEY>/<berkas>`,
+  /// dan catatan di `notes/<X>/<judul> (KEY).md`. Yang ditulis di sini harus
+  /// bisa dibaca kembali oleh Zotero, jadi tidak ada satu pun bidang yang
+  /// ditambahkan sendiri.
+  Future<CreatedItem> createItemFromPdf({
+    required String libraryDir,
+    required String libraryName,
+    required int libraryId,
+    required String pdfPath,
+    required String title,
+    String? collectionKey,
+    String? collectionPath,
+    DateTime? now,
+  }) async {
+    final source = File(pdfPath);
+    if (!source.existsSync()) {
+      throw LibraryFailure('Berkas PDF tidak ditemukan', details: pdfPath);
+    }
+
+    final moment = now ?? DateTime.now();
+    final itemKey = ZoteroKey.generate();
+    final attachmentKey = ZoteroKey.generate();
+    final stamp = _stamp(moment);
+    final filename = p.basename(pdfPath);
+
+    // Lampirannya disalin lebih dulu: kalau penyalinan gagal, tidak ada item
+    // setengah jadi yang menunjuk ke berkas yang tidak ada.
+    final relativeAttachment = <String>[
+      'attachments',
+      ZoteroKey.bucket(attachmentKey),
+      attachmentKey,
+      filename,
+    ].join('/');
+    final attachmentFile = File(p.join(libraryDir, relativeAttachment));
+    await attachmentFile.parent.create(recursive: true);
+    await source.copy(attachmentFile.path);
+    final size = await attachmentFile.length();
+
+    final json = <String, dynamic>{
+      'children': <dynamic>[
+        <String, dynamic>{
+          'charset': '',
+          'contentType': 'application/pdf',
+          'dateAdded': stamp,
+          'dateModified': stamp,
+          'filename': filename,
+          'itemType': 'attachment',
+          'key': attachmentKey,
+          'linkMode': 'imported_file',
+          'parentItem': itemKey,
+          'relations': <String, dynamic>{},
+          'tags': <dynamic>[],
+          'title': 'PDF',
+        },
+      ],
+      'meta': <String, dynamic>{
+        'attachments': <dynamic>[
+          <String, dynamic>{
+            'annotationCount': 0,
+            'contentType': 'application/pdf',
+            'filename': filename,
+            'files': <dynamic>[
+              <String, dynamic>{'path': relativeAttachment, 'size': size, 'storage': 'git'},
+            ],
+            'key': attachmentKey,
+            'linkMode': 'imported_file',
+            'status': 'ok',
+            'title': 'PDF',
+            'url': null,
+          },
+        ],
+        'collections': <dynamic>[
+          if (collectionPath != null && collectionPath.isNotEmpty) collectionPath,
+        ],
+        'creators': <dynamic>[],
+        'itemType': 'document',
+        'libraryID': libraryId,
+        'libraryName': libraryName,
+        'notes': <dynamic>[],
+        'title': title,
+        'year': '${moment.year}',
+        'zoteroURI': 'zotero://select/library/items/$itemKey',
+      },
+      'zotero': <String, dynamic>{
+        'accessDate': stamp,
+        'collections': <dynamic>[
+          if (collectionKey != null && collectionKey.isNotEmpty) collectionKey,
+        ],
+        'creators': <dynamic>[],
+        'dateAdded': stamp,
+        'dateModified': stamp,
+        'itemType': 'document',
+        'key': itemKey,
+        'relations': <String, dynamic>{},
+        'tags': <dynamic>[],
+        'title': title,
+      },
+    };
+
+    final itemPath = p.join(libraryDir, 'items', ZoteroKey.bucket(itemKey), '$itemKey.json');
+    final itemFile = File(itemPath);
+    await itemFile.parent.create(recursive: true);
+    await itemFile.writeAsString(ZoteroJson.encodeFile(json), flush: true);
+
+    final notePath = await _writeNote(
+      libraryDir: libraryDir,
+      itemKey: itemKey,
+      title: title,
+      relativeAttachment: relativeAttachment,
+      filename: filename,
+    );
+
+    return CreatedItem(
+      itemKey: itemKey,
+      attachmentKey: attachmentKey,
+      itemFilePath: itemPath,
+      attachmentPath: attachmentFile.path,
+      touchedFiles: <String>[itemPath, attachmentFile.path, ?notePath],
+    );
+  }
+
+  /// Catatan markdown pendamping, seperti yang ditulis plugin.
+  Future<String?> _writeNote({
+    required String libraryDir,
+    required String itemKey,
+    required String title,
+    required String relativeAttachment,
+    required String filename,
+  }) async {
+    final notesDir = Directory(p.join(libraryDir, 'notes'));
+    // Kalau library ini memang tidak memakai catatan, jangan memulai
+    // kebiasaan baru yang tidak diminta siapa pun.
+    if (!notesDir.existsSync()) return null;
+
+    final safeTitle = title.replaceAll(RegExp(r'[\\/:*?"<>|]'), '-').trim();
+    final bucket = safeTitle.isEmpty ? '_' : safeTitle[0].toUpperCase();
+    final path = p.join(notesDir.path, bucket, '$safeTitle ($itemKey).md');
+    final file = File(path);
+    await file.parent.create(recursive: true);
+
+    final depth = p.split(p.relative(file.parent.path, from: libraryDir)).length;
+    final back = List<String>.filled(depth, '..').join('/');
+    final buffer = StringBuffer()
+      ..writeln('---')
+      ..writeln('title: "$safeTitle"')
+      ..writeln('zotero-key: "$itemKey"')
+      ..writeln('---')
+      ..writeln()
+      ..writeln('# $safeTitle')
+      ..writeln()
+      ..writeln('## Attachments')
+      ..writeln()
+      ..writeln('- [$filename]($back/$relativeAttachment)')
+      ..writeln()
+      ..writeln('---')
+      ..writeln()
+      ..writeln('[Open in Zotero](zotero://select/library/items/$itemKey)');
+    await file.writeAsString(buffer.toString(), flush: true);
+    return path;
+  }
+
+  /// Cap waktu dalam bentuk yang dipakai Zotero: UTC, tanpa pecahan detik.
+  static String _stamp(DateTime when) => '${when.toUtc().toIso8601String().split('.').first}Z';
+
   /// Locates `notes/<bucket>/<title> (KEY).md` for an item key.
   Future<String?> findNoteFile(String libraryDir, String itemKey) async {
     final notesDir = Directory(p.join(libraryDir, 'notes'));
@@ -213,4 +385,23 @@ String annotationCommitMessage({
   final title = itemTitle.length > 60 ? '${itemTitle.substring(0, 57)}...' : itemTitle;
   return '$action ${annotation.type.wire} p.$page — $title\n\n'
       'ReadPaper ${zoteroTimestamp()}';
+}
+
+/// Item yang baru dibuat, beserta berkas yang tersentuh.
+class CreatedItem {
+  const CreatedItem({
+    required this.itemKey,
+    required this.attachmentKey,
+    required this.itemFilePath,
+    required this.attachmentPath,
+    required this.touchedFiles,
+  });
+
+  final String itemKey;
+  final String attachmentKey;
+  final String itemFilePath;
+  final String attachmentPath;
+
+  /// Untuk pesan commit, dan untuk memastikan semuanya ikut terdorong.
+  final List<String> touchedFiles;
 }

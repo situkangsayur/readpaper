@@ -58,11 +58,16 @@ class SettingsRepositoryImpl implements SettingsRepository {
   }
 
   @override
-  Future<AppSettings> updatePreferences({String? themeMode, String? lastAnnotationColor}) async {
+  Future<AppSettings> updatePreferences({
+    String? themeMode,
+    String? lastAnnotationColor,
+    bool? keepScreenOn,
+  }) async {
     final settings = await _local.load();
     final updated = settings.copyWith(
       themeMode: themeMode,
       lastAnnotationColor: lastAnnotationColor,
+      keepScreenOn: keepScreenOn,
     );
     await _local.save(updated);
     return updated;

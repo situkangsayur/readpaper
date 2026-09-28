@@ -388,6 +388,54 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return true;
   }
 
+  /// Memasukkan sebuah PDF lepas ke library, dengan koleksi pilihan.
+  ///
+  /// Ini jalur yang berbeda dari menyimpan anotasi: yang dibuat adalah item
+  /// Zotero yang belum pernah ada, beserta lampirannya. Karena itu berkasnya
+  /// ditulis lebih dulu, lalu di-commit sekali dengan pesan yang menyebut
+  /// judulnya — dan kalau profilnya menyalakan dorong otomatis, ikut terdorong.
+  Future<CreatedItem?> addPdfToLibrary({
+    required String pdfPath,
+    required String title,
+    String? collectionKey,
+  }) async {
+    final library = state.library;
+    final profile = state.profile;
+    final index = state.index;
+    if (library == null || profile == null || index == null) {
+      state = state.copyWith(error: 'Tidak ada library aktif untuk menampung berkas ini.');
+      return null;
+    }
+
+    try {
+      // Nama jalur koleksi ("PhD/Crypto") ikut ditulis di bagian meta, persis
+      // seperti yang dilakukan plugin; keynya saja tidak cukup.
+      final collection = collectionKey == null ? null : index.collections[collectionKey];
+
+      final created = await ref
+          .read(libraryRepositoryProvider)
+          .addPdfAsItem(
+            libraryDir: library.directoryPath,
+            libraryName: library.name,
+            libraryId: 1,
+            pdfPath: pdfPath,
+            title: title,
+            collectionKey: collectionKey,
+            collectionPath: collection?.path,
+          );
+
+      await _commitAnnotation(
+        profile: profile,
+        message: 'Tambah dokumen: $title',
+      );
+      await reloadLibrary();
+      return created;
+    } on Object catch (e) {
+      state = state.copyWith(error: 'Gagal menambahkan ke library: $e');
+      return null;
+    }
+  }
+
   Future<void> _commitAnnotation({required RepoProfile profile, required String message}) async {
     final backend = ref.read(gitBackendProvider);
     state = state.copyWith(phase: SyncPhase.committing, clearError: true);
@@ -451,6 +499,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final settings = await ref
         .read(settingsRepositoryProvider)
         .updatePreferences(lastAnnotationColor: color);
+    state = state.copyWith(settings: settings);
+  }
+
+  /// Menyalakan atau mematikan "layar tetap menyala saat membaca".
+  Future<void> setKeepScreenOn(bool value) async {
+    final settings = await ref
+        .read(settingsRepositoryProvider)
+        .updatePreferences(keepScreenOn: value);
     state = state.copyWith(settings: settings);
   }
 

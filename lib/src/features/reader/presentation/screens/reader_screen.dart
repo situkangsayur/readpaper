@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme.dart';
@@ -137,6 +138,24 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// Hides everything but the page.
   bool _readingMode = false;
 
+  /// Layar dibiarkan menyala selama pembaca ini terbuka.
+  ///
+  /// Membaca paper berarti menatap satu halaman berpuluh detik tanpa
+  /// menyentuh apa pun, dan layar yang mati di tengah kalimat memutus
+  /// bacaan. Tetapi ia juga memakan baterai, jadi ini pilihan yang dinyalakan
+  /// sendiri — bukan keputusan aplikasi untuk semua orang.
+  bool _keepScreenOn = false;
+
+  Future<void> _applyKeepScreenOn(bool value) async {
+    setState(() => _keepScreenOn = value);
+    try {
+      await WakelockPlus.toggle(enable: value);
+    } on Object {
+      // Perangkat yang menolak permintaan ini bukan alasan untuk menutup
+      // pembacanya; yang hilang hanya kenyamanan.
+    }
+  }
+
   /// Mode menyajikan: satu halaman penuh layar, maju-mundur dengan ketukan.
   ///
   /// Berbeda dari mode baca. Mode baca menyembunyikan bilah supaya yang
@@ -182,6 +201,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     // The bars must come back even if the reader is closed from inside
     // reading mode, or the rest of the app loses its status bar.
     if (_readingMode) SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    // Dilepas saat pembacanya ditutup, apa pun yang terjadi sebelumnya:
+    // layar yang terus menyala di layar daftar paper tidak ada gunanya.
+    if (_keepScreenOn) WakelockPlus.disable();
     super.dispose();
   }
 
@@ -189,7 +211,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   void initState() {
     super.initState();
     _workspace = ref.read(workspaceControllerProvider.notifier);
-    _color = ref.read(workspaceControllerProvider).settings.lastAnnotationColor;
+    final settings = ref.read(workspaceControllerProvider).settings;
+    _color = settings.lastAnnotationColor;
+    if (settings.keepScreenOn) _applyKeepScreenOn(true);
     _load();
   }
 
@@ -654,6 +678,103 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
   }
 
+  /// Memasukkan PDF yang sedang dibuka ke library, ke koleksi pilihan.
+  ///
+  /// Hanya untuk berkas lepas: paper yang memang berasal dari library sudah
+  /// ada di sana. Yang disalin adalah berkas yang sedang ditampilkan — kalau
+  /// halaman kosong sudah ditambahkan, itulah yang ikut masuk.
+  Future<void> _addToCollection() async {
+    final index = ref.read(workspaceControllerProvider).index;
+    if (index == null) {
+      _say('Belum ada library yang terbuka di aplikasi ini.');
+      return;
+    }
+
+    if (_unsaved) {
+      _say('Anotasi yang belum disimpan tidak ikut. Simpan PDF dulu bila perlu.');
+    }
+
+    final chosen = await showModalBottomSheet<_CollectionChoice>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.7),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            shrinkWrap: true,
+            children: <Widget>[
+              Text('Tambahkan ke koleksi', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                'Berkasnya disalin ke dalam library, dibuatkan item Zotero, '
+                'lalu di-commit — jadi ikut tersinkron ke GitHub.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.folder_off_outlined),
+                title: const Text('Tanpa koleksi'),
+                subtitle: const Text('masuk library, tidak masuk koleksi mana pun'),
+                onTap: () => Navigator.of(context).pop(const _CollectionChoice(null)),
+              ),
+              const Divider(),
+              for (final collection in index.collections.values)
+                ListTile(
+                  leading: const Icon(Icons.folder_outlined),
+                  title: Text(collection.name),
+                  subtitle: collection.path == collection.name ? null : Text(collection.path),
+                  onTap: () => Navigator.of(context).pop(_CollectionChoice(collection.key)),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (chosen == null || !mounted) return;
+
+    final title = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController(text: widget.title);
+        return AlertDialog(
+          title: const Text('Judul dokumen'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+            onSubmitted: (value) => Navigator.of(context).pop(value),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: const Text('Tambahkan'),
+            ),
+          ],
+        );
+      },
+    );
+    if (title == null || title.trim().isEmpty || !mounted) return;
+
+    _say('Menambahkan ke library…');
+    final created = await _workspace.addPdfToLibrary(
+      pdfPath: _path,
+      title: title.trim(),
+      collectionKey: chosen.key,
+    );
+    if (!mounted) return;
+    _say(
+      created == null
+          ? (ref.read(workspaceControllerProvider).error ?? 'Gagal menambahkan')
+          : 'Masuk library sebagai ${created.itemKey}',
+    );
+  }
+
   /// Menambahkan halaman kosong untuk dicoreti, seperti papan tulis yang
   /// menempel pada dokumennya.
   ///
@@ -1006,6 +1127,28 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   }),
                 ),
                 IconButton(
+                  tooltip: _keepScreenOn
+                      ? 'Layar tetap menyala — tekan untuk mematikan'
+                      : 'Biarkan layar menyala selama membaca',
+                  isSelected: _keepScreenOn,
+                  selectedIcon: const Icon(Icons.lightbulb),
+                  icon: const Icon(Icons.lightbulb_outline),
+                  onPressed: () async {
+                    final value = !_keepScreenOn;
+                    await _applyKeepScreenOn(value);
+                    // Diingat untuk pembacaan berikutnya: yang menyalakannya
+                    // sekali biasanya menginginkannya selalu.
+                    await _workspace.setKeepScreenOn(value);
+                    if (mounted) {
+                      _say(
+                        value
+                            ? 'Layar akan tetap menyala selama membaca'
+                            : 'Layar kembali mati sendiri',
+                      );
+                    }
+                  },
+                ),
+                IconButton(
                   tooltip: 'Sajikan — satu halaman penuh layar',
                   icon: const Icon(Icons.slideshow_outlined),
                   onPressed: _togglePresent,
@@ -1031,9 +1174,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     'simpan' => _savePdf(),
                     'simpan-sebagai' => _exportImages(),
                     'halaman-kosong' => _addBlankPages(),
+                    'ke-koleksi' => _addToCollection(),
                     _ => _shareAnnotated(),
                   },
                   itemBuilder: (_) => <PopupMenuEntry<String>>[
+                    if (widget.isStandalone)
+                      const PopupMenuItem<String>(
+                        value: 'ke-koleksi',
+                        child: ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.library_add_outlined),
+                          title: Text('Tambahkan ke koleksi…'),
+                          subtitle: Text('masuk library dan ikut tersinkron'),
+                        ),
+                      ),
                     const PopupMenuItem<String>(
                       value: 'halaman-kosong',
                       child: ListTile(
@@ -2124,4 +2279,13 @@ class _UndoStep {
   /// Disebut apa saat diurungkan, supaya yang menekan tahu apa yang kembali.
   final String label;
   final Future<void> Function() action;
+}
+
+
+/// Koleksi yang dipilih saat memasukkan berkas ke library; null berarti
+/// tidak masuk koleksi mana pun.
+class _CollectionChoice {
+  const _CollectionChoice(this.key);
+
+  final String? key;
 }

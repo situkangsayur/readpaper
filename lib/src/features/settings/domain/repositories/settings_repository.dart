@@ -10,7 +10,11 @@ abstract class SettingsRepository {
 
   Future<AppSettings> setActiveProfile(String profileId);
 
-  Future<AppSettings> updatePreferences({String? themeMode, String? lastAnnotationColor});
+  Future<AppSettings> updatePreferences({
+    String? themeMode,
+    String? lastAnnotationColor,
+    bool? keepScreenOn,
+  });
 
   /// Records a paper as opened, or moves it back to the front of the history.
   Future<AppSettings> rememberRecent(RecentPaper entry);

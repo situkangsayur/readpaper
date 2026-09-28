@@ -159,6 +159,7 @@ class AppSettings {
     this.themeMode = 'system',
     this.lastAnnotationColor = AnnotationPalette.yellow,
     this.recents = const <RecentPaper>[],
+    this.keepScreenOn = false,
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -173,6 +174,7 @@ class AppSettings {
       for (final entry in (json['recents'] as List?) ?? const <dynamic>[])
         if (entry is Map) RecentPaper.fromJson(entry.cast<String, dynamic>()),
     ],
+    keepScreenOn: json['keepScreenOn'] as bool? ?? false,
   );
 
   final List<RepoProfile> profiles;
@@ -182,6 +184,13 @@ class AppSettings {
 
   /// Papers opened before, newest first.
   final List<RecentPaper> recents;
+
+  /// Layar dibiarkan menyala selama sebuah paper terbuka.
+  ///
+  /// Mati secara bawaan: membiarkan layar menyala memakan baterai, dan itu
+  /// pilihan yang pantas diambil sendiri oleh yang membaca — bukan diputuskan
+  /// aplikasi untuk semua orang.
+  final bool keepScreenOn;
 
   RepoProfile? get activeProfile {
     if (profiles.isEmpty) return null;
@@ -197,6 +206,7 @@ class AppSettings {
     'themeMode': themeMode,
     'lastAnnotationColor': lastAnnotationColor,
     'recents': recents.map((r) => r.toJson()).toList(),
+    'keepScreenOn': keepScreenOn,
   };
 
   AppSettings copyWith({
@@ -205,6 +215,7 @@ class AppSettings {
     String? themeMode,
     String? lastAnnotationColor,
     List<RecentPaper>? recents,
+    bool? keepScreenOn,
     bool clearActive = false,
   }) => AppSettings(
     profiles: profiles ?? this.profiles,
@@ -212,6 +223,7 @@ class AppSettings {
     themeMode: themeMode ?? this.themeMode,
     lastAnnotationColor: lastAnnotationColor ?? this.lastAnnotationColor,
     recents: recents ?? this.recents,
+    keepScreenOn: keepScreenOn ?? this.keepScreenOn,
   );
 
   /// Puts [entry] at the front, replacing any earlier visit to the same file.

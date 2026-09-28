@@ -600,14 +600,14 @@ paper — tidak ada alasan itu jadi aplikasi lain.
       di atas dokumen
 - [x] **Simpan PDF** dan **Simpan sebagai…** (PDF, PNG, JPG)
 - [x] **Bagikan** ke chat, surel, atau aplikasi lain
-- [ ] **Tambahkan ke koleksi tertentu supaya ikut sync GitHub** — diminta,
-      belum dikerjakan. Ini bukan tempelan: perlu membuat berkas item Zotero
-      baru, menyalin PDF-nya ke `attachments/`, dan menyunting
-      `collections.json`, semuanya **byte-for-byte** seperti tulisan plugin
-      `zotero-github-sync`. Format itu sudah diuji ketat untuk *menyunting*
-      item; *membuat* item baru adalah jalur yang belum pernah ditempuh dan
-      pantas mendapat uji round-trip sendiri sebelum menyentuh library
-      sungguhan
+- [x] **Tambahkan ke koleksi tertentu supaya ikut sync GitHub** (2026-09-28).
+      Item Zotero baru ditulis lengkap dengan lampirannya dan catatan
+      pendampingnya, dalam format yang sama persis dengan tulisan plugin.
+      Ujinya membaca kembali hasilnya lewat parser aplikasi sendiri — kalau
+      bentuknya meleset sedikit saja, di situ ketahuannya — lalu dibuktikan
+      pada library sungguhan di tablet: itemnya muncul di koleksi yang
+      dipilih dan commit-nya terbentuk. `collections.json` ternyata tidak
+      perlu disunting: keanggotaan koleksi disimpan di dalam berkas itemnya
 - [ ] Sunting kembali teks yang sudah ditaruh (sekarang harus dihapus lalu
       dibuat ulang)
 - [ ] Simpan tanda tangan supaya tidak perlu digambar ulang tiap kali
@@ -737,6 +737,14 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
       daftar ini dan pantas jadi tahap sendiri: butuh OCR tulisan tangan yang
       layak, dan keputusan apakah berjalan di perangkat atau lewat layanan
       (bandingkan pertimbangan yang sama di Fase 12)
+
+### Layar dan kenyamanan
+
+- [x] **Layar tetap menyala saat membaca** (2026-09-28), bisa dimatikan.
+      Membaca paper berarti menatap satu halaman berpuluh detik tanpa
+      menyentuh apa pun, dan layar yang mati di tengah kalimat memutus
+      bacaan. Mati secara bawaan: itu memakan baterai, dan pantas jadi
+      pilihan yang diambil sendiri
 
 ### Cetak dan integrasi sistem
 
