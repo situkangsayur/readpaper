@@ -8,6 +8,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../core/utils/layout_size.dart';
 import '../../reader/presentation/screens/reader_screen.dart';
+import '../../whiteboard/domain/board.dart';
+import '../../whiteboard/presentation/whiteboard_screen.dart';
 
 /// Penjelajah berkas di bawah pohon koleksi.
 ///
@@ -111,6 +113,132 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     }
   }
 
+  /// Papan tulis baru: pilih warna latarnya, gambar, lalu hasilnya tersimpan
+  /// sebagai PDF di folder ini — langsung terlihat, dan bisa diseret ke
+  /// koleksi seperti berkas lain.
+  /// Mengganti nama berkas di folder kerja.
+  Future<void> _rename(File file) async {
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController(text: p.basename(file.path));
+        return AlertDialog(
+          title: const Text('Ganti nama'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(border: OutlineInputBorder()),
+            onSubmitted: (value) => Navigator.of(context).pop(value),
+          ),
+          actions: <Widget>[
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: const Text('Simpan'),
+            ),
+          ],
+        );
+      },
+    );
+    final trimmed = name?.trim();
+    if (trimmed == null || trimmed.isEmpty) return;
+    // Nama yang mengandung pemisah folder akan memindahkan berkasnya ke
+    // tempat lain, bukan mengganti namanya.
+    final safe = trimmed.replaceAll(RegExp(r'[\\/]'), '-');
+    final target = File(p.join(file.parent.path, safe));
+    if (target.existsSync()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(content: Text('Sudah ada berkas bernama itu')));
+      }
+      return;
+    }
+    await file.rename(target.path);
+    await _open(file.parent);
+  }
+
+  /// Menghapus berkas dari folder kerja.
+  ///
+  /// Hanya berkas di perangkat; yang sudah masuk library dihapus dari
+  /// panel detailnya, dan itu memang dua hal yang berbeda.
+  Future<void> _deleteFile(File file) async {
+    final yakin = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus berkas ini?'),
+        content: Text(
+          '${p.basename(file.path)}\n\nDihapus dari folder ini. Salinan yang '
+          'sudah masuk library tidak tersentuh.',
+        ),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+    if (yakin != true) return;
+    await file.delete();
+    await _open(file.parent);
+  }
+
+  Future<void> _newBoard() async {
+    final dir = _dir;
+    if (dir == null) return;
+
+    final chosen = await showModalBottomSheet<Color>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          children: <Widget>[
+            Text('Papan tulis baru', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              'Berlembar-lembar, bisa dicoreti, lalu disimpan sebagai PDF di '
+              'folder ini.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            for (final option in BoardBackgrounds.all)
+              ListTile(
+                leading: Container(
+                  width: 34,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    color: option.color,
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                title: Text(option.name),
+                onTap: () => Navigator.of(context).pop(option.color),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (chosen == null || !mounted) return;
+
+    final saved = await Navigator.of(context).push<String>(
+      MaterialPageRoute<String>(
+        builder: (_) => WhiteboardScreen(background: chosen, saveDir: dir.path),
+      ),
+    );
+    await _open(dir);
+    if (saved != null && mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('${p.basename(saved)} tersimpan di folder ini')));
+    }
+  }
+
   Future<void> _newFolder() async {
     final dir = _dir;
     if (dir == null) return;
@@ -188,6 +316,12 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                     : () => _open(dir.parent),
               ),
               IconButton(
+                tooltip: 'Papan tulis baru',
+                iconSize: 18,
+                icon: const Icon(Icons.draw_outlined),
+                onPressed: dir == null ? null : _newBoard,
+              ),
+              IconButton(
                 tooltip: 'Salin berkas ke sini',
                 iconSize: 18,
                 icon: const Icon(Icons.file_download_outlined),
@@ -219,9 +353,9 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(
-                      'Folder ini kosong.\n\nSalin PDF ke sini dengan tombol unduh '
-                      'di atas, lalu seret ke sebuah koleksi untuk memasukkannya '
-                      'ke library.',
+                      'Folder ini kosong.\n\nBuat papan tulis, atau salin PDF ke '
+                      'sini dengan tombol unduh di atas — lalu seret ke sebuah '
+                      'koleksi untuk memasukkannya ke library.',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -229,8 +363,13 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                 )
               : ListView.builder(
                   itemCount: _entries.length,
-                  itemBuilder: (context, i) =>
-                      _EntryRow(entry: _entries[i], onOpenDir: _open, onOpenFile: _openFile),
+                  itemBuilder: (context, i) => _EntryRow(
+                    entry: _entries[i],
+                    onOpenDir: _open,
+                    onOpenFile: _openFile,
+                    onRename: _rename,
+                    onDelete: _deleteFile,
+                  ),
                 ),
         ),
       ],
@@ -239,11 +378,19 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
 }
 
 class _EntryRow extends StatelessWidget {
-  const _EntryRow({required this.entry, required this.onOpenDir, required this.onOpenFile});
+  const _EntryRow({
+    required this.entry,
+    required this.onOpenDir,
+    required this.onOpenFile,
+    required this.onRename,
+    required this.onDelete,
+  });
 
   final FileSystemEntity entry;
   final void Function(Directory dir) onOpenDir;
   final void Function(File file) onOpenFile;
+  final void Function(File file) onRename;
+  final void Function(File file) onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -300,6 +447,21 @@ class _EntryRow extends StatelessWidget {
                     context,
                   ).textTheme.bodySmall?.copyWith(color: isPdf ? null : scheme.outline),
                 ),
+              ),
+              PopupMenuButton<String>(
+                tooltip: 'Tindakan berkas',
+                icon: Icon(Icons.more_vert, size: 16, color: scheme.outline),
+                padding: EdgeInsets.zero,
+                onSelected: (choice) => switch (choice) {
+                  'buka' => onOpenFile(file),
+                  'ganti-nama' => onRename(file),
+                  _ => onDelete(file),
+                },
+                itemBuilder: (_) => <PopupMenuEntry<String>>[
+                  if (isPdf) const PopupMenuItem<String>(value: 'buka', child: Text('Buka')),
+                  const PopupMenuItem<String>(value: 'ganti-nama', child: Text('Ganti nama')),
+                  const PopupMenuItem<String>(value: 'hapus', child: Text('Hapus berkas')),
+                ],
               ),
             ],
           ),

@@ -694,10 +694,19 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 
 ### Papan tulis sebagai jenis berkas sendiri
 
-- [ ] **Papan tulis berhalaman**: putih, hitam, atau warna apa pun, berlembar
-      banyak, bisa dicoreti, lalu **dikonversi ke PDF atau gambar**
-- [ ] Papan tulis baru dibuat dari panel berkas, sebelum ada PDF-nya sama
-      sekali
+- [x] **Papan tulis berhalaman** (2026-09-28): lima warna latar, berlembar
+      banyak, pena berwarna dengan empat ketebalan, **penghapus per goresan**,
+      urungkan, dan kosongkan lembar. Disimpan sebagai **PDF** — satu lembar
+      per halaman, ukuran A4 supaya bisa dicetak atau digabung dengan paper
+      tanpa berbeda ukuran
+- [x] Papan tulis baru dibuat **dari panel berkas**, sebelum ada PDF-nya sama
+      sekali. Hasilnya mendarat di folder kerja, langsung terlihat, dan bisa
+      diseret ke koleksi seperti berkas lain
+- [ ] Ekspor per lembar sebagai gambar (PNG sudah ada di kode, belum ada
+      tombolnya)
+- [ ] Papan tulis yang sudah disimpan **dibuka dan disunting lagi** — perlu
+      format yang menyimpan goresannya, bukan hanya PDF hasilnya (lihat
+      Fase 15)
 
 ### Panel berkas di samping koleksi
 
@@ -710,7 +719,9 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 - [x] Di penjelajah berkas: **folder baru**, **masuk/keluar folder**, **buka
       folder kerja lain**, dan **salin berkas ke sini**
 - [ ] Seret **antar koleksi** (memindahkan item yang sudah ada di library)
-- [ ] Berkas baru, proyek baru, dan papan tulis baru dari panel ini
+- [x] **Papan tulis baru** dari panel ini (2026-09-28)
+- [x] **Ganti nama** dan **hapus berkas** dari panel ini (2026-09-28)
+- [ ] Berkas baru dan proyek baru dari panel ini
 - [ ] Batasan yang ditemukan: Android menolak memberikan akses ke folder
       `Download` lewat pemilih **folder** ("Tidak dapat menggunakan folder
       ini"). Karena itu ada tombol **salin berkas ke sini** yang memakai
