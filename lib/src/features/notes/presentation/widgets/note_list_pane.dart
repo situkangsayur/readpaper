@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../library/domain/entities/library_index.dart';
 import '../../../library/presentation/controllers/library_controllers.dart';
+import '../../../markdown/presentation/screens/markdown_editor_screen.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/note_entities.dart';
 import '../controllers/notes_controller.dart';
@@ -55,6 +58,11 @@ class NoteListPane extends ConsumerWidget {
                     ),
                   ],
                 ),
+              ),
+              IconButton(
+                tooltip: 'Catatan Markdown baru',
+                icon: const Icon(Icons.post_add_outlined, size: 20),
+                onPressed: () => _newMarkdown(context, ref, selection),
               ),
               IconButton(
                 tooltip: 'Tambah catatan dari berkas',
@@ -201,8 +209,72 @@ Future<void> _addFile(BuildContext context, WidgetRef ref, LibrarySelection sele
   );
 }
 
-void _open(BuildContext context, WidgetRef ref, NoteItem note, NotesIndex index) {
+/// Membuat catatan Markdown kosong di koleksi yang sedang dipilih, lalu
+/// membukanya.
+///
+/// Berkasnya dibuat lewat folder sementara dan disalin masuk oleh
+/// [NotesStore], supaya penamaan dan pencatatannya tetap satu jalur dengan
+/// catatan yang datang dari mana pun.
+Future<void> _newMarkdown(BuildContext context, WidgetRef ref, LibrarySelection selection) async {
+  final title = await _askText(context, title: 'Catatan baru', initial: 'Catatan');
+  if (title == null || title.trim().isEmpty || !context.mounted) return;
+
+  final stem = title.trim().replaceAll(RegExp(r'[\\/:*?"<>|]'), '-');
+  final temp = await Directory.systemTemp.createTemp('readpaper-catatan-');
+  final seed = File(p.join(temp.path, '$stem.md'));
+  await seed.writeAsString('# ${title.trim()}\n\n');
+
+  final controller = ref.read(notesControllerProvider.notifier);
+  final key = await controller.addFile(
+    sourcePath: seed.path,
+    title: title.trim(),
+    collectionKey: selection.noteCollectionKey,
+  );
+  await temp.delete(recursive: true);
+  if (!context.mounted) return;
+  if (key == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ref.read(notesErrorProvider) ?? 'Gagal membuat catatan')),
+    );
+    return;
+  }
+
+  final index = ref.read(notesControllerProvider).value ?? NotesIndex.empty;
+  final note = index.items.firstWhereOrNull((item) => item.key == key);
+  if (note == null) return;
+  await Navigator.of(context).push(
+    MaterialPageRoute<String>(
+      builder: (_) => MarkdownEditorScreen(
+        path: p.join(index.directory, note.file),
+        title: note.title,
+        startInEdit: true,
+      ),
+    ),
+  );
+  // Isinya berubah di luar store, jadi commit-nya dilakukan di sini.
+  await controller.touch(itemKey: key, message: 'Ubah catatan: ${note.title}');
+}
+
+Future<void> _open(
+  BuildContext context,
+  WidgetRef ref,
+  NoteItem note,
+  NotesIndex index,
+) async {
   final path = p.join(index.directory, note.file);
+  if (note.isMarkdown) {
+    await Navigator.of(context).push(
+      MaterialPageRoute<String>(
+        builder: (_) => MarkdownEditorScreen(path: path, title: note.title),
+      ),
+    );
+    // Penyuntingnya sudah menulis berkasnya; yang tersisa adalah mencatat
+    // perubahannya ke git, sama seperti perubahan catatan yang lain.
+    await ref
+        .read(notesControllerProvider.notifier)
+        .touch(itemKey: note.key, message: 'Ubah catatan: ${note.title}');
+    return;
+  }
   if (note.isPdf) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -221,7 +293,7 @@ void _open(BuildContext context, WidgetRef ref, NoteItem note, NotesIndex index)
     SnackBar(
       content: Text(
         'Berkas ${note.extension.isEmpty ? 'ini' : note.extension} belum bisa dibuka '
-        'di dalam aplikasi. Yang sudah bisa: PDF.',
+        'di dalam aplikasi. Yang sudah bisa: PDF dan Markdown.',
       ),
     ),
   );

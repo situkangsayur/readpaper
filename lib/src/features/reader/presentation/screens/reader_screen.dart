@@ -19,6 +19,8 @@ import '../../../../core/utils/layout_size.dart';
 import '../../../../core/utils/zotero_key.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
+import '../../../markdown/data/pdf_to_markdown.dart';
+import '../../../markdown/presentation/screens/markdown_editor_screen.dart';
 import '../../../library/domain/entities/zotero_item.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
@@ -779,6 +781,60 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// Yang dicetak adalah berkas apa adanya, termasuk halaman kosong yang
   /// ditambahkan. Anotasi yang belum disimpan belum menyatu dengan
   /// halamannya, jadi itu dikatakan dulu daripada mengejutkan di kertas.
+  /// Mengubah teks PDF ini jadi dokumen Markdown yang bisa disunting.
+  ///
+  /// Hasilnya **tidak** ditulis di sebelah berkas aslinya: paper hidup di
+  /// dalam ekspor Zotero, dan berkas asing di sana mengacaukan struktur yang
+  /// dijaga plugin sinkronisasi. Markdown-nya karena itu mendarat di folder
+  /// kerja aplikasi — tempat yang sama dengan papan tulis dan berkas lain
+  /// yang dibuat sendiri.
+  Future<void> _convertToMarkdown() async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Membaca teks halaman…')));
+    try {
+      final markdown = await PdfToMarkdown.fromFile(widget.filePath, title: widget.title);
+      final base = await getApplicationDocumentsDirectory();
+      final dir = Directory(p.join(base.path, 'readpaper'));
+      await dir.create(recursive: true);
+
+      final stem = p.basenameWithoutExtension(widget.filePath);
+      var file = File(p.join(dir.path, '$stem.md'));
+      for (var n = 2; file.existsSync() && n < 100; n++) {
+        file = File(p.join(dir.path, '$stem-$n.md'));
+      }
+      await file.writeAsString(markdown, flush: true);
+      if (!mounted) return;
+      messenger.hideCurrentSnackBar();
+
+      final empty = markdown.trim().isEmpty || markdown.trim().split('\n').length <= 1;
+      if (empty) {
+        // PDF hasil pindaian tidak punya lapisan teks sama sekali. Mengatakan
+        // "berhasil" untuk berkas yang isinya kosong hanya menunda kecewanya.
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'PDF ini tidak punya lapisan teks — kemungkinan hasil pindaian. '
+              'Yang keluar hanya judulnya.',
+            ),
+            duration: Duration(seconds: 6),
+          ),
+        );
+      }
+      await Navigator.of(context).push(
+        MaterialPageRoute<String>(
+          builder: (_) => MarkdownEditorScreen(path: file.path, title: widget.title),
+        ),
+      );
+    } on Object catch (e) {
+      if (!mounted) return;
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('Gagal mengubah ke Markdown: $e')));
+    }
+  }
+
   Future<void> _print() async {
     if (_unsaved) {
       final lanjut = await showDialog<bool>(
@@ -1215,6 +1271,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     'simpan-sebagai' => _exportImages(),
                     'halaman-kosong' => _addBlankPages(),
                     'cetak' => _print(),
+                    'ke-markdown' => _convertToMarkdown(),
                     'ke-koleksi' => _addToCollection(),
                     _ => _shareAnnotated(),
                   },
@@ -1238,6 +1295,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         leading: Icon(Icons.print_outlined),
                         title: Text('Cetak…'),
                         subtitle: Text('ke pencetak, atau simpan sebagai PDF'),
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'ke-markdown',
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.notes_outlined),
+                        title: Text('Ubah ke Markdown'),
+                        subtitle: Text('teksnya jadi dokumen yang bisa disunting'),
                       ),
                     ),
                     const PopupMenuItem<String>(

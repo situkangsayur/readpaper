@@ -81,6 +81,14 @@ class NotesController extends AsyncNotifier<NotesIndex> {
         return item.key;
       });
 
+  /// Menyimpan perubahan yang terjadi di luar store: berkasnya sudah ditulis
+  /// penyunting, yang tersisa adalah mencatat waktunya dan meng-commit.
+  Future<String?> touch({required String itemKey, required String message}) =>
+      _guard(message, (store) async {
+        await store.touch(itemKey);
+        return itemKey;
+      });
+
   Future<String?> deleteItem(String itemKey) =>
       _guard('Hapus catatan', (store) async {
         await store.deleteItem(itemKey);

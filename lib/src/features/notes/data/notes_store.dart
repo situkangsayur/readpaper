@@ -224,6 +224,17 @@ class NotesStore {
     return moved;
   }
 
+  /// Mencatat bahwa isi sebuah catatan berubah dari luar store — misalnya
+  /// setelah disunting di penyunting Markdown.
+  Future<NoteItem?> touch(String itemKey) async {
+    final index = await read();
+    final item = index.items.where((i) => i.key == itemKey).firstOrNull;
+    if (item == null) return null;
+    final touched = item.copyWith(dateModified: DateTime.now());
+    await _writeItem(touched);
+    return touched;
+  }
+
   Future<NoteItem> rename({required String itemKey, required String title}) async {
     final trimmed = title.trim();
     if (trimmed.isEmpty) throw const LibraryFailure('Judul catatan tidak boleh kosong');

@@ -33,6 +33,7 @@ presentation  →  domain  ←  data
 | `notes` | Koleksi catatan di direktori tersendiri, di luar struktur Zotero |
 | `files` | Penjelajah berkas perangkat; berkas diseret dari sini ke pohon |
 | `whiteboard` | Papan tulis berlembar-lembar → PDF, bisa disimpan sebagai catatan |
+| `markdown` | Baca/sunting Markdown, diagram Mermaid, Markdown ↔ PDF |
 
 `WorkspaceController` adalah satu-satunya tempat operasi remote dijalankan,
 sehingga UI cukup merender satu `WorkspaceState`.
@@ -124,6 +125,48 @@ Dua aturan yang dijaga kode, bukan oleh kebiasaan pemakai:
 Menghapus koleksi catatan tidak menghapus catatannya — isinya pindah ke "tanpa
 koleksi". Menghapus berkas orang karena satu ketukan adalah kejutan yang tidak
 pantas.
+
+## Markdown, Mermaid, dan dua arah konversi
+
+Markdown-nya diurai sendiri (`MarkdownDoc.parse`) dan bukan dengan pustaka,
+karena satu dokumen harus melayani tiga keluaran: widget di layar, PDF, dan
+penyuntingan balik ke sumbernya. Pustaka Markdown yang lengkap menghasilkan
+HTML — satu lapisan lagi untuk dibongkar sebelum bisa digambar ke PDF. Tiap
+blok menyimpan **nomor baris asalnya**, dan itulah yang membuat ketukan di
+pratinjau bisa memindahkan kursor ke sumber blok yang diketuk.
+
+Diagram Mermaid digambar sendiri juga — tanpa WebView, tanpa mermaid.js —
+karena catatan harus terbuka di tablet tanpa jaringan, dan sebuah mesin
+JavaScript untuk menggambar sepuluh kotak adalah harga yang tidak perlu
+dibayar. Yang dikenali hanya `graph`/`flowchart`; jenis lain ditolak dengan
+menyebut sebabnya dan menampilkan sumbernya apa adanya, karena diagram yang
+salah gambar lebih menyesatkan daripada kode yang terbaca jujur.
+
+`MermaidLayout` dihitung **sekali** dan dipakai dua kali: oleh pelukis di layar
+dan oleh penulis PDF. Kalau keduanya menghitung sendiri, diagram di layar dan
+di cetakan akan berbeda, dan yang mencetak tidak akan tahu mana yang benar.
+
+Markdown → PDF menulis **teks sungguhan**, bukan tangkapan layar: hasilnya
+masih bisa dicari, disalin, dan dibaca pembaca layar — termasuk label di dalam
+diagram, yang ditulis sebagai widget teks di atas bentuk yang digambar kanvas.
+Satu jebakan yang sudah diperbaiki: font baku PDF tidak punya blok tanda baca
+"pintar" (— “ ” … •) dan **menghilangkannya tanpa jejak**, bukan menggambar
+kotak kosong. Semua teks karena itu melewati `_safe()` yang menukarnya dengan
+padanan ASCII.
+
+PDF → Markdown menebak struktur dari geometri, karena PDF tidak menyimpan
+paragraf, tajuk, atau daftar — hanya potongan teks beserta tempatnya. Aturannya
+sengaja bisa dijelaskan: tinggi huruf badan teks diambil dari tinggi yang
+membawa paling banyak **huruf** (bukan rata-rata, yang digeser satu tajuk
+raksasa, dan bukan nilai tengah, yang digeser dokumen bertajuk banyak); baris
+yang lebih besar dan pendek jadi tajuk; baris berdekatan disambung; kata
+terpotong tanda hubung disatukan; dan kepala/kaki halaman dikenali dari
+**ruang kosong di sekitarnya**, bukan dari isinya — tanpa itu, badan teks yang
+kebetulan berpola ("Isi halaman 3.") ikut terbuang.
+
+Hasil konversinya ditulis ke folder kerja aplikasi, tidak pernah di sebelah
+papernya: paper hidup di dalam ekspor Zotero, dan berkas asing di sana
+mengacaukan struktur yang dijaga plugin sinkronisasi.
 
 ## Koordinat anotasi
 

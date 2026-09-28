@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../../../core/utils/layout_size.dart';
+import '../../markdown/presentation/screens/markdown_editor_screen.dart';
 import '../../reader/presentation/screens/reader_screen.dart';
 import '../../whiteboard/domain/board.dart';
 import '../../whiteboard/presentation/whiteboard_screen.dart';
@@ -273,8 +274,61 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     await _open(dir);
   }
 
+  /// Membuat berkas Markdown kosong di folder ini, lalu membukanya.
+  Future<void> _newMarkdown() async {
+    final dir = _dir;
+    if (dir == null) return;
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialog) {
+        final controller = TextEditingController(text: 'catatan');
+        return AlertDialog(
+          title: const Text('Berkas Markdown baru'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'Nama berkas', suffixText: '.md'),
+            onSubmitted: (value) => Navigator.of(dialog).pop(value),
+          ),
+          actions: <Widget>[
+            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Batal')),
+            FilledButton(
+              onPressed: () => Navigator.of(dialog).pop(controller.text),
+              child: const Text('Buat'),
+            ),
+          ],
+        );
+      },
+    );
+    final trimmed = name?.trim();
+    if (trimmed == null || trimmed.isEmpty) return;
+    final stem = trimmed.replaceAll(RegExp(r'[\\/]'), '-').replaceAll(RegExp(r'\.md$'), '');
+
+    var file = File(p.join(dir.path, '$stem.md'));
+    // Berkas yang sudah ada tidak ditimpa: yang membuat berkas baru tidak
+    // sedang meminta yang lama hilang.
+    for (var n = 2; file.existsSync() && n < 100; n++) {
+      file = File(p.join(dir.path, '$stem-$n.md'));
+    }
+    await file.writeAsString('# $stem\n\n');
+    await _open(dir);
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<String>(
+        builder: (_) => MarkdownEditorScreen(path: file.path, startInEdit: true),
+      ),
+    );
+  }
+
   void _openFile(File file) {
-    if (p.extension(file.path).toLowerCase() != '.pdf') return;
+    final extension = p.extension(file.path).toLowerCase();
+    if (extension == '.md') {
+      Navigator.of(context).push(
+        MaterialPageRoute<String>(builder: (_) => MarkdownEditorScreen(path: file.path)),
+      );
+      return;
+    }
+    if (extension != '.pdf') return;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ReaderScreen(
@@ -320,6 +374,12 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                 iconSize: 18,
                 icon: const Icon(Icons.draw_outlined),
                 onPressed: dir == null ? null : _newBoard,
+              ),
+              IconButton(
+                tooltip: 'Berkas Markdown baru',
+                iconSize: 18,
+                icon: const Icon(Icons.post_add_outlined),
+                onPressed: dir == null ? null : _newMarkdown,
               ),
               IconButton(
                 tooltip: 'Salin berkas ke sini',
@@ -424,19 +484,24 @@ class _EntryRow extends StatelessWidget {
     }
 
     final file = entry as File;
-    final isPdf = p.extension(name).toLowerCase() == '.pdf';
+    final extension = p.extension(name).toLowerCase();
+    final isPdf = extension == '.pdf';
+    final isMarkdown = extension == '.md';
+    final canOpen = isPdf || isMarkdown;
     final row = SizedBox(
       height: treeRowHeight,
       child: InkWell(
-        onTap: isPdf ? () => onOpenFile(file) : null,
+        onTap: canOpen ? () => onOpenFile(file) : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             children: <Widget>[
               Icon(
-                isPdf ? Icons.picture_as_pdf_outlined : Icons.insert_drive_file_outlined,
+                isPdf
+                    ? Icons.picture_as_pdf_outlined
+                    : (isMarkdown ? Icons.notes_outlined : Icons.insert_drive_file_outlined),
                 size: 15,
-                color: isPdf ? scheme.primary : scheme.outline,
+                color: canOpen ? scheme.primary : scheme.outline,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -445,7 +510,7 @@ class _EntryRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(
                     context,
-                  ).textTheme.bodySmall?.copyWith(color: isPdf ? null : scheme.outline),
+                  ).textTheme.bodySmall?.copyWith(color: canOpen ? null : scheme.outline),
                 ),
               ),
               PopupMenuButton<String>(
@@ -458,7 +523,8 @@ class _EntryRow extends StatelessWidget {
                   _ => onDelete(file),
                 },
                 itemBuilder: (_) => <PopupMenuEntry<String>>[
-                  if (isPdf) const PopupMenuItem<String>(value: 'buka', child: Text('Buka')),
+                  if (canOpen)
+                    const PopupMenuItem<String>(value: 'buka', child: Text('Buka')),
                   const PopupMenuItem<String>(value: 'ganti-nama', child: Text('Ganti nama')),
                   const PopupMenuItem<String>(value: 'hapus', child: Text('Hapus berkas')),
                 ],

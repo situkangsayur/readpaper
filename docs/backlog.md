@@ -762,10 +762,44 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 
 ### Markdown
 
-- [ ] **Baca dan sunting Markdown**, termasuk **Mermaid** — ditampilkan
-      sebagai diagram dan bisa disunting
-- [ ] **Berkas baru** yang bisa disimpan sebagai **PDF atau Markdown**
-- [ ] **Markdown → PDF** dan **PDF → Markdown**
+- [x] **Baca dan sunting Markdown** (2026-09-28): penyunting dengan tiga mode —
+      sunting, pratinjau, dan keduanya berdampingan di layar lebar. Tombol
+      sisip untuk tajuk, tebal, miring, daftar, daftar tugas, kutipan, kode,
+      tabel, dan diagram. Berkasnya dibaca dan ditulis langsung, jadi tidak
+      pernah ada putaran tunggu yang menggantung
+- [x] **Mermaid ditampilkan sebagai diagram dan bisa disunting** (2026-09-28).
+      Digambar sendiri — tanpa WebView dan tanpa mermaid.js — karena catatan
+      harus terbuka di tablet tanpa jaringan. Yang dikenali: `graph` dan
+      `flowchart` dengan arah TD/TB/BT/LR/RL, bentuk `[]` `()` `([])` `{}`
+      `(())`, garis solid/tebal/putus-putus, panah berlabel, dan komentar.
+      **Mengetuk diagramnya di pratinjau membawa kursor ke sumbernya** — itu
+      yang membuatnya bisa disunting dan bukan hanya dilihat
+- [x] Jenis diagram lain (sequence, gantt, class) ditolak dengan menyebut
+      sebabnya dan menampilkan sumbernya apa adanya (2026-09-28) — diagram
+      yang salah gambar lebih menyesatkan daripada kode yang terbaca jujur
+- [x] **Berkas baru** yang bisa disimpan sebagai **PDF atau Markdown**
+      (2026-09-28): "Berkas Markdown baru" di panel berkas, "Catatan Markdown
+      baru" di panel catatan, dan "Simpan sebagai PDF" dari dalam penyuntingnya
+- [x] **Markdown → PDF** (2026-09-28) dengan **teks sungguhan**, bukan
+      tangkapan layar: hasilnya masih bisa dicari dan disalin. Diagram ikut
+      tergambar, dan labelnya pun tetap teks. Tata letak diagramnya satu
+      perhitungan dengan yang di layar, jadi cetakannya tidak pernah berbeda
+      dari pratinjaunya
+- [x] Tanda baca yang tidak ada di font bawaan PDF — tanda pisah panjang,
+      kutip melengkung, titik-titik, butir bulat — ditukar dengan padanan
+      ASCII-nya (2026-09-28). Sebelumnya hilang **tanpa jejak**: kalimat
+      bertanda pisah keluar dari cetakan dengan dua kata berdempetan
+- [x] **PDF → Markdown** (2026-09-28), dari menu pembaca. Strukturnya ditebak
+      dari geometri dengan aturan yang bisa dijelaskan: huruf yang lebih besar
+      jadi tajuk, baris berdekatan disambung jadi paragraf, kata terpotong
+      tanda hubung disatukan, butir jadi daftar, dan kepala/kaki halaman yang
+      berulang dibuang. Hasilnya mendarat di folder kerja aplikasi — **bukan**
+      di sebelah papernya, karena berkas asing di dalam ekspor Zotero
+      mengacaukan struktur yang dijaga plugin sinkronisasi
+- [x] PDF hasil pindaian dikatakan apa adanya: "tidak punya lapisan teks",
+      bukan dilaporkan berhasil dengan berkas kosong (2026-09-28)
+- [ ] Menyunting Mermaid lewat antarmuka, bukan lewat sumbernya
+- [ ] Tabel di PDF → Markdown masih keluar sebagai teks biasa, bukan tabel
 
 ### Mengubah tulisan tangan jadi teks
 
@@ -828,7 +862,7 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 2. Panel berkas + seret ke koleksi (membuka jalan untuk sisa daftarnya)
 3. Papan tulis berhalaman → PDF/gambar
 4. ~~Dua jenis akar koleksi + catatan di direktori terpisah~~ (selesai)
-5. Markdown baca/sunting/Mermaid + konversi dua arah
+5. ~~Markdown baca/sunting/Mermaid + konversi dua arah~~ (selesai)
 6. Cetak + pembuka PDF bawaan
 7. Ubah ukuran dan putar anotasi
 8. OCR tulisan tangan
