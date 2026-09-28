@@ -994,7 +994,19 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       bernama, satu daftar yang sama untuk papan tulis dan buku catatan.
       Namanya ikut disebut karena bulatan warna saja sulit dibedakan di layar
       kecil — apalagi hijau dan hijau muda
-- [ ] Arah kertas untuk **buku catatan** juga (sekarang masih A4 tegak saja)
+- [x] **Kertas buku catatan juga** (2026-09-29): **A5, A4, A3, A2, A1**, tegak
+      atau mendatar, **per lembar** — satu buku boleh mencampur A5 tegak untuk
+      tulisan dan A3 mendatar untuk bagan. Lembar baru mewarisi kertas lembar
+      yang sedang dibuka. Memutar lembar membawa isinya (memutar empat kali
+      kembali persis, dan titik tintanya tidak pernah ditulis ulang);
+      memperbesar kertas memberi ruang tanpa membengkakkan tulisan, dan
+      memperkecil yang membuat sesuatu keluar kertas **dikatakan** — bukan
+      dirapikan diam-diam, karena memindahkannya sendiri akan mengacaukan tata
+      letak yang sudah diatur
+- [x] PDF yang dijadikan buku catatan memilih kertas **terdekat** dengan
+      halaman aslinya beserta arahnya (2026-09-29): halaman A4 mendatar
+      mendarat di kertas A4 mendatar, bukan dipaksa tegak lalu menyisakan dua
+      pita kosong
 
 ### Bangun, panah, dan penghubung
 

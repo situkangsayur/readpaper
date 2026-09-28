@@ -275,4 +275,97 @@ void main() {
       expect(langkah, lessThanOrEqualTo(5));
     });
   });
+
+  group('kertas', () {
+    test('ukuran seri A, tegak dan mendatar', () {
+      expect(NotePaper.a4.sizeFor(NoteOrientation.tegak).width, closeTo(595.28, 0.01));
+      expect(NotePaper.a4.sizeFor(NoteOrientation.mendatar).width, closeTo(841.89, 0.01));
+      expect(NotePaper.a5.longSide, closeTo(NotePaper.a4.shortSide, 0.01),
+          reason: 'A5 adalah A4 yang dilipat dua');
+      expect(NotePaper.a3.shortSide, closeTo(NotePaper.a4.longSide, 0.01));
+      expect(NotePaper.values.map((p) => p.label),
+          <String>['A5', 'A4', 'A3', 'A2', 'A1']);
+    });
+
+    test('tiap lembar punya kertasnya sendiri', () {
+      const document = NoteDocument(
+        pages: <NotePage>[
+          NotePage(paper: NotePaper.a5),
+          NotePage(paper: NotePaper.a3, orientation: NoteOrientation.mendatar),
+        ],
+      );
+      expect(document.pages.first.size.width, closeTo(419.53, 0.01));
+      expect(document.pages.last.size.width, closeTo(1190.55, 0.01));
+      expect(document.pages.last.size.height, closeTo(841.89, 0.01));
+    });
+
+    test('kertas dan arahnya bertahan setelah dibaca ulang', () {
+      const document = NoteDocument(
+        pages: <NotePage>[
+          NotePage(paper: NotePaper.a2, orientation: NoteOrientation.mendatar),
+        ],
+      );
+      final kembali = NoteDocumentStore.decodeSync(NoteDocumentStore.encode(document));
+      expect(kembali.pages.single.paper, NotePaper.a2);
+      expect(kembali.pages.single.orientation, NoteOrientation.mendatar);
+    });
+
+    test('memutar lembar membawa isinya, dan empat kali kembali persis', () {
+      final page = NotePage(
+        components: <NoteComponent>[
+          ink(id: 'i1', x: 20, y: 700),
+          text(),
+        ],
+      );
+
+      var turned = page.turned();
+      expect(turned.orientation, NoteOrientation.mendatar);
+      // Tidak ada yang keluar dari tepi kertas yang baru.
+      for (final component in turned.components) {
+        expect(component.position.dx, greaterThanOrEqualTo(-0.01));
+        expect(component.position.dy, greaterThanOrEqualTo(-0.01));
+        expect(component.bounds.right, lessThanOrEqualTo(turned.size.width + 0.01));
+        expect(component.bounds.bottom, lessThanOrEqualTo(turned.size.height + 0.01));
+      }
+
+      for (var i = 0; i < 3; i++) {
+        turned = turned.turned();
+      }
+      expect(turned.orientation, page.orientation);
+      for (var i = 0; i < page.components.length; i++) {
+        expect(turned.components[i].position.dx, closeTo(page.components[i].position.dx, 1e-9));
+        expect(turned.components[i].position.dy, closeTo(page.components[i].position.dy, 1e-9));
+        expect(turned.components[i].size.width, closeTo(page.components[i].size.width, 1e-9));
+      }
+      // Titik tintanya tidak pernah ditulis ulang.
+      expect(
+        (turned.components.first as NoteInk).strokes.single.points,
+        (page.components.first as NoteInk).strokes.single.points,
+      );
+    });
+
+    test('kertas yang diperkecil melaporkan yang jadi di luar kertas', () {
+      // Memindahkannya sendiri akan mengacaukan tata letak yang sudah diatur,
+      // jadi yang dilakukan memberitahu.
+      final besar = NotePage(
+        paper: NotePaper.a3,
+        components: <NoteComponent>[ink(id: 'jauh', x: 700, y: 1000)],
+      );
+      expect(besar.outsidePaper, 0);
+      expect(besar.copyWith(paper: NotePaper.a5).outsidePaper, 1);
+    });
+
+    test('kertas terdekat dipilih dari ukuran halaman, beserta arahnya', () {
+      final tegak = NotePaper.closestTo(const Size(595.28, 841.89));
+      expect(tegak.paper, NotePaper.a4);
+      expect(tegak.orientation, NoteOrientation.tegak);
+
+      final mendatar = NotePaper.closestTo(const Size(841.89, 595.28));
+      expect(mendatar.paper, NotePaper.a4);
+      expect(mendatar.orientation, NoteOrientation.mendatar);
+
+      expect(NotePaper.closestTo(const Size(420, 595)).paper, NotePaper.a5);
+      expect(NotePaper.closestTo(const Size(1190, 1684)).paper, NotePaper.a2);
+    });
+  });
 }

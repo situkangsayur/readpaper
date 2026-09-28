@@ -253,15 +253,18 @@ class NoteExport {
     for (final page in document.pages) {
       pdf.addPage(
         pw.Page(
-          pageFormat: const PdfPageFormat(NoteSheet.width, NoteSheet.height),
+          // Seukuran lembarnya masing-masing: satu buku boleh mencampur A5
+          // tegak dan A3 mendatar, dan PDF memang mengizinkan tiap halaman
+          // punya ukurannya sendiri.
+          pageFormat: PdfPageFormat(page.size.width, page.size.height),
           build: (context) => pw.Stack(
             children: <pw.Widget>[
               pw.Positioned(
                 left: 0,
                 top: 0,
                 child: pw.Container(
-                  width: NoteSheet.width,
-                  height: NoteSheet.height,
+                  width: page.size.width,
+                  height: page.size.height,
                   color: PdfColor.fromInt(page.background),
                 ),
               ),
@@ -274,10 +277,10 @@ class NoteExport {
                   left: 0,
                   top: 0,
                   child: pw.SizedBox(
-                    width: NoteSheet.width,
-                    height: NoteSheet.height,
+                    width: page.size.width,
+                    height: page.size.height,
                     child: pw.CustomPaint(
-                      size: const PdfPoint(NoteSheet.width, NoteSheet.height),
+                      size: PdfPoint(page.size.width, page.size.height),
                       painter: (canvas, size) => _paintConnectors(canvas, page, size.y),
                     ),
                   ),

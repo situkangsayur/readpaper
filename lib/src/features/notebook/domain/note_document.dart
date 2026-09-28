@@ -5,12 +5,76 @@ import 'package:meta/meta.dart';
 
 import '../../../core/utils/shape_geometry.dart';
 
-/// Ukuran lembar catatan dalam titik PDF (A4 tegak).
+/// Ukuran kertas yang ditawarkan, dalam titik PDF.
+///
+/// Seri A, sama dengan kertas yang keluar dari pencetak: A5 untuk catatan
+/// saku, A4 untuk catatan biasa, dan A3 ke atas untuk bagan yang butuh ruang —
+/// yang terakhir memang tidak akan dicetak di pencetak rumah, tetapi tetap
+/// masuk akal sebagai kanvas dan tetap tercetak benar di tempat cetak.
+enum NotePaper {
+  a5('A5', 419.528, 595.276),
+  a4('A4', 595.276, 841.89),
+  a3('A3', 841.89, 1190.551),
+  a2('A2', 1190.551, 1683.78),
+  a1('A1', 1683.78, 2383.937);
+
+  const NotePaper(this.label, this.shortSide, this.longSide);
+
+  final String label;
+  final double shortSide;
+  final double longSide;
+
+  Size sizeFor(NoteOrientation orientation) => orientation == NoteOrientation.tegak
+      ? Size(shortSide, longSide)
+      : Size(longSide, shortSide);
+
+  static NotePaper parse(String name) =>
+      values.firstWhere((v) => v.name == name, orElse: () => NotePaper.a4);
+
+  /// Kertas seri A yang paling dekat dengan [size], beserta arahnya.
+  ///
+  /// Dipakai saat sebuah PDF dijadikan buku catatan: halaman A4 mendatar harus
+  /// mendarat di kertas A4 mendatar, bukan dipaksa tegak lalu menyisakan dua
+  /// pita kosong di atas dan di bawah.
+  static ({NotePaper paper, NoteOrientation orientation}) closestTo(Size size) {
+    final orientation =
+        size.width > size.height ? NoteOrientation.mendatar : NoteOrientation.tegak;
+    final short = math.min(size.width, size.height);
+    final long = math.max(size.width, size.height);
+    var best = NotePaper.a4;
+    var bestGap = double.infinity;
+    for (final paper in values) {
+      final gap = (paper.shortSide - short).abs() + (paper.longSide - long).abs();
+      if (gap < bestGap) {
+        bestGap = gap;
+        best = paper;
+      }
+    }
+    return (paper: best, orientation: orientation);
+  }
+}
+
+/// Arah kertas lembar catatan.
+enum NoteOrientation {
+  tegak('Tegak'),
+  mendatar('Mendatar');
+
+  const NoteOrientation(this.label);
+
+  final String label;
+
+  NoteOrientation get lain => this == tegak ? mendatar : tegak;
+
+  static NoteOrientation parse(String name) =>
+      values.firstWhere((v) => v.name == name, orElse: () => NoteOrientation.tegak);
+}
+
+/// Ukuran lembar bawaan — A4 tegak, dalam titik PDF.
 class NoteSheet {
   const NoteSheet._();
 
-  static const double width = 595;
-  static const double height = 842;
+  static const double width = 595.276;
+  static const double height = 841.89;
 }
 
 /// Satu goresan tinta, dalam koordinat lokal komponennya.
@@ -566,6 +630,8 @@ class NotePage {
     this.components = const <NoteComponent>[],
     this.background = 0xFFFFFFFF,
     this.rule = NotePageRule.polos,
+    this.paper = NotePaper.a4,
+    this.orientation = NoteOrientation.tegak,
   });
 
   factory NotePage.fromJson(Map<String, dynamic> json) => NotePage(
@@ -574,6 +640,8 @@ class NotePage {
       (r) => r.name == (json['rule'] as String? ?? 'polos'),
       orElse: () => NotePageRule.polos,
     ),
+    paper: NotePaper.parse(json['paper'] as String? ?? 'a4'),
+    orientation: NoteOrientation.parse(json['orientation'] as String? ?? 'tegak'),
     components: _pruned(<NoteComponent>[
       for (final entry in (json['components'] as List? ?? const <dynamic>[]))
         if (entry is Map) NoteComponent.fromJson(entry.cast<String, dynamic>()),
@@ -600,12 +668,64 @@ class NotePage {
   final int background;
   final NotePageRule rule;
 
-  NotePage copyWith({List<NoteComponent>? components, int? background, NotePageRule? rule}) =>
-      NotePage(
-        components: components ?? this.components,
-        background: background ?? this.background,
-        rule: rule ?? this.rule,
-      );
+  /// Ukuran dan arah kertas lembar **ini**, bukan seluruh buku: satu buku boleh
+  /// mencampur, karena satu catatan bisa berisi halaman tulisan A5 dan satu
+  /// bagan A3 yang butuh ruang.
+  final NotePaper paper;
+  final NoteOrientation orientation;
+
+  Size get size => paper.sizeFor(orientation);
+
+  NotePage copyWith({
+    List<NoteComponent>? components,
+    int? background,
+    NotePageRule? rule,
+    NotePaper? paper,
+    NoteOrientation? orientation,
+  }) => NotePage(
+    components: components ?? this.components,
+    background: background ?? this.background,
+    rule: rule ?? this.rule,
+    paper: paper ?? this.paper,
+    orientation: orientation ?? this.orientation,
+  );
+
+  /// Memutar kertas seperempat putaran, **beserta isinya**.
+  ///
+  /// Memutar kertas tanpa memutar isinya berarti benda yang tadinya di dalam
+  /// kertas mendadak keluar dari tepi. Yang dikerjakan di sini hanya memindah
+  /// dan menambah sudut komponennya — titik tintanya sendiri tidak pernah
+  /// ditulis ulang, jadi memutar empat kali kembali persis.
+  NotePage turned() {
+    final from = size;
+    return copyWith(
+      orientation: orientation.lain,
+      components: <NoteComponent>[
+        for (final component in components)
+          component.copyWith(
+            // Searah jarum jam: sudut kiri atas pindah ke kanan atas.
+            position: Offset(
+              from.height - component.position.dy - component.size.height,
+              component.position.dx,
+            ),
+            size: Size(component.size.height, component.size.width),
+            rotation: component.rotation + math.pi / 2,
+          ),
+      ],
+    );
+  }
+
+  /// Komponen yang keluar dari kertas sekarang.
+  ///
+  /// Dipakai untuk memberi tahu saat kertas diperkecil: memindahkan bendanya
+  /// sendiri akan mengacaukan tata letak yang sudah diatur, jadi yang
+  /// dilakukan memberitahu, bukan merapikan diam-diam.
+  int get outsidePaper {
+    final sheet = Rect.fromLTWH(0, 0, size.width, size.height);
+    return components
+        .where((component) => !sheet.inflate(1).contains(component.bounds.bottomRight))
+        .length;
+  }
 
   NoteComponent? byId(String id) {
     for (final component in components) {
@@ -678,6 +798,8 @@ class NotePage {
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'background': background,
+    'orientation': orientation.name,
+    'paper': paper.name,
     'rule': rule.name,
     'components': <dynamic>[for (final component in components) component.toJson()],
   };

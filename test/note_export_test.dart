@@ -142,8 +142,9 @@ void main() {
       expect(latin1.decode(bytes.sublist(0, 8)), startsWith('%PDF-'));
       expect('/Type /Page'.allMatches(raw).length + '/Type/Page'.allMatches(raw).length,
           greaterThanOrEqualTo(2));
+      // Kotak halamannya seukuran kertas A4 sungguhan, dalam titik PDF.
       expect(raw, contains('595'));
-      expect(raw, contains('842'));
+      expect(raw, contains('841'));
     });
 
     test('teksnya tetap teks, jadi masih bisa dicari', () async {

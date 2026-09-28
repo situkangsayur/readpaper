@@ -59,8 +59,8 @@ class NoteCanvas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-    width: NoteSheet.width * scale,
-    height: NoteSheet.height * scale,
+    width: page.size.width * scale,
+    height: page.size.height * scale,
     child: ClipRect(
       child: Stack(
         children: <Widget>[
@@ -274,11 +274,11 @@ class _SheetPainter extends CustomPainter {
       ..color = const Color(0xFF90A4AE).withValues(alpha: 0.5)
       ..strokeWidth = 0.7;
     const step = 28.0;
-    for (var y = step; y < NoteSheet.height; y += step) {
+    for (var y = step; y < page.size.height; y += step) {
       canvas.drawLine(Offset(0, y * scale), Offset(size.width, y * scale), line);
     }
     if (page.rule != NotePageRule.kotak) return;
-    for (var x = step; x < NoteSheet.width; x += step) {
+    for (var x = step; x < page.size.width; x += step) {
       canvas.drawLine(Offset(x * scale, 0), Offset(x * scale, size.height), line);
     }
   }

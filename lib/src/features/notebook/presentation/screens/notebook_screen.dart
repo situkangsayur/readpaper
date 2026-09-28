@@ -428,7 +428,17 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   void _addPage() {
     _apply(
       _document.copyWith(
-        pages: <NotePage>[..._document.pages, NotePage(rule: _sheet.rule, background: _sheet.background)],
+        pages: <NotePage>[
+          ..._document.pages,
+          // Kertasnya ikut lembar yang sedang dibuka: yang sedang menggambar
+          // bagan A3 mendatar hampir selalu butuh satu lagi.
+          NotePage(
+            rule: _sheet.rule,
+            background: _sheet.background,
+            paper: _sheet.paper,
+            orientation: _sheet.orientation,
+          ),
+        ],
       ),
     );
     setState(() {
@@ -755,16 +765,45 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
             _PageBar(
               page: _page,
               count: _document.pages.length,
+              paper: _sheet.paper,
+              orientation: _sheet.orientation,
               onGo: (index) => setState(() {
                 _page = index;
                 _selectedId = null;
               }),
               onAdd: _addPage,
               onDelete: _deletePage,
+              onPaper: _setPaper,
+              onTurn: _turnPage,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Mengganti ukuran kertas lembar ini.
+  ///
+  /// Isinya tidak diikutkan mengecil atau membesar: kertas yang diperbesar
+  /// memberi ruang, bukan tulisan yang membengkak. Kalau diperkecil dan ada
+  /// yang jadi di luar kertas, itu dikatakan — memindahkannya sendiri akan
+  /// mengacaukan tata letak yang sudah diatur.
+  void _setPaper(NotePaper paper) {
+    final next = _sheet.copyWith(paper: paper);
+    _apply(_document.replacePage(_page, next));
+    final outside = next.outsidePaper;
+    if (outside == 0) return;
+    _say('Kertas jadi ${paper.label}. $outside benda sekarang di luar kertas.');
+  }
+
+  /// Memutar kertas lembar ini seperempat putaran, beserta isinya.
+  void _turnPage() {
+    final turned = _sheet.turned();
+    _apply(_document.replacePage(_page, turned));
+    if (_sheet.components.isEmpty) return;
+    _say(
+      'Kertas jadi ${turned.orientation.label.toLowerCase()} — '
+      'isinya ikut berputar, tidak ada yang keluar tepi.',
     );
   }
 
@@ -778,8 +817,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     builder: (context, constraints) {
       const margin = 12.0;
       final scale = math.min(
-        (constraints.maxWidth - margin * 2) / NoteSheet.width,
-        (constraints.maxHeight - margin * 2) / NoteSheet.height,
+        (constraints.maxWidth - margin * 2) / _sheet.size.width,
+        (constraints.maxHeight - margin * 2) / _sheet.size.height,
       );
       final selected = _selected;
 
@@ -1107,23 +1146,33 @@ class _PageBar extends StatelessWidget {
   const _PageBar({
     required this.page,
     required this.count,
+    required this.paper,
+    required this.orientation,
     required this.onGo,
     required this.onAdd,
     required this.onDelete,
+    required this.onPaper,
+    required this.onTurn,
   });
 
   final int page;
   final int count;
+  final NotePaper paper;
+  final NoteOrientation orientation;
   final ValueChanged<int> onGo;
   final VoidCallback onAdd;
   final VoidCallback onDelete;
+  final ValueChanged<NotePaper> onPaper;
+  final VoidCallback onTurn;
 
   @override
   Widget build(BuildContext context) => Material(
     color: Theme.of(context).colorScheme.surfaceContainerLow,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
         IconButton(
           tooltip: 'Lembar sebelumnya',
           icon: const Icon(Icons.chevron_left),
@@ -1136,13 +1185,60 @@ class _PageBar extends StatelessWidget {
           onPressed: page >= count - 1 ? null : () => onGo(page + 1),
         ),
         const SizedBox(width: 12),
-        IconButton(tooltip: 'Lembar baru', icon: const Icon(Icons.note_add_outlined), onPressed: onAdd),
+        IconButton(
+          tooltip: 'Lembar baru',
+          icon: const Icon(Icons.note_add_outlined),
+          onPressed: onAdd,
+        ),
         IconButton(
           tooltip: 'Hapus lembar ini',
           icon: const Icon(Icons.delete_outline),
           onPressed: onDelete,
         ),
+        const SizedBox(width: 8),
+        // Kertas dipilih per lembar: satu buku boleh mencampur A5 tegak untuk
+        // tulisan dan A3 mendatar untuk bagan.
+        PopupMenuButton<NotePaper>(
+          tooltip: 'Ukuran kertas: ${paper.label}',
+          onSelected: onPaper,
+          icon: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Icon(Icons.description_outlined, size: 20),
+              const SizedBox(width: 4),
+              Text(paper.label, style: Theme.of(context).textTheme.labelMedium),
+            ],
+          ),
+          itemBuilder: (_) => <PopupMenuEntry<NotePaper>>[
+            for (final option in NotePaper.values)
+              PopupMenuItem<NotePaper>(
+                value: option,
+                child: Row(
+                  children: <Widget>[
+                    Icon(
+                      option == paper ? Icons.check : Icons.description_outlined,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(option.label),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        IconButton(
+          tooltip: orientation == NoteOrientation.tegak
+              ? 'Kertas tegak — ketuk untuk memutar jadi mendatar'
+              : 'Kertas mendatar — ketuk untuk memutar jadi tegak',
+          icon: Icon(
+            orientation == NoteOrientation.tegak
+                ? Icons.crop_portrait
+                : Icons.crop_landscape,
+          ),
+          onPressed: onTurn,
+        ),
       ],
+      ),
     ),
   );
 }

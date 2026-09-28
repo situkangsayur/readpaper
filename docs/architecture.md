@@ -243,6 +243,25 @@ Bangun 2D juga tidak menyimpan titik: bentuknya dihitung ulang dari kotaknya
 setiap kali digambar, jadi bangun yang diubah ukurannya tetap rapi alih-alih
 terlihat ditarik melar.
 
+## Kertas
+
+Papan tulis dan buku catatan sama-sama memakai kertas seri A dalam titik PDF,
+dan **per lembar**, bukan per berkas: satu papan boleh mencampur daftar tegak
+dan bagan mendatar, dan satu buku catatan boleh mencampur A5 tegak dengan A3
+mendatar. PDF memang mengizinkan tiap halaman punya ukurannya sendiri, jadi
+ekspornya mengikuti apa adanya.
+
+Memutar kertas **membawa isinya**. Memutar kertas tanpa memutar isinya berarti
+coretan yang tadinya di dalam kertas mendadak keluar dari tepi — hilang tanpa
+pernah dihapus. Di buku catatan yang berpindah hanya posisi dan sudut
+komponennya; titik tintanya sendiri tidak pernah ditulis ulang, jadi memutar
+empat kali kembali persis ke asalnya. Keduanya dijaga uji.
+
+Mengganti ukuran kertas tidak mengubah ukuran isinya: kertas yang diperbesar
+memberi ruang, bukan tulisan yang membengkak. Kalau diperkecil dan ada yang
+jadi di luar kertas, itu dikatakan — memindahkannya sendiri akan mengacaukan
+tata letak yang sudah diatur.
+
 ## Koordinat anotasi
 
 Zotero menyimpan persegi anotasi sebagai `[x1, y1, x2, y2]` dalam satuan poin

@@ -74,12 +74,16 @@ class PdfToNotebook {
             flush: true,
           );
 
-          // Halamannya dimuat ke dalam lembar A4 dengan mempertahankan
-          // perbandingan sisinya: halaman lebar tidak boleh jadi gepeng, dan
-          // halaman panjang tidak boleh terpotong.
-          final box = _fit(Size(page.width, page.height));
+          // Kertasnya dipilih sedekat mungkin dengan halaman aslinya: halaman
+          // A4 mendatar mendarat di kertas A4 mendatar, bukan dipaksa tegak
+          // lalu menyisakan dua pita kosong di atas dan di bawah.
+          final chosen = NotePaper.closestTo(Size(page.width, page.height));
+          final sheet = chosen.paper.sizeFor(chosen.orientation);
+          final box = _fit(Size(page.width, page.height), sheet);
           pages.add(
             NotePage(
+              paper: chosen.paper,
+              orientation: chosen.orientation,
               components: <NoteComponent>[
                 NoteImage(
                   id: 'halaman-${i + 1}',
@@ -100,9 +104,14 @@ class PdfToNotebook {
     }
 
     // Lembar kosong di belakang: itu yang sebenarnya diminta — tempat menulis
-    // catatan tambahan tanpa mengotori halaman dokumennya.
+    // catatan tambahan tanpa mengotori halaman dokumennya. Kertasnya mengikuti
+    // halaman terakhir, supaya tidak mendadak berganti ukuran.
     for (var i = 0; i < math.max(0, extraPages); i++) {
-      pages.add(const NotePage());
+      pages.add(
+        pages.isEmpty
+            ? const NotePage()
+            : NotePage(paper: pages.last.paper, orientation: pages.last.orientation),
+      );
     }
     if (pages.isEmpty) pages.add(const NotePage());
 
@@ -113,16 +122,16 @@ class PdfToNotebook {
     return notePath;
   }
 
-  /// Kotak tempat halaman berukuran [source] duduk di dalam lembar A4.
-  static Rect _fit(Size source) {
+  /// Kotak tempat halaman berukuran [source] duduk di dalam lembar [sheet].
+  static Rect _fit(Size source, Size sheet) {
     final scale = math.min(
-      NoteSheet.width / math.max(source.width, 1),
-      NoteSheet.height / math.max(source.height, 1),
+      sheet.width / math.max(source.width, 1),
+      sheet.height / math.max(source.height, 1),
     );
     final size = Size(source.width * scale, source.height * scale);
     return Rect.fromLTWH(
-      (NoteSheet.width - size.width) / 2,
-      (NoteSheet.height - size.height) / 2,
+      (sheet.width - size.width) / 2,
+      (sheet.height - size.height) / 2,
       size.width,
       size.height,
     );
