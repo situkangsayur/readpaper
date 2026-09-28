@@ -55,6 +55,74 @@ class ZoteroWriter {
     return _persist(json: json, itemFilePath: itemFilePath, libraryDir: libraryDir);
   }
 
+  /// Menghapus sebuah item beserta lampiran dan catatannya.
+  ///
+  /// Pasangan dari [createItemFromPdf]: begitu item bisa ditambahkan, ia
+  /// harus bisa dicabut lagi — termasuk yang ditambahkan karena salah pencet.
+  /// Yang dihapus hanya berkas milik item itu: berkas item, folder lampiran
+  /// per kunci lampiran, dan catatan markdown-nya.
+  Future<List<String>> deleteItem({
+    required String libraryDir,
+    required String itemFilePath,
+  }) async {
+    // Pagar yang sengaja galak. Yang dihapus di sini adalah berkas di dalam
+    // repositori orang, dan satu jalur yang meleset berarti paper atau
+    // daftar koleksi yang hilang. Jadi tempatnya diperiksa dulu: hanya
+    // berkas item di dalam `items/` yang boleh disentuh, tidak akar library,
+    // tidak `collections.json`, tidak folder lain.
+    final itemsRoot = p.normalize(p.join(libraryDir, 'items'));
+    final target = p.normalize(itemFilePath);
+    if (!p.isWithin(itemsRoot, target) || p.extension(target) != '.json') {
+      throw LibraryFailure(
+        'Menolak menghapus: berkas ini bukan item di dalam items/',
+        details: itemFilePath,
+      );
+    }
+
+    final json = await _readItem(itemFilePath);
+    final touched = <String>[itemFilePath];
+
+    // Lampiran hidup di folder bernama kunci lampirannya, jadi seluruh
+    // folder itu yang dibuang — bukan hanya berkasnya, supaya tidak ada
+    // folder kosong yang tertinggal di dalam repositori.
+    for (final child in _children(json)) {
+      if (child is! Map) continue;
+      if (child['itemType'] != 'attachment') continue;
+      final key = child['key'] as String?;
+      if (key == null || key.isEmpty) continue;
+      final attachmentsRoot = p.normalize(p.join(libraryDir, 'attachments'));
+      final dir = Directory(p.join(attachmentsRoot, ZoteroKey.bucket(key), key));
+      // Kunci yang aneh — berisi `..` atau garis miring — tidak boleh
+      // mengarahkan penghapusan ke luar folder lampiran.
+      if (!p.isWithin(attachmentsRoot, p.normalize(dir.path))) continue;
+      if (dir.existsSync()) {
+        touched.add(dir.path);
+        await dir.delete(recursive: true);
+      }
+    }
+
+    final itemKey = ((json['zotero'] as Map?)?['key'] as String?) ?? '';
+    if (itemKey.isNotEmpty) {
+      final notePath = await findNoteFile(libraryDir, itemKey);
+      if (notePath != null) {
+        touched.add(notePath);
+        await File(notePath).delete();
+      }
+    }
+
+    await File(itemFilePath).delete();
+
+    // Folder bucket yang jadi kosong ikut dibuang: `items/AB/` tanpa isi
+    // hanya menambah kebisingan di dalam repositori.
+    final bucket = File(itemFilePath).parent;
+    if (p.isWithin(itemsRoot, p.normalize(bucket.path)) &&
+        bucket.existsSync() &&
+        bucket.listSync().isEmpty) {
+      await bucket.delete();
+    }
+    return touched;
+  }
+
   Future<Map<String, dynamic>> _readItem(String itemFilePath) async {
     final file = File(itemFilePath);
     if (!file.existsSync()) {

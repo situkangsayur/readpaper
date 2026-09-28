@@ -145,4 +145,87 @@ void main() {
     );
     expect(Directory(p.join(library.path, 'items')).existsSync(), isFalse);
   });
+
+  group('menghapus item', () {
+    test('hanya berkas milik item itu yang hilang', () async {
+      final tetap = await const ZoteroWriter().createItemFromPdf(
+        libraryDir: library.path,
+        libraryName: 'Library Uji',
+        libraryId: 1,
+        pdfPath: makePdf('tetap.pdf'),
+        title: 'Yang Tetap',
+        collectionKey: 'COLL0001',
+        collectionPath: 'Formulir',
+      );
+      final dibuang = await const ZoteroWriter().createItemFromPdf(
+        libraryDir: library.path,
+        libraryName: 'Library Uji',
+        libraryId: 1,
+        pdfPath: makePdf('buang.pdf'),
+        title: 'Yang Dibuang',
+      );
+
+      await const ZoteroWriter().deleteItem(
+        libraryDir: library.path,
+        itemFilePath: dibuang.itemFilePath,
+      );
+
+      // Yang dihapus benar-benar hilang...
+      expect(File(dibuang.itemFilePath).existsSync(), isFalse);
+      expect(File(dibuang.attachmentPath).existsSync(), isFalse);
+
+      // ...dan tidak ada yang lain ikut terbawa.
+      expect(File(tetap.itemFilePath).existsSync(), isTrue);
+      expect(File(tetap.attachmentPath).existsSync(), isTrue);
+      expect(File(p.join(library.path, 'collections.json')).existsSync(), isTrue);
+
+      final index = parseLibrarySync(library.path, 'Library Uji', 'uji', 'user');
+      expect(index.items.keys, <String>[tetap.itemKey]);
+      expect(index.collections['COLL0001'], isNotNull);
+    });
+
+    test('menolak jalur di luar items/', () async {
+      // Pagar yang menjaga `collections.json` dan akar library: satu jalur
+      // yang meleset di sini berarti paper orang yang hilang.
+      await expectLater(
+        const ZoteroWriter().deleteItem(
+          libraryDir: library.path,
+          itemFilePath: p.join(library.path, 'collections.json'),
+        ),
+        throwsA(isA<Exception>()),
+      );
+      expect(File(p.join(library.path, 'collections.json')).existsSync(), isTrue);
+    });
+
+    test('menolak berkas di luar library sama sekali', () async {
+      final luar = File(p.join(library.parent.path, 'luar.json'))..writeAsStringSync('{}');
+      await expectLater(
+        const ZoteroWriter().deleteItem(
+          libraryDir: library.path,
+          itemFilePath: luar.path,
+        ),
+        throwsA(isA<Exception>()),
+      );
+      expect(luar.existsSync(), isTrue);
+      luar.deleteSync();
+    });
+
+    test('catatan pendampingnya ikut dihapus', () async {
+      final created = await const ZoteroWriter().createItemFromPdf(
+        libraryDir: library.path,
+        libraryName: 'Library Uji',
+        libraryId: 1,
+        pdfPath: makePdf('d.pdf'),
+        title: 'Berkatatan',
+      );
+      final note = created.touchedFiles.firstWhere((f) => f.endsWith('.md'));
+      expect(File(note).existsSync(), isTrue);
+
+      await const ZoteroWriter().deleteItem(
+        libraryDir: library.path,
+        itemFilePath: created.itemFilePath,
+      );
+      expect(File(note).existsSync(), isFalse);
+    });
+  });
 }

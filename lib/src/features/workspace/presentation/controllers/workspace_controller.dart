@@ -436,6 +436,27 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  /// Membuang sebuah item dari library, beserta lampiran dan catatannya.
+  Future<bool> deleteItem(ZoteroItem item) async {
+    final library = state.library;
+    final profile = state.profile;
+    if (library == null || profile == null) {
+      state = state.copyWith(error: 'Tidak ada library aktif.');
+      return false;
+    }
+    try {
+      await ref
+          .read(libraryRepositoryProvider)
+          .removeItem(libraryDir: library.directoryPath, itemFilePath: item.filePath);
+      await _commitAnnotation(profile: profile, message: 'Hapus dokumen: ${item.title}');
+      await reloadLibrary();
+      return true;
+    } on Object catch (e) {
+      state = state.copyWith(error: 'Gagal menghapus: $e');
+      return false;
+    }
+  }
+
   Future<void> _commitAnnotation({required RepoProfile profile, required String message}) async {
     final backend = ref.read(gitBackendProvider);
     state = state.copyWith(phase: SyncPhase.committing, clearError: true);

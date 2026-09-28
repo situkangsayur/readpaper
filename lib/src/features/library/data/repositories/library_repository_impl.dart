@@ -75,6 +75,12 @@ class LibraryRepositoryImpl implements LibraryRepository {
   }
 
   @override
+  Future<List<String>> removeItem({
+    required String libraryDir,
+    required String itemFilePath,
+  }) => writer.deleteItem(libraryDir: libraryDir, itemFilePath: itemFilePath);
+
+  @override
   Future<CreatedItem> addPdfAsItem({
     required String libraryDir,
     required String libraryName,

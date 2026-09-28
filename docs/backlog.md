@@ -752,6 +752,12 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 - [ ] **ReadPaper jadi aplikasi pembuka PDF bawaan** — intent filter Android
       untuk `application/pdf`, dengan jalur "buka" yang sudah ada di Fase 13
 
+### Pena di pembaca
+
+- [ ] **Penghapus** untuk coretan di halaman PDF — sekarang satu-satunya
+      jalan adalah mengurungkan goresan terakhir atau membuang semuanya.
+      Sama seperti di catatan: per goresan dan sebagian
+
 ### Anotasi yang bisa diatur ulang
 
 - [x] Tanda tangan, coretan, dan catatan bisa **dipindah** (2026-09-27)
@@ -772,6 +778,82 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 6. Cetak + pembuka PDF bawaan
 7. Ubah ukuran dan putar anotasi
 8. OCR tulisan tangan
+
+---
+
+## Fase 15 — Catatan tulisan tangan yang jadi dokumen hidup
+
+Diminta 2026-09-28. Ini bukan "OCR lalu selesai": yang diminta adalah
+menulis dengan stylus berlembar-lembar seperti buku catatan, lalu mengubahnya
+menjadi dokumen yang **komponennya masih bisa disentuh satu per satu**.
+
+Bedanya dengan Fase 14 butir OCR: di sana keluarannya dokumen jadi (PDF atau
+Markdown). Di sini keluarannya bisa disunting lagi — teks tetap teks,
+diagram tetap objek, gambar tetap gambar, dan semuanya bisa digeser tanpa
+merusak tata letak aslinya.
+
+### Menulis
+
+- [ ] **Kanvas catatan berlembar-lembar** dengan stylus: tambah halaman,
+      berpindah halaman, seperti buku catatan
+- [ ] Pena dengan **warna** dan **ketebalan**, dan **urungkan**
+- [ ] **Penghapus**, dua macam dan keduanya perlu:
+      - *per goresan* — sentuh sebuah goresan, goresan itu hilang seluruhnya.
+        Ini yang dipakai saat salah menulis satu huruf
+      - *sebagian* — menghapus bagian yang dilewati, seperti penghapus
+        sungguhan. Ini yang dipakai saat merapikan sebuah diagram
+      Ukuran penghapusnya bisa diatur, dan hasilnya ikut bisa diurungkan
+
+### Mengubah jadi komponen
+
+- [ ] **Teks tulisan tangan → teks sungguhan**, di tempat yang sama. Yang
+      dijaga bukan hanya isinya, melainkan **posisinya**: tata letak yang
+      kacau setelah konversi membuat hasilnya lebih buruk daripada
+      tulisannya sendiri
+- [ ] **Diagram → objek diagram** yang bisa digeser, bukan gambar mati
+- [ ] **Gambar tetap gambar**, ikut pada posisinya
+- [ ] Yang tidak dikenali **tetap sebagai tinta**, bukan dibuang. Konversi
+      yang menghilangkan coretan adalah konversi yang merusak
+
+### Menyunting hasilnya
+
+Setiap komponen — teks, diagram, gambar, tinta — bisa:
+
+- [ ] **digeser** (drag and drop)
+- [ ] **diubah ukurannya**
+- [ ] **diputar**
+- [ ] **dihapus**
+- [ ] diubah **warnanya**
+- [ ] diubah **kepekatannya** (opacity)
+- [ ] dan semuanya bisa **diurungkan**
+
+Catatan teknis yang sudah kelihatan sekarang: memutar dan mengubah ukuran
+tidak boleh dikerjakan dengan menulis ulang titik-titik tintanya, karena
+memutar dua kali akan kehilangan ketelitian. Sudut, skala, dan kepekatan
+disimpan sebagai sifat komponen, dan titiknya tetap seperti saat ditulis.
+
+### Menyimpan
+
+- [ ] **Markdown** — untuk yang mau dibaca dan disunting di tempat lain
+- [ ] **PDF** — untuk yang mau dibagikan atau dicetak
+- [ ] **Format sendiri yang bisa disunting lagi** setelah disimpan. Markdown
+      dan PDF keduanya kehilangan posisi dan sifat komponen, jadi keduanya
+      saja tidak cukup. Bentuknya perlu diputuskan: JSON di samping berkas,
+      atau format terbuka yang sudah ada — yang penting bisa dibuka kembali
+      dan disunting seperti sebelum disimpan
+- [ ] Disimpan ke **koleksi catatan** tertentu (lihat akar koleksi berjenis
+      catatan di Fase 14) — bukan ke koleksi paper, karena catatan tidak
+      punya rujukan atau bibliografi
+
+### Yang perlu diputuskan sebelum dikerjakan
+
+- Pengenalan tulisan tangan berjalan **di perangkat** atau lewat layanan?
+  Pertimbangannya sama dengan Fase 12: yang di perangkat menjaga tulisan
+  tetap milik penulisnya, yang di layanan jauh lebih akurat. Bahasa
+  Indonesia dan Inggris keduanya harus terbaca
+- Bagaimana membedakan "ini diagram" dari "ini coretan biasa" tanpa menebak
+  terlalu berani. Salah tebak yang mengubah coretan jadi kotak rapi lebih
+  menyebalkan daripada tidak mengubah apa-apa
 
 ---
 

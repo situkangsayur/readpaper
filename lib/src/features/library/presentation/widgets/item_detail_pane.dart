@@ -72,6 +72,24 @@ class ItemDetailPane extends ConsumerWidget {
                   ),
                 ),
             ],
+            const SizedBox(height: 28),
+            const Divider(),
+            const SizedBox(height: 8),
+            // Pasangan dari "tambahkan ke koleksi": yang bisa dimasukkan
+            // harus bisa dicabut lagi, termasuk yang masuk karena salah
+            // pencet. Diletakkan paling bawah, di luar jangkauan jari yang
+            // sedang menggulir.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+                icon: const Icon(Icons.delete_outline, size: 18),
+                label: const Text('Hapus dokumen ini dari library'),
+                onPressed: () => _confirmDelete(context, ref, item),
+              ),
+            ),
           ],
         );
       },
@@ -390,4 +408,46 @@ class _SectionTitle extends StatelessWidget {
       color: Theme.of(context).colorScheme.primary,
     ),
   );
+}
+
+/// Bertanya dulu, lalu menghapus. Menghapus dokumen membuang berkas dari
+/// repositori orang, jadi tidak pantas terjadi karena satu ketukan.
+Future<void> _confirmDelete(BuildContext context, WidgetRef ref, ZoteroItem item) async {
+  final yakin = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Hapus dokumen ini?'),
+      content: Text(
+        'Berkas item, lampirannya, dan catatannya dihapus dari library, lalu '
+        'perubahannya di-commit.\n\n'
+        '"${item.title}"\n\n'
+        'Koleksi dan dokumen lain tidak tersentuh.',
+      ),
+      actions: <Widget>[
+        TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+          onPressed: () => Navigator.of(context).pop(true),
+          child: const Text('Hapus'),
+        ),
+      ],
+    ),
+  );
+  if (yakin != true) return;
+
+  final ok = await ref.read(workspaceControllerProvider.notifier).deleteItem(item);
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Dokumen dihapus'
+              : ref.read(workspaceControllerProvider).error ?? 'Gagal menghapus',
+        ),
+      ),
+    );
 }
