@@ -8,6 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:printing/printing.dart';
 
+import '../../../../core/utils/ink_palette.dart';
+import '../../../../core/utils/ink_smoothing.dart';
+import '../../../../core/utils/shape_geometry.dart';
 import '../../../library/presentation/controllers/library_controllers.dart';
 import '../../../notes/domain/note_target.dart';
 import '../../../notes/presentation/controllers/notes_controller.dart';
@@ -15,8 +18,6 @@ import '../../data/note_document_store.dart';
 import '../../data/note_export.dart';
 import '../../domain/note_document.dart';
 import '../../domain/note_history.dart';
-import '../../../../core/utils/ink_palette.dart';
-import '../../../../core/utils/shape_geometry.dart';
 import '../widgets/component_frame.dart';
 import '../widgets/note_canvas.dart';
 
@@ -56,7 +57,12 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
 
   String? _selectedId;
   List<Offset> _live = const <Offset>[];
+  List<double> _liveWidths = const <double>[];
   Offset? _eraserAt;
+
+  /// Tekanan stylus terakhir, 0..1. Null berarti alatnya tidak melaporkan
+  /// tekanan — jari dan tetikus tidak — dan goresannya bertebal tetap.
+  double? _pressure;
 
   /// Bangun yang sedang dipilih untuk disisipkan.
   ShapeKind _shape = ShapeKind.kotak;
@@ -127,8 +133,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   void _replaceComponents(List<NoteComponent> components, {bool commit = true}) =>
       _apply(_document.replacePage(_page, _sheet.copyWith(components: components)), commit: commit);
 
-  NoteComponent? get _selected =>
-      _sheet.components.where((c) => c.id == _selectedId).firstOrNull;
+  NoteComponent? get _selected => _sheet.components.where((c) => c.id == _selectedId).firstOrNull;
 
   void _update(NoteComponent replacement, {bool commit = false}) {
     _replaceComponents(<NoteComponent>[
@@ -139,11 +144,33 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
 
   // ------------------------------------------------------------------ menulis
 
+  /// Tebal untuk titik yang baru: mengikuti tekanan kalau alatnya melaporkan.
+  double get _nextWidth =>
+      _pressure == null ? _penWidth : InkSmoothing.widthFor(_penWidth, _pressure!);
+
+  /// Mencatat tekanan dari peristiwa pointer mentah.
+  ///
+  /// Hanya stylus: banyak layar melaporkan tekanan tetap untuk jari, dan
+  /// mengikutinya membuat tebal goresan berubah tanpa sebab.
+  void _notePressure(PointerEvent event) {
+    final stylus =
+        event.kind == PointerDeviceKind.stylus || event.kind == PointerDeviceKind.invertedStylus;
+    if (!stylus || event.pressureMax <= event.pressureMin) {
+      _pressure = null;
+      return;
+    }
+    _pressure = ((event.pressure - event.pressureMin) / (event.pressureMax - event.pressureMin))
+        .clamp(0.0, 1.0);
+  }
+
   void _onPanStart(Offset sheetPoint) {
     _touchedThisGesture = false;
     switch (_tool) {
       case NoteTool.pena:
-        setState(() => _live = <Offset>[sheetPoint]);
+        setState(() {
+          _live = <Offset>[sheetPoint];
+          _liveWidths = <double>[_nextWidth];
+        });
       case NoteTool.hapusGoresan:
       case NoteTool.hapusSebagian:
         setState(() => _eraserAt = sheetPoint);
@@ -167,8 +194,13 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       case NoteTool.pena:
         // Titik yang terlalu rapat hanya menambah besar berkas tanpa
         // mengubah bentuk garisnya.
-        if (_live.isNotEmpty && (_live.last - sheetPoint).distance < 1.2) return;
-        setState(() => _live = <Offset>[..._live, sheetPoint]);
+        if (_live.isNotEmpty && (_live.last - sheetPoint).distance < InkSmoothing.minStep) {
+          return;
+        }
+        setState(() {
+          _live = <Offset>[..._live, sheetPoint];
+          _liveWidths = <double>[..._liveWidths, _nextWidth];
+        });
       case NoteTool.hapusGoresan:
       case NoteTool.hapusSebagian:
         setState(() => _eraserAt = sheetPoint);
@@ -194,6 +226,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     }
     setState(() {
       _live = const <Offset>[];
+      _liveWidths = const <double>[];
       _eraserAt = null;
       _shapeFrom = null;
       _shapeTo = null;
@@ -267,11 +300,17 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   /// mengelompokkan beberapa goresan jadi satu kata adalah pekerjaan
   /// pengenalan tulisan, dan menebaknya di sini akan sering salah.
   void _commitStroke() {
+    // Daftar tebal hanya disimpan kalau tekanannya memang berubah: menyimpan
+    // daftar yang isinya angka sama semua hanya menggandakan besar berkasnya.
+    final varied =
+        _liveWidths.length == _live.length && _liveWidths.any((w) => (w - _penWidth).abs() > 0.01);
+
     final stroke = NoteStroke(points: _live, width: _penWidth);
     final bounds = stroke.bounds;
     final local = NoteStroke(
       points: <Offset>[for (final point in _live) point - bounds.topLeft],
       width: _penWidth,
+      widths: varied ? List<double>.of(_liveWidths) : null,
     );
     final ink = NoteInk(
       id: _freshId('tinta'),
@@ -398,11 +437,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
         if (text == null) return;
         _update(component.copyWith(text: text), commit: true);
       case NoteDiagram():
-        final source = await _ask(
-          title: 'Ubah diagram',
-          initial: component.source,
-          lines: 8,
-        );
+        final source = await _ask(title: 'Ubah diagram', initial: component.source, lines: 8);
         if (source == null) return;
         _update(component.copyWith(source: source), commit: true);
       case NoteImage():
@@ -527,10 +562,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
           title: const Text('Belum bisa disimpan sebagai catatan'),
           content: Text(target.refusal!),
           actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialog).pop(),
-              child: const Text('Mengerti'),
-            ),
+            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Mengerti')),
           ],
         ),
       );
@@ -541,27 +573,22 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
         .read(notesControllerProvider.notifier)
         .addFile(
           sourcePath: widget.path,
-          title: _document.title.isEmpty
-              ? NoteDocumentStore.stemOf(widget.path)
-              : _document.title,
+          title: _document.title.isEmpty ? NoteDocumentStore.stemOf(widget.path) : _document.title,
           collectionKey: target.collectionKey,
         );
     if (!mounted) return;
-    _say(key == null
-        ? (ref.read(notesErrorProvider) ?? 'Gagal menyimpan ke koleksi')
-        : 'Masuk ke koleksi catatan');
+    _say(
+      key == null
+          ? (ref.read(notesErrorProvider) ?? 'Gagal menyimpan ke koleksi')
+          : 'Masuk ke koleksi catatan',
+    );
   }
 
   void _say(String message) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text(message)));
 
-  Future<String?> _ask({
-    required String title,
-    String initial = '',
-    String? hint,
-    int lines = 1,
-  }) {
+  Future<String?> _ask({required String title, String initial = '', String? hint, int lines = 1}) {
     final controller = TextEditingController(text: initial);
     return showDialog<String>(
       context: context,
@@ -754,7 +781,9 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
               onEraser: (radius) => setState(() => _eraserRadius = radius),
               onColor: (color) {
                 final component = _selected;
-                if (component != null) _update(component.copyWith(color: color.toARGB32()), commit: true);
+                if (component != null) {
+                  _update(component.copyWith(color: color.toARGB32()), commit: true);
+                }
               },
               onOpacity: (opacity) {
                 final component = _selected;
@@ -826,66 +855,79 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       // melepaskannya sama sekali. Itu bukan penghematan: selama kanvas masih
       // memasang pengenal seretan, bingkai komponen di atasnya kalah di arena
       // gerakan dan komponennya tidak pernah bisa digeser.
-      final menggambar = _tool == NoteTool.pena ||
+      final menggambar =
+          _tool == NoteTool.pena ||
           _tool == NoteTool.hapusGoresan ||
           _tool == NoteTool.hapusSebagian ||
           _tool == NoteTool.bangun;
 
       return Center(
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          supportedDevices: _drawWith,
-          onTapUp: (details) => _onTap(details.localPosition / scale),
-          onPanStart: menggambar ? (details) => _onPanStart(details.localPosition / scale) : null,
-          onPanUpdate: menggambar ? (details) => _onPanUpdate(details.localPosition / scale) : null,
-          onPanEnd: menggambar ? (_) => _onPanEnd() : null,
-          onPanCancel: menggambar ? _onPanEnd : null,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: <Widget>[
-              NoteCanvas(
-                page: _sheet,
-                scale: scale,
-                baseDir: _baseDir,
-                selectedId: _selectedId,
-                liveStroke: _live.length > 1
-                    ? NoteStroke(points: _live, width: _penWidth)
-                    : null,
-                liveColor: _pen,
-                liveWidth: _penWidth,
-                eraserAt: _eraserAt,
-                eraserRadius: _eraserRadius,
-                previewShape: _shapeFrom == null || _shapeTo == null
-                    ? null
-                    : (kind: _shape, from: _shapeFrom!, to: _shapeTo!),
-                connectFromId: _connectFrom,
-              ),
-              if (selected != null && _tool == NoteTool.pilih)
-                ComponentFrame(
-                  rect: Rect.fromLTWH(
-                    selected.position.dx * scale,
-                    selected.position.dy * scale,
-                    selected.size.width * scale,
-                    selected.size.height * scale,
-                  ),
-                  rotation: selected.rotation,
-                  onMove: (delta) => _update(selected.copyWith(
-                    position: selected.position + delta / scale,
-                  )),
-                  onResize: (delta) => _update(selected.copyWith(
-                    size: Size(
-                      math.max(12, selected.size.width + delta.dx / scale),
-                      math.max(12, selected.size.height + delta.dy / scale),
-                    ),
-                  )),
-                  onRotate: (delta) => _update(
-                    selected.copyWith(rotation: snapAngle(selected.rotation + delta)),
-                  ),
-                  onDelete: _deleteSelected,
-                  onSettled: () => setState(() => _history.push(_document)),
-                  onEdit: selected is NoteText || selected is NoteDiagram ? _editSelected : null,
+        // Tekanan stylus dibaca dari peristiwa pointer mentah: GestureDetector
+        // tidak menyerahkannya, dan tanpa itu tekanan tidak pernah terbaca.
+        child: Listener(
+          onPointerDown: _notePressure,
+          onPointerMove: _notePressure,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            supportedDevices: _drawWith,
+            onTapUp: (details) => _onTap(details.localPosition / scale),
+            onPanStart: menggambar ? (details) => _onPanStart(details.localPosition / scale) : null,
+            onPanUpdate: menggambar
+                ? (details) => _onPanUpdate(details.localPosition / scale)
+                : null,
+            onPanEnd: menggambar ? (_) => _onPanEnd() : null,
+            onPanCancel: menggambar ? _onPanEnd : null,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: <Widget>[
+                NoteCanvas(
+                  page: _sheet,
+                  scale: scale,
+                  baseDir: _baseDir,
+                  selectedId: _selectedId,
+                  liveStroke: _live.length > 1
+                      ? NoteStroke(
+                          points: _live,
+                          width: _penWidth,
+                          widths: _liveWidths.length == _live.length ? _liveWidths : null,
+                        )
+                      : null,
+                  liveColor: _pen,
+                  liveWidth: _penWidth,
+                  eraserAt: _eraserAt,
+                  eraserRadius: _eraserRadius,
+                  previewShape: _shapeFrom == null || _shapeTo == null
+                      ? null
+                      : (kind: _shape, from: _shapeFrom!, to: _shapeTo!),
+                  connectFromId: _connectFrom,
                 ),
-            ],
+                if (selected != null && _tool == NoteTool.pilih)
+                  ComponentFrame(
+                    rect: Rect.fromLTWH(
+                      selected.position.dx * scale,
+                      selected.position.dy * scale,
+                      selected.size.width * scale,
+                      selected.size.height * scale,
+                    ),
+                    rotation: selected.rotation,
+                    onMove: (delta) =>
+                        _update(selected.copyWith(position: selected.position + delta / scale)),
+                    onResize: (delta) => _update(
+                      selected.copyWith(
+                        size: Size(
+                          math.max(12, selected.size.width + delta.dx / scale),
+                          math.max(12, selected.size.height + delta.dy / scale),
+                        ),
+                      ),
+                    ),
+                    onRotate: (delta) =>
+                        _update(selected.copyWith(rotation: snapAngle(selected.rotation + delta))),
+                    onDelete: _deleteSelected,
+                    onSettled: () => setState(() => _history.push(_document)),
+                    onEdit: selected is NoteText || selected is NoteDiagram ? _editSelected : null,
+                  ),
+              ],
+            ),
           ),
         ),
       );
@@ -987,9 +1029,7 @@ class _Tools extends StatelessWidget {
             onSelected: onShape,
             icon: Icon(
               _shapeIcon(shape),
-              color: tool == NoteTool.bangun
-                  ? Theme.of(context).colorScheme.primary
-                  : null,
+              color: tool == NoteTool.bangun ? Theme.of(context).colorScheme.primary : null,
             ),
             itemBuilder: (_) => <PopupMenuEntry<ShapeKind>>[
               for (final kind in ShapeKind.values)
@@ -1013,13 +1053,7 @@ class _Tools extends StatelessWidget {
             onTool: onTool,
           ),
           const VerticalDivider(width: 12),
-          _Tool(
-            icon: Icons.title,
-            label: 'Teks',
-            value: NoteTool.teks,
-            tool: tool,
-            onTool: onTool,
-          ),
+          _Tool(icon: Icons.title, label: 'Teks', value: NoteTool.teks, tool: tool, onTool: onTool),
           _Tool(
             icon: Icons.account_tree_outlined,
             label: 'Diagram',
@@ -1070,9 +1104,10 @@ class _Tools extends StatelessWidget {
             icon: const Icon(Icons.line_weight),
             onSelected: tool == NoteTool.pena ? onPenWidth : onEraser,
             itemBuilder: (_) => <PopupMenuEntry<double>>[
-              for (final value in tool == NoteTool.pena
-                  ? const <double>[1.5, 2.5, 4, 7]
-                  : const <double>[8, 14, 22, 34])
+              for (final value
+                  in tool == NoteTool.pena
+                      ? const <double>[1.5, 2.5, 4, 7]
+                      : const <double>[8, 14, 22, 34])
                 PopupMenuItem<double>(
                   value: value,
                   child: Text(
@@ -1090,10 +1125,7 @@ class _Tools extends StatelessWidget {
               onSelected: onOpacity,
               itemBuilder: (_) => <PopupMenuEntry<double>>[
                 for (final value in const <double>[1, 0.75, 0.5, 0.25])
-                  PopupMenuItem<double>(
-                    value: value,
-                    child: Text('${(value * 100).round()}%'),
-                  ),
+                  PopupMenuItem<double>(value: value, child: Text('${(value * 100).round()}%')),
               ],
             ),
           const SizedBox(width: 8),
@@ -1134,9 +1166,7 @@ class _Tool extends StatelessWidget {
     iconSize: 20,
     icon: Icon(icon),
     style: IconButton.styleFrom(
-      backgroundColor: tool == value
-          ? Theme.of(context).colorScheme.primaryContainer
-          : null,
+      backgroundColor: tool == value ? Theme.of(context).colorScheme.primaryContainer : null,
     ),
     onPressed: () => onTool(value),
   );
@@ -1173,71 +1203,66 @@ class _PageBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-        IconButton(
-          tooltip: 'Lembar sebelumnya',
-          icon: const Icon(Icons.chevron_left),
-          onPressed: page == 0 ? null : () => onGo(page - 1),
-        ),
-        Text('${page + 1} / $count', style: Theme.of(context).textTheme.labelMedium),
-        IconButton(
-          tooltip: 'Lembar berikutnya',
-          icon: const Icon(Icons.chevron_right),
-          onPressed: page >= count - 1 ? null : () => onGo(page + 1),
-        ),
-        const SizedBox(width: 12),
-        IconButton(
-          tooltip: 'Lembar baru',
-          icon: const Icon(Icons.note_add_outlined),
-          onPressed: onAdd,
-        ),
-        IconButton(
-          tooltip: 'Hapus lembar ini',
-          icon: const Icon(Icons.delete_outline),
-          onPressed: onDelete,
-        ),
-        const SizedBox(width: 8),
-        // Kertas dipilih per lembar: satu buku boleh mencampur A5 tegak untuk
-        // tulisan dan A3 mendatar untuk bagan.
-        PopupMenuButton<NotePaper>(
-          tooltip: 'Ukuran kertas: ${paper.label}',
-          onSelected: onPaper,
-          icon: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const Icon(Icons.description_outlined, size: 20),
-              const SizedBox(width: 4),
-              Text(paper.label, style: Theme.of(context).textTheme.labelMedium),
+          IconButton(
+            tooltip: 'Lembar sebelumnya',
+            icon: const Icon(Icons.chevron_left),
+            onPressed: page == 0 ? null : () => onGo(page - 1),
+          ),
+          Text('${page + 1} / $count', style: Theme.of(context).textTheme.labelMedium),
+          IconButton(
+            tooltip: 'Lembar berikutnya',
+            icon: const Icon(Icons.chevron_right),
+            onPressed: page >= count - 1 ? null : () => onGo(page + 1),
+          ),
+          const SizedBox(width: 12),
+          IconButton(
+            tooltip: 'Lembar baru',
+            icon: const Icon(Icons.note_add_outlined),
+            onPressed: onAdd,
+          ),
+          IconButton(
+            tooltip: 'Hapus lembar ini',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: onDelete,
+          ),
+          const SizedBox(width: 8),
+          // Kertas dipilih per lembar: satu buku boleh mencampur A5 tegak untuk
+          // tulisan dan A3 mendatar untuk bagan.
+          PopupMenuButton<NotePaper>(
+            tooltip: 'Ukuran kertas: ${paper.label}',
+            onSelected: onPaper,
+            icon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                const Icon(Icons.description_outlined, size: 20),
+                const SizedBox(width: 4),
+                Text(paper.label, style: Theme.of(context).textTheme.labelMedium),
+              ],
+            ),
+            itemBuilder: (_) => <PopupMenuEntry<NotePaper>>[
+              for (final option in NotePaper.values)
+                PopupMenuItem<NotePaper>(
+                  value: option,
+                  child: Row(
+                    children: <Widget>[
+                      Icon(option == paper ? Icons.check : Icons.description_outlined, size: 18),
+                      const SizedBox(width: 10),
+                      Text(option.label),
+                    ],
+                  ),
+                ),
             ],
           ),
-          itemBuilder: (_) => <PopupMenuEntry<NotePaper>>[
-            for (final option in NotePaper.values)
-              PopupMenuItem<NotePaper>(
-                value: option,
-                child: Row(
-                  children: <Widget>[
-                    Icon(
-                      option == paper ? Icons.check : Icons.description_outlined,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(option.label),
-                  ],
-                ),
-              ),
-          ],
-        ),
-        IconButton(
-          tooltip: orientation == NoteOrientation.tegak
-              ? 'Kertas tegak — ketuk untuk memutar jadi mendatar'
-              : 'Kertas mendatar — ketuk untuk memutar jadi tegak',
-          icon: Icon(
-            orientation == NoteOrientation.tegak
-                ? Icons.crop_portrait
-                : Icons.crop_landscape,
+          IconButton(
+            tooltip: orientation == NoteOrientation.tegak
+                ? 'Kertas tegak — ketuk untuk memutar jadi mendatar'
+                : 'Kertas mendatar — ketuk untuk memutar jadi tegak',
+            icon: Icon(
+              orientation == NoteOrientation.tegak ? Icons.crop_portrait : Icons.crop_landscape,
+            ),
+            onPressed: onTurn,
           ),
-          onPressed: onTurn,
-        ),
-      ],
+        ],
       ),
     ),
   );

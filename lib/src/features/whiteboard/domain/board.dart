@@ -9,11 +9,22 @@ import 'package:meta/meta.dart';
 /// besar menghasilkan berkas yang sama.
 @immutable
 class BoardStroke {
-  const BoardStroke({required this.points, required this.color, required this.width});
+  const BoardStroke({
+    required this.points,
+    required this.color,
+    required this.width,
+    this.widths,
+  });
 
   final List<Offset> points;
   final Color color;
+
+  /// Tebal goresannya; kalau [widths] ada, ini tebal dasarnya.
   final double width;
+
+  /// Tebal di tiap titik, dari tekanan stylus. Null berarti tebal tetap —
+  /// jari dan tetikus tidak melaporkan tekanan.
+  final List<double>? widths;
 
   bool get isEmpty => points.length < 2;
 
@@ -124,6 +135,7 @@ class BoardPage {
             ],
             color: stroke.color,
             width: stroke.width,
+            widths: stroke.widths,
           ),
       ],
     );

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 
 /// Menghaluskan goresan tinta.
@@ -51,6 +52,53 @@ class InkSmoothing {
       path.quadraticBezierTo(quad.control.dx, quad.control.dy, quad.end.dx, quad.end.dy);
     }
     return path;
+  }
+
+  /// Tebal goresan untuk satu titik, dari tekanan stylus.
+  ///
+  /// Tekanan menulis biasa berada di sekitar separuh, jadi di situlah tebalnya
+  /// sama dengan tebal pena yang dipilih: menekan lebih keras menebalkan,
+  /// menyentuh ringan menipiskan. Batas bawahnya tidak nol — garis yang hilang
+  /// sama sekali saat tangan melemah terasa seperti pena yang rusak.
+  static double widthFor(double base, double pressure) {
+    final p = pressure.clamp(0.0, 1.0);
+    return base * (0.55 + 0.9 * p);
+  }
+
+  /// Menggambar satu goresan, bertebal tetap atau bertebal berubah.
+  ///
+  /// Yang bertebal berubah digambar ruas demi ruas, masing-masing dengan
+  /// tebalnya sendiri; ujung bulat membuat sambungannya tidak terlihat. Tetap
+  /// memakai kurva yang sama, jadi goresan bertekanan tidak mendadak jadi
+  /// bersudut.
+  static void paintStroke(
+    Canvas canvas,
+    List<Offset> points,
+    Paint paint, {
+    required double width,
+    List<double>? widths,
+  }) {
+    if (points.isEmpty) return;
+    if (widths == null || widths.length < points.length) {
+      paint.strokeWidth = width;
+      canvas.drawPath(path(points), paint);
+      return;
+    }
+
+    var from = points.first;
+    var i = 0;
+    for (final quad in quads(points)) {
+      final at = math.min(i + 1, widths.length - 1);
+      paint.strokeWidth = widths[at];
+      canvas.drawPath(
+        Path()
+          ..moveTo(from.dx, from.dy)
+          ..quadraticBezierTo(quad.control.dx, quad.control.dy, quad.end.dx, quad.end.dy),
+        paint,
+      );
+      from = quad.end;
+      i++;
+    }
   }
 
   /// Kurva kuadratik sebagai kubik — bentuk yang dimengerti PDF.

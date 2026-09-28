@@ -232,6 +232,35 @@ diberi `supportedDevices` berisi stylus saja, jadi sentuhan tangan tidak pernah
 sampai ke kanvas. Tetikus tetap diizinkan supaya layar tanpa stylus tetap bisa
 dipakai.
 
+Tekanan stylus dibaca dari peristiwa pointer **mentah** lewat `Listener` di
+sekeliling kanvas — `GestureDetector` tidak menyerahkannya. Tekanannya
+dinormalkan dengan `pressureMin`/`pressureMax` perangkatnya, dan hanya dipakai
+untuk stylus: banyak layar melaporkan tekanan tetap untuk jari, dan
+mengikutinya membuat tebal goresan berubah tanpa sebab. Tebal per titik hanya
+ditulis ke berkas kalau tekanannya memang berubah — daftar berisi angka sama
+semua cuma menggandakan besar berkasnya — dan ikut terbawa saat goresan
+dipotong penghapus atau kertasnya diputar. Goresan bertebal berubah digambar
+ruas demi ruas (satu jalur PDF hanya bisa punya satu tebal garis), tetap dengan
+kurva yang sama, dan ujung bulat membuat sambungannya tidak terlihat.
+
+## Satu-satunya berkas struktur Zotero yang ditulisi
+
+Membuat koleksi paper berarti menulis `collections.json` — satu-satunya berkas
+**struktur** Zotero yang disentuh ReadPaper. Sisanya hanya berkas item dan
+lampiran. Karena itu pagarnya rapat:
+
+- yang sudah ada tidak pernah diubah maupun diurutkan ulang; entri baru
+  ditambahkan **di ujung**;
+- bentuk tulisannya sama persis seperti plugin: array beridentasi tab, kunci
+  terurut, `parentKey: null` untuk akar, `relations: {}`;
+- berkas yang isinya bukan daftar koleksi **ditolak**, bukan ditimpa;
+- nama kembar di bawah induk yang sama ditolak, begitu juga nama bergaris
+  miring — itu pemisah jalur koleksi di dalam berkas ini.
+
+Dibuktikan pada `collections.json` sungguhan berisi 61 koleksi: dibaca lalu
+ditulis ulang dengan penulis yang sama menghasilkan berkas yang sama
+byte-for-byte, jadi menambah satu koleksi hanya menambah satu blok di diff.
+
 Penghubung antar objek menyimpan **rujukan kedua ujungnya**, bukan koordinat.
 Menyimpan koordinat berarti garisnya tertinggal begitu bendanya digeser, dan
 penghubung yang tidak mengikuti bukan penghubung. Membuang sebuah benda ikut

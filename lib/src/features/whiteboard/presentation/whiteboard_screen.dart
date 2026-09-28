@@ -122,9 +122,7 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
 
   String get _stem {
     final name = widget.name?.trim();
-    return (name == null || name.isEmpty)
-        ? 'papan-${DateTime.now().millisecondsSinceEpoch}'
-        : name;
+    return (name == null || name.isEmpty) ? 'papan-${DateTime.now().millisecondsSinceEpoch}' : name;
   }
 
   /// Menulis seluruh papan sebagai satu PDF di folder kerja.
@@ -177,10 +175,7 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
           title: const Text('Belum bisa disimpan sebagai catatan'),
           content: Text(target.refusal!),
           actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialog).pop(),
-              child: const Text('Mengerti'),
-            ),
+            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Mengerti')),
           ],
         ),
       );
@@ -420,7 +415,27 @@ class _BoardCanvas extends StatefulWidget {
 
 class _BoardCanvasState extends State<_BoardCanvas> {
   final List<Offset> _live = <Offset>[];
+  final List<double> _liveWidths = <double>[];
   Size _size = Size.zero;
+
+  /// Tekanan stylus terakhir, 0..1; null kalau alatnya tidak melaporkannya.
+  double? _pressure;
+
+  double get _nextWidth =>
+      _pressure == null ? widget.penWidth : InkSmoothing.widthFor(widget.penWidth, _pressure!);
+
+  /// Hanya stylus: banyak layar melaporkan tekanan tetap untuk jari, dan
+  /// mengikutinya membuat tebal goresan berubah tanpa sebab.
+  void _notePressure(PointerEvent event) {
+    final stylus =
+        event.kind == PointerDeviceKind.stylus || event.kind == PointerDeviceKind.invertedStylus;
+    if (!stylus || event.pressureMax <= event.pressureMin) {
+      _pressure = null;
+      return;
+    }
+    _pressure = ((event.pressure - event.pressureMin) / (event.pressureMax - event.pressureMin))
+        .clamp(0.0, 1.0);
+  }
 
   Offset _toBoard(Offset local) => Offset(
     local.dx / _size.width * widget.page.size.width,
@@ -450,11 +465,14 @@ class _BoardCanvasState extends State<_BoardCanvas> {
       widget.onChanged(widget.page.erasedAt(_toBoard(local), widget.penWidth * 3));
       return;
     }
-    setState(
-      () => _live
+    setState(() {
+      _live
         ..clear()
-        ..add(_toBoard(local)),
-    );
+        ..add(_toBoard(local));
+      _liveWidths
+        ..clear()
+        ..add(_nextWidth);
+    });
   }
 
   void _move(Offset local) {
@@ -465,12 +483,20 @@ class _BoardCanvasState extends State<_BoardCanvas> {
     }
     // Titik yang terlalu rapat hanya menambah besar berkas.
     if (_live.isNotEmpty && (_live.last - point).distance < 0.8) return;
-    setState(() => _live.add(point));
+    setState(() {
+      _live.add(point);
+      _liveWidths.add(_nextWidth);
+    });
+  }
+
+  void _clearLive() {
+    _live.clear();
+    _liveWidths.clear();
   }
 
   void _up() {
     if (_live.length < 2) {
-      setState(_live.clear);
+      setState(_clearLive);
       return;
     }
 
@@ -484,49 +510,65 @@ class _BoardCanvasState extends State<_BoardCanvas> {
         );
       }
       widget.onChanged(page);
-      setState(_live.clear);
+      setState(_clearLive);
       return;
     }
 
+    // Daftar tebal hanya disimpan kalau tekanannya memang berubah.
+    final varied =
+        _liveWidths.length == _live.length &&
+        _liveWidths.any((w) => (w - widget.penWidth).abs() > 0.01);
     widget.onChanged(
       widget.page.withStroke(
-        BoardStroke(points: List<Offset>.of(_live), color: widget.penColor, width: widget.penWidth),
+        BoardStroke(
+          points: List<Offset>.of(_live),
+          color: widget.penColor,
+          width: widget.penWidth,
+          widths: varied ? List<double>.of(_liveWidths) : null,
+        ),
       ),
     );
-    setState(_live.clear);
+    setState(_clearLive);
   }
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       _size = constraints.biggest;
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        // Tetikus ikut, supaya layar tanpa stylus tetap bisa dipakai.
-        supportedDevices: widget.finger
-            ? null
-            : const <PointerDeviceKind>{
-                PointerDeviceKind.stylus,
-                PointerDeviceKind.invertedStylus,
-                PointerDeviceKind.mouse,
-              },
-        onPanStart: (d) => _down(d.localPosition),
-        onPanUpdate: (d) => _move(d.localPosition),
-        onPanEnd: (_) => _up(),
-        onPanCancel: _up,
-        child: CustomPaint(
-          size: _size,
-          painter: _BoardPainter(
-            page: widget.page,
-            live: _live,
-            // Bangun yang sedang ditarik digambar dengan perhitungan yang sama
-            // dengan bangun yang sudah jadi, jadi yang terlihat saat menarik
-            // sama dengan yang mendarat.
-            preview: widget.shape == null || _live.length < 2
-                ? const <List<Offset>>[]
-                : _shapeLines(_live.first, _live.last),
-            penColor: widget.penColor,
-            penWidth: widget.penWidth,
+      // Tekanan stylus dibaca dari peristiwa pointer mentah; GestureDetector
+      // tidak menyerahkannya.
+      return Listener(
+        onPointerDown: _notePressure,
+        onPointerMove: _notePressure,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          // Tetikus ikut, supaya layar tanpa stylus tetap bisa dipakai.
+          supportedDevices: widget.finger
+              ? null
+              : const <PointerDeviceKind>{
+                  PointerDeviceKind.stylus,
+                  PointerDeviceKind.invertedStylus,
+                  PointerDeviceKind.mouse,
+                },
+          onPanStart: (d) => _down(d.localPosition),
+          onPanUpdate: (d) => _move(d.localPosition),
+          onPanEnd: (_) => _up(),
+          onPanCancel: _up,
+          child: CustomPaint(
+            size: _size,
+            painter: _BoardPainter(
+              page: widget.page,
+              live: _live,
+              // Bangun yang sedang ditarik digambar dengan perhitungan yang sama
+              // dengan bangun yang sudah jadi, jadi yang terlihat saat menarik
+              // sama dengan yang mendarat.
+              preview: widget.shape == null || _live.length < 2
+                  ? const <List<Offset>>[]
+                  : _shapeLines(_live.first, _live.last),
+              penColor: widget.penColor,
+              penWidth: widget.penWidth,
+              liveWidths: _liveWidths.length == _live.length ? _liveWidths : null,
+            ),
           ),
         ),
       );
@@ -541,6 +583,7 @@ class _BoardPainter extends CustomPainter {
     required this.penColor,
     required this.penWidth,
     this.preview = const <List<Offset>>[],
+    this.liveWidths,
   });
 
   final BoardPage page;
@@ -548,6 +591,9 @@ class _BoardPainter extends CustomPainter {
 
   /// Garis bangun yang sedang ditarik.
   final List<List<Offset>> preview;
+
+  /// Tebal per titik goresan yang sedang ditarik, kalau stylus melaporkannya.
+  final List<double>? liveWidths;
   final Color penColor;
   final double penWidth;
 
@@ -557,30 +603,29 @@ class _BoardPainter extends CustomPainter {
     final scaleY = size.height / page.size.height;
     canvas.drawRect(Offset.zero & size, Paint()..color = page.background);
 
-    void drawStroke(List<Offset> points, Color color, double width) {
+    void drawStroke(List<Offset> points, Color color, double width, [List<double>? widths]) {
       if (points.length < 2) return;
       // Dihaluskan, bukan disambung garis lurus: tulisan tangan yang
       // disambung lurus terlihat patah-patah, paling terasa pada huruf
       // melingkar dan tanda tangan.
-      final path = InkSmoothing.path(<Offset>[
-        for (final point in points) Offset(point.dx * scaleX, point.dy * scaleY),
-      ]);
-      canvas.drawPath(
-        path,
+      InkSmoothing.paintStroke(
+        canvas,
+        <Offset>[for (final point in points) Offset(point.dx * scaleX, point.dy * scaleY)],
         Paint()
           ..color = color
-          ..strokeWidth = width * scaleX
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
+        width: width * scaleX,
+        widths: widths == null ? null : <double>[for (final w in widths) w * scaleX],
       );
     }
 
     for (final stroke in page.strokes) {
-      drawStroke(stroke.points, stroke.color, stroke.width);
+      drawStroke(stroke.points, stroke.color, stroke.width, stroke.widths);
     }
     if (preview.isEmpty) {
-      drawStroke(live, penColor, penWidth);
+      drawStroke(live, penColor, penWidth, liveWidths);
       return;
     }
     for (final line in preview) {

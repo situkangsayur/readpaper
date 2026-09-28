@@ -175,8 +175,13 @@ class NoteExport {
           _applyTransform(canvas, component);
           for (final stroke in component.strokes) {
             if (stroke.points.isEmpty) continue;
-            paint.strokeWidth = stroke.width;
-            canvas.drawPath(_pathOf(stroke.points, smooth: true), paint);
+            InkSmoothing.paintStroke(
+              canvas,
+              stroke.points,
+              paint,
+              width: stroke.width,
+              widths: stroke.widths,
+            );
           }
           canvas.restore();
 
@@ -386,12 +391,25 @@ class NoteExport {
     for (final stroke in component.strokes) {
       final points = stroke.points;
       if (points.length < 2) continue;
-      canvas
-        ..setLineWidth(stroke.width)
-        ..moveTo(points.first.dx, height - points.first.dy);
+      final widths = stroke.widths;
+      final berubah = widths != null && widths.length >= points.length;
+
       var from = points.first;
+      var i = 0;
+      if (!berubah) {
+        canvas
+          ..setLineWidth(stroke.width)
+          ..moveTo(points.first.dx, height - points.first.dy);
+      }
       for (final quad in InkSmoothing.quads(points)) {
         final cubic = InkSmoothing.toCubic(from, quad.control, quad.end);
+        if (berubah) {
+          // Tebalnya berubah sepanjang goresan, jadi tiap ruas jadi jalurnya
+          // sendiri: satu jalur PDF hanya bisa punya satu tebal garis.
+          canvas
+            ..setLineWidth(widths[math.min(i + 1, widths.length - 1)])
+            ..moveTo(from.dx, height - from.dy);
+        }
         canvas.curveTo(
           cubic.c1.dx,
           height - cubic.c1.dy,
@@ -400,9 +418,11 @@ class NoteExport {
           cubic.end.dx,
           height - cubic.end.dy,
         );
+        if (berubah) canvas.strokePath();
         from = quad.end;
+        i++;
       }
-      canvas.strokePath();
+      if (!berubah) canvas.strokePath();
     }
   }
 

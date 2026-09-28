@@ -51,6 +51,15 @@ class CollectionTreePane extends ConsumerWidget {
         onTap: () => selectionController.select(const LibrarySelection.all()),
         // Melepas di sini berarti "masuk library, tanpa koleksi".
         onDrop: (drag) => _dropIntoPapers(context, ref, drag, null, index.library.name),
+        trailing: IconButton(
+          tooltip: 'Koleksi paper baru',
+          iconSize: 16,
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          padding: EdgeInsets.zero,
+          icon: const Icon(Icons.create_new_folder_outlined),
+          onPressed: () => _newPaperCollection(context, ref, parentKey: null),
+        ),
       ),
     ];
 
@@ -82,6 +91,7 @@ class CollectionTreePane extends ConsumerWidget {
             isExpanded: isExpanded,
             onToggle: () => expandedController.toggle(node.key),
             onTap: () => selectionController.select(LibrarySelection.collection(node.key)),
+            onAddChild: () => _newPaperCollection(context, ref, parentKey: node.key),
             onDrop: (drag) => _dropIntoPapers(context, ref, drag, node.key, node.name),
           ),
         );
@@ -518,6 +528,43 @@ Future<void> _dropIntoNotes(
   }
 }
 
+/// Membuat koleksi paper baru.
+///
+/// Satu-satunya tempat ReadPaper menulis berkas struktur Zotero, jadi
+/// penjelasannya ikut disebut di layar: yang memakainya berhak tahu bahwa
+/// koleksinya nanti muncul juga di Zotero setelah diimpor.
+Future<void> _newPaperCollection(
+  BuildContext context,
+  WidgetRef ref, {
+  required String? parentKey,
+}) async {
+  final name = await _askName(
+    context,
+    title: parentKey == null ? 'Koleksi paper baru' : 'Sub-koleksi paper baru',
+    hint: 'Ditulis ke collections.json, ikut tersinkron ke GitHub',
+  );
+  if (name == null || name.trim().isEmpty) return;
+
+  final key = await ref
+      .read(workspaceControllerProvider.notifier)
+      .createCollection(name: name, parentKey: parentKey);
+  if (!context.mounted) return;
+  if (key == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ref.read(workspaceControllerProvider).error ?? 'Gagal membuat koleksi'),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+    return;
+  }
+  ref.read(expandedCollectionsProvider.notifier).expandAll(<String>[
+    paperRootNodeKey,
+    ?parentKey,
+  ]);
+  ref.read(selectionProvider.notifier).select(LibrarySelection.collection(key));
+}
+
 Future<void> _newNoteCollection(
   BuildContext context,
   WidgetRef ref, {
@@ -600,7 +647,12 @@ Future<void> _noteCollectionMenu(
   }
 }
 
-Future<String?> _askName(BuildContext context, {required String title, String initial = ''}) {
+Future<String?> _askName(
+  BuildContext context, {
+  required String title,
+  String initial = '',
+  String? hint,
+}) {
   final controller = TextEditingController(text: initial);
   return showDialog<String>(
     context: context,
@@ -609,7 +661,7 @@ Future<String?> _askName(BuildContext context, {required String title, String in
       content: TextField(
         controller: controller,
         autofocus: true,
-        decoration: const InputDecoration(labelText: 'Nama'),
+        decoration: InputDecoration(labelText: 'Nama', helperText: hint, helperMaxLines: 2),
         onSubmitted: (value) => Navigator.of(dialog).pop(value),
       ),
       actions: <Widget>[

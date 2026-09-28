@@ -80,7 +80,7 @@ class NoteSheet {
 /// Satu goresan tinta, dalam koordinat lokal komponennya.
 @immutable
 class NoteStroke {
-  const NoteStroke({required this.points, required this.width});
+  const NoteStroke({required this.points, required this.width, this.widths});
 
   factory NoteStroke.fromJson(Map<String, dynamic> json) => NoteStroke(
     points: <Offset>[
@@ -89,16 +89,30 @@ class NoteStroke {
           Offset((pair[0] as num).toDouble(), (pair[1] as num).toDouble()),
     ],
     width: (json['width'] as num?)?.toDouble() ?? 2,
+    widths: (json['widths'] as List?)
+        ?.whereType<num>()
+        .map((v) => v.toDouble())
+        .toList(growable: false),
   );
 
   final List<Offset> points;
+
+  /// Tebal goresannya. Kalau [widths] ada, ini tebal dasarnya.
   final double width;
+
+  /// Tebal di tiap titik, dari tekanan stylus.
+  ///
+  /// Null untuk goresan bertebal tetap — jari dan tetikus tidak melaporkan
+  /// tekanan, dan menyimpan daftar yang isinya angka sama semua hanya
+  /// menggandakan besar berkasnya.
+  final List<double>? widths;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'points': <dynamic>[
       for (final point in points) <double>[_round(point.dx), _round(point.dy)],
     ],
     'width': _round(width),
+    if (widths != null) 'widths': <double>[for (final w in widths!) _round(w)],
   };
 
   Rect get bounds {
@@ -160,18 +174,60 @@ class NoteStroke {
       }
     }
 
-    final kept = <List<Offset>>[];
-    var current = <Offset>[];
-    for (final point in dense) {
+    // Tebal per titik ikut dirapatkan, supaya goresan bertekanan yang dipotong
+    // tidak kehilangan tebalnya di potongan yang tersisa.
+    final denseWidths = widths == null ? null : _densifiedWidths(at, radius);
+
+    final kept = <List<({Offset point, double? width})>>[];
+    var current = <({Offset point, double? width})>[];
+    for (var i = 0; i < dense.length; i++) {
+      final point = dense[i];
       if ((point - at).distance <= radius) {
         if (current.length > 1) kept.add(current);
-        current = <Offset>[];
+        current = <({Offset point, double? width})>[];
         continue;
       }
-      current.add(point);
+      current.add((
+        point: point,
+        width: denseWidths == null ? null : denseWidths[math.min(i, denseWidths.length - 1)],
+      ));
     }
     if (current.length > 1) kept.add(current);
-    return <NoteStroke>[for (final piece in kept) NoteStroke(points: piece, width: width)];
+
+    return <NoteStroke>[
+      for (final piece in kept)
+        NoteStroke(
+          points: <Offset>[for (final entry in piece) entry.point],
+          width: width,
+          widths: widths == null
+              ? null
+              : <double>[for (final entry in piece) entry.width ?? width],
+        ),
+    ];
+  }
+
+  /// Tebal per titik setelah ruas yang tersentuh penghapus dirapatkan.
+  ///
+  /// Urutannya harus sejajar dengan titik hasil perapatan di [erase], jadi
+  /// aturan perapatannya diulang sama persis di sini.
+  List<double> _densifiedWidths(Offset at, double radius) {
+    final source = widths!;
+    double widthAt(int i) => source[math.min(i, source.length - 1)];
+
+    final out = <double>[];
+    for (var i = 0; i < points.length; i++) {
+      out.add(widthAt(i));
+      if (i + 1 >= points.length) continue;
+      final a = points[i];
+      final b = points[i + 1];
+      if (_toSegment(at, a, b) > radius) continue;
+      final steps = ((b - a).distance / math.max(radius / 2, 1)).ceil();
+      for (var s = 1; s < steps; s++) {
+        // Tebalnya ikut melandai di antara dua titik, sama seperti tempatnya.
+        out.add(widthAt(i) + (widthAt(i + 1) - widthAt(i)) * (s / steps));
+      }
+    }
+    return out;
   }
 
   static double _round(double value) => (value * 100).roundToDouble() / 100;

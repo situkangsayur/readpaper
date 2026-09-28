@@ -433,6 +433,38 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  /// Membuat koleksi paper baru di dalam library yang aktif.
+  ///
+  /// Satu-satunya jalur yang menulis berkas struktur Zotero
+  /// (`collections.json`), jadi hasilnya langsung di-commit dengan pesan yang
+  /// menyebut namanya — kalau nanti ada yang perlu ditelusuri, riwayatnya ada.
+  Future<String?> createCollection({required String name, String? parentKey}) async {
+    final library = state.library;
+    final profile = state.profile;
+    if (library == null || profile == null) {
+      state = state.copyWith(error: 'Tidak ada library aktif.');
+      return null;
+    }
+    try {
+      final created = await ref
+          .read(libraryRepositoryProvider)
+          .createCollection(
+            libraryDir: library.directoryPath,
+            name: name,
+            parentKey: parentKey,
+          );
+      await _commitAnnotation(profile: profile, message: 'Tambah koleksi: ${created.path}');
+      await reloadLibrary();
+      return created.key;
+    } on Failure catch (e) {
+      state = state.copyWith(error: e.message);
+      return null;
+    } on Object catch (e) {
+      state = state.copyWith(error: 'Gagal membuat koleksi: $e');
+      return null;
+    }
+  }
+
   /// Memindahkan sebuah item ke koleksi lain — jalur seret-dan-lepas di pohon.
   ///
   /// [collectionKey] null berarti dikeluarkan dari semua koleksi.

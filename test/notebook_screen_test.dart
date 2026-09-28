@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,8 @@ import 'package:readpaper/src/features/notebook/presentation/widgets/component_f
 import 'package:readpaper/src/features/notebook/presentation/widgets/note_canvas.dart';
 
 void main() {
+  _pressureTests();
+
   late Directory dir;
   late String path;
 
@@ -253,5 +256,69 @@ void main() {
       find.ancestor(of: find.byTooltip('Simpan'), matching: find.byType(IconButton)).first,
     );
     expect(save.onPressed, isNull);
+  });
+}
+
+/// Uji terpisah: tekanan stylus sungguhan lewat peristiwa pointer mentah.
+///
+/// `tester.startGesture` tidak bisa membawa tekanan, jadi peristiwanya disusun
+/// sendiri — dan justru itu yang perlu diuji: tekanan hanya sampai kalau
+/// `Listener` di sekeliling kanvas benar-benar menerimanya.
+void _pressureTests() {
+  testWidgets('goresan stylus bertekanan keras jadi lebih tebal', (tester) async {
+    final dir = Directory.systemTemp.createTempSync('rp-tekanan-');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final path = p.join(dir.path, 'tekanan${NoteDocumentStore.extension}');
+
+    tester.view
+      ..physicalSize = const Size(1200, 1600)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(child: MaterialApp(home: NotebookScreen(path: path, title: 'Tekanan'))),
+    );
+    await tester.pumpAndSettle();
+
+    final at = tester.getCenter(find.byType(NoteCanvas));
+    const kind = PointerDeviceKind.stylus;
+    await tester.sendEventToBinding(
+      PointerDownEvent(
+        pointer: 7,
+        kind: kind,
+        position: at - const Offset(60, 0),
+        pressure: 0.95,
+        pressureMin: 0,
+        pressureMax: 1,
+      ),
+    );
+    for (var i = 1; i <= 4; i++) {
+      await tester.sendEventToBinding(
+        PointerMoveEvent(
+          pointer: 7,
+          kind: kind,
+          position: at - Offset(60 - i * 30, 0),
+          pressure: 0.95,
+          pressureMin: 0,
+          pressureMax: 1,
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+    }
+    await tester.sendEventToBinding(
+      PointerUpEvent(pointer: 7, kind: kind, position: at + const Offset(60, 0)),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Simpan'));
+    await tester.pumpAndSettle();
+
+    final ink =
+        NoteDocumentStore.decodeSync(File(path).readAsStringSync()).pages.first.components.single
+            as NoteInk;
+    final widths = ink.strokes.single.widths;
+    expect(widths, isNotNull, reason: 'tekanannya tercatat');
+    for (final w in widths!) {
+      expect(w, greaterThan(ink.strokes.single.width), reason: 'lebih tebal dari tebal dasarnya');
+    }
   });
 }

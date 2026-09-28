@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../domain/entities/library_index.dart';
+import '../../domain/entities/zotero_collection.dart';
 import '../../domain/entities/zotero_annotation.dart';
 import '../../domain/entities/zotero_item.dart';
 import '../../domain/repositories/library_repository.dart';
@@ -77,6 +78,17 @@ class LibraryRepositoryImpl implements LibraryRepository {
   @override
   Future<List<String>> removeItem({required String libraryDir, required String itemFilePath}) =>
       writer.deleteItem(libraryDir: libraryDir, itemFilePath: itemFilePath);
+
+  @override
+  Future<ZoteroCollection> createCollection({
+    required String libraryDir,
+    required String name,
+    String? parentKey,
+  }) => const ZoteroWriter().createCollection(
+    libraryDir: libraryDir,
+    name: name,
+    parentKey: parentKey,
+  );
 
   @override
   Future<List<String>> setItemCollections({

@@ -1,11 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/errors/failure.dart';
 import '../../../../core/utils/formatting.dart';
 import '../../../../core/utils/zotero_key.dart';
 import '../../domain/entities/zotero_annotation.dart';
+import '../../domain/entities/zotero_collection.dart';
 import 'zotero_fs_datasource.dart';
 import 'zotero_json.dart';
 
@@ -122,6 +125,108 @@ class ZoteroWriter {
     }
     return touched;
   }
+
+  /// Membuat koleksi Zotero baru di `<library>/collections.json`.
+  ///
+  /// Ini satu-satunya tempat ReadPaper menulis berkas **struktur** Zotero, dan
+  /// karena itu pagarnya rapat. Yang sudah ada tidak pernah diubah maupun
+  /// diurutkan ulang: entri baru ditambahkan di ujung, dengan bentuk tulisan
+  /// yang sama persis seperti yang dipakai plugin — array beridentasi tab,
+  /// kunci terurut, `parentKey: null` untuk akar, `relations: {}`. Dengan
+  /// begitu diff-nya hanya satu blok yang bertambah, dan impor di Zotero tetap
+  /// menerimanya.
+  ///
+  /// Nama kembar di bawah induk yang sama ditolak: dua koleksi bernama sama di
+  /// tempat yang sama hanya membuat yang memakainya salah pilih.
+  Future<ZoteroCollection> createCollection({
+    required String libraryDir,
+    required String name,
+    String? parentKey,
+  }) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      throw const LibraryFailure('Nama koleksi tidak boleh kosong');
+    }
+    if (trimmed.contains('/')) {
+      // Garis miring adalah pemisah jalur koleksi di berkas ini; nama yang
+      // memuatnya akan membuat jalurnya tidak bisa dibaca kembali.
+      throw const LibraryFailure('Nama koleksi tidak boleh memuat garis miring');
+    }
+
+    final file = File(p.join(libraryDir, 'collections.json'));
+    final existing = <Map<String, dynamic>>[];
+    if (file.existsSync()) {
+      final decoded = jsonDecode(await file.readAsString());
+      if (decoded is! List) {
+        throw LibraryFailure(
+          'collections.json tidak berisi daftar koleksi — menolak menulisinya',
+          details: file.path,
+        );
+      }
+      for (final entry in decoded) {
+        if (entry is! Map) {
+          throw LibraryFailure(
+            'Ada entri di collections.json yang bukan koleksi — menolak menulisinya',
+            details: file.path,
+          );
+        }
+        existing.add(entry.cast<String, dynamic>());
+      }
+    }
+
+    String? parentPath;
+    if (parentKey != null) {
+      final parent = existing.where((e) => e['key'] == parentKey).firstOrNull;
+      if (parent == null) {
+        throw LibraryFailure('Koleksi induk tidak ada', details: parentKey);
+      }
+      parentPath = (parent['path'] as String?) ?? (parent['name'] as String? ?? '');
+    }
+
+    final kembar = existing.any(
+      (e) =>
+          (e['parentKey'] as String?) == parentKey &&
+          ((e['name'] as String?) ?? '').toLowerCase() == trimmed.toLowerCase(),
+    );
+    if (kembar) {
+      throw LibraryFailure('Sudah ada koleksi bernama "$trimmed" di tempat yang sama');
+    }
+
+    final keys = <String>{for (final e in existing) (e['key'] as String?) ?? ''};
+    var key = ZoteroKey.generate();
+    for (var attempt = 0; keys.contains(key) && attempt < 32; attempt++) {
+      key = ZoteroKey.generate();
+    }
+    if (keys.contains(key)) {
+      throw const LibraryFailure('Gagal membuat kunci koleksi baru');
+    }
+
+    final created = ZoteroCollection(
+      key: key,
+      name: trimmed,
+      path: parentPath == null || parentPath.isEmpty ? trimmed : '$parentPath/$trimmed',
+      parentKey: parentKey,
+    );
+
+    final written = <Map<String, dynamic>>[
+      ...existing,
+      <String, dynamic>{
+        'key': created.key,
+        'name': created.name,
+        'parentKey': created.parentKey,
+        'path': created.path,
+        'relations': <String, dynamic>{},
+      },
+    ];
+
+    await file.writeAsString(
+      '${_pretty.convert(ZoteroJson.sortKeys(written))}\n',
+      flush: true,
+    );
+    return created;
+  }
+
+  static final JsonEncoder _pretty = JsonEncoder.withIndent('\t');
 
   /// Memindahkan sebuah item ke koleksi lain.
   ///

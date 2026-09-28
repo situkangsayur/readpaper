@@ -2,6 +2,7 @@ import 'dart:io';
 
 import '../../data/datasources/zotero_writer.dart' show CreatedItem;
 import '../entities/library_index.dart';
+import '../entities/zotero_collection.dart';
 import '../entities/zotero_annotation.dart';
 import '../entities/zotero_item.dart';
 
@@ -41,6 +42,13 @@ abstract class LibraryRepository {
 
   /// Membuang item beserta lampiran dan catatannya.
   Future<List<String>> removeItem({required String libraryDir, required String itemFilePath});
+
+  /// Membuat koleksi Zotero baru di dalam library.
+  Future<ZoteroCollection> createCollection({
+    required String libraryDir,
+    required String name,
+    String? parentKey,
+  });
 
   /// Memindahkan item ke koleksi lain; daftar kosong berarti tanpa koleksi.
   Future<List<String>> setItemCollections({

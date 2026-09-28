@@ -1039,7 +1039,15 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       telapak tangan yang sebenarnya, karena sentuhan tangan tidak pernah
       sampai ke kanvas. Tetikus tetap diizinkan, supaya layar tanpa stylus
       tetap bisa dipakai
-- [ ] Tebal goresan mengikuti tekanan stylus
+- [x] **Tebal goresan mengikuti tekanan stylus** (2026-09-29). Tekanan menulis
+      biasa — sekitar separuh — menghasilkan tebal pena yang dipilih, jadi
+      angka di menu tetap berarti sesuatu; menekan menebalkan, menyentuh ringan
+      menipiskan, dan batas bawahnya tidak nol karena garis yang hilang saat
+      tangan melemah terasa seperti pena yang rusak. Hanya untuk stylus: banyak
+      layar melaporkan tekanan tetap untuk jari, dan mengikutinya membuat tebal
+      berubah tanpa sebab. Tebal per titik hanya disimpan kalau tekanannya
+      memang berubah, dan ikut terbawa saat goresan dipotong penghapus atau
+      kertasnya diputar
 
 ### Menata koleksi
 
@@ -1053,10 +1061,22 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
 - [x] **Sub-koleksi bisa dibuat langsung** dari tombol di barisnya (2026-09-29).
       Sebelumnya hanya lewat tekan-lama, dan yang tidak pernah menekan lama
       tidak pernah menemukannya — itu memang yang terjadi
-- [ ] Membuat koleksi **paper** baru dari dalam aplikasi. Belum dikerjakan
-      karena itu berarti menulis `collections.json`, satu-satunya berkas
-      struktur Zotero yang sejauh ini tidak pernah disentuh ReadPaper —
-      keputusannya perlu diambil sadar-sadar, bukan disambil
+- [x] **Membuat koleksi paper baru** dari dalam aplikasi, berikut
+      sub-koleksinya (2026-09-29). Ini satu-satunya tempat ReadPaper menulis
+      berkas **struktur** Zotero (`collections.json`), jadi pagarnya rapat:
+      yang sudah ada tidak pernah diubah maupun diurutkan ulang — entri baru
+      ditambahkan di ujung dengan bentuk tulisan yang sama persis seperti
+      plugin (array beridentasi tab, kunci terurut, `parentKey: null` untuk
+      akar, `relations: {}`), jadi diff-nya hanya satu blok yang bertambah.
+      Dibuktikan pada `collections.json` sungguhan berisi 61 koleksi: dibaca
+      lalu ditulis ulang dengan penulis yang sama menghasilkan berkas yang
+      **sama byte-for-byte**. Nama kembar di bawah induk yang sama ditolak,
+      begitu juga nama bergaris miring — itu pemisah jalur koleksi di berkas
+      ini. Berkas yang isinya bukan daftar koleksi ditolak dengan mengatakan
+      menolak, bukan ditimpa
+- [ ] Mengganti nama dan menghapus koleksi paper. Menghapus lebih berat
+      daripada membuat: item yang jadi yatim harus diputuskan mau ke mana, dan
+      itu keputusan sendiri
 
 ### Pembaca
 

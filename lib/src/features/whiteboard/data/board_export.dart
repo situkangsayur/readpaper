@@ -36,18 +36,19 @@ class BoardExport {
 
     for (final stroke in page.strokes) {
       if (stroke.isEmpty) continue;
-      // Kurva yang sama dengan yang terlihat di layar.
-      final path = InkSmoothing.path(<Offset>[
-        for (final point in stroke.points) point * scale,
-      ]);
-      canvas.drawPath(
-        path,
+      // Kurva dan tebal yang sama dengan yang terlihat di layar.
+      InkSmoothing.paintStroke(
+        canvas,
+        <Offset>[for (final point in stroke.points) point * scale],
         Paint()
           ..color = stroke.color
-          ..strokeWidth = stroke.width * scale
           ..style = PaintingStyle.stroke
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
+        width: stroke.width * scale,
+        widths: stroke.widths == null
+            ? null
+            : <double>[for (final w in stroke.widths!) w * scale],
       );
     }
 
