@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/layout_size.dart';
 import '../../../library/presentation/controllers/library_controllers.dart';
+import '../../../files/presentation/file_browser_pane.dart';
 import '../../../library/presentation/widgets/collection_tree_pane.dart';
 import '../../../library/presentation/widgets/item_detail_pane.dart';
 import '../../../library/presentation/widgets/item_list_pane.dart';
@@ -51,7 +52,7 @@ class HomeScreen extends ConsumerWidget {
       // On anything narrower than a tablet in landscape the collection tree
       // costs more width than it is worth, so it moves into a drawer.
       drawer: layout.treeInDrawer && state.hasLibrary
-          ? const Drawer(child: SafeArea(child: CollectionTreePane()))
+          ? const Drawer(child: SafeArea(child: _TreeAndFiles()))
           : null,
       body: Column(
         children: <Widget>[
@@ -102,7 +103,7 @@ class _Body extends ConsumerWidget {
         return const Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            SizedBox(width: 300, child: CollectionTreePane()),
+            SizedBox(width: 300, child: _TreeAndFiles()),
             VerticalDivider(width: 1),
             SizedBox(width: 400, child: ItemListPane()),
             VerticalDivider(width: 1),
@@ -167,4 +168,23 @@ class _Banner extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Pohon koleksi di atas, penjelajah berkas di bawah.
+///
+/// Dua hal yang saling melengkapi dan karena itu pantas bersebelahan: yang
+/// di atas adalah apa yang sudah ada di library, yang di bawah adalah berkas
+/// di perangkat yang belum masuk. Berkas diseret dari bawah ke atas untuk
+/// memasukkannya.
+class _TreeAndFiles extends StatelessWidget {
+  const _TreeAndFiles();
+
+  @override
+  Widget build(BuildContext context) => const Column(
+    children: <Widget>[
+      Expanded(flex: 3, child: CollectionTreePane()),
+      Divider(height: 1),
+      Expanded(flex: 2, child: FileBrowserPane()),
+    ],
+  );
 }

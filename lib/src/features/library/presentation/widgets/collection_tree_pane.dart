@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../../core/utils/layout_size.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
@@ -30,6 +31,8 @@ class CollectionTreePane extends ConsumerWidget {
         depth: 0,
         selected: selection.kind == SelectionKind.all,
         onTap: () => selectionController.select(const LibrarySelection.all()),
+        // Melepas di sini berarti "masuk library, tanpa koleksi".
+        onDropFile: (path) => _dropIntoCollection(context, ref, path, null, 'library'),
       ),
       if (index.unfiledItemKeys.isNotEmpty)
         _TreeRow(
@@ -57,6 +60,7 @@ class CollectionTreePane extends ConsumerWidget {
           isExpanded: isExpanded,
           onToggle: () => expandedController.toggle(node.key),
           onTap: () => selectionController.select(LibrarySelection.collection(node.key)),
+          onDropFile: (path) => _dropIntoCollection(context, ref, path, node.key, node.name),
         ),
       );
       if (!isExpanded) return;
@@ -148,6 +152,7 @@ class _TreeRow extends StatelessWidget {
     this.hasChildren = false,
     this.isExpanded = false,
     this.onToggle,
+    this.onDropFile,
   });
 
   final String label;
@@ -160,55 +165,106 @@ class _TreeRow extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onToggle;
 
+  /// Dipanggil saat sebuah berkas dilepas di atas baris ini.
+  final void Function(String path)? onDropFile;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        height: treeRowHeight,
-        padding: EdgeInsets.only(left: 4 + depth * 14.0, right: 8),
-        color: selected ? scheme.primaryContainer.withValues(alpha: 0.5) : null,
-        child: Row(
-          children: <Widget>[
-            SizedBox(
-              // The chevron is its own tap target, so it needs room of its own
-              // on a touch screen or it swallows taps meant for the row.
-              width: isTouchPlatform ? 34 : 20,
-              child: hasChildren
-                  ? InkWell(
-                      onTap: onToggle,
-                      borderRadius: BorderRadius.circular(4),
-                      child: SizedBox(
-                        height: treeRowHeight,
-                        child: Icon(
-                          isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
-                          size: isTouchPlatform ? 22 : 16,
-                          color: scheme.onSurfaceVariant,
+    // Sasaran lepas untuk berkas yang diseret dari panel berkas di bawah.
+    // Hanya koleksi sungguhan yang menerima: "Semua item" dan "Tanpa
+    // koleksi" bukan tempat yang bisa dituju.
+    return DragTarget<String>(
+      onWillAcceptWithDetails: (_) => onDropFile != null,
+      onAcceptWithDetails: (details) => onDropFile?.call(details.data),
+      builder: (context, candidate, rejected) => InkWell(
+        onTap: onTap,
+        child: Container(
+          height: treeRowHeight,
+          padding: EdgeInsets.only(left: 4 + depth * 14.0, right: 8),
+          // Berubah warna saat berkas melayang di atasnya: tanpa itu yang
+          // menyeret tidak tahu apakah lepasannya akan mendarat.
+          color: candidate.isNotEmpty
+              ? scheme.primary.withValues(alpha: 0.22)
+              : (selected ? scheme.primaryContainer.withValues(alpha: 0.5) : null),
+          child: Row(
+            children: <Widget>[
+              SizedBox(
+                // The chevron is its own tap target, so it needs room of its own
+                // on a touch screen or it swallows taps meant for the row.
+                width: isTouchPlatform ? 34 : 20,
+                child: hasChildren
+                    ? InkWell(
+                        onTap: onToggle,
+                        borderRadius: BorderRadius.circular(4),
+                        child: SizedBox(
+                          height: treeRowHeight,
+                          child: Icon(
+                            isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right,
+                            size: isTouchPlatform ? 22 : 16,
+                            color: scheme.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    )
-                  : null,
-            ),
-            Icon(icon, size: 15, color: selected ? scheme.primary : scheme.onSurfaceVariant),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                      )
+                    : null,
+              ),
+              Icon(icon, size: 15, color: selected ? scheme.primary : scheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  ),
                 ),
               ),
-            ),
-            if (count > 0)
-              Text(
-                '$count',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.outline),
-              ),
-          ],
+              if (count > 0)
+                Text(
+                  '$count',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.outline),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// Memasukkan berkas yang dilepas ke sebuah koleksi.
+///
+/// Judulnya diambil dari nama berkas — yang menyeretnya sedang menata, bukan
+/// sedang mengisi formulir metadata; namanya bisa diperbaiki kemudian.
+Future<void> _dropIntoCollection(
+  BuildContext context,
+  WidgetRef ref,
+  String path,
+  String? collectionKey,
+  String collectionName,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text('Memasukkan ke $collectionName…')));
+
+  final created = await ref
+      .read(workspaceControllerProvider.notifier)
+      .addPdfToLibrary(
+        pdfPath: path,
+        title: p.basenameWithoutExtension(path),
+        collectionKey: collectionKey,
+      );
+  if (!context.mounted) return;
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(
+          created == null
+              ? (ref.read(workspaceControllerProvider).error ?? 'Gagal memasukkan berkas')
+              : 'Masuk ke $collectionName',
+        ),
+      ),
+    );
 }

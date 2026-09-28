@@ -424,10 +424,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             collectionPath: collection?.path,
           );
 
-      await _commitAnnotation(
-        profile: profile,
-        message: 'Tambah dokumen: $title',
-      );
+      await _commitAnnotation(profile: profile, message: 'Tambah dokumen: $title');
       await reloadLibrary();
       return created;
     } on Object catch (e) {

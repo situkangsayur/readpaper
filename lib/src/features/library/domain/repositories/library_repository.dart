@@ -40,10 +40,7 @@ abstract class LibraryRepository {
   });
 
   /// Membuang item beserta lampiran dan catatannya.
-  Future<List<String>> removeItem({
-    required String libraryDir,
-    required String itemFilePath,
-  });
+  Future<List<String>> removeItem({required String libraryDir, required String itemFilePath});
 
   Future<List<String>> saveAnnotation({
     required String itemFilePath,

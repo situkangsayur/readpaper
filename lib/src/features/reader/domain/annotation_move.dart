@@ -54,9 +54,7 @@ class AnnotationMove {
 
     // Kept on the page. A signature dragged past the edge is not "somewhere
     // else", it is gone — and getting it back means finding it in a list.
-    final bounds = rectsOf(annotation).isEmpty
-        ? null
-        : _boundsOf(rectsOf(annotation));
+    final bounds = rectsOf(annotation).isEmpty ? null : _boundsOf(rectsOf(annotation));
     var moveX = dx;
     var moveY = dy;
     if (bounds != null) {

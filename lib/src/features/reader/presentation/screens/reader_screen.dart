@@ -448,10 +448,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (!_controller.isReady) return;
     final target = _currentPage + delta;
     if (target < 1 || target > _controller.pages.length) return;
-    await _controller.goToPage(
-      pageNumber: target,
-      anchor: _presentMode ? PdfPageAnchor.all : null,
-    );
+    await _controller.goToPage(pageNumber: target, anchor: _presentMode ? PdfPageAnchor.all : null);
   }
 
   /// Hides every bar and panel, leaving the page.
@@ -747,10 +744,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             onSubmitted: (value) => Navigator.of(context).pop(value),
           ),
           actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
-            ),
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(controller.text),
               child: const Text('Tambahkan'),
@@ -1492,20 +1486,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           top: 0,
           bottom: 0,
           width: 96,
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () => _stepPage(-1),
-          ),
+          child: GestureDetector(behavior: HitTestBehavior.translucent, onTap: () => _stepPage(-1)),
         ),
         Positioned(
           right: 0,
           top: 0,
           bottom: 0,
           width: 96,
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () => _stepPage(1),
-          ),
+          child: GestureDetector(behavior: HitTestBehavior.translucent, onTap: () => _stepPage(1)),
         ),
       ],
       if (_presentMode)
@@ -1642,8 +1630,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         // Anotasi yang sedang dipilih bisa digeser, selama tidak ada alat
         // lain yang aktif — dua hal yang menerima seretan di tempat yang sama
         // akan saling merebut.
-        if (!_penMode && !_markerMode)
-          ..._moveLayersFor(page: page, pageRect: pageRect),
+        if (!_penMode && !_markerMode) ..._moveLayersFor(page: page, pageRect: pageRect),
         if (_penMode)
           Positioned.fill(
             child: InkCaptureLayer(
@@ -1671,10 +1658,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             child: Center(
               child: Text(
                 '${pageNumber ?? 1}',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSecondary,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSecondary, fontSize: 12),
               ),
             ),
           ),
@@ -1715,12 +1699,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         key: ValueKey<String>('geser-$key-${annotation.dateModified}'),
         bounds: bounds,
         onDelete: () => _deleteAnnotation(annotation),
-        onMoved: (delta) => _moveAnnotation(
-          annotation,
-          page: page,
-          dx: delta.dx / scaleX,
-          dy: -delta.dy / scaleY,
-        ),
+        onMoved: (delta) =>
+            _moveAnnotation(annotation, page: page, dx: delta.dx / scaleX, dy: -delta.dy / scaleY),
       ),
     ];
   }
@@ -1990,10 +1970,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
     // Menyunting komentar atau warna juga bisa diurungkan: yang sudah
     // ditulis sebelumnya tidak boleh hilang hanya karena salah tekan.
-    _pushUndo(
-      'mengubah anotasi',
-      () => _persist(annotation, isNew: false, recordUndo: false),
-    );
+    _pushUndo('mengubah anotasi', () => _persist(annotation, isNew: false, recordUndo: false));
     await _persist(
       annotation.copyWith(
         comment: result.comment,
@@ -2031,10 +2008,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     // `recordUndo: false`: mengembalikannya bukan langkah baru yang perlu
     // diurungkan lagi.
-    _pushUndo(
-      'menghapus anotasi',
-      () => _persist(annotation, isNew: true, recordUndo: false),
-    );
+    _pushUndo('menghapus anotasi', () => _persist(annotation, isNew: true, recordUndo: false));
     await _removeAnnotation(annotation);
   }
 
@@ -2280,7 +2254,6 @@ class _UndoStep {
   final String label;
   final Future<void> Function() action;
 }
-
 
 /// Koleksi yang dipilih saat memasukkan berkas ke library; null berarti
 /// tidak masuk koleksi mana pun.

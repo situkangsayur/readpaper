@@ -82,9 +82,7 @@ class ItemDetailPane extends ConsumerWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
+                style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
                 icon: const Icon(Icons.delete_outline, size: 18),
                 label: const Text('Hapus dokumen ini dari library'),
                 onPressed: () => _confirmDelete(context, ref, item),
@@ -426,9 +424,7 @@ Future<void> _confirmDelete(BuildContext context, WidgetRef ref, ZoteroItem item
       actions: <Widget>[
         TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
         FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
+          style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
           onPressed: () => Navigator.of(context).pop(true),
           child: const Text('Hapus'),
         ),
@@ -444,9 +440,7 @@ Future<void> _confirmDelete(BuildContext context, WidgetRef ref, ZoteroItem item
     ..showSnackBar(
       SnackBar(
         content: Text(
-          ok
-              ? 'Dokumen dihapus'
-              : ref.read(workspaceControllerProvider).error ?? 'Gagal menghapus',
+          ok ? 'Dokumen dihapus' : ref.read(workspaceControllerProvider).error ?? 'Gagal menghapus',
         ),
       ),
     );

@@ -701,13 +701,22 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 
 ### Panel berkas di samping koleksi
 
-- [ ] Sisi kanan dibagi dua: **pohon koleksi** (seperti sekarang) dan
-      **penjelajah berkas** untuk yang dibuka, disimpan, atau disimpan-sebagai
-- [ ] **Seret dan lepas** dari penjelajah berkas ke koleksi, dan antar koleksi
-- [ ] Di penjelajah berkas: berkas baru, proyek baru, papan tulis baru, folder
-      baru, masuk/keluar folder, dan buka folder kerja lain
-- [ ] Ini yang membuat butir "tambahkan ke koleksi supaya ikut sync" di Fase 13
-      benar-benar terpakai — jalannya lewat seret dan lepas, bukan menu
+- [x] Panelnya dibagi dua (2026-09-28): **pohon koleksi** di atas,
+      **penjelajah berkas** di bawah
+- [x] **Seret dan lepas** dari penjelajah berkas ke sebuah koleksi — barisnya
+      menyala saat berkas melayang di atasnya, dan melepas di "Semua item"
+      berarti masuk library tanpa koleksi. Diuji di tablet: berkas diseret,
+      itemnya muncul di koleksi, commit-nya terbentuk
+- [x] Di penjelajah berkas: **folder baru**, **masuk/keluar folder**, **buka
+      folder kerja lain**, dan **salin berkas ke sini**
+- [ ] Seret **antar koleksi** (memindahkan item yang sudah ada di library)
+- [ ] Berkas baru, proyek baru, dan papan tulis baru dari panel ini
+- [ ] Batasan yang ditemukan: Android menolak memberikan akses ke folder
+      `Download` lewat pemilih **folder** ("Tidak dapat menggunakan folder
+      ini"). Karena itu ada tombol **salin berkas ke sini** yang memakai
+      pemilih **berkas** — yang tidak dibatasi — dan hasilnya justru lebih
+      baik: satu salinan di folder kerja, bukan berkas di tempat yang bisa
+      hilang
 
 ### Dua jenis akar koleksi
 

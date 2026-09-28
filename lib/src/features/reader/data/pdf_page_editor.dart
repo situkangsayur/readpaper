@@ -155,12 +155,13 @@ class PdfPageEditor {
       Int Function(Pointer<pdfium.FPDF_FILEWRITE>, Pointer<Void>, UnsignedLong)
     >
     callback;
-    callback = NativeCallable<
-      Int Function(Pointer<pdfium.FPDF_FILEWRITE>, Pointer<Void>, UnsignedLong)
-    >.isolateLocal((Pointer<pdfium.FPDF_FILEWRITE> _, Pointer<Void> data, int size) {
-      chunks.addAll(data.cast<Uint8>().asTypedList(size));
-      return 1;
-    }, exceptionalReturn: 0);
+    callback =
+        NativeCallable<
+          Int Function(Pointer<pdfium.FPDF_FILEWRITE>, Pointer<Void>, UnsignedLong)
+        >.isolateLocal((Pointer<pdfium.FPDF_FILEWRITE> _, Pointer<Void> data, int size) {
+          chunks.addAll(data.cast<Uint8>().asTypedList(size));
+          return 1;
+        }, exceptionalReturn: 0);
 
     final writer = calloc<pdfium.FPDF_FILEWRITE>();
     try {
