@@ -1098,6 +1098,14 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
 - [x] **Halaman PDF bisa disisipkan sebagai lembar catatan** (2026-09-29), di
       tengah buku, setelah lembar yang sedang dibuka — bukan hanya saat sebuah
       PDF dijadikan buku catatan seluruhnya
+- [x] **Bilah bawah tidak lagi tertutup taskbar Android** (2026-09-29). Ini
+      sebab sebenarnya dari "catatan tidak bisa mendatar": tombol ukuran kertas
+      dan arahnya ada, tetapi bilahnya duduk di bawah bilah navigasi sistem —
+      terlihat, sentuhannya diambil sistem, dan yang memakainya menyimpulkan
+      fiturnya tidak ada. Berlaku untuk buku catatan dan papan tulis
+- [x] Kertas dan arahnya **dipindah ke depan** di bilah itu, dan ikut disebut di
+      kepala layar (2026-09-29): sebelumnya keduanya paling ujung di bilah yang
+      bisa tergulir, jadi di layar sempit tidak pernah terlihat sekalipun
 
 - [x] **Bilah pembaca tidak lagi bertumpuk** (2026-09-29). Di layar sempit
       tombolnya pindah ke baris sendiri di bawah judul: AppBar memberi judulnya

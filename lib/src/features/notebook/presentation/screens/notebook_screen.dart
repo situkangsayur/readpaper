@@ -178,7 +178,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   /// gerakan di kanvas: pengenal gerakan di kanvas ikut bersaing di arena dan
   /// membuat bingkai komponen tidak bisa diseret lagi. Itu pernah terjadi.
   void _watchIdleDrag(PointerEvent event) {
-    final menggambar = _tool == NoteTool.pena ||
+    final menggambar =
+        _tool == NoteTool.pena ||
         _tool == NoteTool.hapusGoresan ||
         _tool == NoteTool.hapusSebagian ||
         _tool == NoteTool.bangun;
@@ -548,11 +549,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       final at = _page + 1;
       _apply(
         _document.copyWith(
-          pages: <NotePage>[
-            ..._document.pages.take(at),
-            ...pages,
-            ..._document.pages.skip(at),
-          ],
+          pages: <NotePage>[..._document.pages.take(at), ...pages, ..._document.pages.skip(at)],
         ),
       );
       setState(() {
@@ -742,6 +739,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
               Text(widget.title ?? NoteDocumentStore.stemOf(widget.path)),
               Text(
                 'Lembar ${_page + 1} dari ${_document.pages.length} · '
+                '${_sheet.paper.label} ${_sheet.orientation.label.toLowerCase()} · '
                 'alat: ${_toolLabel(_tool)}'
                 '${_dirty ? ' · belum disimpan' : ''}',
                 style: Theme.of(context).textTheme.labelSmall,
@@ -1225,6 +1223,93 @@ class _Tools extends StatelessWidget {
   );
 }
 
+/// Keping kertas: menyebut ukuran **dan** arahnya, dan keduanya bisa diubah
+/// dari situ — ketuk ikonnya untuk memutar, ketuk labelnya untuk ukuran.
+class _PaperChip extends StatelessWidget {
+  const _PaperChip({
+    required this.paper,
+    required this.orientation,
+    required this.onPaper,
+    required this.onTurn,
+  });
+
+  final NotePaper paper;
+  final NoteOrientation orientation;
+  final ValueChanged<NotePaper> onPaper;
+  final VoidCallback onTurn;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        PopupMenuButton<NotePaper>(
+          tooltip: 'Ukuran kertas: ${paper.label}',
+          onSelected: onPaper,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  paper.label,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: scheme.primary),
+                ),
+                Icon(Icons.arrow_drop_down, size: 18, color: scheme.primary),
+              ],
+            ),
+          ),
+          itemBuilder: (_) => <PopupMenuEntry<NotePaper>>[
+            for (final option in NotePaper.values)
+              PopupMenuItem<NotePaper>(
+                value: option,
+                child: Row(
+                  children: <Widget>[
+                    Icon(option == paper ? Icons.check : Icons.description_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text(option.label),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        // Arahnya tidak disembunyikan di dalam menu: memutar kertas adalah satu
+        // ketukan, dan namanya ikut tertulis supaya jelas sekarang sedang apa.
+        Tooltip(
+          message: orientation == NoteOrientation.tegak
+              ? 'Kertas tegak — ketuk untuk mendatar'
+              : 'Kertas mendatar — ketuk untuk tegak',
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: onTurn,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(
+                    orientation == NoteOrientation.tegak
+                        ? Icons.crop_portrait
+                        : Icons.crop_landscape,
+                    size: 20,
+                    color: scheme.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    orientation.label,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.primary),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 String _toolLabel(NoteTool tool) => switch (tool) {
   NoteTool.pena => 'Pena',
   NoteTool.hapusGoresan => 'Hapus goresan',
@@ -1347,76 +1432,50 @@ class _PageBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: Theme.of(context).colorScheme.surfaceContainerLow,
-    child: SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          IconButton(
-            tooltip: 'Lembar sebelumnya',
-            icon: const Icon(Icons.chevron_left),
-            onPressed: page == 0 ? null : () => onGo(page - 1),
-          ),
-          Text('${page + 1} / $count', style: Theme.of(context).textTheme.labelMedium),
-          IconButton(
-            tooltip: 'Lembar berikutnya',
-            icon: const Icon(Icons.chevron_right),
-            onPressed: page >= count - 1 ? null : () => onGo(page + 1),
-          ),
-          const SizedBox(width: 12),
-          IconButton(
-            tooltip: 'Lembar kosong baru',
-            icon: const Icon(Icons.note_add_outlined),
-            onPressed: onAdd,
-          ),
-          IconButton(
-            tooltip: 'Sisipkan halaman PDF sebagai lembar',
-            icon: const Icon(Icons.picture_as_pdf_outlined),
-            onPressed: onAddPdf,
-          ),
-          IconButton(
-            tooltip: 'Hapus lembar ini',
-            icon: const Icon(Icons.delete_outline),
-            onPressed: onDelete,
-          ),
-          const SizedBox(width: 8),
-          // Kertas dipilih per lembar: satu buku boleh mencampur A5 tegak untuk
-          // tulisan dan A3 mendatar untuk bagan.
-          PopupMenuButton<NotePaper>(
-            tooltip: 'Ukuran kertas: ${paper.label}',
-            onSelected: onPaper,
-            icon: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const Icon(Icons.description_outlined, size: 20),
-                const SizedBox(width: 4),
-                Text(paper.label, style: Theme.of(context).textTheme.labelMedium),
-              ],
+    // Di atas bilah navigasi Android, bukan di bawahnya. Tanpa ini bilah ini
+    // terlihat tetapi tidak bisa ditekan — tombolnya ada, sentuhannya diambil
+    // sistem, dan yang memakainya menyimpulkan fiturnya tidak ada.
+    child: SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            IconButton(
+              tooltip: 'Lembar sebelumnya',
+              icon: const Icon(Icons.chevron_left),
+              onPressed: page == 0 ? null : () => onGo(page - 1),
             ),
-            itemBuilder: (_) => <PopupMenuEntry<NotePaper>>[
-              for (final option in NotePaper.values)
-                PopupMenuItem<NotePaper>(
-                  value: option,
-                  child: Row(
-                    children: <Widget>[
-                      Icon(option == paper ? Icons.check : Icons.description_outlined, size: 18),
-                      const SizedBox(width: 10),
-                      Text(option.label),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-          IconButton(
-            tooltip: orientation == NoteOrientation.tegak
-                ? 'Kertas tegak — ketuk untuk memutar jadi mendatar'
-                : 'Kertas mendatar — ketuk untuk memutar jadi tegak',
-            icon: Icon(
-              orientation == NoteOrientation.tegak ? Icons.crop_portrait : Icons.crop_landscape,
+            Text('${page + 1} / $count', style: Theme.of(context).textTheme.labelMedium),
+            IconButton(
+              tooltip: 'Lembar berikutnya',
+              icon: const Icon(Icons.chevron_right),
+              onPressed: page >= count - 1 ? null : () => onGo(page + 1),
             ),
-            onPressed: onTurn,
-          ),
-        ],
+            const SizedBox(width: 12),
+            // Kertas dan arahnya di depan, sebelum tombol tambah dan hapus:
+            // keduanya dulu paling ujung di bilah yang bisa tergulir, dan di layar
+            // sempit tidak pernah terlihat — sama saja dengan tidak ada.
+            _PaperChip(paper: paper, orientation: orientation, onPaper: onPaper, onTurn: onTurn),
+            const SizedBox(width: 4),
+            IconButton(
+              tooltip: 'Lembar kosong baru',
+              icon: const Icon(Icons.note_add_outlined),
+              onPressed: onAdd,
+            ),
+            IconButton(
+              tooltip: 'Sisipkan halaman PDF sebagai lembar',
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              onPressed: onAddPdf,
+            ),
+            IconButton(
+              tooltip: 'Hapus lembar ini',
+              icon: const Icon(Icons.delete_outline),
+              onPressed: onDelete,
+            ),
+          ],
+        ),
       ),
     ),
   );

@@ -227,6 +227,60 @@ void main() {
     expect(document.pages.single.components, isEmpty);
   });
 
+  testWidgets('kertas dan arahnya terlihat, dan tidak tertutup bilah sistem', (tester) async {
+    // Dua sebab kenapa dulu tidak ketemu: tombolnya paling ujung di bilah yang
+    // bisa tergulir, dan bilahnya sendiri duduk di bawah bilah navigasi
+    // Android — terlihat, tetapi sentuhannya diambil sistem.
+    tester.view
+      ..physicalSize = const Size(400, 800)
+      ..devicePixelRatio = 1
+      ..viewPadding = const FakeViewPadding(bottom: 48)
+      ..padding = const FakeViewPadding(bottom: 48);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(child: MaterialApp(home: NotebookScreen(path: path, title: 'Rapat'))),
+    );
+    await tester.pumpAndSettle();
+
+    // Terlihat tanpa digulir: label ukuran dan arahnya ada di layar.
+    expect(find.text('A4'), findsOneWidget);
+    expect(find.text('Tegak'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('Tegak')).dx, lessThan(400));
+    // Dan di atas bilah navigasi, bukan di bawahnya.
+    expect(tester.getBottomLeft(find.text('Tegak')).dy, lessThan(800 - 48));
+
+    await tester.tap(find.text('Tegak'));
+    await tester.pumpAndSettle();
+    expect(find.text('Mendatar'), findsOneWidget);
+
+    await save(tester);
+    final document = NoteDocumentStore.decodeSync(File(path).readAsStringSync());
+    expect(document.pages.single.orientation, NoteOrientation.mendatar);
+    expect(document.pages.single.size.width, greaterThan(document.pages.single.size.height));
+  });
+
+  testWidgets('ukuran kertas bisa diganti dari kepingnya', (tester) async {
+    tester.view
+      ..physicalSize = const Size(400, 800)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(child: MaterialApp(home: NotebookScreen(path: path, title: 'Rapat'))),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('A4'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('A3').last);
+    await tester.pumpAndSettle();
+
+    await save(tester);
+    expect(
+      NoteDocumentStore.decodeSync(File(path).readAsStringSync()).pages.single.paper,
+      NotePaper.a3,
+    );
+  });
+
   testWidgets('buku yang sudah ada dibuka dengan isinya', (tester) async {
     await NoteDocumentStore.write(
       path,

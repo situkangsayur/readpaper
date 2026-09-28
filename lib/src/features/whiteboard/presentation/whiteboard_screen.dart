@@ -657,34 +657,39 @@ class _PageBar extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Material(
       color: scheme.surfaceContainerHighest,
-      child: SizedBox(
-        height: 56,
-        child: Row(
-          children: <Widget>[
-            Expanded(
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                itemCount: count,
-                itemBuilder: (context, i) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                  child: ChoiceChip(
-                    selected: i == current,
-                    label: Text('${i + 1}'),
-                    onSelected: (_) => onSelect(i),
+      // Di atas bilah navigasi Android, bukan di bawahnya: tanpa ini tombolnya
+      // terlihat tetapi sentuhannya diambil sistem.
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 56,
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  itemCount: count,
+                  itemBuilder: (context, i) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    child: ChoiceChip(
+                      selected: i == current,
+                      label: Text('${i + 1}'),
+                      onSelected: (_) => onSelect(i),
+                    ),
                   ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: FilledButton.tonalIcon(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Lembar'),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: FilledButton.tonalIcon(
+                  onPressed: onAdd,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Lembar'),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
