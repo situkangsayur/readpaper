@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../library/domain/entities/zotero_annotation.dart';
 
 /// Moving an annotation across the page it lives on.
@@ -96,6 +98,72 @@ class AnnotationMove {
         topFromPageTop: pageHeight - top,
       ),
     );
+  }
+
+  /// Anotasi yang diperbesar dan/atau diputar terhadap titik tengahnya.
+  ///
+  /// Hanya untuk tinta. Stabilo dan garis bawah disimpan Zotero sebagai
+  /// kotak yang sejajar sumbu — memutarnya berarti menyimpan sesuatu yang
+  /// tidak bisa dibaca kembali oleh Zotero, dan itu harga yang tidak
+  /// sepadan untuk sebuah kemudahan.
+  ///
+  /// Titiknya ditulis ulang, karena format tinta Zotero memang hanya
+  /// menyimpan titik — tidak ada tempat untuk sudut atau skala. Karena itu
+  /// pemanggilnya menerapkan seluruh gerakan **sekali** dari anotasi
+  /// aslinya, bukan sedikit demi sedikit: memutar seratus kali dengan satu
+  /// derajat kehilangan ketelitian yang tidak bisa dikembalikan.
+  static ZoteroAnnotation transform(
+    ZoteroAnnotation annotation, {
+    double scale = 1,
+    double rotation = 0,
+    required double pageWidth,
+    required double pageHeight,
+  }) {
+    if (annotation.paths.isEmpty) return annotation;
+    if (scale == 1 && rotation == 0) return annotation;
+
+    final bounds = _boundsOf(rectsOf(annotation));
+    if (bounds == null) return annotation;
+
+    // Batas bawah yang masuk akal: anotasi yang diperkecil sampai satu titik
+    // tidak bisa dipegang lagi untuk dikembalikan.
+    final safeScale = scale.clamp(0.15, 12.0);
+    final cx = (bounds.left + bounds.right) / 2;
+    final cy = (bounds.bottom + bounds.top) / 2;
+    final cos = math.cos(rotation);
+    final sin = math.sin(rotation);
+
+    double newX(double x, double y) => cx + ((x - cx) * cos - (y - cy) * sin) * safeScale;
+    double newY(double x, double y) => cy + ((x - cx) * sin + (y - cy) * cos) * safeScale;
+
+    final paths = <InkPath>[
+      for (final path in annotation.paths)
+        InkPath(<double>[
+          for (var i = 0; i < path.length; i++) ...<double>[
+            newX(path.xAt(i), path.yAt(i)),
+            newY(path.xAt(i), path.yAt(i)),
+          ],
+        ]),
+    ];
+
+    // Tebal penanya ikut diperbesar: tanda tangan yang digandakan ukurannya
+    // dengan garis setipis semula terlihat seperti gambar yang ditarik.
+    final moved = annotation.copyWith(
+      paths: paths,
+      inkWidth: (annotation.inkWidth * safeScale).clamp(0.3, 40.0),
+    );
+
+    // Tetap di dalam halaman, sama seperti saat digeser.
+    final after = _boundsOf(rectsOf(moved));
+    if (after == null) return moved;
+    var dx = 0.0;
+    var dy = 0.0;
+    if (after.left < 0) dx = -after.left;
+    if (after.right + dx > pageWidth) dx = pageWidth - after.right;
+    if (after.bottom < 0) dy = -after.bottom;
+    if (after.top + dy > pageHeight) dy = pageHeight - after.top;
+
+    return shift(moved, dx: dx, dy: dy, pageWidth: pageWidth, pageHeight: pageHeight);
   }
 
   static AnnotationRect? _boundsOf(List<AnnotationRect> rects) {

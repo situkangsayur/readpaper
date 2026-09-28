@@ -789,11 +789,19 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 ### Anotasi yang bisa diatur ulang
 
 - [x] Tanda tangan, coretan, dan catatan bisa **dipindah** (2026-09-27)
-- [ ] ...dan bisa **diubah ukurannya** serta **diputar**. Ukuran dan putaran
-      perlu penyimpanan sendiri: format ink Zotero hanya menyimpan titik, jadi
-      memutar berarti menulis ulang titik-titiknya — yang berarti memutar dua
-      kali kehilangan ketelitian. Perlu diputuskan apakah sudut disimpan
-      terpisah di `rawPosition` atau titiknya memang ditulis ulang
+- [x] ...dan bisa **diubah ukurannya** serta **diputar** (2026-09-28), lewat
+      dua pegangan di sudut bawah bingkainya. Keputusannya: titiknya memang
+      ditulis ulang, tidak disimpan sebagai sudut di `rawPosition` —
+      menyimpan sudut berarti menulis sesuatu yang tidak bisa dibaca Zotero
+      lagi, dan itu harga yang tidak sepadan. Ketelitiannya dijaga dengan
+      menerapkan seluruh gerakan **sekali** dari anotasi aslinya saat jari
+      diangkat, bukan sedikit demi sedikit selama menyeret. Tebal penanya
+      ikut diperbesar, karena tanda tangan yang digandakan dengan garis
+      setipis semula terlihat seperti gambar yang ditarik
+- [x] Hanya berlaku untuk tinta. Stabilo dan garis bawah disimpan Zotero
+      sebagai kotak sejajar sumbu; memutarnya menghasilkan berkas yang tidak
+      bisa dibaca kembali di sana
+- [ ] Warna dan kepekatan anotasi yang sudah ada (lihat Fase 15)
 
 ### Urutan yang disarankan
 

@@ -1756,10 +1756,44 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         key: ValueKey<String>('geser-$key-${annotation.dateModified}'),
         bounds: bounds,
         onDelete: () => _deleteAnnotation(annotation),
+        // Hanya tinta yang bisa diubah ukuran dan diputar; stabilo disimpan
+        // Zotero sebagai kotak sejajar sumbu.
+        onTransformed: annotation.paths.isEmpty
+            ? null
+            : ({double scale = 1, double rotation = 0}) =>
+                  _transformAnnotation(annotation, page: page, scale: scale, rotation: rotation),
         onMoved: (delta) =>
             _moveAnnotation(annotation, page: page, dx: delta.dx / scaleX, dy: -delta.dy / scaleY),
       ),
     ];
+  }
+
+  /// Mengubah ukuran dan memutar anotasi tinta.
+  ///
+  /// Seluruh gerakan diterapkan sekali dari anotasi aslinya — bukan sedikit
+  /// demi sedikit — karena titiknya ditulis ulang setiap kali, dan memutar
+  /// seratus kali dengan satu derajat kehilangan ketelitian yang tidak bisa
+  /// dikembalikan.
+  Future<void> _transformAnnotation(
+    ZoteroAnnotation annotation, {
+    required PdfPage page,
+    required double scale,
+    required double rotation,
+  }) async {
+    final changed = AnnotationMove.transform(
+      annotation,
+      scale: scale,
+      // Layar menghitung sudut searah jarum jam, PDF berlawanan.
+      rotation: -rotation,
+      pageWidth: page.width,
+      pageHeight: page.height,
+    );
+    if (identical(changed, annotation)) return;
+
+    _pushUndo('mengubah bentuk anotasi', () async {
+      await _persist(annotation, isNew: false, recordUndo: false);
+    });
+    await _persist(changed, isNew: false, recordUndo: false);
   }
 
   /// Memindahkan anotasi, dan mencatatnya sebagai langkah yang bisa
