@@ -69,6 +69,9 @@ class NoteItem {
   bool get isPdf => extension == '.pdf';
   bool get isMarkdown => extension == '.md';
 
+  /// Buku catatan ReadPaper: berkas yang masih bisa disunting setelah disimpan.
+  bool get isNotebook => file.toLowerCase().endsWith('.catatan.json');
+
   Map<String, dynamic> toJson() => <String, dynamic>{
     'collections': collectionKeys,
     'dateAdded': _stamp(dateAdded),

@@ -882,15 +882,25 @@ merusak tata letak aslinya.
 
 ### Menulis
 
-- [ ] **Kanvas catatan berlembar-lembar** dengan stylus: tambah halaman,
-      berpindah halaman, seperti buku catatan
-- [ ] Pena dengan **warna** dan **ketebalan**, dan **urungkan**
-- [ ] **Penghapus**, dua macam dan keduanya perlu:
-      - *per goresan* — sentuh sebuah goresan, goresan itu hilang seluruhnya.
-        Ini yang dipakai saat salah menulis satu huruf
-      - *sebagian* — menghapus bagian yang dilewati, seperti penghapus
-        sungguhan. Ini yang dipakai saat merapikan sebuah diagram
-      Ukuran penghapusnya bisa diatur, dan hasilnya ikut bisa diurungkan
+- [x] **Kanvas catatan berlembar-lembar** dengan stylus (2026-09-29): tambah
+      lembar, berpindah lembar, hapus lembar. Lembarnya berukuran A4 dalam
+      titik PDF dan diperkecil utuh ke layar, jadi satu koordinat berlaku di
+      ponsel, di tablet, dan di dalam PDF — catatan yang ditulis di layar kecil
+      tidak berpindah tempat saat dibuka di layar besar. Ada garis bantu
+      polos/bergaris/kotak
+- [x] Pena dengan **warna** dan **ketebalan**, dan **urungkan** (2026-09-29)
+- [x] **Penghapus**, dua macam (2026-09-29):
+      - *per goresan* — sentuh sebuah goresan, goresan itu hilang seluruhnya
+      - *sebagian* — menghapus bagian yang dilewati, dan goresan yang dihapus
+        di tengahnya benar-benar terbelah jadi dua
+      Ukuran penghapusnya bisa diatur, dan hasilnya ikut bisa diurungkan.
+      Satu jebakan yang ditemukan dan ditutup: goresan cepat hanya menyimpan
+      titik yang berjauhan, dan penghapus yang hanya memeriksa titik akan
+      melewatkan goresan yang jelas dilewatinya — ruas yang tersentuh
+      dirapatkan dulu, hanya yang tersentuh
+- [x] **Satu gerakan pena = satu komponen** (2026-09-29). Itu batas yang jujur
+      untuk sekarang: mengelompokkan beberapa goresan jadi satu kata adalah
+      pekerjaan pengenalan tulisan, dan menebaknya tanpa itu akan sering salah
 
 ### Mengubah jadi komponen
 
@@ -905,33 +915,55 @@ merusak tata letak aslinya.
 
 ### Menyunting hasilnya
 
-Setiap komponen — teks, diagram, gambar, tinta — bisa:
+Setiap komponen — teks, diagram, gambar, tinta — bisa (semuanya 2026-09-29):
 
-- [ ] **digeser** (drag and drop)
-- [ ] **diubah ukurannya**
-- [ ] **diputar**
-- [ ] **dihapus**
-- [ ] diubah **warnanya**
-- [ ] diubah **kepekatannya** (opacity)
-- [ ] dan semuanya bisa **diurungkan**
+- [x] **digeser** (drag and drop)
+- [x] **diubah ukurannya**
+- [x] **diputar**, dan sudutnya dibulatkan ke kelipatan 15° saat mendekatinya —
+      tulisan yang hampir lurus lebih sering dimaksudkan lurus
+- [x] **dihapus**
+- [x] diubah **warnanya**
+- [x] diubah **kepekatannya** (opacity)
+- [x] dan semuanya bisa **diurungkan** — yang disimpan bukan daftar tindakan
+      melainkan keadaan dokumennya, jadi tidak ada tindakan yang lupa
+      didaftarkan dan membuat urungkan bohong
+- [x] Satu gerakan tangan = satu langkah urungkan, bukan satu langkah per
+      piksel (2026-09-29)
 
-Catatan teknis yang sudah kelihatan sekarang: memutar dan mengubah ukuran
-tidak boleh dikerjakan dengan menulis ulang titik-titik tintanya, karena
-memutar dua kali akan kehilangan ketelitian. Sudut, skala, dan kepekatan
-disimpan sebagai sifat komponen, dan titiknya tetap seperti saat ditulis.
+Catatan teknis yang sudah kelihatan sekarang — dan sudah dipatuhi: memutar dan
+mengubah ukuran tidak dikerjakan dengan menulis ulang titik-titik tintanya,
+karena memutar dua kali akan kehilangan ketelitian. Sudut, skala, dan
+kepekatan disimpan sebagai sifat komponen, dan titiknya tetap seperti saat
+ditulis. Ada uji yang menjaganya: memutar lalu menyimpan tidak boleh mengubah
+satu pun titik.
 
 ### Menyimpan
 
-- [ ] **Markdown** — untuk yang mau dibaca dan disunting di tempat lain
-- [ ] **PDF** — untuk yang mau dibagikan atau dicetak
-- [ ] **Format sendiri yang bisa disunting lagi** setelah disimpan. Markdown
-      dan PDF keduanya kehilangan posisi dan sifat komponen, jadi keduanya
-      saja tidak cukup. Bentuknya perlu diputuskan: JSON di samping berkas,
-      atau format terbuka yang sudah ada — yang penting bisa dibuka kembali
-      dan disunting seperti sebelum disimpan
-- [ ] Disimpan ke **koleksi catatan** tertentu (lihat akar koleksi berjenis
-      catatan di Fase 14) — bukan ke koleksi paper, karena catatan tidak
-      punya rujukan atau bibliografi
+- [x] **Markdown** (2026-09-29) — urutannya urutan baca, bukan urutan menulis,
+      karena catatan ditulis melompat-lompat. Tinta tidak bisa jadi teks, jadi
+      digambar ke PNG di sebelah berkasnya dan dirujuk sebagai gambar:
+      membuangnya berarti catatannya hilang sebagian
+- [x] **PDF** (2026-09-29) — satu lembar jadi satu halaman, tintanya digambar
+      sebagai **garis vektor** (tetap tajam diperbesar, berkasnya jauh lebih
+      kecil), teksnya tetap teks, diagramnya ikut tergambar
+- [x] **Format sendiri yang bisa disunting lagi** (2026-09-29):
+      `<nama>.catatan.json`. JSON dan bukan format biner karena catatan ini
+      hidup di dalam repositori git — diff-nya terbaca, bisa di-merge, dan
+      masih terbuka lima tahun lagi oleh apa pun yang bisa membaca JSON. Kunci
+      diurut dan identasinya tab, sama seperti berkas lain di repositori ini.
+      Berkas dari versi format yang lebih baru **ditolak dengan jelas**, bukan
+      dibaca setengah-setengah lalu disimpan balik dalam keadaan rusak
+- [x] Disimpan ke **koleksi catatan** tertentu (2026-09-29), lewat aturan
+      `NoteTarget` yang sama dengan papan tulis — akar paper ditolak dengan
+      penjelasan
+
+### Yang belum: mengubah tulisan jadi komponen
+
+Bagian "Mengubah jadi komponen" di atas belum dikerjakan sama sekali, dan itu
+disengaja: semuanya bergantung pada keputusan di bawah. Yang sudah ada
+sekarang adalah **wadahnya** — komponen teks, diagram, gambar, dan tinta yang
+semuanya bisa disunting — jadi ketika pengenalannya datang, yang perlu ditulis
+hanya bagian yang mengubah tinta jadi komponen lain, bukan seluruh dokumennya.
 
 ### Yang perlu diputuskan sebelum dikerjakan
 

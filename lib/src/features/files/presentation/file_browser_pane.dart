@@ -8,6 +8,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../core/utils/layout_size.dart';
 import '../../markdown/presentation/screens/markdown_editor_screen.dart';
+import '../../notebook/data/note_document_store.dart';
+import '../../notebook/presentation/screens/notebook_screen.dart';
 import '../../reader/presentation/screens/reader_screen.dart';
 import '../../whiteboard/domain/board.dart';
 import '../../whiteboard/presentation/whiteboard_screen.dart';
@@ -320,8 +322,60 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     );
   }
 
+  /// Membuat buku catatan baru di folder ini, lalu membukanya.
+  Future<void> _newNotebook() async {
+    final dir = _dir;
+    if (dir == null) return;
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialog) {
+        final controller = TextEditingController(text: 'catatan');
+        return AlertDialog(
+          title: const Text('Buku catatan baru'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: 'Nama', suffixText: '.catatan.json'),
+            onSubmitted: (value) => Navigator.of(dialog).pop(value),
+          ),
+          actions: <Widget>[
+            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Batal')),
+            FilledButton(
+              onPressed: () => Navigator.of(dialog).pop(controller.text),
+              child: const Text('Buat'),
+            ),
+          ],
+        );
+      },
+    );
+    final trimmed = name?.trim();
+    if (trimmed == null || trimmed.isEmpty) return;
+    final stem = trimmed.replaceAll(RegExp(r'[\\/]'), '-');
+
+    var target = p.join(dir.path, '$stem${NoteDocumentStore.extension}');
+    for (var n = 2; File(target).existsSync() && n < 100; n++) {
+      target = p.join(dir.path, '$stem-$n${NoteDocumentStore.extension}');
+    }
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<String>(builder: (_) => NotebookScreen(path: target, title: stem)),
+    );
+    await _open(dir);
+  }
+
   void _openFile(File file) {
     final extension = p.extension(file.path).toLowerCase();
+    if (NoteDocumentStore.isNoteDocument(file.path)) {
+      Navigator.of(context).push(
+        MaterialPageRoute<String>(
+          builder: (_) => NotebookScreen(
+            path: file.path,
+            title: NoteDocumentStore.stemOf(file.path),
+          ),
+        ),
+      );
+      return;
+    }
     if (extension == '.md') {
       Navigator.of(context).push(
         MaterialPageRoute<String>(builder: (_) => MarkdownEditorScreen(path: file.path)),
@@ -380,6 +434,12 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                 iconSize: 18,
                 icon: const Icon(Icons.post_add_outlined),
                 onPressed: dir == null ? null : _newMarkdown,
+              ),
+              IconButton(
+                tooltip: 'Buku catatan baru',
+                iconSize: 18,
+                icon: const Icon(Icons.auto_stories_outlined),
+                onPressed: dir == null ? null : _newNotebook,
               ),
               IconButton(
                 tooltip: 'Salin berkas ke sini',
@@ -487,7 +547,8 @@ class _EntryRow extends StatelessWidget {
     final extension = p.extension(name).toLowerCase();
     final isPdf = extension == '.pdf';
     final isMarkdown = extension == '.md';
-    final canOpen = isPdf || isMarkdown;
+    final isNotebook = NoteDocumentStore.isNoteDocument(name);
+    final canOpen = isPdf || isMarkdown || isNotebook;
     final row = SizedBox(
       height: treeRowHeight,
       child: InkWell(
@@ -499,6 +560,8 @@ class _EntryRow extends StatelessWidget {
               Icon(
                 isPdf
                     ? Icons.picture_as_pdf_outlined
+                    : isNotebook
+                    ? Icons.auto_stories_outlined
                     : (isMarkdown ? Icons.notes_outlined : Icons.insert_drive_file_outlined),
                 size: 15,
                 color: canOpen ? scheme.primary : scheme.outline,

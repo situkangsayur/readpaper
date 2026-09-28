@@ -9,6 +9,9 @@ import 'package:path/path.dart' as p;
 import '../../../library/domain/entities/library_index.dart';
 import '../../../library/presentation/controllers/library_controllers.dart';
 import '../../../markdown/presentation/screens/markdown_editor_screen.dart';
+import '../../../notebook/data/note_document_store.dart';
+import '../../../notebook/domain/note_document.dart';
+import '../../../notebook/presentation/screens/notebook_screen.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/note_entities.dart';
 import '../controllers/notes_controller.dart';
@@ -60,6 +63,10 @@ class NoteListPane extends ConsumerWidget {
                 ),
               ),
               IconButton(
+                tooltip: 'Buku catatan baru',
+                icon: const Icon(Icons.auto_stories_outlined, size: 20),
+                onPressed: () => _newNotebook(context, ref, selection),
+              ),              IconButton(
                 tooltip: 'Catatan Markdown baru',
                 icon: const Icon(Icons.post_add_outlined, size: 20),
                 onPressed: () => _newMarkdown(context, ref, selection),
@@ -125,7 +132,9 @@ class _NoteTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final icon = switch (note.extension) {
+    final icon = note.isNotebook
+        ? Icons.auto_stories_outlined
+        : switch (note.extension) {
       '.pdf' => Icons.picture_as_pdf_outlined,
       '.md' || '.txt' => Icons.notes_outlined,
       '.png' || '.jpg' || '.jpeg' || '.webp' => Icons.image_outlined,
@@ -209,6 +218,48 @@ Future<void> _addFile(BuildContext context, WidgetRef ref, LibrarySelection sele
   );
 }
 
+/// Membuat buku catatan baru di koleksi yang sedang dipilih.
+///
+/// Berkasnya ditulis di folder sementara lalu disalin masuk oleh [NotesStore],
+/// sama seperti catatan lain — supaya penamaan dan pencatatannya satu jalur.
+Future<void> _newNotebook(BuildContext context, WidgetRef ref, LibrarySelection selection) async {
+  final title = await _askText(context, title: 'Buku catatan baru', initial: 'Catatan');
+  if (title == null || title.trim().isEmpty || !context.mounted) return;
+
+  final stem = title.trim().replaceAll(RegExp(r'[\\/:*?"<>|]'), '-');
+  final temp = await Directory.systemTemp.createTemp('readpaper-buku-');
+  final seed = p.join(temp.path, '$stem${NoteDocumentStore.extension}');
+  await NoteDocumentStore.write(seed, NoteDocument.blank(title: title.trim()));
+
+  final controller = ref.read(notesControllerProvider.notifier);
+  final key = await controller.addFile(
+    sourcePath: seed,
+    title: title.trim(),
+    collectionKey: selection.noteCollectionKey,
+  );
+  await temp.delete(recursive: true);
+  if (!context.mounted) return;
+  if (key == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ref.read(notesErrorProvider) ?? 'Gagal membuat buku catatan')),
+    );
+    return;
+  }
+
+  final index = ref.read(notesControllerProvider).value ?? NotesIndex.empty;
+  final note = index.items.firstWhereOrNull((item) => item.key == key);
+  if (note == null) return;
+  await Navigator.of(context).push(
+    MaterialPageRoute<String>(
+      builder: (_) => NotebookScreen(
+        path: p.join(index.directory, note.file),
+        title: note.title,
+      ),
+    ),
+  );
+  await controller.touch(itemKey: key, message: 'Ubah catatan: ${note.title}');
+}
+
 /// Membuat catatan Markdown kosong di koleksi yang sedang dipilih, lalu
 /// membukanya.
 ///
@@ -262,6 +313,17 @@ Future<void> _open(
   NotesIndex index,
 ) async {
   final path = p.join(index.directory, note.file);
+  if (note.isNotebook) {
+    await Navigator.of(context).push(
+      MaterialPageRoute<String>(
+        builder: (_) => NotebookScreen(path: path, title: note.title),
+      ),
+    );
+    await ref
+        .read(notesControllerProvider.notifier)
+        .touch(itemKey: note.key, message: 'Ubah catatan: ${note.title}');
+    return;
+  }
   if (note.isMarkdown) {
     await Navigator.of(context).push(
       MaterialPageRoute<String>(
@@ -293,7 +355,7 @@ Future<void> _open(
     SnackBar(
       content: Text(
         'Berkas ${note.extension.isEmpty ? 'ini' : note.extension} belum bisa dibuka '
-        'di dalam aplikasi. Yang sudah bisa: PDF dan Markdown.',
+        'di dalam aplikasi. Yang sudah bisa: PDF, Markdown, dan buku catatan.',
       ),
     ),
   );

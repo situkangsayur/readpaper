@@ -34,6 +34,7 @@ presentation  →  domain  ←  data
 | `files` | Penjelajah berkas perangkat; berkas diseret dari sini ke pohon |
 | `whiteboard` | Papan tulis berlembar-lembar → PDF, bisa disimpan sebagai catatan |
 | `markdown` | Baca/sunting Markdown, diagram Mermaid, Markdown ↔ PDF |
+| `notebook` | Buku catatan stylus: komponen yang bisa disunting, `.catatan.json` |
 
 `WorkspaceController` adalah satu-satunya tempat operasi remote dijalankan,
 sehingga UI cukup merender satu `WorkspaceState`.
@@ -167,6 +168,46 @@ kebetulan berpola ("Isi halaman 3.") ikut terbuang.
 Hasil konversinya ditulis ke folder kerja aplikasi, tidak pernah di sebelah
 papernya: paper hidup di dalam ekspor Zotero, dan berkas asing di sana
 mengacaukan struktur yang dijaga plugin sinkronisasi.
+
+## Buku catatan: komponen, bukan gambar
+
+Papan tulis menghasilkan gambar; buku catatan menghasilkan **dokumen**. Isinya
+komponen — tinta, teks, gambar, diagram — yang masing-masing punya tempat,
+ukuran, sudut, warna, dan kepekatan sendiri.
+
+Aturan yang dijaga kode: **sudut, skala, dan kepekatan adalah sifat komponen,
+bukan sesuatu yang ditulis balik ke titik-titik tintanya.** Memutar dengan
+menulis ulang titik akan kehilangan ketelitian sedikit demi sedikit sampai
+tulisannya berubah bentuk; menyimpannya sebagai sifat membuat memutar
+bolak-balik kembali persis ke asalnya. Ada uji yang menjaganya.
+
+Lembarnya berukuran A4 dalam **titik PDF** dan diperkecil utuh ke layar. Satu
+koordinat karena itu berlaku di mana saja — ponsel, tablet, dan PDF — dan
+catatan yang ditulis di layar kecil tidak berpindah tempat saat dibuka di layar
+besar.
+
+Urungkan menyimpan **keadaan dokumen**, bukan daftar tindakan
+(`NoteHistory`). Daftar tindakan selalu punya satu tindakan yang lupa
+didaftarkan, dan satu saja sudah cukup untuk membuat urungkan bohong. Satu
+gerakan tangan mencatat satu langkah, bukan satu langkah per piksel.
+
+Penghapusnya dua macam. Yang per goresan membuang goresan yang disentuh; yang
+sebagian memotong bagian yang dilewati dan **membelah** goresan yang dihapus di
+tengahnya. Jebakan yang ditemukan di sini: goresan cepat hanya menyimpan titik
+yang berjauhan, jadi penghapus yang memeriksa titik saja akan melewatkan
+goresan yang jelas dilewatinya — ruas yang tersentuh dirapatkan dulu, dan hanya
+yang tersentuh, supaya sisa goresannya tetap sehemat semula.
+
+Berkasnya `<nama>.catatan.json`: JSON beridentasi tab dengan kunci terurut,
+seperti berkas lain di repositori ini. Bukan format biner, karena catatan ini
+hidup di dalam git — diff-nya harus terbaca. Berkas dari versi format yang
+lebih baru ditolak dengan jelas alih-alih dibaca setengah-setengah lalu
+disimpan balik dalam keadaan rusak. Ekspor Markdown dan PDF berdiri di
+sampingnya: Markdown kehilangan posisi, PDF kehilangan kemampuan disunting,
+jadi keduanya cara membagikan — bukan pengganti.
+
+Yang belum ada: mengubah tulisan tangan jadi teks dan diagram. Wadahnya sudah
+berdiri, jadi yang tersisa hanya bagian pengenalannya.
 
 ## Koordinat anotasi
 

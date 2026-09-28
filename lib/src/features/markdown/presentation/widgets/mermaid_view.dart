@@ -45,36 +45,54 @@ class MermaidView extends StatelessWidget {
       );
     }
 
-    final style = TextStyle(fontSize: 12.5, color: scheme.onSurface, height: 1.2);
-    final layout = MermaidLayout.of(
-      graph,
-      measure: (line) => _measure(line, style),
-      lineHeight: 17,
-    );
-
     return _Frame(
       onEdit: onEdit,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: math.max(layout.width, 1),
-          height: math.max(layout.height, 1),
-          child: CustomPaint(
-            painter: _MermaidPainter(
-              layout: layout,
-              style: style,
-              line: scheme.onSurfaceVariant,
-              fill: scheme.surfaceContainerHighest,
-              border: scheme.primary,
-              labelBackground: scheme.surface,
-            ),
-          ),
-        ),
+        child: MermaidPicture(graph: graph),
       ),
     );
   }
+}
 
-  static double _measure(String line, TextStyle style) {
+/// Diagramnya saja: tanpa bingkai, tanpa gulir, sebesar yang dibutuhkan.
+///
+/// Dipisah dari [MermaidView] karena kanvas catatan memakainya sebagai isi
+/// sebuah komponen — di sana bingkai dan gulirnya justru merebut seretan yang
+/// dimaksudkan untuk menggeser komponennya.
+class MermaidPicture extends StatelessWidget {
+  const MermaidPicture({required this.graph, this.fit = false, super.key});
+
+  final MermaidGraph graph;
+
+  /// Mengecilkan diagram supaya muat di ruang yang tersedia.
+  final bool fit;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final style = TextStyle(fontSize: 12.5, color: scheme.onSurface, height: 1.2);
+    final layout = MermaidLayout.of(graph, measure: (line) => measure(line, style), lineHeight: 17);
+
+    final picture = SizedBox(
+      width: math.max(layout.width, 1),
+      height: math.max(layout.height, 1),
+      child: CustomPaint(
+        painter: MermaidPainter(
+          layout: layout,
+          style: style,
+          line: scheme.onSurfaceVariant,
+          fill: scheme.surfaceContainerHighest,
+          border: scheme.primary,
+          labelBackground: scheme.surface,
+        ),
+      ),
+    );
+    return fit ? FittedBox(fit: BoxFit.contain, child: picture) : picture;
+  }
+
+  /// Selebar apa satu baris label dengan gaya ini.
+  static double measure(String line, TextStyle style) {
     final painter = TextPainter(
       text: TextSpan(text: line, style: style),
       textDirection: TextDirection.ltr,
@@ -121,8 +139,9 @@ class _Frame extends StatelessWidget {
   }
 }
 
-class _MermaidPainter extends CustomPainter {
-  _MermaidPainter({
+/// Pelukis diagram, dipakai [MermaidPicture].
+class MermaidPainter extends CustomPainter {
+  MermaidPainter({
     required this.layout,
     required this.style,
     required this.line,
@@ -262,6 +281,6 @@ class _MermaidPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_MermaidPainter old) =>
+  bool shouldRepaint(MermaidPainter old) =>
       old.layout != layout || old.style != style || old.fill != fill || old.line != line;
 }
