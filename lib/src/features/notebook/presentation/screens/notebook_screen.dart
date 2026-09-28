@@ -16,6 +16,7 @@ import '../../../notes/domain/note_target.dart';
 import '../../../notes/presentation/controllers/notes_controller.dart';
 import '../../data/note_document_store.dart';
 import '../../data/note_export.dart';
+import '../../data/pdf_to_notebook.dart';
 import '../../domain/note_document.dart';
 import '../../domain/note_history.dart';
 import '../widgets/component_frame.dart';
@@ -94,6 +95,12 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   /// Satu gerakan tangan = satu langkah urungkan, bukan satu per piksel.
   bool _touchedThisGesture = false;
 
+  /// Sudah menjelaskan sekali kenapa seretan tidak menggambar apa pun.
+  bool _explainedIdleDrag = false;
+
+  /// Tempat jari mulai menekan, untuk mengenali seretan yang sia-sia.
+  Offset? _dragFrom;
+
   @override
   void initState() {
     super.initState();
@@ -153,6 +160,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   /// Hanya stylus: banyak layar melaporkan tekanan tetap untuk jari, dan
   /// mengikutinya membuat tebal goresan berubah tanpa sebab.
   void _notePressure(PointerEvent event) {
+    _watchIdleDrag(event);
+
     final stylus =
         event.kind == PointerDeviceKind.stylus || event.kind == PointerDeviceKind.invertedStylus;
     if (!stylus || event.pressureMax <= event.pressureMin) {
@@ -161,6 +170,29 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     }
     _pressure = ((event.pressure - event.pressureMin) / (event.pressureMax - event.pressureMin))
         .clamp(0.0, 1.0);
+  }
+
+  /// Memperhatikan seretan yang tidak meninggalkan apa pun.
+  ///
+  /// Diperhatikan dari peristiwa pointer, **bukan** dengan memasang pengenal
+  /// gerakan di kanvas: pengenal gerakan di kanvas ikut bersaing di arena dan
+  /// membuat bingkai komponen tidak bisa diseret lagi. Itu pernah terjadi.
+  void _watchIdleDrag(PointerEvent event) {
+    final menggambar = _tool == NoteTool.pena ||
+        _tool == NoteTool.hapusGoresan ||
+        _tool == NoteTool.hapusSebagian ||
+        _tool == NoteTool.bangun;
+    if (menggambar) return;
+
+    if (event is PointerDownEvent) {
+      _dragFrom = event.position;
+      return;
+    }
+    final from = _dragFrom;
+    if (from == null || _selectedId != null) return;
+    if ((event.position - from).distance < 24) return;
+    _dragFrom = null;
+    _explainIdleDrag();
   }
 
   void _onPanStart(Offset sheetPoint) {
@@ -482,6 +514,57 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     });
   }
 
+  /// Menyisipkan halaman sebuah PDF sebagai lembar-lembar baru.
+  ///
+  /// Inilah jawaban untuk "lembar baru dari PDF": halamannya jadi alas lembar,
+  /// dan di atasnya bisa ditulis seperti lembar lain. Disisipkan **setelah**
+  /// lembar yang sedang dibuka, bukan di ujung buku — yang menyisipkan biasanya
+  /// sedang berada di tempat yang dimaksud.
+  Future<void> _insertPdfPages() async {
+    final picked = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: <String>['pdf'],
+      dialogTitle: 'Pilih PDF untuk disisipkan sebagai lembar',
+    );
+    if (picked.isEmpty) return;
+    final source = picked.first.path;
+    if (source == null) return;
+
+    _say('Menyiapkan lembar dari ${p.basename(source)}…');
+    try {
+      final relativeDir = '${NoteDocumentStore.stemOf(widget.path)}-berkas';
+      final pages = await PdfToNotebook.pagesOf(
+        pdfPath: source,
+        assetDir: p.join(_baseDir, relativeDir),
+        relativeDir: relativeDir,
+        prefix: p.basenameWithoutExtension(source),
+      );
+      if (!mounted) return;
+      if (pages.isEmpty) {
+        _say('PDF itu tidak punya halaman yang bisa dibaca.');
+        return;
+      }
+
+      final at = _page + 1;
+      _apply(
+        _document.copyWith(
+          pages: <NotePage>[
+            ..._document.pages.take(at),
+            ...pages,
+            ..._document.pages.skip(at),
+          ],
+        ),
+      );
+      setState(() {
+        _page = at;
+        _selectedId = null;
+      });
+      _say('${pages.length} lembar disisipkan dari ${p.basename(source)}.');
+    } on Object catch (e) {
+      if (mounted) _say('Gagal menyisipkan PDF: $e');
+    }
+  }
+
   void _deletePage() {
     if (_document.pages.length == 1) {
       // Satu-satunya lembar tidak dihapus melainkan dikosongkan: menutup
@@ -658,7 +741,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
             children: <Widget>[
               Text(widget.title ?? NoteDocumentStore.stemOf(widget.path)),
               Text(
-                'Lembar ${_page + 1} dari ${_document.pages.length}'
+                'Lembar ${_page + 1} dari ${_document.pages.length} · '
+                'alat: ${_toolLabel(_tool)}'
                 '${_dirty ? ' · belum disimpan' : ''}',
                 style: Theme.of(context).textTheme.labelSmall,
               ),
@@ -765,6 +849,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
               selected: _selected,
               onTool: (tool) => setState(() {
                 _tool = tool;
+                _explainedIdleDrag = false;
                 if (tool != NoteTool.pilih) _selectedId = null;
                 if (tool != NoteTool.hubung) _connectFrom = null;
               }),
@@ -801,6 +886,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                 _selectedId = null;
               }),
               onAdd: _addPage,
+              onAddPdf: _insertPdfPages,
               onDelete: _deletePage,
               onPaper: _setPaper,
               onTurn: _turnPage,
@@ -933,6 +1019,16 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       );
     },
   );
+
+  /// Menjelaskan sekali kenapa seretan tidak meninggalkan apa pun.
+  ///
+  /// Yang paling membingungkan dari alat yang bukan pena adalah diamnya: jari
+  /// digerakkan, tidak ada yang terjadi, dan tidak ada yang mengatakan kenapa.
+  void _explainIdleDrag() {
+    if (_explainedIdleDrag) return;
+    _explainedIdleDrag = true;
+    _say('Alat sekarang "${_toolLabel(_tool)}" — pilih ikon pena untuk menggambar.');
+  }
 
   void _onTap(Offset sheetPoint) {
     switch (_tool) {
@@ -1069,18 +1165,6 @@ class _Tools extends StatelessWidget {
             onTool: onTool,
           ),
           const VerticalDivider(width: 12),
-          IconButton(
-            tooltip: finger
-                ? 'Jari boleh menggambar — ketuk untuk hanya stylus'
-                : 'Hanya stylus yang menggambar — telapak tangan diabaikan',
-            isSelected: !finger,
-            iconSize: 20,
-            icon: Icon(finger ? Icons.touch_app_outlined : Icons.draw),
-            style: IconButton.styleFrom(
-              backgroundColor: finger ? null : Theme.of(context).colorScheme.primaryContainer,
-            ),
-            onPressed: () => onFinger(!finger),
-          ),
           PopupMenuButton<Color>(
             tooltip: selected == null ? 'Warna pena' : 'Warna komponen',
             icon: Icon(Icons.circle, color: selected == null ? pen : Color(selected!.color)),
@@ -1128,11 +1212,74 @@ class _Tools extends StatelessWidget {
                   PopupMenuItem<double>(value: value, child: Text('${(value * 100).round()}%')),
               ],
             ),
+          const VerticalDivider(width: 12),
+          // Berdiri di ujung, terpisah dari tombol alat, dan ikonnya bukan
+          // pena: sebelumnya ia duduk di antara alat-alat dengan ikon pena,
+          // dan itu terbaca seperti memilih alat — ditekan, lalu bingung
+          // kenapa tidak bisa menggambar lagi.
+          _ModeChip(finger: finger, onFinger: onFinger),
           const SizedBox(width: 8),
         ],
       ),
     ),
   );
+}
+
+String _toolLabel(NoteTool tool) => switch (tool) {
+  NoteTool.pena => 'Pena',
+  NoteTool.hapusGoresan => 'Hapus goresan',
+  NoteTool.hapusSebagian => 'Hapus sebagian',
+  NoteTool.pilih => 'Pilih',
+  NoteTool.bangun => 'Bangun',
+  NoteTool.hubung => 'Hubungkan',
+  NoteTool.teks => 'Teks',
+  NoteTool.gambar => 'Gambar',
+  NoteTool.diagram => 'Diagram',
+};
+
+/// Sakelar "siapa yang boleh menggambar" — bukan alat, jadi tidak berbentuk
+/// tombol alat.
+class _ModeChip extends StatelessWidget {
+  const _ModeChip({required this.finger, required this.onFinger});
+
+  final bool finger;
+  final ValueChanged<bool> onFinger;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: finger
+          ? 'Jari dan stylus boleh menggambar. Ketuk untuk hanya stylus, supaya '
+                'telapak tangan tidak ikut menggambar.'
+          : 'Hanya stylus yang menggambar; telapak tangan diabaikan. Ketuk untuk '
+                'mengizinkan jari lagi.',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => onFinger(!finger),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
+            children: <Widget>[
+              Icon(
+                finger ? Icons.touch_app_outlined : Icons.do_not_touch_outlined,
+                size: 18,
+                color: finger ? scheme.onSurfaceVariant : scheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                finger ? 'Jari + stylus' : 'Stylus saja',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: finger ? scheme.onSurfaceVariant : scheme.primary,
+                  fontWeight: finger ? FontWeight.w400 : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 IconData _shapeIcon(ShapeKind kind) => switch (kind) {
@@ -1180,6 +1327,7 @@ class _PageBar extends StatelessWidget {
     required this.orientation,
     required this.onGo,
     required this.onAdd,
+    required this.onAddPdf,
     required this.onDelete,
     required this.onPaper,
     required this.onTurn,
@@ -1191,6 +1339,7 @@ class _PageBar extends StatelessWidget {
   final NoteOrientation orientation;
   final ValueChanged<int> onGo;
   final VoidCallback onAdd;
+  final VoidCallback onAddPdf;
   final VoidCallback onDelete;
   final ValueChanged<NotePaper> onPaper;
   final VoidCallback onTurn;
@@ -1216,9 +1365,14 @@ class _PageBar extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           IconButton(
-            tooltip: 'Lembar baru',
+            tooltip: 'Lembar kosong baru',
             icon: const Icon(Icons.note_add_outlined),
             onPressed: onAdd,
+          ),
+          IconButton(
+            tooltip: 'Sisipkan halaman PDF sebagai lembar',
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: onAddPdf,
           ),
           IconButton(
             tooltip: 'Hapus lembar ini',

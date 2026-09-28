@@ -196,7 +196,7 @@ void main() {
     final at = centre(tester);
     await draw(tester, at - const Offset(40, 0), at + const Offset(40, 0));
 
-    await tester.tap(find.byTooltip('Lembar baru'));
+    await tester.tap(find.byTooltip('Lembar kosong baru'));
     await tester.pumpAndSettle();
     expect(find.text('2 / 2'), findsOneWidget);
 

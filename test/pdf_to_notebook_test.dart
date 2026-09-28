@@ -113,4 +113,50 @@ void main() {
     expect(File(satu).existsSync(), isTrue);
     expect(File(dua).existsSync(), isTrue);
   });
+
+  test('halaman PDF bisa diambil sebagai lembar untuk disisipkan', () async {
+    // Jalur yang dipakai "sisipkan halaman PDF" di dalam buku catatan: lembarnya
+    // dikembalikan tanpa menulis berkas catatan apa pun.
+    final pdf = await samplePdf(pages: 2);
+    final pages = await PdfToNotebook.pagesOf(
+      pdfPath: pdf,
+      assetDir: p.join(dir.path, 'buku-berkas'),
+      relativeDir: 'buku-berkas',
+      prefix: 'sisipan',
+    );
+
+    expect(pages.length, greaterThanOrEqualTo(2));
+    for (final page in pages) {
+      final image = page.components.single as NoteImage;
+      expect(image.file, startsWith('buku-berkas/sisipan-'));
+      expect(File(p.join(dir.path, image.file)).existsSync(), isTrue, reason: image.file);
+    }
+    expect(
+      Directory(p.join(dir.path, 'buku-berkas')).listSync().length,
+      pages.length,
+    );
+  });
+
+  test('menyisipkan dua kali tidak menimpa gambar sisipan pertama', () async {
+    final pdf = await samplePdf(pages: 1);
+    final satu = await PdfToNotebook.pagesOf(
+      pdfPath: pdf,
+      assetDir: p.join(dir.path, 'berkas'),
+      relativeDir: 'berkas',
+      prefix: 'sama',
+    );
+    final dua = await PdfToNotebook.pagesOf(
+      pdfPath: pdf,
+      assetDir: p.join(dir.path, 'berkas'),
+      relativeDir: 'berkas',
+      prefix: 'sama',
+    );
+    // Berkas contohnya bisa lebih dari satu halaman; yang diperiksa halaman
+    // pertamanya.
+    final a = (satu.first.components.single as NoteImage).file;
+    final b = (dua.first.components.single as NoteImage).file;
+    expect(a, isNot(b));
+    expect(File(p.join(dir.path, a)).existsSync(), isTrue);
+    expect(File(p.join(dir.path, b)).existsSync(), isTrue);
+  });
 }

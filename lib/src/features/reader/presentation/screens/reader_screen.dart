@@ -452,6 +452,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final target = _currentPage + delta;
     if (target < 1 || target > _controller.pages.length) return;
     await _controller.goToPage(pageNumber: target, anchor: _presentMode ? PdfPageAnchor.all : null);
+    // Sekali lagi setelah halamannya berganti: halaman yang ukurannya berbeda
+    // dari halaman sebelumnya — lembar kosong mendatar di antara halaman tegak,
+    // misalnya — harus ikut dipaskan penuh layar, bukan mewarisi zum lama.
+    if (_presentMode) await _fitCurrentPage();
   }
 
   /// Hides every bar and panel, leaving the page.
@@ -921,7 +925,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // menulis di sana sekarang, bukan mencarinya dulu.
       await Future<void>.delayed(const Duration(milliseconds: 400));
       if (_controller.isReady && before + 1 <= _controller.pages.length) {
-        await _controller.goToPage(pageNumber: before + 1);
+        await _controller.goToPage(
+          pageNumber: before + 1,
+          anchor: _presentMode ? PdfPageAnchor.all : null,
+        );
       }
     } on Object catch (e) {
       if (mounted) _say('Gagal menambah halaman: $e');
@@ -1631,9 +1638,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               : ColorFiltered(colorFilter: _tint.filter!, child: _buildPdf(scheme)),
         ),
       ),
-      // Menyajikan: separuh kiri mundur, separuh kanan maju. Hanya saat pena
-      // tidak aktif — kalau tidak, satu coretan berubah jadi ganti halaman.
+      // Menyajikan: separuh kiri mundur, separuh kanan maju, dan geseran ke
+      // samping juga berganti halaman — gulir bebas sudah dilepas, jadi
+      // seretan mendatar tidak lagi dipakai siapa pun.
       if (_presentMode && !_penMode) ...<Widget>[
+        Positioned.fill(
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragEnd: (details) {
+              final v = details.primaryVelocity ?? 0;
+              if (v.abs() < 120) return;
+              _stepPage(v < 0 ? 1 : -1);
+            },
+          ),
+        ),
         Positioned(
           left: 0,
           top: 0,
@@ -1660,6 +1678,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   icon: _penMode ? Icons.draw : Icons.draw_outlined,
                   tooltip: _penMode ? 'Selesai menggambar' : 'Coret-coret di halaman',
                   onTap: _togglePen,
+                ),
+                const SizedBox(width: 8),
+                _ReadingChip(
+                  icon: Icons.note_add_outlined,
+                  tooltip: 'Tambah lembar kosong untuk dicoreti',
+                  onTap: _addBlankPages,
                 ),
                 const SizedBox(width: 8),
                 _ReadingChip(
@@ -1754,7 +1778,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       textSelectionParams: _markerMode ? _selectByDrag : _selectByHandles,
       // While marking, the drag belongs to the selection; while drawing, to
       // the pen. Panning would fight either one for the same gesture.
-      panEnabled: !_markerMode && !_penMode,
+      //
+      // Saat menyajikan, gulir dan cubit dilepas sama sekali: yang menyajikan
+      // ingin satu halaman penuh layar yang berganti, bukan dokumen panjang
+      // yang bisa tergeser setengah halaman karena tangan menyenggol.
+      panEnabled: !_markerMode && !_penMode && !_presentMode,
+      scaleEnabled: !_presentMode,
       onPageChanged: (pageNumber) {
         if (pageNumber == null || !mounted) return;
         setState(() => _currentPage = pageNumber);

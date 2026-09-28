@@ -32,26 +32,22 @@ class PdfToNotebook {
   /// tablet, tanpa membuat berkasnya tidak masuk akal.
   static const double dpi = 144;
 
-  /// Menulis buku catatan baru dari [pdfPath] ke dalam [targetDir].
+  /// Membaca halaman [pdfPath] jadi lembar-lembar catatan.
   ///
-  /// Mengembalikan jalur berkas `.catatan.json`-nya.
-  static Future<String> convert({
+  /// Gambar halamannya ditulis ke [assetDir], dan dirujuk lewat [relativeDir] —
+  /// jalur relatif terhadap folder dokumennya, supaya catatan yang dipindahkan
+  /// atau disinkronkan tetap menemukan gambarnya.
+  ///
+  /// Dipakai dua kali: saat sebuah PDF dijadikan buku catatan seluruhnya, dan
+  /// saat halaman PDF disisipkan ke buku catatan yang sudah ada.
+  static Future<List<NotePage>> pagesOf({
     required String pdfPath,
-    required String targetDir,
-    String? title,
-    int extraPages = 1,
+    required String assetDir,
+    required String relativeDir,
+    String prefix = 'halaman',
     int? maxPages,
   }) async {
-    final stem = _stem(title ?? p.basenameWithoutExtension(pdfPath));
-    var notePath = p.join(targetDir, '$stem${NoteDocumentStore.extension}');
-    for (var n = 2; File(notePath).existsSync() && n < 100; n++) {
-      notePath = p.join(targetDir, '$stem-$n${NoteDocumentStore.extension}');
-    }
-    final assetDir = Directory(
-      p.join(targetDir, '${NoteDocumentStore.stemOf(notePath)}-berkas'),
-    );
-    await assetDir.create(recursive: true);
-
+    await Directory(assetDir).create(recursive: true);
     final document = await PdfDocument.openFile(pdfPath);
     final pages = <NotePage>[];
     try {
@@ -68,28 +64,30 @@ class PdfToNotebook {
         );
         if (rendered == null) continue;
         try {
-          final name = 'halaman-${i + 1}.png';
-          await File(p.join(assetDir.path, name)).writeAsBytes(
-            _png(rendered),
-            flush: true,
-          );
+          var name = '$prefix-${i + 1}.png';
+          for (var n = 2; File(p.join(assetDir, name)).existsSync() && n < 999; n++) {
+            name = '$prefix-${i + 1}-$n.png';
+          }
+          await File(p.join(assetDir, name)).writeAsBytes(_png(rendered), flush: true);
 
           // Kertasnya dipilih sedekat mungkin dengan halaman aslinya: halaman
           // A4 mendatar mendarat di kertas A4 mendatar, bukan dipaksa tegak
           // lalu menyisakan dua pita kosong di atas dan di bawah.
           final chosen = NotePaper.closestTo(Size(page.width, page.height));
-          final sheet = chosen.paper.sizeFor(chosen.orientation);
-          final box = _fit(Size(page.width, page.height), sheet);
+          final box = _fit(
+            Size(page.width, page.height),
+            chosen.paper.sizeFor(chosen.orientation),
+          );
           pages.add(
             NotePage(
               paper: chosen.paper,
               orientation: chosen.orientation,
               components: <NoteComponent>[
                 NoteImage(
-                  id: 'halaman-${i + 1}',
+                  id: '$prefix-${i + 1}-${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}',
                   position: box.topLeft,
                   size: box.size,
-                  file: '${assetDir.path.split(Platform.pathSeparator).last}/$name',
+                  file: '$relativeDir/$name',
                   alt: 'Halaman ${i + 1}',
                 ),
               ],
@@ -102,6 +100,31 @@ class PdfToNotebook {
     } finally {
       await document.dispose();
     }
+    return pages;
+  }
+
+  /// Menulis buku catatan baru dari [pdfPath] ke dalam [targetDir].
+  ///
+  /// Mengembalikan jalur berkas `.catatan.json`-nya.
+  static Future<String> convert({
+    required String pdfPath,
+    required String targetDir,
+    String? title,
+    int extraPages = 1,
+    int? maxPages,
+  }) async {
+    final stem = _stem(title ?? p.basenameWithoutExtension(pdfPath));
+    var notePath = p.join(targetDir, '$stem${NoteDocumentStore.extension}');
+    for (var n = 2; File(notePath).existsSync() && n < 100; n++) {
+      notePath = p.join(targetDir, '$stem-$n${NoteDocumentStore.extension}');
+    }
+    final relativeDir = '${NoteDocumentStore.stemOf(notePath)}-berkas';
+    final pages = await pagesOf(
+      pdfPath: pdfPath,
+      assetDir: p.join(targetDir, relativeDir),
+      relativeDir: relativeDir,
+      maxPages: maxPages,
+    );
 
     // Lembar kosong di belakang: itu yang sebenarnya diminta — tempat menulis
     // catatan tambahan tanpa mengotori halaman dokumennya. Kertasnya mengikuti

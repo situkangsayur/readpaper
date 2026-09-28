@@ -1080,6 +1080,25 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
 
 ### Pembaca
 
+- [x] **Mode menyajikan benar-benar seperti slide** (2026-09-29): gulir bebas
+      dan cubit dilepas sama sekali, jadi halamannya tidak bisa tergeser
+      setengah karena tangan menyenggol. Berganti halaman lewat ketuk tepi,
+      geseran ke samping, atau tombolnya — dan tiap halaman dipaskan penuh
+      layar lagi, termasuk halaman yang ukurannya berbeda dari sebelumnya
+- [x] **Lembar kosong bisa ditambahkan dari dalam mode menyajikan**
+      (2026-09-29), lalu langsung dicoreti di situ — tanpa keluar dari mode
+      menyajikan dan tanpa mencari menu
+- [x] **Sakelar jari/stylus tidak lagi terbaca seperti alat** (2026-09-29).
+      Sebelumnya ia duduk di antara tombol alat dengan ikon pena; ditekan, lalu
+      bingung kenapa tidak bisa menggambar. Sekarang berdiri di ujung bilah
+      sebagai keping bernama ("Jari + stylus" / "Stylus saja"), alat yang sedang
+      dipegang disebut di kepala layar, dan menyeret dengan alat yang tidak
+      menggambar **mengatakan** alat apa yang aktif — diamnya yang paling
+      membingungkan
+- [x] **Halaman PDF bisa disisipkan sebagai lembar catatan** (2026-09-29), di
+      tengah buku, setelah lembar yang sedang dibuka — bukan hanya saat sebuah
+      PDF dijadikan buku catatan seluruhnya
+
 - [x] **Bilah pembaca tidak lagi bertumpuk** (2026-09-29). Di layar sempit
       tombolnya pindah ke baris sendiri di bawah judul: AppBar memberi judulnya
       kotak tetap, dan keterangan dokumen — jumlah anotasi dan nomor halaman —
