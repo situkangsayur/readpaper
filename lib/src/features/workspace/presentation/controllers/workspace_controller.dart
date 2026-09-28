@@ -454,6 +454,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  /// Menyimpan perubahan apa pun di dalam repositori ke git, dengan pesan
+  /// yang sudah disiapkan pemanggilnya.
+  ///
+  /// Dipakai sisi catatan: berkasnya ada di dalam repositori yang sama, di
+  /// luar struktur Zotero, tetapi tetap harus ikut terkirim.
+  Future<void> commitChange(String message) async {
+    final profile = state.profile;
+    if (profile == null) return;
+    await _commitAnnotation(profile: profile, message: message);
+  }
+
   Future<void> _commitAnnotation({required RepoProfile profile, required String message}) async {
     final backend = ref.read(gitBackendProvider);
     state = state.copyWith(phase: SyncPhase.committing, clearError: true);

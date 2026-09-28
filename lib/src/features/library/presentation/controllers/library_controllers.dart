@@ -30,10 +30,24 @@ final selectionProvider = NotifierProvider<SelectionController, LibrarySelection
   SelectionController.new,
 );
 
+/// Kunci semu untuk kedua akar pohon koleksi.
+///
+/// Pohonnya punya lebih dari satu akar dan tiap akar punya jenis: yang satu
+/// berisi paper — item Zotero — yang satu lagi berisi catatan. Keduanya butuh
+/// kunci sendiri di daftar simpul yang terbuka, dan kunci koleksi catatan
+/// diberi awalan karena memakai abjad yang sama dengan kunci Zotero: tanpa
+/// awalan, dua koleksi berbeda bisa membuka dan menutup bersamaan.
+const String paperRootNodeKey = '@paper';
+const String notesRootNodeKey = '@catatan';
+
+String noteNodeKey(String collectionKey) => 'catatan:$collectionKey';
+
 /// Collection keys whose children are visible in the tree.
 class ExpandedCollectionsController extends Notifier<Set<String>> {
   @override
-  Set<String> build() => <String>{};
+  // Kedua akar terbuka sejak awal: pohon yang seluruhnya tertutup saat
+  // aplikasi dibuka terlihat seperti library yang kosong.
+  Set<String> build() => <String>{paperRootNodeKey, notesRootNodeKey};
 
   void toggle(String key) {
     final next = <String>{...state};
@@ -114,6 +128,11 @@ final visibleItemsProvider = Provider<List<ZoteroItem>>((ref) {
       selection.collectionKey!,
       includeSubcollections: includeSub,
     ),
+    // Yang dipilih ada di bawah akar catatan: daftar paper memang kosong,
+    // dan panel tengah menampilkan daftar catatan sebagai gantinya.
+    SelectionKind.notes ||
+    SelectionKind.notesUnfiled ||
+    SelectionKind.noteCollection => const <ZoteroItem>[],
   };
 
   if (query.isNotEmpty) {

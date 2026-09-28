@@ -117,6 +117,11 @@ class LibraryIndex {
 }
 
 /// The selection driving the item list.
+///
+/// Satu pilihan untuk dua akar. Pohon koleksi punya akar paper dan akar
+/// catatan, dan keduanya berbagi satu pilihan supaya memilih koleksi catatan
+/// benar-benar melepas koleksi paper — dua sorotan sekaligus di pohon yang
+/// sama hanya membuat bingung daftar mana yang sedang ditampilkan.
 @immutable
 class LibrarySelection {
   const LibrarySelection.all() : collectionKey = null, kind = SelectionKind.all;
@@ -125,8 +130,29 @@ class LibrarySelection {
     : collectionKey = key,
       kind = SelectionKind.collection;
 
+  /// Seluruh catatan, apa pun koleksinya — akar catatan itu sendiri.
+  const LibrarySelection.notes() : collectionKey = null, kind = SelectionKind.notes;
+  const LibrarySelection.notesUnfiled()
+    : collectionKey = null,
+      kind = SelectionKind.notesUnfiled;
+  const LibrarySelection.noteCollection(String key)
+    : collectionKey = key,
+      kind = SelectionKind.noteCollection;
+
+  /// Kunci koleksinya: koleksi Zotero untuk pilihan paper, koleksi catatan
+  /// untuk pilihan catatan. Null untuk baris semu.
   final String? collectionKey;
   final SelectionKind kind;
+
+  /// Apakah yang dipilih berada di bawah akar catatan.
+  bool get isNotes => switch (kind) {
+    SelectionKind.notes || SelectionKind.notesUnfiled || SelectionKind.noteCollection => true,
+    SelectionKind.all || SelectionKind.unfiled || SelectionKind.collection => false,
+  };
+
+  /// Kunci koleksi catatan yang dipilih, kalau memang koleksi catatan.
+  String? get noteCollectionKey =>
+      kind == SelectionKind.noteCollection ? collectionKey : null;
 
   @override
   bool operator ==(Object other) =>
@@ -136,4 +162,4 @@ class LibrarySelection {
   int get hashCode => Object.hash(kind, collectionKey);
 }
 
-enum SelectionKind { all, unfiled, collection }
+enum SelectionKind { all, unfiled, collection, notes, notesUnfiled, noteCollection }

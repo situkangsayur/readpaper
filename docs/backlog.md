@@ -731,16 +731,34 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 
 ### Dua jenis akar koleksi
 
-- [ ] **Pohon koleksi boleh punya lebih dari satu akar**, dan tiap akar punya
-      jenis: **paper** atau **catatan**
-- [ ] Catatan disimpan di **direktori terpisah** di dalam repositori, bukan di
-      dalam struktur Zotero. Alasannya tegas: item Zotero punya properti
+- [x] **Pohon koleksi boleh punya lebih dari satu akar**, dan tiap akar punya
+      jenis: **paper** atau **catatan** (2026-09-28). Akar paper memakai nama
+      library Zotero-nya, akar catatan bernama "Catatan". Keduanya berbagi satu
+      pilihan: memilih koleksi catatan melepas koleksi paper, karena dua
+      sorotan sekaligus membuat tidak jelas daftar mana yang sedang tampil
+- [x] Catatan disimpan di **direktori terpisah** di dalam repositori, bukan di
+      dalam struktur Zotero (2026-09-28) — `catatan/` di akar repositori,
+      dengan `koleksi.json`, `item/<XX>/<KEY>.json`, dan
+      `berkas/<XX>/<KEY>/<nama>`. Alasannya tegas: item Zotero punya properti
       rujukan dan bibliografi yang tidak berlaku untuk catatan, dan formatnya
       dijaga byte-for-byte oleh plugin `zotero-github-sync`. Zotero sendiri
       tidak mengenal catatan lepas semacam ini — ReadPaper mengenalnya, dan
-      itu yang membuatnya berguna
-- [ ] Menyimpan catatan **wajib** ke akar berjenis catatan; menolak dengan
-      penjelasan kalau yang dipilih akar paper
+      itu yang membuatnya berguna. Bentuk JSON-nya tetap meniru yang di
+      sebelah (identasi tab, kunci terurut) supaya diff git tetap kecil
+- [x] Menyimpan catatan **wajib** ke akar berjenis catatan; menolak dengan
+      penjelasan kalau yang dipilih akar paper (2026-09-28). Aturannya satu
+      tempat — `NoteTarget` — dan penolakannya menyebutkan sebabnya, bukan
+      sekadar berkata tidak bisa. Berlaku di papan tulis ("Simpan sebagai
+      catatan") dan saat berkas bukan-PDF dilepas di akar paper
+- [x] Panel tengah mengikuti akar yang dipilih: daftar item Zotero untuk paper,
+      daftar catatan untuk catatan (2026-09-28). Catatan tidak punya pengarang
+      atau tahun, jadi memakai daftar yang sama hanya menghasilkan kolom kosong
+- [x] Menghapus koleksi catatan **tidak** menghapus catatannya — isinya pindah
+      ke "tanpa koleksi" (2026-09-28)
+- [ ] Menyeret catatan antar koleksi langsung di pohon (sekarang lewat menu
+      "Pindahkan ke koleksi" di daftar catatan)
+- [ ] Membuka catatan Markdown di dalam aplikasi — sekarang hanya PDF; lihat
+      bagian Markdown di bawah
 
 ### Markdown
 
@@ -809,7 +827,7 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
    sudah ada, dan paling sering dipakai)
 2. Panel berkas + seret ke koleksi (membuka jalan untuk sisa daftarnya)
 3. Papan tulis berhalaman → PDF/gambar
-4. Dua jenis akar koleksi + catatan di direktori terpisah
+4. ~~Dua jenis akar koleksi + catatan di direktori terpisah~~ (selesai)
 5. Markdown baca/sunting/Mermaid + konversi dua arah
 6. Cetak + pembuka PDF bawaan
 7. Ubah ukuran dan putar anotasi

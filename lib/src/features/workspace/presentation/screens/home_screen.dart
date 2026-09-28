@@ -14,6 +14,7 @@ import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../../library/presentation/widgets/collection_tree_pane.dart';
 import '../../../library/presentation/widgets/item_detail_pane.dart';
 import '../../../library/presentation/widgets/item_list_pane.dart';
+import '../../../notes/presentation/widgets/note_list_pane.dart';
 import '../../../settings/presentation/screens/profiles_screen.dart';
 import '../controllers/workspace_controller.dart';
 import '../widgets/workspace_bar.dart';
@@ -129,32 +130,40 @@ class _Body extends ConsumerWidget {
     }
     if (!state.hasLibrary) return const NoLibraryView();
 
+    // Pohon koleksi punya dua akar, dan panel tengah mengikuti akar yang
+    // sedang dipilih: daftar item Zotero untuk paper, daftar catatan untuk
+    // catatan. Catatan tidak punya pengarang atau tahun, jadi memakai daftar
+    // yang sama hanya menghasilkan kolom kosong.
+    final notesSelected = ref.watch(selectionProvider.select((s) => s.isNotes));
+    final Widget list = notesSelected ? const NoteListPane() : const ItemListPane();
+
     switch (layout) {
       case LayoutSize.compact:
+        if (notesSelected) return list;
         final selected = ref.watch(selectedItemKeyProvider);
         return selected == null ? const ItemListPane() : const ItemDetailPane();
 
       // A tablet in portrait has room for the list and the paper side by side,
       // which is the pairing that matters while reading.
       case LayoutSize.medium:
-        return const Row(
+        return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            SizedBox(width: 340, child: ItemListPane()),
-            VerticalDivider(width: 1),
-            Expanded(child: ItemDetailPane()),
+            SizedBox(width: 340, child: list),
+            const VerticalDivider(width: 1),
+            const Expanded(child: ItemDetailPane()),
           ],
         );
 
       case LayoutSize.expanded:
-        return const Row(
+        return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            SizedBox(width: 300, child: _TreeAndFiles()),
-            VerticalDivider(width: 1),
-            SizedBox(width: 400, child: ItemListPane()),
-            VerticalDivider(width: 1),
-            Expanded(child: ItemDetailPane()),
+            const SizedBox(width: 300, child: _TreeAndFiles()),
+            const VerticalDivider(width: 1),
+            SizedBox(width: 400, child: list),
+            const VerticalDivider(width: 1),
+            const Expanded(child: ItemDetailPane()),
           ],
         );
     }

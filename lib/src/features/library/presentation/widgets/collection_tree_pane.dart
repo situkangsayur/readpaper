@@ -3,13 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/utils/layout_size.dart';
+import '../../../notes/domain/note_entities.dart';
+import '../../../notes/presentation/controllers/notes_controller.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/library_index.dart';
 import '../../domain/entities/zotero_collection.dart';
 import '../controllers/library_controllers.dart';
 
-/// The Zotero collection tree: expandable, with item counts, plus the
-/// "all items" / "unfiled" pseudo-collections.
+/// Pohon koleksi dengan **dua akar**: paper dan catatan.
+///
+/// Akar paper adalah ekspor Zotero — item dengan penulis, tahun, dan kunci
+/// sitasi, yang formatnya dijaga byte-for-byte oleh plugin sinkronisasi.
+/// Akar catatan adalah folder tersendiri di dalam repositori yang sama, di
+/// luar struktur Zotero: catatan tidak punya bibliografi, dan Zotero tidak
+/// mengenal catatan lepas semacam ini. Memisahkannya membuat keduanya bisa
+/// hidup di satu repositori tanpa yang satu merusak yang lain.
 class CollectionTreePane extends ConsumerWidget {
   const CollectionTreePane({super.key});
 
@@ -18,59 +26,152 @@ class CollectionTreePane extends ConsumerWidget {
     final index = ref.watch(workspaceControllerProvider).index;
     if (index == null) return const SizedBox.shrink();
 
+    final notes = ref.watch(notesControllerProvider).value ?? NotesIndex.empty;
     final selection = ref.watch(selectionProvider);
     final expanded = ref.watch(expandedCollectionsProvider);
     final expandedController = ref.read(expandedCollectionsProvider.notifier);
     final selectionController = ref.read(selectionProvider.notifier);
 
+    final paperOpen = expanded.contains(paperRootNodeKey);
+    final notesOpen = expanded.contains(notesRootNodeKey);
+
     final rows = <Widget>[
       _TreeRow(
-        label: 'Semua item',
-        icon: Icons.inbox_outlined,
+        label: index.library.name,
+        icon: Icons.local_library_outlined,
         count: index.itemCount,
         depth: 0,
+        isRoot: true,
         selected: selection.kind == SelectionKind.all,
+        hasChildren: true,
+        isExpanded: paperOpen,
+        onToggle: () => expandedController.toggle(paperRootNodeKey),
         onTap: () => selectionController.select(const LibrarySelection.all()),
         // Melepas di sini berarti "masuk library, tanpa koleksi".
-        onDropFile: (path) => _dropIntoCollection(context, ref, path, null, 'library'),
+        onDropFile: (path) => _dropIntoCollection(context, ref, path, null, index.library.name),
       ),
-      if (index.unfiledItemKeys.isNotEmpty)
-        _TreeRow(
-          label: 'Tanpa koleksi',
-          icon: Icons.folder_off_outlined,
-          count: index.unfiledItemKeys.length,
-          depth: 0,
-          selected: selection.kind == SelectionKind.unfiled,
-          onTap: () => selectionController.select(const LibrarySelection.unfiled()),
-        ),
-      const Divider(height: 12),
     ];
 
-    void addNode(CollectionNode node, int depth) {
-      final isExpanded = expanded.contains(node.key);
-      rows.add(
-        _TreeRow(
-          label: node.name,
-          icon: isExpanded ? Icons.folder_open_outlined : Icons.folder_outlined,
-          count: node.totalItemCount,
-          depth: depth,
-          selected:
-              selection.kind == SelectionKind.collection && selection.collectionKey == node.key,
-          hasChildren: node.children.isNotEmpty,
-          isExpanded: isExpanded,
-          onToggle: () => expandedController.toggle(node.key),
-          onTap: () => selectionController.select(LibrarySelection.collection(node.key)),
-          onDropFile: (path) => _dropIntoCollection(context, ref, path, node.key, node.name),
-        ),
-      );
-      if (!isExpanded) return;
-      for (final child in node.children) {
-        addNode(child, depth + 1);
+    if (paperOpen) {
+      if (index.unfiledItemKeys.isNotEmpty) {
+        rows.add(
+          _TreeRow(
+            label: 'Tanpa koleksi',
+            icon: Icons.folder_off_outlined,
+            count: index.unfiledItemKeys.length,
+            depth: 1,
+            selected: selection.kind == SelectionKind.unfiled,
+            onTap: () => selectionController.select(const LibrarySelection.unfiled()),
+          ),
+        );
+      }
+
+      void addNode(CollectionNode node, int depth) {
+        final isExpanded = expanded.contains(node.key);
+        rows.add(
+          _TreeRow(
+            label: node.name,
+            icon: isExpanded ? Icons.folder_open_outlined : Icons.folder_outlined,
+            count: node.totalItemCount,
+            depth: depth,
+            selected:
+                selection.kind == SelectionKind.collection && selection.collectionKey == node.key,
+            hasChildren: node.children.isNotEmpty,
+            isExpanded: isExpanded,
+            onToggle: () => expandedController.toggle(node.key),
+            onTap: () => selectionController.select(LibrarySelection.collection(node.key)),
+            onDropFile: (path) => _dropIntoCollection(context, ref, path, node.key, node.name),
+          ),
+        );
+        if (!isExpanded) return;
+        for (final child in node.children) {
+          addNode(child, depth + 1);
+        }
+      }
+
+      for (final root in index.roots) {
+        addNode(root, 1);
       }
     }
 
-    for (final root in index.roots) {
-      addNode(root, 0);
+    rows.add(const Divider(height: 12));
+
+    rows.add(
+      _TreeRow(
+        label: 'Catatan',
+        icon: Icons.sticky_note_2_outlined,
+        count: notes.items.length,
+        depth: 0,
+        isRoot: true,
+        selected: selection.kind == SelectionKind.notes,
+        hasChildren: true,
+        isExpanded: notesOpen,
+        onToggle: () => expandedController.toggle(notesRootNodeKey),
+        onTap: () => selectionController.select(const LibrarySelection.notes()),
+        onDropFile: (path) => _dropIntoNotes(context, ref, path, null, 'Catatan'),
+        trailing: IconButton(
+          tooltip: 'Koleksi catatan baru',
+          iconSize: 16,
+          visualDensity: VisualDensity.compact,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          padding: EdgeInsets.zero,
+          icon: const Icon(Icons.create_new_folder_outlined),
+          onPressed: () => _newNoteCollection(context, ref, parentKey: null),
+        ),
+      ),
+    );
+
+    if (notesOpen) {
+      if (notes.unfiled.isNotEmpty) {
+        rows.add(
+          _TreeRow(
+            label: 'Tanpa koleksi',
+            icon: Icons.folder_off_outlined,
+            count: notes.unfiled.length,
+            depth: 1,
+            selected: selection.kind == SelectionKind.notesUnfiled,
+            onTap: () => selectionController.select(const LibrarySelection.notesUnfiled()),
+            onDropFile: (path) => _dropIntoNotes(context, ref, path, null, 'Catatan'),
+          ),
+        );
+      }
+
+      void addNote(NoteCollection collection, int depth) {
+        final nodeKey = noteNodeKey(collection.key);
+        final children = notes.childrenOf(collection.key);
+        final isExpanded = expanded.contains(nodeKey);
+        rows.add(
+          _TreeRow(
+            label: collection.name,
+            icon: isExpanded ? Icons.folder_open_outlined : Icons.folder_outlined,
+            count: notes.countIn(collection.key),
+            depth: depth,
+            selected:
+                selection.kind == SelectionKind.noteCollection &&
+                selection.collectionKey == collection.key,
+            hasChildren: children.isNotEmpty,
+            isExpanded: isExpanded,
+            onToggle: () => expandedController.toggle(nodeKey),
+            onTap: () =>
+                selectionController.select(LibrarySelection.noteCollection(collection.key)),
+            onLongPress: () => _noteCollectionMenu(context, ref, collection),
+            onDropFile: (path) =>
+                _dropIntoNotes(context, ref, path, collection.key, collection.name),
+          ),
+        );
+        if (!isExpanded) return;
+        for (final child in children) {
+          addNote(child, depth + 1);
+        }
+      }
+
+      final roots = notes.childrenOf(null);
+      if (roots.isEmpty && notes.items.isEmpty) {
+        rows.add(const _EmptyNotesHint());
+      }
+      for (final root in roots) {
+        addNote(root, 1);
+      }
     }
 
     return Column(
@@ -132,13 +233,34 @@ class _Header extends ConsumerWidget {
             tooltip: 'Buka semua',
             iconSize: 18,
             icon: const Icon(Icons.unfold_more),
-            onPressed: () =>
-                ref.read(expandedCollectionsProvider.notifier).expandAll(index.collections.keys),
+            onPressed: () => ref
+                .read(expandedCollectionsProvider.notifier)
+                .expandAll(<String>[
+                  paperRootNodeKey,
+                  notesRootNodeKey,
+                  ...index.collections.keys,
+                ]),
           ),
         ],
       ),
     );
   }
+}
+
+/// Keterangan singkat saat akar catatan masih kosong, supaya tidak terlihat
+/// seperti bagian yang rusak.
+class _EmptyNotesHint extends StatelessWidget {
+  const _EmptyNotesHint();
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(40, 4, 12, 8),
+    child: Text(
+      'Belum ada koleksi catatan. Catatan disimpan di folder tersendiri di '
+      'dalam repositori, terpisah dari paper.',
+      style: Theme.of(context).textTheme.labelSmall,
+    ),
+  );
 }
 
 class _TreeRow extends StatelessWidget {
@@ -151,8 +273,11 @@ class _TreeRow extends StatelessWidget {
     required this.onTap,
     this.hasChildren = false,
     this.isExpanded = false,
+    this.isRoot = false,
     this.onToggle,
+    this.onLongPress,
     this.onDropFile,
+    this.trailing,
   });
 
   final String label;
@@ -162,23 +287,29 @@ class _TreeRow extends StatelessWidget {
   final bool selected;
   final bool hasChildren;
   final bool isExpanded;
+
+  /// Akar pohon ditulis tebal: dua akar yang tampak sama beratnya dengan
+  /// koleksi di bawahnya membuat jenisnya tidak terbaca.
+  final bool isRoot;
   final VoidCallback onTap;
   final VoidCallback? onToggle;
+  final VoidCallback? onLongPress;
 
   /// Dipanggil saat sebuah berkas dilepas di atas baris ini.
   final void Function(String path)? onDropFile;
+
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     // Sasaran lepas untuk berkas yang diseret dari panel berkas di bawah.
-    // Hanya koleksi sungguhan yang menerima: "Semua item" dan "Tanpa
-    // koleksi" bukan tempat yang bisa dituju.
     return DragTarget<String>(
       onWillAcceptWithDetails: (_) => onDropFile != null,
       onAcceptWithDetails: (details) => onDropFile?.call(details.data),
       builder: (context, candidate, rejected) => InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Container(
           height: treeRowHeight,
           padding: EdgeInsets.only(left: 4 + depth * 14.0, right: 8),
@@ -208,14 +339,18 @@ class _TreeRow extends StatelessWidget {
                       )
                     : null,
               ),
-              Icon(icon, size: 15, color: selected ? scheme.primary : scheme.onSurfaceVariant),
+              Icon(
+                icon,
+                size: isRoot ? 17 : 15,
+                color: selected || isRoot ? scheme.primary : scheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    fontWeight: selected || isRoot ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
               ),
@@ -224,6 +359,7 @@ class _TreeRow extends StatelessWidget {
                   '$count',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.outline),
                 ),
+              ?trailing,
             ],
           ),
         ),
@@ -232,7 +368,7 @@ class _TreeRow extends StatelessWidget {
   }
 }
 
-/// Memasukkan berkas yang dilepas ke sebuah koleksi.
+/// Memasukkan berkas yang dilepas ke sebuah koleksi paper.
 ///
 /// Judulnya diambil dari nama berkas — yang menyeretnya sedang menata, bukan
 /// sedang mengisi formulir metadata; namanya bisa diperbaiki kemudian.
@@ -244,6 +380,26 @@ Future<void> _dropIntoCollection(
   String collectionName,
 ) async {
   final messenger = ScaffoldMessenger.of(context);
+
+  // Akar paper hanya menerima PDF. Item Zotero adalah paper dengan lampiran
+  // PDF; berkas lain yang dipaksa masuk ke sana akan jadi item yang tidak
+  // bisa dibuka Zotero. Yang bukan PDF tempatnya di akar catatan, dan
+  // penolakannya harus menyebutkan itu — bukan sekadar berkata tidak bisa.
+  if (p.extension(path).toLowerCase() != '.pdf') {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            'Akar paper hanya menerima PDF, karena isinya item Zotero dengan '
+            'lampiran PDF. Lepas ${p.basename(path)} di akar "Catatan".',
+          ),
+          duration: const Duration(seconds: 6),
+        ),
+      );
+    return;
+  }
+
   messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(SnackBar(content: Text('Memasukkan ke $collectionName…')));
@@ -267,4 +423,147 @@ Future<void> _dropIntoCollection(
         ),
       ),
     );
+}
+
+/// Memasukkan berkas yang dilepas ke akar catatan.
+///
+/// Apa pun jenisnya: catatan bisa berupa PDF papan tulis, markdown, atau
+/// gambar hasil pindaian. Yang membedakannya dari paper bukan formatnya,
+/// melainkan tempatnya.
+Future<void> _dropIntoNotes(
+  BuildContext context,
+  WidgetRef ref,
+  String path,
+  String? collectionKey,
+  String collectionName,
+) async {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text('Memasukkan ke $collectionName…')));
+
+  final key = await ref
+      .read(notesControllerProvider.notifier)
+      .addFile(
+        sourcePath: path,
+        title: p.basenameWithoutExtension(path),
+        collectionKey: collectionKey,
+      );
+  if (!context.mounted) return;
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(
+          key == null
+              ? (ref.read(notesErrorProvider) ?? 'Gagal menyimpan catatan')
+              : 'Masuk ke $collectionName',
+        ),
+      ),
+    );
+}
+
+Future<void> _newNoteCollection(
+  BuildContext context,
+  WidgetRef ref, {
+  required String? parentKey,
+}) async {
+  final name = await _askName(
+    context,
+    title: parentKey == null ? 'Koleksi catatan baru' : 'Sub-koleksi catatan baru',
+  );
+  if (name == null || name.trim().isEmpty) return;
+  final key = await ref
+      .read(notesControllerProvider.notifier)
+      .createCollection(name: name, parentKey: parentKey);
+  if (!context.mounted) return;
+  if (key == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ref.read(notesErrorProvider) ?? 'Gagal membuat koleksi')),
+    );
+    return;
+  }
+  // Koleksi yang baru dibuat langsung dipilih: itu yang sedang dituju.
+  ref.read(expandedCollectionsProvider.notifier).expandAll(<String>[
+    notesRootNodeKey,
+    if (parentKey != null) noteNodeKey(parentKey),
+  ]);
+  ref.read(selectionProvider.notifier).select(LibrarySelection.noteCollection(key));
+}
+
+Future<void> _noteCollectionMenu(
+  BuildContext context,
+  WidgetRef ref,
+  NoteCollection collection,
+) async {
+  final action = await showModalBottomSheet<String>(
+    context: context,
+    builder: (sheet) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ListTile(
+            dense: true,
+            title: Text(collection.name, style: Theme.of(sheet).textTheme.titleSmall),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.create_new_folder_outlined),
+            title: const Text('Sub-koleksi baru'),
+            onTap: () => Navigator.of(sheet).pop('baru'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.drive_file_rename_outline),
+            title: const Text('Ubah nama'),
+            onTap: () => Navigator.of(sheet).pop('nama'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.folder_delete_outlined),
+            title: const Text('Hapus koleksi'),
+            subtitle: const Text('Catatannya tidak ikut terhapus'),
+            onTap: () => Navigator.of(sheet).pop('hapus'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (action == null || !context.mounted) return;
+
+  final controller = ref.read(notesControllerProvider.notifier);
+  switch (action) {
+    case 'baru':
+      await _newNoteCollection(context, ref, parentKey: collection.key);
+    case 'nama':
+      final name = await _askName(context, title: 'Ubah nama', initial: collection.name);
+      if (name == null || name.trim().isEmpty) return;
+      await controller.renameCollection(key: collection.key, name: name);
+    case 'hapus':
+      await controller.deleteCollection(collection.key);
+      if (ref.read(selectionProvider).collectionKey == collection.key) {
+        ref.read(selectionProvider.notifier).select(const LibrarySelection.notes());
+      }
+  }
+}
+
+Future<String?> _askName(BuildContext context, {required String title, String initial = ''}) {
+  final controller = TextEditingController(text: initial);
+  return showDialog<String>(
+    context: context,
+    builder: (dialog) => AlertDialog(
+      title: Text(title),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        decoration: const InputDecoration(labelText: 'Nama'),
+        onSubmitted: (value) => Navigator.of(dialog).pop(value),
+      ),
+      actions: <Widget>[
+        TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Batal')),
+        FilledButton(
+          onPressed: () => Navigator.of(dialog).pop(controller.text),
+          child: const Text('Simpan'),
+        ),
+      ],
+    ),
+  );
 }

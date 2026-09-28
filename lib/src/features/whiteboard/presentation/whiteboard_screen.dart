@@ -1,8 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../../library/presentation/controllers/library_controllers.dart';
+import '../../notes/domain/note_target.dart';
+import '../../notes/presentation/controllers/notes_controller.dart';
 import '../data/board_export.dart';
 import '../domain/board.dart';
 
@@ -12,7 +16,7 @@ import '../domain/board.dart';
 /// Berbeda dari halaman kosong yang ditempelkan ke sebuah dokumen — yang itu
 /// menempel pada paper. Ini dimulai dari tidak ada apa-apa: menjelaskan
 /// sesuatu di depan orang, mencatat rapat, menghitung di sisi kertas.
-class WhiteboardScreen extends StatefulWidget {
+class WhiteboardScreen extends ConsumerStatefulWidget {
   const WhiteboardScreen({required this.background, required this.saveDir, this.name, super.key});
 
   final Color background;
@@ -24,10 +28,10 @@ class WhiteboardScreen extends StatefulWidget {
   final String? name;
 
   @override
-  State<WhiteboardScreen> createState() => _WhiteboardScreenState();
+  ConsumerState<WhiteboardScreen> createState() => _WhiteboardScreenState();
 }
 
-class _WhiteboardScreenState extends State<WhiteboardScreen> {
+class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
   late List<BoardPage> _pages = <BoardPage>[BoardPage(background: widget.background)];
   int _current = 0;
 
@@ -67,33 +71,91 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
     });
   }
 
-  /// Menyimpan seluruh papan sebagai satu PDF di folder kerja.
-  Future<void> _save() async {
+  String get _stem {
     final name = widget.name?.trim();
-    final stem = (name == null || name.isEmpty)
+    return (name == null || name.isEmpty)
         ? 'papan-${DateTime.now().millisecondsSinceEpoch}'
         : name;
+  }
 
+  /// Menulis seluruh papan sebagai satu PDF di folder kerja.
+  ///
+  /// Selalu lewat folder kerja, bahkan saat tujuannya koleksi catatan: kalau
+  /// langkah berikutnya gagal, gambarnya tetap ada di suatu tempat yang bisa
+  /// ditemukan lagi.
+  Future<File?> _writePdf() async {
     try {
       final bytes = await BoardExport.toPdf(_pages);
-      var file = File(p.join(widget.saveDir, '$stem.pdf'));
+      var file = File(p.join(widget.saveDir, '$_stem.pdf'));
       for (var n = 2; file.existsSync() && n < 100; n++) {
-        file = File(p.join(widget.saveDir, '$stem-$n.pdf'));
+        file = File(p.join(widget.saveDir, '$_stem-$n.pdf'));
       }
       await file.parent.create(recursive: true);
       await file.writeAsBytes(bytes, flush: true);
-      if (!mounted) return;
-      setState(() => _saved = true);
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Tersimpan sebagai ${p.basename(file.path)}')));
-      Navigator.of(context).pop(file.path);
+      if (mounted) setState(() => _saved = true);
+      return file;
     } on Object catch (e) {
-      if (!mounted) return;
+      if (!mounted) return null;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
+      return null;
     }
+  }
+
+  /// Menyimpan seluruh papan sebagai satu PDF di folder kerja.
+  Future<void> _save() async {
+    final file = await _writePdf();
+    if (file == null || !mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text('Tersimpan sebagai ${p.basename(file.path)}')));
+    Navigator.of(context).pop(file.path);
+  }
+
+  /// Menyimpan papan ini sebagai catatan, ke koleksi yang sedang dipilih di
+  /// pohon koleksi.
+  ///
+  /// Hanya akar catatan yang boleh menerimanya, dan penolakannya menjelaskan
+  /// sebabnya — memaksanya masuk ke akar paper berarti menulis item Zotero
+  /// tanpa rujukan maupun bibliografi.
+  Future<void> _saveToNotes() async {
+    final target = NoteTarget.of(ref.read(selectionProvider));
+    if (!target.isAllowed) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          title: const Text('Belum bisa disimpan sebagai catatan'),
+          content: Text(target.refusal!),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialog).pop(),
+              child: const Text('Mengerti'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final file = await _writePdf();
+    if (file == null || !mounted) return;
+    final key = await ref
+        .read(notesControllerProvider.notifier)
+        .addFile(sourcePath: file.path, title: _stem, collectionKey: target.collectionKey);
+    if (!mounted) return;
+    if (key == null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(ref.read(notesErrorProvider) ?? 'Gagal menyimpan catatan')),
+        );
+      return;
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Tersimpan sebagai catatan')));
+    Navigator.of(context).pop(file.path);
   }
 
   Future<bool> _confirmLeave() async {
@@ -172,6 +234,11 @@ class _WhiteboardScreenState extends State<WhiteboardScreen> {
               onPressed: _deletePage,
             ),
             const SizedBox(width: 4),
+            IconButton(
+              tooltip: 'Simpan sebagai catatan',
+              icon: const Icon(Icons.sticky_note_2_outlined),
+              onPressed: _saveToNotes,
+            ),
             FilledButton.tonalIcon(
               onPressed: _save,
               icon: const Icon(Icons.save_outlined, size: 18),

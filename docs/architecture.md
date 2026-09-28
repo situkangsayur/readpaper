@@ -30,6 +30,9 @@ presentation  →  domain  ←  data
 | `sync` | Entity git dan `GitBackend`; implementasi CLI |
 | `settings` | Profil repositori, kredensial, preferensi |
 | `workspace` | Orkestrasi lintas fitur: repo aktif, status git, library aktif |
+| `notes` | Koleksi catatan di direktori tersendiri, di luar struktur Zotero |
+| `files` | Penjelajah berkas perangkat; berkas diseret dari sini ke pohon |
+| `whiteboard` | Papan tulis berlembar-lembar → PDF, bisa disimpan sebagai catatan |
 
 `WorkspaceController` adalah satu-satunya tempat operasi remote dijalankan,
 sehingga UI cukup merender satu `WorkspaceState`.
@@ -82,6 +85,45 @@ Hal penting yang ditemukan dari repo asli dan dipertahankan oleh penulis
    spasi ganda dari lapisan teks PDF), komentar selalu satu baris — baris-baris
    komentar di-*trim* lalu digabung dengan spasi.
 6. **`meta.attachments[].annotationCount`** ikut diperbarui.
+
+## Catatan: direktori tersendiri
+
+Pohon koleksi punya **dua akar**, dan tiap akar punya jenis. Akar paper adalah
+ekspor Zotero di atas. Akar catatan adalah folder terpisah di akar repositori
+yang sama:
+
+```
+catatan/
+  koleksi.json                  [{key, name, parentKey}]
+  item/<XX>/<KEY>.json          satu berkas per catatan
+  berkas/<XX>/<KEY>/<nama>      isinya — PDF papan tulis, markdown, gambar
+```
+
+Kenapa tidak ditumpangkan ke `zotero/`, padahal di sana sudah ada `notes/`?
+Karena `notes/**.md` di sana adalah **catatan anak sebuah item** — ia melekat
+pada paper dan ikut diperiksa Zotero saat impor. Yang dibutuhkan di sini adalah
+catatan yang berdiri sendiri: hasil rapat, coretan papan tulis, catatan kuliah.
+Untuk menyimpannya sebagai item Zotero, ia harus mengaku punya rujukan dan
+bibliografi yang sebenarnya tidak ada, dan seluruh isi `zotero/` ditulis
+byte-for-byte oleh plugin `zotero-github-sync` — satu berkas yang tidak sah di
+sana berarti impor yang gagal. Jadi catatan mendapat foldernya sendiri, dan
+kedua struktur bisa hidup di satu repositori tanpa yang satu merusak yang lain.
+
+Yang tetap ditiru dari sebelah: ember dua huruf, kunci delapan karakter dari
+abjad Zotero (`ZoteroKey`), JSON beridentasi tab dengan kunci terurut. Diff git
+tetap kecil, dan repositorinya tetap terlihat seperti satu benda.
+
+Dua aturan yang dijaga kode, bukan oleh kebiasaan pemakai:
+
+1. **Menyimpan catatan wajib ke akar catatan.** `NoteTarget.of(selection)`
+   adalah satu-satunya tempat aturan ini tinggal; penolakannya menyebutkan
+   sebabnya. Dipakai papan tulis dan pelepasan berkas di pohon.
+2. **Akar paper hanya menerima PDF,** karena item Zotero adalah paper dengan
+   lampiran PDF. Berkas lain ditolak dengan saran melepasnya di akar catatan.
+
+Menghapus koleksi catatan tidak menghapus catatannya — isinya pindah ke "tanpa
+koleksi". Menghapus berkas orang karena satu ketukan adalah kejutan yang tidak
+pantas.
 
 ## Koordinat anotasi
 
