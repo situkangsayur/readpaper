@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdfrx/pdfrx.dart';
+import 'package:printing/printing.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -769,6 +770,51 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
+  /// Mencetak dokumen yang sedang dibuka.
+  ///
+  /// Dialog cetak Android juga memuat "Simpan sebagai PDF", jadi yang tidak
+  /// punya pencetak tetap mendapat sesuatu yang berguna — itu sebabnya ini
+  /// satu tombol, bukan dua.
+  ///
+  /// Yang dicetak adalah berkas apa adanya, termasuk halaman kosong yang
+  /// ditambahkan. Anotasi yang belum disimpan belum menyatu dengan
+  /// halamannya, jadi itu dikatakan dulu daripada mengejutkan di kertas.
+  Future<void> _print() async {
+    if (_unsaved) {
+      final lanjut = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Cetak tanpa anotasi terbaru?'),
+          content: const Text(
+            'Ada anotasi yang belum menyatu dengan halaman, jadi belum akan '
+            'ikut tercetak. Simpan PDF dulu kalau anotasinya perlu ikut.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Cetak apa adanya'),
+            ),
+          ],
+        ),
+      );
+      if (lanjut != true || !mounted) return;
+    }
+
+    try {
+      final bytes = await File(_path).readAsBytes();
+      await Printing.layoutPdf(
+        onLayout: (_) async => bytes,
+        name: p.basenameWithoutExtension(_path),
+      );
+    } on Object catch (e) {
+      if (mounted) _say('Gagal mencetak: $e');
+    }
+  }
+
   /// Menambahkan halaman kosong untuk dicoreti, seperti papan tulis yang
   /// menempel pada dokumennya.
   ///
@@ -1168,6 +1214,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     'simpan' => _savePdf(),
                     'simpan-sebagai' => _exportImages(),
                     'halaman-kosong' => _addBlankPages(),
+                    'cetak' => _print(),
                     'ke-koleksi' => _addToCollection(),
                     _ => _shareAnnotated(),
                   },
@@ -1183,6 +1230,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           subtitle: Text('masuk library dan ikut tersinkron'),
                         ),
                       ),
+                    const PopupMenuItem<String>(
+                      value: 'cetak',
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.print_outlined),
+                        title: Text('Cetak…'),
+                        subtitle: Text('ke pencetak, atau simpan sebagai PDF'),
+                      ),
+                    ),
                     const PopupMenuItem<String>(
                       value: 'halaman-kosong',
                       child: ListTile(

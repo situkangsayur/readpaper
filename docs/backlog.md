@@ -768,9 +768,17 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
 
 ### Cetak dan integrasi sistem
 
-- [ ] **Cetak**: ke printer, atau ke PDF kalau tidak ada printer
-- [ ] **ReadPaper jadi aplikasi pembuka PDF bawaan** — intent filter Android
-      untuk `application/pdf`, dengan jalur "buka" yang sudah ada di Fase 13
+- [x] **Cetak** (2026-09-28) lewat dialog cetak Android, yang juga memuat
+      "Simpan sebagai PDF" — jadi yang tidak punya pencetak tetap mendapat
+      sesuatu yang berguna. Anotasi yang belum menyatu dengan halaman
+      dikatakan dulu, daripada mengejutkan di kertas
+- [x] **ReadPaper jadi aplikasi pembuka PDF** (2026-09-28): intent filter
+      untuk `VIEW` dan `SEND` dengan `application/pdf`. URI `content://`
+      disalin ke cache di sisi Android lebih dulu — izinnya hanya berlaku
+      selama Activity-nya hidup, jadi menyerahkan URI-nya apa adanya ke Dart
+      akan gagal beberapa detik kemudian. Diuji dengan intent sungguhan:
+      ReadPaper muncul di daftar "Buka dengan", dan PDF 32 halaman terbuka
+      langsung di pembacanya
 
 ### Pena di pembaca
 

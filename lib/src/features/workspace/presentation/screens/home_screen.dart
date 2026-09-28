@@ -1,10 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/layout_size.dart';
 import '../../../library/presentation/controllers/library_controllers.dart';
+import 'package:path/path.dart' as p;
+
+import '../../../files/data/incoming_file.dart';
 import '../../../files/presentation/file_browser_pane.dart';
+import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../../library/presentation/widgets/collection_tree_pane.dart';
 import '../../../library/presentation/widgets/item_detail_pane.dart';
 import '../../../library/presentation/widgets/item_list_pane.dart';
@@ -13,11 +19,52 @@ import '../controllers/workspace_controller.dart';
 import '../widgets/workspace_bar.dart';
 import '../widgets/workspace_placeholders.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  StreamSubscription<String>? _incoming;
+
+  @override
+  void initState() {
+    super.initState();
+    // PDF yang membuka aplikasi ini dari tempat lain — berkas, surel, pesan.
+    // Dijalankan setelah bingkai pertama supaya Navigator sudah ada.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final path = await IncomingFile.takeInitial();
+      if (path != null && mounted) _openIncoming(path);
+    });
+    _incoming = IncomingFile.opened.listen((path) {
+      if (mounted) _openIncoming(path);
+    });
+  }
+
+  @override
+  void dispose() {
+    _incoming?.cancel();
+    super.dispose();
+  }
+
+  void _openIncoming(String path) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ReaderScreen(
+          itemKey: '',
+          itemFilePath: '',
+          attachmentKey: '',
+          filePath: path,
+          title: p.basenameWithoutExtension(path),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(workspaceControllerProvider);
     final layout = LayoutSize.of(context);
 
