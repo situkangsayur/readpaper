@@ -455,9 +455,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // dilakukan sebelum itu memakai tata letak yang lama — halaman pertama
       // mendarat terlalu ke atas dan terlalu kecil. Yang kedua membetulkannya.
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await _fitCurrentPage();
-        await Future<void>.delayed(const Duration(milliseconds: 250));
-        if (mounted && _presentMode) await _fitCurrentPage();
+        // Beberapa kali, makin jarang. Tata letak mode menyajikan baru berlaku
+        // setelah viewer-nya disusun ulang, dan susunan ulang itu tidak
+        // mengabarkan kapan selesainya — pemasangan yang dilakukan terlalu awal
+        // memakai tata letak lama, dan halamannya mendarat terlalu besar dan
+        // terlalu ke bawah. Terbukti di tablet: menekan "pas ke layar" sekali
+        // langsung membetulkannya, jadi yang salah memang waktunya.
+        for (final jeda in const <int>[0, 200, 500, 900]) {
+          if (!mounted || !_presentMode) return;
+          if (jeda > 0) await Future<void>.delayed(Duration(milliseconds: jeda));
+          if (!mounted || !_presentMode) return;
+          await _fitCurrentPage();
+        }
       });
     }
   }

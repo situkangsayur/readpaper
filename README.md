@@ -13,6 +13,10 @@ and committed to git.
 
 ![ReadPaper library view](docs/screenshot-library.png)
 
+*The collection tree has two roots: the Zotero library on top, and **Catatan**
+(notes) below it — notes live in their own directory inside the repository,
+outside the Zotero export.*
+
 ## Download
 
 **Android** — get the APK from the
@@ -64,9 +68,35 @@ for the library repository.
 
 ![Reader with highlights](docs/screenshot-reader.png)
 
-What comes next is in [docs/backlog.md](docs/backlog.md): author search and
-metadata detail (phase 2), EPUB and other ebook formats (phase 3), then the
-remaining Android and distribution work (phase 4).
+*Highlights, ink and comments on the page; the panel on the right lists every
+annotation on the document.*
+
+### Presenting
+
+![Presenting mode](docs/screenshot-menyajikan.png)
+
+*One page per screen, no neighbours peeking in. The bar at the bottom carries
+page steps, zoom, fit-to-screen, the pen, undo, palm rejection, a blank sheet to
+scribble on, saving, and the way out — all reachable without leaving the mode.*
+
+### Notes: a notebook, not a picture
+
+![Notebook with ink, shapes and a connector](docs/screenshot-catatan.png)
+
+*Ink, 2D shapes, text and connectors that follow the objects they join. Paper is
+A5 to A1, portrait or landscape, **per sheet**. Saved as `.catatan.json` — it can
+be opened and edited again — and exported to Markdown and PDF.*
+
+### Markdown with Mermaid
+
+![Markdown editor with a Mermaid diagram](docs/screenshot-markdown.png)
+
+*Source on the left, preview on the right. Mermaid diagrams are drawn by the app
+itself — no WebView, no network — and tapping one puts the cursor on its source.*
+
+What comes next is in [docs/backlog.md](docs/backlog.md): handwriting
+recognition is the large piece still open (phases 14 and 15), together with
+renaming and deleting paper collections.
 
 ## Running it
 
