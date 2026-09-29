@@ -11,12 +11,22 @@ class AnnotationMoveLayer extends StatefulWidget {
     required this.bounds,
     required this.onMoved,
     required this.onDelete,
+    this.limit,
     this.onTransformed,
     super.key,
   });
 
   /// Batas anotasinya pada kanvas halaman, bukan koordinat PDF.
   final Rect bounds;
+
+  /// Ukuran ruang yang tersedia — biasanya sebesar halamannya.
+  ///
+  /// Dipakai untuk menahan kotak sentuh tetap **di dalam** ruang itu: anotasi
+  /// yang menempel di tepi halaman punya pegangan yang jatuh di luar induknya,
+  /// dan yang di luar induk tidak pernah menerima sentuhan. Terlihat, tidak
+  /// bisa dipencet — itu keluhan yang sama yang dulu membuat tombol hapus
+  /// tampak rusak.
+  final Size? limit;
 
   /// Dipanggil sekali saat seretan selesai, dengan perpindahan pada kanvas.
   final ValueChanged<Offset> onMoved;
@@ -68,7 +78,22 @@ class _AnnotationMoveLayerState extends State<AnnotationMoveLayer> {
     // pointer ke anak yang berada di luar batas induknya. Semua pegangan
     // karena itu duduk di dalam kotak ini.
     const grip = 26.0;
-    final box = widget.bounds.shift(_drag).inflate(grip);
+    var box = widget.bounds.shift(_drag).inflate(grip);
+
+    // Digeser masuk kalau kotaknya keluar dari ruang yang ada; pergeserannya
+    // dibayar balik oleh jarak dalamnya, supaya bingkainya tetap pas di
+    // anotasinya dan yang bergeser hanya pegangannya.
+    var shiftX = 0.0;
+    var shiftY = 0.0;
+    final limit = widget.limit;
+    if (limit != null) {
+      if (box.left < 0) shiftX = -box.left;
+      if (box.top < 0) shiftY = -box.top;
+      if (box.right + shiftX > limit.width) shiftX = limit.width - box.right;
+      if (box.bottom + shiftY > limit.height) shiftY = limit.height - box.bottom;
+      box = box.shift(Offset(shiftX, shiftY));
+    }
+
     final canTransform = widget.onTransformed != null;
 
     return Positioned(
@@ -97,7 +122,12 @@ class _AnnotationMoveLayerState extends State<AnnotationMoveLayer> {
             // adalah tempat pegangan.
             Positioned.fill(
               child: Padding(
-                padding: const EdgeInsets.all(grip),
+                padding: EdgeInsets.fromLTRB(
+                  grip - shiftX,
+                  grip - shiftY,
+                  grip + shiftX,
+                  grip + shiftY,
+                ),
                 child: Transform.rotate(
                   angle: _rotation,
                   child: Transform.scale(

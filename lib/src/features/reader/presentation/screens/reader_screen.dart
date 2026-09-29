@@ -1880,6 +1880,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       AnnotationMoveLayer(
         key: ValueKey<String>('geser-$key-${annotation.dateModified}'),
         bounds: bounds,
+        // Seluas halamannya: pegangan yang jatuh di luar halaman tidak pernah
+        // menerima sentuhan, dan anotasi memang sering menempel di tepi.
+        limit: pageRect.size,
         onDelete: () => _deleteAnnotation(annotation),
         // Hanya tinta yang bisa diubah ukuran dan diputar; stabilo disimpan
         // Zotero sebagai kotak sejajar sumbu.

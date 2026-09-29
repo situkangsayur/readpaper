@@ -1078,6 +1078,32 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       daripada membuat: item yang jadi yatim harus diputuskan mau ke mana, dan
       itu keputusan sendiri
 
+### Menulis dan memilih
+
+- [x] **Zum dua jari di kanvas catatan** (2026-09-29), dengan tombol "pas ke
+      layar" untuk mengembalikannya. Dikerjakan sendiri, **bukan** dengan
+      `InteractiveViewer`: pengenal gerakannya ikut bersaing untuk seretan satu
+      jari, dan akibatnya terukur — awal setiap goresan hilang sekitar enam
+      puluh piksel sebelum kanvas menang di arena, dan seretan pendek seperti
+      satu ketukan penghapus tidak pernah sampai sama sekali. Cubitannya
+      dihitung langsung dari peristiwa pointer, jadi tidak ada arena yang perlu
+      dimenangkan. Jari kedua yang mendarat juga membuang goresan yang sedang
+      ditarik — jari kedua berarti memperbesar, bukan menggambar
+- [x] **Kotak pilih** (2026-09-29): dengan alat Pilih, seretan di ruang kosong
+      menarik kotak, dan semua benda yang **tersentuh** kotaknya jadi terpilih —
+      tersentuh, bukan harus termuat seluruhnya, karena menuntut coretan panjang
+      masuk penuh membuat memilih hampir tidak mungkin. Lalu bisa langsung
+      dihapus sekaligus
+- [x] **Tombol hapus di bingkai komponen bisa ditekan lagi** (2026-09-29).
+      Terlihat tapi tidak bisa ditekan untuk benda yang menempel di tepi
+      lembar: pegangan bingkai duduk di luar kotak benda, dan anak yang
+      digambar di luar batas induknya tidak pernah menerima sentuhan. Lembar
+      catatan sekarang punya ruang di sekelilingnya seluas pegangannya
+- [x] Hal yang sama diperbaiki di **pembaca** (2026-09-29): pegangan anotasi
+      yang menempel di tepi halaman ditahan tetap di dalam halaman, dan
+      pergeserannya dibayar balik oleh jarak dalamnya supaya bingkainya tetap
+      pas di anotasinya
+
 ### Pembaca
 
 - [x] **Mode menyajikan benar-benar seperti slide** (2026-09-29): gulir bebas

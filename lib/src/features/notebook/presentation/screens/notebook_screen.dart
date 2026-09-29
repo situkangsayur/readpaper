@@ -101,12 +101,46 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   /// Tempat jari mulai menekan, untuk mengenali seretan yang sia-sia.
   Offset? _dragFrom;
 
+  /// Zum kanvas: dikerjakan sendiri, **bukan** dengan InteractiveViewer.
+  ///
+  /// InteractiveViewer memasang pengenal gerakan yang ikut bersaing untuk
+  /// seretan satu jari. Hasilnya terukur: awal setiap goresan hilang sekitar
+  /// enam puluh piksel sebelum kanvas menang di arena, dan seretan pendek —
+  /// satu ketukan penghapus — tidak pernah sampai sama sekali. Zum di sini
+  /// dihitung langsung dari peristiwa pointer, jadi tidak ada arena yang perlu
+  /// dimenangkan siapa pun.
+  double _userScale = 1;
+  Offset _userOffset = Offset.zero;
+
+  /// Pointer yang sedang menyentuh layar, beserta tempatnya.
+  final Map<int, Offset> _pointers = <int, Offset>{};
+
+  final GlobalKey _viewportKey = GlobalKey();
+
+  double? _pinchDistance;
+  double _pinchScale = 1;
+
+  /// Titik lembar yang berada di bawah jari saat cubitan dimulai; itulah yang
+  /// dijaga tetap di bawah jari selama mencubit.
+  Offset _pinchScene = Offset.zero;
+
+  /// Kotak pilih yang sedang ditarik, dalam koordinat lembar.
+  Rect? _marquee;
+
+  /// Benda-benda yang terpilih lewat kotak pilih.
+  Set<String> _picked = const <String>{};
+
   @override
   void initState() {
     super.initState();
     _document = _load();
     _history = NoteHistory(_document);
   }
+
+  void _resetZoom() => setState(() {
+    _userScale = 1;
+    _userOffset = Offset.zero;
+  });
 
   NoteDocument _load() {
     final file = File(widget.path);
@@ -159,6 +193,71 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   ///
   /// Hanya stylus: banyak layar melaporkan tekanan tetap untuk jari, dan
   /// mengikutinya membuat tebal goresan berubah tanpa sebab.
+  /// Titik layar jadi titik di dalam kotak kanvas, sebelum zum.
+  Offset _toViewport(Offset global) {
+    final box = _viewportKey.currentContext?.findRenderObject() as RenderBox?;
+    return box == null ? global : box.globalToLocal(global);
+  }
+
+  void _onPointerDown(PointerDownEvent event) {
+    _pointers[event.pointer] = event.position;
+    if (_pointers.length == 2) _startPinch();
+    _notePressure(event);
+  }
+
+  void _onPointerMove(PointerMoveEvent event) {
+    _pointers[event.pointer] = event.position;
+    if (_pointers.length >= 2) {
+      _updatePinch();
+      return;
+    }
+    _notePressure(event);
+  }
+
+  void _onPointerUp(PointerEvent event) {
+    _pointers.remove(event.pointer);
+    if (_pointers.length < 2) _pinchDistance = null;
+  }
+
+  /// Mulai mencubit: goresan yang sedang ditarik dibuang.
+  ///
+  /// Jari kedua yang mendarat berarti yang dimaksud memperbesar, bukan
+  /// menggambar — dan garis nyasar yang tertinggal dari gerakan itu harus
+  /// dihapus sendiri oleh yang mencubit, yang menjengkelkan.
+  void _startPinch() {
+    final points = _pointers.values.toList();
+    final a = _toViewport(points[0]);
+    final b = _toViewport(points[1]);
+    final focus = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
+    setState(() {
+      _live = const <Offset>[];
+      _liveWidths = const <double>[];
+      _shapeFrom = null;
+      _shapeTo = null;
+      _marquee = null;
+      _pinchDistance = (a - b).distance;
+      _pinchScale = _userScale;
+      _pinchScene = (focus - _userOffset) / _userScale;
+    });
+  }
+
+  void _updatePinch() {
+    final start = _pinchDistance;
+    if (start == null || start < 1) return;
+    final points = _pointers.values.toList();
+    final a = _toViewport(points[0]);
+    final b = _toViewport(points[1]);
+    final focus = Offset((a.dx + b.dx) / 2, (a.dy + b.dy) / 2);
+
+    final scale = (_pinchScale * (a - b).distance / start).clamp(1.0, 8.0);
+    setState(() {
+      _userScale = scale;
+      // Titik lembar yang tadi di bawah jari tetap di bawah jari: itulah yang
+      // membuat mencubit terasa memegang kertas, bukan menggeser jendela.
+      _userOffset = scale == 1 ? Offset.zero : focus - _pinchScene * scale;
+    });
+  }
+
   void _notePressure(PointerEvent event) {
     _watchIdleDrag(event);
 
@@ -748,6 +847,11 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
           ),
           actions: <Widget>[
             IconButton(
+              tooltip: 'Pas ke layar — kembalikan zum',
+              icon: const Icon(Icons.fit_screen_outlined),
+              onPressed: _resetZoom,
+            ),
+            IconButton(
               tooltip: 'Urungkan',
               icon: const Icon(Icons.undo),
               onPressed: _history.canUndo
@@ -848,7 +952,10 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
               onTool: (tool) => setState(() {
                 _tool = tool;
                 _explainedIdleDrag = false;
-                if (tool != NoteTool.pilih) _selectedId = null;
+                if (tool != NoteTool.pilih) {
+                  _selectedId = null;
+                  _picked = const <String>{};
+                }
                 if (tool != NoteTool.hubung) _connectFrom = null;
               }),
               onFinger: (value) => setState(() => _finger = value),
@@ -873,6 +980,27 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                 if (component != null) _update(component.copyWith(opacity: opacity), commit: true);
               },
             ),
+            if (_picked.isNotEmpty)
+              Material(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(child: Text('${_picked.length} benda dipilih')),
+                      TextButton.icon(
+                        onPressed: _deletePicked,
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: const Text('Hapus'),
+                      ),
+                      TextButton(
+                        onPressed: () => setState(() => _picked = const <String>{}),
+                        child: const Text('Lepas'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             Expanded(child: _sheetArea()),
             _PageBar(
               page: _page,
@@ -926,12 +1054,19 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     _apply(_document.replacePage(_page, _sheet.copyWith(rule: next)));
   }
 
+  /// Ruang di sekeliling lembar, tempat pegangan bingkai komponen duduk.
+  ///
+  /// Bukan hiasan: anak yang digambar di luar batas induknya **tidak pernah
+  /// menerima sentuhan**. Tanpa ruang ini, komponen yang menempel di tepi atas
+  /// lembar punya tombol hapus yang terlihat jelas tetapi tidak bisa ditekan —
+  /// dan itu memang yang terjadi.
+  static const double _margin = ComponentFrame.grip + 6;
+
   Widget _sheetArea() => LayoutBuilder(
     builder: (context, constraints) {
-      const margin = 12.0;
       final scale = math.min(
-        (constraints.maxWidth - margin * 2) / _sheet.size.width,
-        (constraints.maxHeight - margin * 2) / _sheet.size.height,
+        (constraints.maxWidth - _margin * 2) / _sheet.size.width,
+        (constraints.maxHeight - _margin * 2) / _sheet.size.height,
       );
       final selected = _selected;
 
@@ -945,78 +1080,162 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
           _tool == NoteTool.hapusSebagian ||
           _tool == NoteTool.bangun;
 
+      // Kotak pilih hanya saat tidak ada satu benda yang sedang terpilih —
+      // kalau ada, seretan itu milik bingkainya.
+      final menandai = _tool == NoteTool.pilih && selected == null;
+
+      /// Titik layar jadi titik lembar.
+      Offset toSheet(Offset local) => (local - const Offset(_margin, _margin)) / scale;
+
       return Center(
-        // Tekanan stylus dibaca dari peristiwa pointer mentah: GestureDetector
-        // tidak menyerahkannya, dan tanpa itu tekanan tidak pernah terbaca.
         child: Listener(
-          onPointerDown: _notePressure,
-          onPointerMove: _notePressure,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            supportedDevices: _drawWith,
-            onTapUp: (details) => _onTap(details.localPosition / scale),
-            onPanStart: menggambar ? (details) => _onPanStart(details.localPosition / scale) : null,
-            onPanUpdate: menggambar
-                ? (details) => _onPanUpdate(details.localPosition / scale)
-                : null,
-            onPanEnd: menggambar ? (_) => _onPanEnd() : null,
-            onPanCancel: menggambar ? _onPanEnd : null,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: <Widget>[
-                NoteCanvas(
-                  page: _sheet,
-                  scale: scale,
-                  baseDir: _baseDir,
-                  selectedId: _selectedId,
-                  liveStroke: _live.length > 1
-                      ? NoteStroke(
-                          points: _live,
-                          width: _penWidth,
-                          widths: _liveWidths.length == _live.length ? _liveWidths : null,
-                        )
-                      : null,
-                  liveColor: _pen,
-                  liveWidth: _penWidth,
-                  eraserAt: _eraserAt,
-                  eraserRadius: _eraserRadius,
-                  previewShape: _shapeFrom == null || _shapeTo == null
-                      ? null
-                      : (kind: _shape, from: _shapeFrom!, to: _shapeTo!),
-                  connectFromId: _connectFrom,
-                ),
-                if (selected != null && _tool == NoteTool.pilih)
-                  ComponentFrame(
-                    rect: Rect.fromLTWH(
-                      selected.position.dx * scale,
-                      selected.position.dy * scale,
-                      selected.size.width * scale,
-                      selected.size.height * scale,
-                    ),
-                    rotation: selected.rotation,
-                    onMove: (delta) =>
-                        _update(selected.copyWith(position: selected.position + delta / scale)),
-                    onResize: (delta) => _update(
-                      selected.copyWith(
-                        size: Size(
-                          math.max(12, selected.size.width + delta.dx / scale),
-                          math.max(12, selected.size.height + delta.dy / scale),
-                        ),
+          key: _viewportKey,
+          // Tekanan stylus dan cubitan dua jari sama-sama dibaca dari
+          // peristiwa pointer mentah: GestureDetector tidak menyerahkan
+          // tekanan, dan pengenal gerakan untuk zum akan merebut seretan satu
+          // jari milik pena.
+          onPointerDown: _onPointerDown,
+          onPointerMove: _onPointerMove,
+          onPointerUp: _onPointerUp,
+          onPointerCancel: _onPointerUp,
+          // Transform di luar GestureDetector: Flutter memetakan balik
+          // koordinat sentuhan lewat transform, jadi titik yang digambar tetap
+          // mendarat di tempat yang terlihat — sedekat apa pun zumnya.
+          child: Transform(
+            transform: Matrix4.identity()
+              ..translateByDouble(_userOffset.dx, _userOffset.dy, 0, 1)
+              ..scaleByDouble(_userScale, _userScale, 1, 1),
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              supportedDevices: _drawWith,
+              onTapUp: (details) => _onTap(toSheet(details.localPosition)),
+              onPanStart: menggambar
+                  ? (details) => _onPanStart(toSheet(details.localPosition))
+                  : (menandai ? (details) => _markStart(toSheet(details.localPosition)) : null),
+              onPanUpdate: menggambar
+                  ? (details) => _onPanUpdate(toSheet(details.localPosition))
+                  : (menandai ? (details) => _markUpdate(toSheet(details.localPosition)) : null),
+              onPanEnd: menggambar ? (_) => _onPanEnd() : (menandai ? (_) => _markEnd() : null),
+              onPanCancel: menggambar ? _onPanEnd : (menandai ? _markEnd : null),
+              child: SizedBox(
+                width: _sheet.size.width * scale + _margin * 2,
+                height: _sheet.size.height * scale + _margin * 2,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: <Widget>[
+                    Positioned(
+                      left: _margin,
+                      top: _margin,
+                      child: NoteCanvas(
+                        page: _sheet,
+                        scale: scale,
+                        baseDir: _baseDir,
+                        selectedId: _selectedId,
+                        pickedIds: _picked,
+                        marquee: _marquee,
+                        liveStroke: _live.length > 1
+                            ? NoteStroke(
+                                points: _live,
+                                width: _penWidth,
+                                widths: _liveWidths.length == _live.length ? _liveWidths : null,
+                              )
+                            : null,
+                        liveColor: _pen,
+                        liveWidth: _penWidth,
+                        eraserAt: _eraserAt,
+                        eraserRadius: _eraserRadius,
+                        previewShape: _shapeFrom == null || _shapeTo == null
+                            ? null
+                            : (kind: _shape, from: _shapeFrom!, to: _shapeTo!),
+                        connectFromId: _connectFrom,
                       ),
                     ),
-                    onRotate: (delta) =>
-                        _update(selected.copyWith(rotation: snapAngle(selected.rotation + delta))),
-                    onDelete: _deleteSelected,
-                    onSettled: () => setState(() => _history.push(_document)),
-                    onEdit: selected is NoteText || selected is NoteDiagram ? _editSelected : null,
-                  ),
-              ],
+                    if (selected != null && _tool == NoteTool.pilih)
+                      ComponentFrame(
+                        rect: Rect.fromLTWH(
+                          selected.position.dx * scale + _margin,
+                          selected.position.dy * scale + _margin,
+                          selected.size.width * scale,
+                          selected.size.height * scale,
+                        ),
+                        rotation: selected.rotation,
+                        onMove: (delta) =>
+                            _update(selected.copyWith(position: selected.position + delta / scale)),
+                        onResize: (delta) => _update(
+                          selected.copyWith(
+                            size: Size(
+                              math.max(12, selected.size.width + delta.dx / scale),
+                              math.max(12, selected.size.height + delta.dy / scale),
+                            ),
+                          ),
+                        ),
+                        onRotate: (delta) => _update(
+                          selected.copyWith(rotation: snapAngle(selected.rotation + delta)),
+                        ),
+                        onDelete: _deleteSelected,
+                        onSettled: () => setState(() => _history.push(_document)),
+                        onEdit: selected is NoteText || selected is NoteDiagram
+                            ? _editSelected
+                            : null,
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
       );
     },
   );
+
+  // ------------------------------------------------------------- kotak pilih
+
+  void _markStart(Offset at) => setState(() {
+    _picked = const <String>{};
+    _marquee = Rect.fromPoints(at, at);
+  });
+
+  void _markUpdate(Offset at) {
+    final from = _marquee;
+    if (from == null) return;
+    setState(() => _marquee = Rect.fromPoints(from.topLeft, at));
+  }
+
+  /// Menutup kotak pilih: semua benda yang tersentuh kotaknya jadi terpilih.
+  ///
+  /// Tersentuh, bukan harus termuat seluruhnya — menuntut benda masuk penuh
+  /// membuat memilih coretan panjang hampir tidak mungkin.
+  void _markEnd() {
+    final box = _marquee;
+    setState(() => _marquee = null);
+    if (box == null || (box.width < 8 && box.height < 8)) return;
+
+    final picked = <String>{};
+    for (final component in _sheet.components) {
+      final bounds = component is NoteConnector
+          ? () {
+              final ends = _sheet.endsOf(component);
+              return ends == null ? null : Rect.fromPoints(ends.$1, ends.$2);
+            }()
+          : component.bounds;
+      if (bounds == null) continue;
+      if (box.overlaps(bounds)) picked.add(component.id);
+    }
+    setState(() {
+      _picked = picked;
+      _selectedId = null;
+    });
+  }
+
+  void _deletePicked() {
+    if (_picked.isEmpty) return;
+    var page = _sheet;
+    for (final id in _picked) {
+      page = page.without(id);
+    }
+    _apply(_document.replacePage(_page, page));
+    setState(() => _picked = const <String>{});
+  }
 
   /// Menjelaskan sekali kenapa seretan tidak meninggalkan apa pun.
   ///

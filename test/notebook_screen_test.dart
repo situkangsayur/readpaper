@@ -281,6 +281,82 @@ void main() {
     );
   });
 
+  testWidgets('tombol hapus tetap bisa ditekan untuk benda di tepi atas lembar', (tester) async {
+    // Bug yang dilaporkan: ikon tong sampahnya terlihat tetapi tidak bisa
+    // ditekan. Sebabnya anak yang digambar di luar batas induknya tidak pernah
+    // menerima sentuhan — dan pegangan bingkai duduk di luar kotak benda.
+    await NoteDocumentStore.write(
+      path,
+      const NoteDocument(
+        pages: <NotePage>[
+          NotePage(
+            components: <NoteComponent>[
+              NoteText(
+                id: 'atas',
+                position: Offset(0, 0),
+                size: Size(200, 40),
+                text: 'Menempel di tepi atas',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    await open(tester);
+
+    await tester.tap(find.byTooltip('Pilih'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(tester.getRect(find.byType(NoteCanvas)).topLeft + const Offset(40, 20));
+    await tester.pumpAndSettle();
+    expect(find.byType(ComponentFrame), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.delete_outline).first);
+    await tester.pumpAndSettle();
+    await save(tester);
+    expect(
+      NoteDocumentStore.decodeSync(File(path).readAsStringSync()).pages.single.components,
+      isEmpty,
+    );
+  });
+
+  testWidgets('kotak pilih memilih beberapa benda sekaligus, lalu menghapusnya', (tester) async {
+    await NoteDocumentStore.write(
+      path,
+      const NoteDocument(
+        pages: <NotePage>[
+          NotePage(
+            components: <NoteComponent>[
+              NoteText(id: 't1', position: Offset(60, 60), size: Size(120, 30), text: 'satu'),
+              NoteText(id: 't2', position: Offset(60, 120), size: Size(120, 30), text: 'dua'),
+              NoteText(id: 'jauh', position: Offset(60, 700), size: Size(120, 30), text: 'jauh'),
+            ],
+          ),
+        ],
+      ),
+    );
+    await open(tester);
+
+    await tester.tap(find.byTooltip('Pilih'));
+    await tester.pumpAndSettle();
+
+    // Kotak pilih ditarik di ruang kosong, melewati dua benda teratas.
+    final canvas = tester.getRect(find.byType(NoteCanvas));
+    final scale = canvas.width / 595.276;
+    await tester.dragFrom(
+      canvas.topLeft + Offset(40 * scale, 40 * scale),
+      Offset(200 * scale, 130 * scale),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 benda dipilih'), findsOneWidget);
+    await tester.tap(find.text('Hapus'));
+    await tester.pumpAndSettle();
+    await save(tester);
+
+    final left = NoteDocumentStore.decodeSync(File(path).readAsStringSync()).pages.single.components;
+    expect(left.map((c) => c.id), <String>['jauh'], reason: 'yang di luar kotak tetap ada');
+  });
+
   testWidgets('buku yang sudah ada dibuka dengan isinya', (tester) async {
     await NoteDocumentStore.write(
       path,

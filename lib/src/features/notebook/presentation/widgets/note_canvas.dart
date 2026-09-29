@@ -24,6 +24,8 @@ class NoteCanvas extends StatelessWidget {
     this.liveColor = const Color(0xFF000000),
     this.liveWidth = 2.5,
     this.selectedId,
+    this.pickedIds = const <String>{},
+    this.marquee,
     this.eraserAt,
     this.eraserRadius = 12,
     this.previewShape,
@@ -45,6 +47,12 @@ class NoteCanvas extends StatelessWidget {
   final double liveWidth;
 
   final String? selectedId;
+
+  /// Benda-benda yang terpilih lewat kotak pilih.
+  final Set<String> pickedIds;
+
+  /// Kotak pilih yang sedang ditarik, dalam koordinat lembar.
+  final Rect? marquee;
 
   /// Tempat penghapus sedang berada, untuk lingkaran penunjuknya.
   final Offset? eraserAt;
@@ -85,6 +93,23 @@ class NoteCanvas extends StatelessWidget {
                       component is NoteShape ||
                       component is NoteConnector))
                 _selectionBox(component),
+          for (final component in page.components)
+            if (pickedIds.contains(component.id)) _pickedBox(component),
+          if (marquee != null)
+            Positioned(
+              left: marquee!.left * scale,
+              top: marquee!.top * scale,
+              width: marquee!.width * scale,
+              height: marquee!.height * scale,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFF1565C0), width: 1.2),
+                    color: const Color(0x141565C0),
+                  ),
+                ),
+              ),
+            ),
           if (connectFromId != null)
             for (final component in page.components)
               if (component.id == connectFromId) _connectHighlight(component),
@@ -159,6 +184,31 @@ class NoteCanvas extends StatelessWidget {
                   child: body,
                 )
               : body,
+        ),
+      ),
+    );
+  }
+
+  /// Penanda benda yang terpilih lewat kotak pilih.
+  Widget _pickedBox(NoteComponent component) {
+    final box = component is NoteConnector
+        ? () {
+            final ends = page.endsOf(component);
+            return ends == null ? null : Rect.fromPoints(ends.$1, ends.$2).inflate(4);
+          }()
+        : component.bounds;
+    if (box == null) return const SizedBox.shrink();
+    return Positioned(
+      left: box.left * scale,
+      top: box.top * scale,
+      width: box.width * scale,
+      height: box.height * scale,
+      child: IgnorePointer(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFF1565C0), width: 1.4),
+            color: const Color(0x1A1565C0),
+          ),
         ),
       ),
     );
