@@ -534,7 +534,13 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     );
     if (picked.isEmpty) return;
     final source = picked.first.path;
-    if (source == null) return;
+    if (source == null) {
+      // Beberapa penyedia berkas Android hanya menyerahkan URI tanpa jalur
+      // berkas. Dikatakan, bukan didiamkan — yang memilih gambar berhak tahu
+      // kenapa gambarnya tidak muncul.
+      _say('Gambar itu tidak bisa dibaca dari tempatnya. Salin dulu ke folder kerja.');
+      return;
+    }
 
     // Gambarnya disalin ke sebelah dokumennya dan dirujuk secara relatif,
     // supaya catatan yang ikut tersinkron tetap menemukan gambarnya.
@@ -949,15 +955,31 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
               shape: _shape,
               finger: _finger,
               selected: _selected,
-              onTool: (tool) => setState(() {
-                _tool = tool;
-                _explainedIdleDrag = false;
-                if (tool != NoteTool.pilih) {
-                  _selectedId = null;
-                  _picked = const <String>{};
+              onTool: (tool) {
+                // Alat penempel butuh satu ketukan lagi di lembarnya. Tanpa
+                // dikatakan, memilihnya terasa seperti tidak terjadi apa-apa —
+                // dan kesimpulannya "tidak bisa", bukan "belum".
+                final tempel = switch (tool) {
+                  NoteTool.teks => 'teks',
+                  NoteTool.gambar => 'gambar',
+                  NoteTool.diagram => 'diagram',
+                  NoteTool.hubung => null,
+                  _ => null,
+                };
+                if (tempel != null) _say('Ketuk lembar untuk menaruh $tempel.');
+                if (tool == NoteTool.hubung) {
+                  _say('Ketuk benda pertama, lalu benda kedua.');
                 }
-                if (tool != NoteTool.hubung) _connectFrom = null;
-              }),
+                setState(() {
+                  _tool = tool;
+                  _explainedIdleDrag = false;
+                  if (tool != NoteTool.pilih) {
+                    _selectedId = null;
+                    _picked = const <String>{};
+                  }
+                  if (tool != NoteTool.hubung) _connectFrom = null;
+                });
+              },
               onFinger: (value) => setState(() => _finger = value),
               onShape: (kind) => setState(() {
                 _shape = kind;

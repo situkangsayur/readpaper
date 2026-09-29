@@ -357,6 +357,43 @@ void main() {
     expect(left.map((c) => c.id), <String>['jauh'], reason: 'yang di luar kotak tetap ada');
   });
 
+  testWidgets('alat penempel mengatakan langkah berikutnya', (tester) async {
+    // Memilih alat gambar lalu menunggu terasa seperti "tidak bisa"; yang
+    // kurang hanya satu ketukan di lembarnya, dan itu sekarang dikatakan.
+    await open(tester);
+
+    await tester.tap(find.byTooltip('Gambar'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Ketuk lembar untuk menaruh gambar'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Teks'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Ketuk lembar untuk menaruh teks'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Hubungkan dua benda'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Ketuk benda pertama'), findsOneWidget);
+  });
+
+  testWidgets('menaruh teks dengan alat teks benar-benar bekerja', (tester) async {
+    await open(tester);
+    await tester.tap(find.byTooltip('Teks'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(tester.getCenter(find.byType(NoteCanvas)));
+    await tester.pumpAndSettle();
+    expect(find.text('Teks baru'), findsOneWidget, reason: 'dialognya muncul');
+
+    await tester.enterText(find.byType(TextField).last, 'Halo');
+    await tester.tap(find.text('Simpan').last);
+    await tester.pumpAndSettle();
+    await save(tester);
+
+    final text = NoteDocumentStore.decodeSync(File(path).readAsStringSync())
+        .pages.single.components.single as NoteText;
+    expect(text.text, 'Halo');
+  });
+
   testWidgets('buku yang sudah ada dibuka dengan isinya', (tester) async {
     await NoteDocumentStore.write(
       path,

@@ -1106,6 +1106,37 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
 
 ### Pembaca
 
+- [x] **Kendali mode menyajikan pindah ke bawah** (2026-09-29). Di kanan atas ia
+      bertengkar dengan tempat yang bukan miliknya: lubang kamera dan bilah
+      status yang disembunyikan mode imersif tetap memakan sentuhan di sana,
+      jadi tombol keluar dan ganti halaman terlihat tetapi tidak selalu bisa
+      ditekan. Sekarang satu bilah di bawah, di atas bilah navigasi: halaman
+      sebelumnya, nomor halaman, berikutnya, pena, **urungkan**, tambah lembar
+      kosong, dan keluar
+- [x] **Ganti halaman tetap bisa saat mode coret-coret** (2026-09-29) lewat
+      bilah itu — ketuk tepi memang tetap dilepas selama pena aktif, karena satu
+      coretan tidak boleh berubah jadi ganti halaman
+- [x] **Urungkan ada di mode menyajikan** (2026-09-29): sebelumnya harus keluar
+      dari mode menyajikan dulu untuk mencarinya — di depan orang
+- [x] Keping mode baca juga diletakkan memakai `viewPadding`, bukan `SafeArea`
+      (2026-09-29): mode imersif membuat jarak amannya nol padahal lubang
+      kameranya masih di sana
+
+### Catatan
+
+- [x] **Gambar di koleksi catatan bisa dibuka** (2026-09-29) — bisa diperbesar
+      dua jari dan dibagikan. Sebelumnya ketukannya hanya menjawab "belum bisa
+      dibuka", padahal gambar adalah bentuk catatan yang paling sering datang
+      dari luar: pindaian, tangkapan layar, foto papan tulis
+- [x] **Alat penempel mengatakan langkah berikutnya** (2026-09-29): memilih alat
+      teks, gambar, diagram, atau penghubung menyebut apa yang harus diketuk
+      sesudahnya. Tanpa itu, memilih alat gambar lalu menunggu terasa seperti
+      "tidak bisa", padahal yang kurang hanya satu ketukan di lembarnya
+- [x] Gambar yang tidak menyerahkan jalur berkas — beberapa penyedia berkas
+      Android hanya memberi URI — dikatakan sebabnya, bukan didiamkan
+      (2026-09-29)
+
+
 - [x] **Mode menyajikan benar-benar seperti slide** (2026-09-29): gulir bebas
       dan cubit dilepas sama sekali, jadi halamannya tidak bisa tergeser
       setengah karena tangan menyenggol. Berganti halaman lewat ketuk tepi,

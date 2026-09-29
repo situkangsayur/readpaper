@@ -13,6 +13,7 @@ import '../../../markdown/presentation/screens/markdown_editor_screen.dart';
 import '../../../notebook/data/note_document_store.dart';
 import '../../../notebook/domain/note_document.dart';
 import '../../../notebook/presentation/screens/notebook_screen.dart';
+import '../screens/image_viewer_screen.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/note_entities.dart';
 import '../controllers/notes_controller.dart';
@@ -364,6 +365,14 @@ Future<void> _open(
         .touch(itemKey: note.key, message: 'Ubah catatan: ${note.title}');
     return;
   }
+  if (const <String>{'.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'}.contains(note.extension)) {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ImageViewerScreen(path: path, title: note.title),
+      ),
+    );
+    return;
+  }
   if (note.isPdf) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -382,7 +391,8 @@ Future<void> _open(
     SnackBar(
       content: Text(
         'Berkas ${note.extension.isEmpty ? 'ini' : note.extension} belum bisa dibuka '
-        'di dalam aplikasi. Yang sudah bisa: PDF, Markdown, dan buku catatan.',
+        'di dalam aplikasi. Yang sudah bisa: PDF, Markdown, gambar, dan buku '
+        'catatan.',
       ),
     ),
   );

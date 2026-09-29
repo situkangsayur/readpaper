@@ -1667,43 +1667,71 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           child: GestureDetector(behavior: HitTestBehavior.translucent, onTap: () => _stepPage(1)),
         ),
       ],
+      // Kendali menyajikan duduk di **bawah**, bukan di kanan atas.
+      //
+      // Di kanan atas ia bertengkar dengan tempat yang bukan miliknya: lubang
+      // kamera dan bilah status yang disembunyikan mode imersif tetap memakan
+      // sentuhan di sana, jadi tombol keluar dan ganti halaman terlihat tetapi
+      // tidak selalu bisa ditekan. Di bawah, di atas bilah navigasi, tidak ada
+      // yang memperebutkannya — dan ibu jari memang sudah di situ.
       if (_presentMode)
         Positioned(
-          top: 8,
-          right: 8,
-          child: SafeArea(
-            child: Row(
-              children: <Widget>[
-                _ReadingChip(
-                  icon: _penMode ? Icons.draw : Icons.draw_outlined,
-                  tooltip: _penMode ? 'Selesai menggambar' : 'Coret-coret di halaman',
-                  onTap: _togglePen,
+          left: 0,
+          right: 0,
+          bottom: 8 + MediaQuery.viewPaddingOf(context).bottom,
+          child: Center(
+            child: Material(
+              color: scheme.surface.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(28),
+              elevation: 6,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    IconButton(
+                      tooltip: 'Halaman sebelumnya',
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: () => _stepPage(-1),
+                    ),
+                    Text(
+                      '$_currentPage / ${_controller.isReady ? _controller.pages.length : '…'}',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    IconButton(
+                      tooltip: 'Halaman berikutnya',
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: () => _stepPage(1),
+                    ),
+                    const VerticalDivider(width: 10, indent: 8, endIndent: 8),
+                    IconButton(
+                      tooltip: _penMode ? 'Selesai menggambar' : 'Coret-coret di halaman',
+                      isSelected: _penMode,
+                      selectedIcon: const Icon(Icons.draw),
+                      icon: const Icon(Icons.draw_outlined),
+                      onPressed: _togglePen,
+                    ),
+                    // Urungkan ikut di sini: saat menyajikan, bilah atas tidak
+                    // ada, dan mencari urungkan berarti keluar dari mode
+                    // menyajikan di depan orang.
+                    IconButton(
+                      tooltip: 'Urungkan',
+                      icon: const Icon(Icons.undo),
+                      onPressed: _undoSteps.isEmpty ? null : _undoLast,
+                    ),
+                    IconButton(
+                      tooltip: 'Tambah lembar kosong untuk dicoreti',
+                      icon: const Icon(Icons.note_add_outlined),
+                      onPressed: _addBlankPages,
+                    ),
+                    IconButton(
+                      tooltip: 'Keluar dari mode menyajikan',
+                      icon: const Icon(Icons.close_fullscreen),
+                      onPressed: _togglePresent,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                _ReadingChip(
-                  icon: Icons.note_add_outlined,
-                  tooltip: 'Tambah lembar kosong untuk dicoreti',
-                  onTap: _addBlankPages,
-                ),
-                const SizedBox(width: 8),
-                _ReadingChip(
-                  icon: Icons.chevron_left,
-                  tooltip: 'Halaman sebelumnya',
-                  onTap: () => _stepPage(-1),
-                ),
-                const SizedBox(width: 8),
-                _ReadingChip(
-                  icon: Icons.chevron_right,
-                  tooltip: 'Halaman berikutnya',
-                  onTap: () => _stepPage(1),
-                ),
-                const SizedBox(width: 8),
-                _ReadingChip(
-                  icon: Icons.close_fullscreen,
-                  tooltip: 'Keluar dari mode menyajikan',
-                  onTap: _togglePresent,
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -1711,9 +1739,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // page itself — and small enough not to become part of the page.
       if (_readingMode)
         Positioned(
-          top: 8,
+          // `viewPadding`, bukan `SafeArea`: mode imersif menyembunyikan bilah
+          // status sehingga jarak amannya jadi nol, padahal lubang kamera masih
+          // di sana dan masih memakan sentuhan.
+          top: 8 + MediaQuery.viewPaddingOf(context).top,
           right: 8,
           child: SafeArea(
+            top: false,
             child: Row(
               children: <Widget>[
                 _ReadingChip(
