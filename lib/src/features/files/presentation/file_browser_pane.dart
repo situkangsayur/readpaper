@@ -26,7 +26,15 @@ import '../../whiteboard/presentation/whiteboard_screen.dart';
 /// Dari sini berkas bisa dibuka, dan bisa **diseret ke sebuah koleksi** di
 /// pohon di atasnya untuk dimasukkan ke library.
 class FileBrowserPane extends ConsumerStatefulWidget {
-  const FileBrowserPane({super.key});
+  const FileBrowserPane({this.collapsed = false, this.onToggleCollapsed, super.key});
+
+  /// Hanya kepala panelnya yang tampil.
+  ///
+  /// Panel berkas berguna saat sedang memasukkan sesuatu, dan cuma jadi
+  /// penyempit pohon koleksi di waktu lain — jadi ia bisa dilipat ke bawah.
+  final bool collapsed;
+
+  final VoidCallback? onToggleCollapsed;
 
   @override
   ConsumerState<FileBrowserPane> createState() => _FileBrowserPaneState();
@@ -72,6 +80,13 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     }
   }
 
+  void _say(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _pickFolder() async {
     final path = await FilePicker.getDirectoryPath(dialogTitle: 'Pilih folder kerja');
     if (path == null) return;
@@ -87,7 +102,10 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   /// bukan berkas di tempat yang bisa hilang kapan saja.
   Future<void> _copyIn() async {
     final dir = _dir;
-    if (dir == null) return;
+    if (dir == null) {
+      _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
+      return;
+    }
     final picked = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: <String>['pdf'],
@@ -192,7 +210,10 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
 
   Future<void> _newBoard() async {
     final dir = _dir;
-    if (dir == null) return;
+    if (dir == null) {
+      _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
+      return;
+    }
 
     // Arah kertas dipilih di sini juga, bukan hanya di dalam papannya: yang
     // mau menggambar bagan mendatar tahu itu sebelum mulai, dan memutar kertas
@@ -273,7 +294,10 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
 
   Future<void> _newFolder() async {
     final dir = _dir;
-    if (dir == null) return;
+    if (dir == null) {
+      _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
+      return;
+    }
     final name = await showDialog<String>(
       context: context,
       builder: (context) {
@@ -308,7 +332,10 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   /// Membuat berkas Markdown kosong di folder ini, lalu membukanya.
   Future<void> _newMarkdown() async {
     final dir = _dir;
-    if (dir == null) return;
+    if (dir == null) {
+      _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
+      return;
+    }
     final name = await showDialog<String>(
       context: context,
       builder: (dialog) {
@@ -354,7 +381,10 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   /// Membuat buku catatan baru di folder ini, lalu membukanya.
   Future<void> _newNotebook() async {
     final dir = _dir;
-    if (dir == null) return;
+    if (dir == null) {
+      _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
+      return;
+    }
     final name = await showDialog<String>(
       context: context,
       builder: (dialog) {
@@ -433,71 +463,119 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 8, 4, 0),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  dir == null ? 'Berkas' : p.basename(dir.path),
-                  style: Theme.of(context).textTheme.titleSmall,
-                  overflow: TextOverflow.ellipsis,
+        // Kepala panel: nama folder, lalu empat kendali saja. Sebelumnya ada
+        // tujuh ikon berdesakan di panel selebar 300 titik, dan yang mencari
+        // "buat folder" atau "buka berkas" tidak pernah tahu yang mana.
+        InkWell(
+          onTap: widget.onToggleCollapsed,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(4, 6, 4, 6),
+            child: Row(
+              children: <Widget>[
+                if (widget.onToggleCollapsed != null)
+                  Icon(
+                    widget.collapsed ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    size: 20,
+                    color: scheme.onSurfaceVariant,
+                  ),
+                Expanded(
+                  child: Text(
+                    dir == null ? 'Berkas' : p.basename(dir.path),
+                    style: Theme.of(context).textTheme.titleSmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              IconButton(
-                tooltip: 'Naik satu tingkat',
-                iconSize: 18,
-                icon: const Icon(Icons.drive_folder_upload_outlined),
-                onPressed: dir == null || dir.parent.path == dir.path
-                    ? null
-                    : () => _open(dir.parent),
-              ),
-              IconButton(
-                tooltip: 'Papan tulis baru',
-                iconSize: 18,
-                icon: const Icon(Icons.draw_outlined),
-                onPressed: dir == null ? null : _newBoard,
-              ),
-              IconButton(
-                tooltip: 'Berkas Markdown baru',
-                iconSize: 18,
-                icon: const Icon(Icons.post_add_outlined),
-                onPressed: dir == null ? null : _newMarkdown,
-              ),
-              IconButton(
-                tooltip: 'Buku catatan baru',
-                iconSize: 18,
-                icon: const Icon(Icons.auto_stories_outlined),
-                onPressed: dir == null ? null : _newNotebook,
-              ),
-              IconButton(
-                tooltip: 'Salin berkas ke sini',
-                iconSize: 18,
-                icon: const Icon(Icons.file_download_outlined),
-                onPressed: dir == null ? null : _copyIn,
-              ),
-              IconButton(
-                tooltip: 'Folder baru',
-                iconSize: 18,
-                icon: const Icon(Icons.create_new_folder_outlined),
-                onPressed: dir == null ? null : _newFolder,
-              ),
-              IconButton(
-                tooltip: 'Buka folder lain',
-                iconSize: 18,
-                icon: const Icon(Icons.folder_open_outlined),
-                onPressed: _pickFolder,
-              ),
-            ],
+                if (!widget.collapsed) ...<Widget>[
+                  IconButton(
+                    tooltip: 'Naik satu tingkat',
+                    iconSize: 18,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.drive_folder_upload_outlined),
+                    onPressed: dir == null || dir.parent.path == dir.path
+                        ? null
+                        : () => _open(dir.parent),
+                  ),
+                  PopupMenuButton<String>(
+                    // Tetap bisa dibuka walau foldernya belum siap: tombol mati
+                    // tanpa keterangan adalah jebakan yang sama seperti tombol
+                    // yang tidak bisa ditekan.
+                    tooltip: 'Buat baru di folder ini',
+                    iconSize: 20,
+                    icon: const Icon(Icons.add_circle_outline),
+                    onSelected: (choice) => switch (choice) {
+                      'papan' => _newBoard(),
+                      'markdown' => _newMarkdown(),
+                      'catatan' => _newNotebook(),
+                      _ => _newFolder(),
+                    },
+                    itemBuilder: (_) => const <PopupMenuEntry<String>>[
+                      PopupMenuItem<String>(
+                        value: 'papan',
+                        child: ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.draw_outlined),
+                          title: Text('Papan tulis'),
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'catatan',
+                        child: ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.auto_stories_outlined),
+                          title: Text('Buku catatan'),
+                        ),
+                      ),
+                      PopupMenuItem<String>(
+                        value: 'markdown',
+                        child: ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.post_add_outlined),
+                          title: Text('Berkas Markdown'),
+                        ),
+                      ),
+                      PopupMenuDivider(),
+                      PopupMenuItem<String>(
+                        value: 'folder',
+                        child: ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.create_new_folder_outlined),
+                          title: Text('Folder'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    tooltip: 'Salin berkas ke sini — dari mana pun di perangkat',
+                    iconSize: 18,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.file_download_outlined),
+                    onPressed: dir == null ? null : _copyIn,
+                  ),
+                  IconButton(
+                    tooltip: 'Buka folder lain',
+                    iconSize: 18,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.folder_open_outlined),
+                    onPressed: _pickFolder,
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
-        if (_error != null)
+        if (widget.collapsed) const SizedBox.shrink(),
+        if (_error != null && !widget.collapsed)
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
             child: Text(_error!, style: TextStyle(color: scheme.error, fontSize: 12)),
           ),
-        Expanded(
-          child: _entries.isEmpty
+        if (!widget.collapsed)
+          Expanded(
+            child: _entries.isEmpty
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.all(16),

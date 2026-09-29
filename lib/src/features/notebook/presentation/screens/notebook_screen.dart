@@ -142,6 +142,23 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     _userOffset = Offset.zero;
   });
 
+  /// Memperbesar atau memperkecil dari tombol, berporos di tengah kotak.
+  ///
+  /// Perlu ada karena di mode "Stylus saja" layar memang tidak menanggapi
+  /// sentuhan sama sekali — termasuk cubitan — dan tanpa tombol ini tidak ada
+  /// jalan memperbesar.
+  void _zoomBy(double factor) {
+    final box = _viewportKey.currentContext?.findRenderObject() as RenderBox?;
+    final centre = box == null
+        ? Offset.zero
+        : Offset(box.size.width / 2, box.size.height / 2);
+    final scene = (centre - _userOffset) / _userScale;
+    setState(() {
+      _userScale = (_userScale * factor).clamp(1.0, 8.0);
+      _userOffset = _userScale == 1 ? Offset.zero : centre - scene * _userScale;
+    });
+  }
+
   NoteDocument _load() {
     final file = File(widget.path);
     if (!file.existsSync()) {
@@ -199,13 +216,28 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     return box == null ? global : box.globalToLocal(global);
   }
 
+  /// Apakah sentuhan ini boleh menyentuh kanvas sama sekali.
+  ///
+  /// Di mode "Stylus saja" jawabannya tidak, dan itu berlaku untuk **semua**
+  /// hal: menggambar, mencubit, dan menggeser. Sebelumnya hanya menggambar yang
+  /// ditolak, sementara telapak tangan yang bertumpu tetap terhitung sebagai
+  /// jari kedua — jadi kanvasnya bergerak sendiri tepat saat tangan mendarat,
+  /// yang justru keadaan yang hendak dihindari.
+  bool _allowed(PointerEvent event) =>
+      _finger ||
+      event.kind == PointerDeviceKind.stylus ||
+      event.kind == PointerDeviceKind.invertedStylus ||
+      event.kind == PointerDeviceKind.mouse;
+
   void _onPointerDown(PointerDownEvent event) {
+    if (!_allowed(event)) return;
     _pointers[event.pointer] = event.position;
     if (_pointers.length == 2) _startPinch();
     _notePressure(event);
   }
 
   void _onPointerMove(PointerMoveEvent event) {
+    if (!_allowed(event)) return;
     _pointers[event.pointer] = event.position;
     if (_pointers.length >= 2) {
       _updatePinch();
@@ -493,11 +525,25 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
 
   // --------------------------------------------------------------- komponen
 
+  /// Benda yang baru ditaruh langsung terpilih, dan alatnya pindah ke Pilih.
+  ///
+  /// Tanpa ini, benda yang baru disisipkan tidak bisa digeser, diubah ukuran,
+  /// diputar, atau dihapus sampai alatnya diganti sendiri — dan tidak ada yang
+  /// mengatakan bahwa itu yang kurang. Menempelkan sesuatu hampir selalu
+  /// diikuti membetulkan tempatnya.
+  void _placed(NoteComponent component) {
+    _replaceComponents(<NoteComponent>[..._sheet.components, component]);
+    setState(() {
+      _tool = NoteTool.pilih;
+      _selectedId = component.id;
+      _picked = const <String>{};
+    });
+  }
+
   Future<void> _addText(Offset at) async {
     final text = await _ask(title: 'Teks baru', hint: 'Tulis teksnya');
     if (text == null || text.trim().isEmpty) return;
-    _replaceComponents(<NoteComponent>[
-      ..._sheet.components,
+    _placed(
       NoteText(
         id: _freshId('teks'),
         position: at,
@@ -505,7 +551,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
         text: text.trim(),
         color: _pen.toARGB32(),
       ),
-    ]);
+    );
   }
 
   Future<void> _addDiagram(Offset at) async {
@@ -516,15 +562,14 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       lines: 6,
     );
     if (source == null || source.trim().isEmpty) return;
-    _replaceComponents(<NoteComponent>[
-      ..._sheet.components,
+    _placed(
       NoteDiagram(
         id: _freshId('diagram'),
         position: at,
         size: const Size(260, 180),
         source: source.trim(),
       ),
-    ]);
+    );
   }
 
   Future<void> _addImage(Offset at) async {
@@ -555,8 +600,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     }
     await File(source).copy(target.path);
 
-    _replaceComponents(<NoteComponent>[
-      ..._sheet.components,
+    _placed(
       NoteImage(
         id: _freshId('gambar'),
         position: at,
@@ -564,7 +608,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
         file: p.relative(target.path, from: _baseDir).replaceAll(r'\', '/'),
         alt: p.basenameWithoutExtension(source),
       ),
-    ]);
+    );
+    if (mounted) _say('Gambar ditaruh — sekarang bisa digeser, diubah ukuran, atau dihapus.');
   }
 
   Future<void> _editSelected() async {
@@ -853,9 +898,19 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
           ),
           actions: <Widget>[
             IconButton(
+              tooltip: 'Perkecil',
+              icon: const Icon(Icons.zoom_out),
+              onPressed: _userScale <= 1.001 ? null : () => _zoomBy(1 / 1.4),
+            ),
+            IconButton(
+              tooltip: 'Perbesar',
+              icon: const Icon(Icons.zoom_in),
+              onPressed: _userScale >= 7.99 ? null : () => _zoomBy(1.4),
+            ),
+            IconButton(
               tooltip: 'Pas ke layar — kembalikan zum',
               icon: const Icon(Icons.fit_screen_outlined),
-              onPressed: _resetZoom,
+              onPressed: _userScale == 1 ? null : _resetZoom,
             ),
             IconButton(
               tooltip: 'Urungkan',

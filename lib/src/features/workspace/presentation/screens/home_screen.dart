@@ -232,15 +232,38 @@ class _Banner extends ConsumerWidget {
 /// di atas adalah apa yang sudah ada di library, yang di bawah adalah berkas
 /// di perangkat yang belum masuk. Berkas diseret dari bawah ke atas untuk
 /// memasukkannya.
-class _TreeAndFiles extends StatelessWidget {
+class _TreeAndFiles extends StatefulWidget {
   const _TreeAndFiles();
 
   @override
-  Widget build(BuildContext context) => const Column(
+  State<_TreeAndFiles> createState() => _TreeAndFilesState();
+}
+
+class _TreeAndFilesState extends State<_TreeAndFiles> {
+  /// Panel berkas terbuka atau terlipat ke bawah.
+  ///
+  /// Terbuka secara bawaan karena di situlah berkas masuk ke koleksi, tetapi
+  /// bisa dilipat: saat sedang menelusuri koleksi, panel berkas hanya
+  /// mempersempit pohonnya.
+  bool _filesOpen = true;
+
+  @override
+  Widget build(BuildContext context) => Column(
     children: <Widget>[
-      Expanded(flex: 3, child: CollectionTreePane()),
-      Divider(height: 1),
-      Expanded(flex: 2, child: FileBrowserPane()),
+      Expanded(child: const CollectionTreePane()),
+      const Divider(height: 1),
+      if (_filesOpen)
+        Expanded(
+          flex: 2,
+          child: FileBrowserPane(
+            onToggleCollapsed: () => setState(() => _filesOpen = false),
+          ),
+        )
+      else
+        FileBrowserPane(
+          collapsed: true,
+          onToggleCollapsed: () => setState(() => _filesOpen = true),
+        ),
     ],
   );
 }

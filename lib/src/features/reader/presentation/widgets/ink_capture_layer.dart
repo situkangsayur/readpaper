@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../library/domain/entities/zotero_annotation.dart';
@@ -19,8 +20,16 @@ class InkCaptureLayer extends StatefulWidget {
     required this.strokeWidth,
     required this.strokes,
     required this.onStrokeFinished,
+    this.stylusOnly = false,
     super.key,
   });
+
+  /// Hanya stylus yang boleh menggambar.
+  ///
+  /// Penolak telapak tangan yang sebenarnya: tangan yang bertumpu di layar
+  /// tidak meninggalkan garis, karena sentuhannya tidak pernah sampai ke
+  /// pengenal gerakannya.
+  final bool stylusOnly;
 
   final double pageWidth;
   final double pageHeight;
@@ -75,6 +84,14 @@ class _InkCaptureLayerState extends State<InkCaptureLayer> {
       _size = constraints.biggest;
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
+        // Tetikus ikut diizinkan, supaya layar tanpa stylus tetap bisa dipakai.
+        supportedDevices: widget.stylusOnly
+            ? const <PointerDeviceKind>{
+                PointerDeviceKind.stylus,
+                PointerDeviceKind.invertedStylus,
+                PointerDeviceKind.mouse,
+              }
+            : null,
         onPanStart: (d) => _add(d.localPosition),
         onPanUpdate: (d) => _add(d.localPosition),
         onPanEnd: (_) => _finish(),

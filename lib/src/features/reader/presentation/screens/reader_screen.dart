@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -166,6 +167,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// yang menyajikan berdiri di depan orang, tidak sedang menggulir dengan
   /// hati-hati, dan satu ketukan di tepi layar harus berarti satu halaman.
   bool _presentMode = false;
+
+  /// Hanya stylus yang menggambar. Tangan yang bertumpu di layar tidak
+  /// meninggalkan garis — itu penolak telapak tangan yang sebenarnya.
+  bool _stylusOnly = false;
 
   /// Tint applied over the page while reading.
   PageTint _tint = PageTint.none;
@@ -434,6 +439,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // ukurannya dihitung; kalau tidak, halamannya pas ke layar yang lama.
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitCurrentPage());
     }
+  }
+
+  /// Tata letak mode menyajikan: satu halaman per layar.
+  static PdfPageLayout _presentLayout(List<PdfPage> pages, PdfViewerParams params) {
+    final width = pages.fold(0.0, (w, page) => math.max(w, page.width));
+    final gap = pages.fold(0.0, (h, page) => math.max(h, page.height));
+
+    final layouts = <Rect>[];
+    var y = gap / 2;
+    for (final page in pages) {
+      layouts.add(Rect.fromLTWH((width - page.width) / 2 + gap / 2, y, page.width, page.height));
+      y += page.height + gap;
+    }
+    return PdfPageLayout(pageLayouts: layouts, documentSize: Size(width + gap, y + gap / 2));
   }
 
   /// Memasang halaman yang sedang dilihat pas di layar.
@@ -882,7 +901,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// teks paper aslinya tetap bisa dicari dan disalin. Ditambahkan di akhir
   /// supaya nomor halaman anotasi yang sudah ada tidak bergeser.
   Future<void> _addBlankPages() async {
-    final count = await showDialog<int>(
+    // Dua pertanyaan, bukan satu: berapa, lalu di mana. Menambahkan di akhir
+    // saja memaksa yang sedang menjelaskan melompat ke belakang dokumen, dan
+    // catatan yang ditulis di sana kehilangan tempatnya dalam cerita.
+    final pilihan = await showDialog<({int count, bool here})>(
       context: context,
       builder: (context) => SimpleDialog(
         title: const Text('Tambah halaman kosong'),
@@ -890,20 +912,27 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           const Padding(
             padding: EdgeInsets.fromLTRB(24, 0, 24, 12),
             child: Text(
-              'Ditambahkan di akhir dokumen, seukuran halaman pertamanya. '
-              'Berkas aslinya tidak disentuh — yang berubah adalah salinan '
-              'kerja, sampai Anda menyimpannya.',
+              'Seukuran halaman pertamanya. Berkas aslinya tidak disentuh — '
+              'yang berubah adalah salinan kerja, sampai Anda menyimpannya.',
             ),
           ),
           for (final n in <int>[1, 2, 5])
             SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(n),
-              child: Text('$n halaman'),
+              onPressed: () => Navigator.of(context).pop((count: n, here: true)),
+              child: Text('$n halaman setelah halaman $_currentPage'),
+            ),
+          const Divider(height: 8),
+          for (final n in <int>[1, 5])
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop((count: n, here: false)),
+              child: Text('$n halaman di akhir dokumen'),
             ),
         ],
       ),
     );
-    if (count == null || !mounted) return;
+    if (pilihan == null || !mounted) return;
+    final count = pilihan.count;
+    final at = pilihan.here ? _currentPage : null;
 
     try {
       final dir = await Directory(
@@ -912,7 +941,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       final stem = p.basenameWithoutExtension(_path);
       final target = p.join(dir.path, '$stem-papan-${DateTime.now().millisecondsSinceEpoch}.pdf');
 
-      await PdfPageEditor.addBlankPages(source: _path, target: target, count: count);
+      await PdfPageEditor.addBlankPages(
+        source: _path,
+        target: target,
+        count: count,
+        at: at,
+      );
 
       final before = _controller.pages.length;
       if (!mounted) return;
@@ -920,13 +954,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         _workingPath = target;
         _unsaved = true;
       });
-      _say('$count halaman kosong ditambahkan — simpan lewat menu bagikan');
+      _say(
+        at == null
+            ? '$count halaman kosong ditambahkan di akhir — simpan lewat menu bagikan'
+            : '$count halaman kosong disisipkan setelah halaman $at — simpan lewat menu bagikan',
+      );
       // Langsung ke halaman kosong pertamanya: yang menambahkannya hendak
       // menulis di sana sekarang, bukan mencarinya dulu.
       await Future<void>.delayed(const Duration(milliseconds: 400));
-      if (_controller.isReady && before + 1 <= _controller.pages.length) {
+      final target1 = (at ?? before) + 1;
+      if (_controller.isReady && target1 <= _controller.pages.length) {
         await _controller.goToPage(
-          pageNumber: before + 1,
+          pageNumber: target1,
           anchor: _presentMode ? PdfPageAnchor.all : null,
         );
       }
@@ -1326,6 +1365,33 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           ),
         ),
       ],
+    ),
+    IconButton(
+      // Penolak telapak tangan. Tangan yang bertumpu di layar sambil menulis
+      // dengan stylus dulu meninggalkan garisnya sendiri, dan itu cukup untuk
+      // membuat orang berhenti memakai penanya.
+      tooltip: _stylusOnly
+          ? 'Stylus saja — sentuhan tangan tidak menggambar'
+          : 'Jari + stylus boleh menggambar — ketuk untuk stylus saja',
+      isSelected: _stylusOnly,
+      selectedIcon: const Icon(Icons.do_not_touch_outlined),
+      icon: const Icon(Icons.touch_app_outlined),
+      onPressed: () {
+        setState(() => _stylusOnly = !_stylusOnly);
+        _say(
+          _stylusOnly
+              ? 'Stylus saja: tangan yang bertumpu tidak akan menggambar.'
+              : 'Jari dan stylus dua-duanya boleh menggambar.',
+        );
+      },
+    ),
+    IconButton(
+      // Dulu hanya ada di dalam menu simpan, dan di situ tidak ada yang
+      // mencarinya: yang mau menambah lembar catatan tidak sedang berpikir
+      // tentang menyimpan.
+      tooltip: 'Tambah lembar kosong',
+      icon: const Icon(Icons.note_add_outlined),
+      onPressed: _loading ? null : _addBlankPages,
     ),
     IconButton(
       tooltip: 'Warna halaman: ${_tint.label}',
@@ -1816,6 +1882,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // yang bisa tergeser setengah halaman karena tangan menyenggol.
       panEnabled: !_markerMode && !_penMode && !_presentMode,
       scaleEnabled: !_presentMode,
+      // Saat menyajikan, tiap halaman diberi jarak setinggi halaman terpanjang.
+      // Tanpa itu halaman sebelumnya dan berikutnya tetap menyembul di atas dan
+      // di bawah — dan yang menyajikan tidak sedang memamerkan dua slide
+      // sekaligus.
+      layoutPages: _presentMode ? _presentLayout : null,
       onPageChanged: (pageNumber) {
         if (pageNumber == null || !mounted) return;
         setState(() => _currentPage = pageNumber);
@@ -1855,6 +1926,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               pageHeight: page.height,
               color: colorFromHex(_color),
               strokeWidth: _inkWidth,
+              stylusOnly: _stylusOnly,
               strokes: _inkPage == page.pageNumber ? _pendingInk : const <InkPath>[],
               onStrokeFinished: (stroke) => _addStroke(page.pageNumber, stroke),
             ),
@@ -2234,8 +2306,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   Future<void> _deleteAnnotation(ZoteroAnnotation annotation) async {
-    final item = _detail?.item;
-    if (item == null) return;
+    // Tidak ada pagar `item == null` di sini, dan itu disengaja: PDF yang
+    // dibuka lepas — dari panel berkas, dari koleksi catatan, atau lewat "buka
+    // dengan" — tidak punya item Zotero, dan pagar itu dulu membuat tombol
+    // hapus tidak melakukan apa pun sama sekali. Yang menekan tong sampah
+    // melihat ikonnya, menekannya, dan tidak terjadi apa-apa. `_removeAnnotation`
+    // sendiri sudah tahu cara menghapus di kedua keadaan.
 
     final confirmed = await showDialog<bool>(
       context: context,

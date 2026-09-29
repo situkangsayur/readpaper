@@ -394,6 +394,59 @@ void main() {
     expect(text.text, 'Halo');
   });
 
+  testWidgets('benda yang baru ditaruh langsung terpilih dan bisa dihapus', (tester) async {
+    // Tanpa ini, benda yang baru disisipkan tidak bisa digeser atau dihapus
+    // sampai alatnya diganti sendiri — dan tidak ada yang mengatakannya.
+    await open(tester);
+    await tester.tap(find.byTooltip('Teks'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(tester.getCenter(find.byType(NoteCanvas)));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'Baru');
+    await tester.tap(find.text('Simpan').last);
+    await tester.pumpAndSettle();
+
+    // Bingkainya sudah ada tanpa perlu berpindah alat lebih dulu.
+    expect(find.byType(ComponentFrame), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.delete_outline).first);
+    await tester.pumpAndSettle();
+    await save(tester);
+    expect(
+      NoteDocumentStore.decodeSync(File(path).readAsStringSync()).pages.single.components,
+      isEmpty,
+    );
+  });
+
+  testWidgets('tombol zum bekerja, dan pas ke layar mengembalikannya', (tester) async {
+    // Di mode "Stylus saja" layar tidak menanggapi sentuhan sama sekali —
+    // termasuk cubitan — jadi tombol ini satu-satunya jalan memperbesar.
+    await open(tester);
+
+    final fit = find.byTooltip('Pas ke layar — kembalikan zum');
+    expect(
+      tester.widget<IconButton>(find.ancestor(of: fit, matching: find.byType(IconButton)).first)
+          .onPressed,
+      isNull,
+      reason: 'belum ada zum yang perlu dikembalikan',
+    );
+
+    await tester.tap(find.byTooltip('Perbesar'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<IconButton>(find.ancestor(of: fit, matching: find.byType(IconButton)).first)
+          .onPressed,
+      isNotNull,
+    );
+
+    await tester.tap(fit);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<IconButton>(find.ancestor(of: fit, matching: find.byType(IconButton)).first)
+          .onPressed,
+      isNull,
+    );
+  });
+
   testWidgets('buku yang sudah ada dibuka dengan isinya', (tester) async {
     await NoteDocumentStore.write(
       path,

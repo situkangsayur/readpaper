@@ -1106,6 +1106,36 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
 
 ### Pembaca
 
+- [x] **Tombol hapus anotasi bekerja untuk PDF yang dibuka lepas** (2026-09-29).
+      Sebabnya satu pagar `item == null` di pembungkus konfirmasinya: PDF dari
+      panel berkas, dari koleksi catatan, atau lewat "buka dengan" tidak punya
+      item Zotero, jadi tong sampahnya tidak melakukan apa pun sama sekali —
+      sementara geser, ubah ukuran, dan putar jalan, karena jalurnya lain
+- [x] **Mode menyajikan benar-benar satu halaman per layar** (2026-09-29):
+      halamannya diberi jarak setinggi halaman terpanjang, jadi halaman
+      sebelumnya dan berikutnya tidak lagi menyembul di atas dan di bawah
+- [x] **Penolak telapak tangan di pembaca** (2026-09-29): sakelar "Stylus saja"
+      di bilah alat. Tangan yang bertumpu di layar sambil menulis dengan stylus
+      dulu meninggalkan garisnya sendiri, dan itu cukup untuk membuat orang
+      berhenti memakai penanya
+- [x] **Lembar kosong bisa disisipkan di tengah** (2026-09-29), bukan hanya di
+      akhir: "n halaman setelah halaman ini" atau "di akhir dokumen".
+      Menambahkan di akhir saja memaksa yang sedang menjelaskan melompat ke
+      belakang dokumen, dan catatannya kehilangan tempat dalam ceritanya
+
+### Panel berkas
+
+- [x] **Bisa dilipat ke bawah** (2026-09-29): panel berkas berguna saat sedang
+      memasukkan sesuatu, dan di waktu lain hanya mempersempit pohon koleksi
+- [x] **Kepalanya diringkas dari tujuh ikon jadi empat** (2026-09-29): naik satu
+      tingkat, satu menu **Buat baru** (papan tulis, buku catatan, berkas
+      Markdown, folder), salin berkas ke sini, dan buka folder lain. Tujuh ikon
+      berdesakan di panel selebar 300 titik adalah sebab kenapa "buat folder"
+      dan "buka berkas" tidak pernah ketemu
+- [x] Tombol yang butuh folder kerja **tidak lagi mati tanpa keterangan**
+      (2026-09-29) — dikatakan apa yang kurang
+
+
 - [x] **Kendali mode menyajikan pindah ke bawah** (2026-09-29). Di kanan atas ia
       bertengkar dengan tempat yang bukan miliknya: lubang kamera dan bilah
       status yang disembunyikan mode imersif tetap memakan sentuhan di sana,
@@ -1123,6 +1153,20 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       kameranya masih di sana
 
 ### Catatan
+
+- [x] **Telapak tangan tidak lagi menggerakkan kanvas di mode "Stylus saja"**
+      (2026-09-29). Yang ditolak dulu hanya menggambar, sementara tangan yang
+      bertumpu tetap terhitung sebagai jari kedua — jadi kanvasnya mencubit
+      sendiri tepat saat tangan mendarat, keadaan yang justru hendak dihindari.
+      Sekarang di mode itu sentuhan tangan tidak menyentuh apa pun: tidak
+      menggambar, tidak mencubit, tidak menggeser
+- [x] **Tombol zum (+/−) dan pas ke layar** (2026-09-29) — karena di mode
+      "Stylus saja" cubitan memang ikut dilepas, dan tanpa tombol tidak ada
+      jalan memperbesar
+- [x] **Benda yang baru ditaruh langsung terpilih** dan alatnya pindah ke Pilih
+      (2026-09-29): gambar, teks, dan diagram yang baru disisipkan dulu tidak
+      bisa digeser, diubah ukuran, diputar, atau dihapus sampai alatnya diganti
+      sendiri — dan tidak ada yang mengatakan bahwa itu yang kurang
 
 - [x] **Gambar di koleksi catatan bisa dibuka** (2026-09-29) — bisa diperbesar
       dua jari dan dibagikan. Sebelumnya ketukannya hanya menjawab "belum bisa

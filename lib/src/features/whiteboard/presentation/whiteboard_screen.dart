@@ -295,8 +295,8 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
             ),
             IconButton(
               tooltip: _finger
-                  ? 'Jari boleh menggambar — ketuk untuk hanya stylus'
-                  : 'Hanya stylus yang menggambar — telapak tangan diabaikan',
+                  ? 'Jari + stylus boleh menggambar — ketuk untuk hanya stylus'
+                  : 'Stylus saja — sentuhan tangan tidak menggambar apa pun',
               isSelected: !_finger,
               selectedIcon: const Icon(Icons.draw),
               icon: const Icon(Icons.touch_app_outlined),

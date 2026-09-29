@@ -113,4 +113,23 @@ void main() {
     final after = File(target).lengthSync();
     expect(after, lessThan(before * 2));
   });
+
+  test('halaman kosong bisa disisipkan di tengah, bukan hanya di akhir', () async {
+    // Menambahkan di akhir saja memaksa yang sedang menjelaskan melompat ke
+    // belakang dokumen, dan catatannya kehilangan tempat dalam ceritanya.
+    final source = makePdf('asal.pdf', 4);
+    final target = p.join(dir.path, 'sisip.pdf');
+
+    await PdfPageEditor.addBlankPages(source: source, target: target, count: 2, at: 2);
+
+    expect(PdfPageEditor.pageCount(source), 4, reason: 'asalnya tidak berubah');
+    expect(PdfPageEditor.pageCount(target), 6);
+  });
+
+  test('menyisipkan di awal juga boleh', () async {
+    final source = makePdf('asal.pdf', 2);
+    final target = p.join(dir.path, 'depan.pdf');
+    await PdfPageEditor.addBlankPages(source: source, target: target, at: 0);
+    expect(PdfPageEditor.pageCount(target), 3);
+  });
 }
