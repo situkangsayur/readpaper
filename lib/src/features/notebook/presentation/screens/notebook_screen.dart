@@ -124,6 +124,9 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   /// dijaga tetap di bawah jari selama mencubit.
   Offset _pinchScene = Offset.zero;
 
+  /// Tempat jari terakhir saat menggeser kanvas dengan satu jari.
+  Offset? _panFrom;
+
   /// Kotak pilih yang sedang ditarik, dalam koordinat lembar.
   Rect? _marquee;
 
@@ -216,31 +219,47 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     return box == null ? global : box.globalToLocal(global);
   }
 
-  /// Apakah sentuhan ini boleh menyentuh kanvas sama sekali.
+  /// Pembagian tugas antara stylus dan jari.
   ///
-  /// Di mode "Stylus saja" jawabannya tidak, dan itu berlaku untuk **semua**
-  /// hal: menggambar, mencubit, dan menggeser. Sebelumnya hanya menggambar yang
-  /// ditolak, sementara telapak tangan yang bertumpu tetap terhitung sebagai
-  /// jari kedua — jadi kanvasnya bergerak sendiri tepat saat tangan mendarat,
-  /// yang justru keadaan yang hendak dihindari.
-  bool _allowed(PointerEvent event) =>
-      _finger ||
-      event.kind == PointerDeviceKind.stylus ||
-      event.kind == PointerDeviceKind.invertedStylus ||
-      event.kind == PointerDeviceKind.mouse;
+  /// Di mode "Stylus saja": stylus **menggambar**, jari **menavigasi** — satu
+  /// jari menggeser, dua jari memperbesar. Sebelumnya jari dilarang menyentuh
+  /// apa pun di mode ini, dan akibatnya layar terasa beku: tidak bisa digeser,
+  /// tidak bisa diperbesar, tidak bisa apa-apa kecuali dengan stylus. Yang
+  /// sebenarnya dihindari cuma satu — telapak tangan meninggalkan garis — dan
+  /// itu sudah ditangani dengan membatasi **menggambar** pada stylus saja.
+  bool _navigates(PointerEvent event) =>
+      !_finger &&
+      (event.kind == PointerDeviceKind.touch || event.kind == PointerDeviceKind.unknown);
 
   void _onPointerDown(PointerDownEvent event) {
-    if (!_allowed(event)) return;
     _pointers[event.pointer] = event.position;
-    if (_pointers.length == 2) _startPinch();
+    if (_pointers.length >= 2) {
+      _startPinch();
+      return;
+    }
+    // Satu jari menggeser, tetapi tidak di tengah goresan yang sedang ditarik:
+    // yang sedang menulis dengan stylus tidak sedang meminta kertasnya bergeser.
+    if (_navigates(event) && _live.isEmpty) {
+      _panFrom = event.position;
+      return;
+    }
     _notePressure(event);
   }
 
   void _onPointerMove(PointerMoveEvent event) {
-    if (!_allowed(event)) return;
     _pointers[event.pointer] = event.position;
     if (_pointers.length >= 2) {
       _updatePinch();
+      return;
+    }
+
+    final from = _panFrom;
+    if (from != null && _navigates(event)) {
+      final delta = event.position - from;
+      _panFrom = event.position;
+      // Saat belum diperbesar, lembarnya sudah pas di layar dan menggesernya
+      // hanya membuat bingung.
+      if (_userScale > 1.001) setState(() => _userOffset += delta);
       return;
     }
     _notePressure(event);
@@ -249,6 +268,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   void _onPointerUp(PointerEvent event) {
     _pointers.remove(event.pointer);
     if (_pointers.length < 2) _pinchDistance = null;
+    if (_pointers.isEmpty) _panFrom = null;
   }
 
   /// Mulai mencubit: goresan yang sedang ditarik dibuang.
@@ -267,6 +287,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       _shapeFrom = null;
       _shapeTo = null;
       _marquee = null;
+      _panFrom = null;
       _pinchDistance = (a - b).distance;
       _pinchScale = _userScale;
       _pinchScene = (focus - _userOffset) / _userScale;
@@ -1631,10 +1652,10 @@ class _ModeChip extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Tooltip(
       message: finger
-          ? 'Jari dan stylus boleh menggambar. Ketuk untuk hanya stylus, supaya '
-                'telapak tangan tidak ikut menggambar.'
-          : 'Hanya stylus yang menggambar; telapak tangan diabaikan. Ketuk untuk '
-                'mengizinkan jari lagi.',
+          ? 'Jari dan stylus sama-sama menggambar. Ketuk untuk hanya stylus — '
+                'jari lalu dipakai menggeser dan memperbesar saja.'
+          : 'Stylus menggambar, jari menggeser dan memperbesar. Ketuk untuk '
+                'mengizinkan jari menggambar lagi.',
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () => onFinger(!finger),

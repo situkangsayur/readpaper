@@ -1260,6 +1260,27 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       tidak bisa jadi komponen teks tanpa pengenalan tata letak yang belum ada.
       Yang mau teksnya ikut terbaca memakai "Ubah ke Markdown"
 
+- [x] **Ganti warna tidak lagi mewarnai ulang coretan sebelumnya** (2026-09-29).
+      Satu anotasi `ink` Zotero menyimpan satu warna untuk semua jalurnya, jadi
+      selama coretan masih terkumpul di satu anotasi, mengganti warna berarti
+      mengganti warna semuanya. Sekarang mengganti warna — atau ketebalan —
+      menutup dulu anotasi yang sedang terkumpul, dan garis berikutnya mulai
+      anotasi baru dengan warna baru
+- [x] **Jari tetap milik halaman selama pena aktif** (2026-09-29), dalam mode
+      "Stylus saja": jari menggeser dan mencubit dokumen, stylus menulis. Ini
+      menuntut membalik tempat penangkapan goresan. Apa pun yang menerima
+      pointer **di depan** penampil PDF — `GestureDetector` maupun `Listener`,
+      sekalipun dibatasi ke stylus — membuat sentuhan jari tidak pernah sampai
+      ke penampilnya; terbukti di tablet: dokumennya sama sekali tidak bisa
+      digeser. Jadi lapisan tintanya tidak lagi menyentuh pointer sama sekali
+      (`IgnorePointer`, hanya melukis), dan goresan stylus ditangkap oleh
+      `Listener` yang **membungkus** penampil — ia hanya menyimak, tidak pernah
+      menghalangi. Titiknya dipetakan ke halaman lewat kotak halaman yang
+      dicatat saat lapisannya dibangun
+- [x] Goresan yang sedang ditarik **dicat ulang tanpa membangun ulang layar**
+      (2026-09-29): stylus mengirim titik seratus kali sedetik, dan `setState`
+      sebanyak itu terasa tersendat persis di saat kelancaran paling dibutuhkan
+
 ---
 
 ## Lintas fase — utang teknis

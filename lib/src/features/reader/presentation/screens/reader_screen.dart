@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
@@ -168,6 +169,25 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// yang menyajikan berdiri di depan orang, tidak sedang menggulir dengan
   /// hati-hati, dan satu ketukan di tepi layar harus berarti satu halaman.
   bool _presentMode = false;
+
+  /// Stylus sedang menggores; selama itu halaman tidak boleh ikut bergeser.
+  bool _stylusDrawing = false;
+
+  /// Kotak tiap halaman di layar, diperbarui saat lapisannya dibangun.
+  final Map<int, Rect> _pageRects = <int, Rect>{};
+
+  /// Ukuran tiap halaman dalam titik PDF, pasangan dari [_pageRects].
+  final Map<int, Size> _pageSizes = <int, Size>{};
+
+  /// Goresan stylus yang sedang ditarik, dalam koordinat kanvas halaman.
+  final List<Offset> _stylusLive = <Offset>[];
+
+  /// Ditambah setiap kali [_stylusLive] bertambah titik, supaya hanya kanvas
+  /// tintanya yang dicat ulang — bukan seluruh layar pembaca.
+  final ValueNotifier<int> _stylusTick = ValueNotifier<int>(0);
+
+  /// Halaman tempat goresan itu mendarat.
+  int? _stylusPage;
 
   /// Hanya stylus yang menggambar. Tangan yang bertumpu di layar tidak
   /// meninggalkan garis — itu penolak telapak tangan yang sebenarnya.
@@ -388,6 +408,26 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _pendingInk.clear();
       _inkPage = null;
     });
+  }
+
+  /// Mengganti pena di tengah menggambar: warna, tebal, atau keduanya.
+  ///
+  /// Goresan yang sudah ada **disimpan lebih dulu** sebagai gambar tersendiri.
+  /// Zotero menyimpan satu gambar tinta sebagai **satu** anotasi dengan satu
+  /// warna dan satu ketebalan, jadi tanpa ini mengganti warna di tengah jalan
+  /// mengubah warna seluruh coretan yang belum selesai — termasuk yang sudah
+  /// digambar dengan warna sebelumnya. Yang diharapkan orang sebaliknya:
+  /// coretan lama tetap seperti semula, yang baru memakai warna yang baru.
+  Future<void> _switchPen({String? color, double? width}) async {
+    if (_pendingInk.isNotEmpty) await _saveInk();
+    if (!mounted) return;
+    setState(() {
+      if (color != null) _color = color;
+      if (width != null) _inkWidth = width;
+    });
+    if (color != null) {
+      await ref.read(workspaceControllerProvider.notifier).setLastAnnotationColor(color);
+    }
   }
 
   /// Turns the strokes gathered so far into one Zotero `ink` annotation.
@@ -1334,13 +1374,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       icon: const Icon(Icons.draw_outlined),
       onPressed: _togglePen,
     ),
-    _ColorButton(
-      color: _color,
-      onSelected: (value) {
-        setState(() => _color = value);
-        ref.read(workspaceControllerProvider.notifier).setLastAnnotationColor(value);
-      },
-    ),
+    _ColorButton(color: _color, onSelected: (value) => _switchPen(color: value)),
     IconButton(
       tooltip: _textMode
           ? 'Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)'
@@ -1685,12 +1719,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           ),
                           _ColorButton(
                             color: _color,
-                            onSelected: (value) {
-                              setState(() => _color = value);
-                              ref
-                                  .read(workspaceControllerProvider.notifier)
-                                  .setLastAnnotationColor(value);
-                            },
+                            onSelected: (value) => _switchPen(color: value),
                           ),
                           TextButton(
                             onPressed: () => setState(() => _markerMode = false),
@@ -1720,7 +1749,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           ),
                           _WidthButton(
                             width: _inkWidth,
-                            onSelected: (value) => setState(() => _inkWidth = value),
+                            onSelected: (value) => _switchPen(width: value),
                           ),
                           _ColorButton(
                             color: _color,
@@ -1816,14 +1845,91 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
   }
 
+  /// Peristiwa ini milik pena stylus, bukan tangan.
+  ///
+  /// Tetikus ikut dihitung supaya layar ini masih bisa dicoba di desktop.
+  bool _drawsWithStylus(PointerEvent event) =>
+      _penMode &&
+      _stylusOnly &&
+      (event.kind == PointerDeviceKind.stylus ||
+          event.kind == PointerDeviceKind.invertedStylus ||
+          event.kind == PointerDeviceKind.mouse);
+
+  void _stylusDown(PointerDownEvent event) {
+    if (!_drawsWithStylus(event)) return;
+    for (final entry in _pageRects.entries) {
+      if (!entry.value.contains(event.localPosition)) continue;
+      _stylusLive
+        ..clear()
+        ..add(event.localPosition - entry.value.topLeft);
+      _stylusTick.value++;
+      setState(() {
+        _stylusPage = entry.key;
+        _stylusDrawing = true;
+      });
+      return;
+    }
+  }
+
+  void _stylusMove(PointerMoveEvent event) {
+    if (_stylusPage == null || !_drawsWithStylus(event)) return;
+    final rect = _pageRects[_stylusPage];
+    if (rect == null) return;
+    final local = event.localPosition - rect.topLeft;
+    // Titik yang lebih rapat dari ini tidak menambah bentuk, hanya menambah
+    // besar berkas — dan berkasnya masuk ke repositori seseorang.
+    if (_stylusLive.isNotEmpty && (_stylusLive.last - local).distance < 1.5) return;
+    _stylusLive.add(local);
+    _stylusTick.value++;
+  }
+
+  void _stylusFinish() {
+    if (_stylusPage == null && !_stylusDrawing) return;
+    final pageNumber = _stylusPage;
+    final rect = pageNumber == null ? null : _pageRects[pageNumber];
+    final size = pageNumber == null ? null : _pageSizes[pageNumber];
+    final points = List<Offset>.of(_stylusLive);
+    _stylusLive.clear();
+    _stylusTick.value++;
+    setState(() {
+      _stylusPage = null;
+      _stylusDrawing = false;
+    });
+    if (rect == null || size == null || points.length < 2) return;
+    if (rect.isEmpty || size.isEmpty) return;
+    final scaleX = rect.width / size.width;
+    final scaleY = rect.height / size.height;
+    final raw = <double>[];
+    for (final point in points) {
+      raw
+        ..add(point.dx / scaleX)
+        ..add(size.height - point.dy / scaleY);
+    }
+    _addStroke(pageNumber!, InkPath(raw));
+  }
+
   Widget _buildViewer(ColorScheme scheme) => Stack(
     children: <Widget>[
       // Listener only watches; it never claims the gesture, so the viewer's
       // own drag-to-select still runs underneath.
       Positioned.fill(
         child: Listener(
-          onPointerUp: (_) => _onMarkerPointerUp(),
-          onPointerCancel: (_) => _onMarkerPointerUp(),
+          // Goresan stylus ditangkap di sini, **di atas** penampil dan bukan di
+          // dalam lapisan tinta. Alasannya terbukti di tablet: apa pun yang
+          // menerima pointer di depan penampil membuat jari berhenti sampai ke
+          // sana, jadi dokumennya beku selama pena aktif. `Listener` yang
+          // membungkus penampil hanya menyimak — jari tetap menggeser halaman,
+          // stylus tetap menulis.
+          onPointerDown: _stylusDown,
+          onPointerMove: _stylusMove,
+          onPointerUp: (_) {
+            _onMarkerPointerUp();
+            _stylusFinish();
+          },
+          onPointerCancel: (_) {
+            _onMarkerPointerUp();
+            _stylusFinish();
+          },
           child: _tint.filter == null
               ? _buildPdf(scheme)
               : ColorFiltered(colorFilter: _tint.filter!, child: _buildPdf(scheme)),
@@ -2054,7 +2160,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // seperti slide bukan mengunci gerakannya, melainkan tata letak satu
       // halaman per layar di bawah — tetangganya sejauh satu layar penuh — dan
       // tombol "pas ke layar" yang selalu ada untuk kembali.
-      panEnabled: !_markerMode && !_penMode,
+      // Saat "Stylus saja" menyala, pena milik stylus dan **jari milik
+      // halaman**: menggeser dokumen tetap bisa sambil mencoret. Tanpa itu,
+      // menulis berarti dokumennya terkunci, dan satu-satunya cara berpindah
+      // adalah keluar dari mode pena dulu.
+      // Saat "Stylus saja" menyala, pena milik stylus dan **jari milik
+      // halaman**: menggeser dokumen tetap bisa sambil mencoret. Selama stylus
+      // benar-benar menggores, geseran dimatikan sebentar — kalau tidak,
+      // halamannya ikut bergeser di bawah pena.
+      panEnabled: !_markerMode && (!_penMode || (_stylusOnly && !_stylusDrawing)),
       scaleEnabled: true,
       // Saat menyajikan, tiap halaman diberi jarak setinggi halaman terpanjang.
       // Tanpa itu halaman sebelumnya dan berikutnya tetap menyembul di atas dan
@@ -2073,7 +2187,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         if (mounted) setState(() => _outline = outline);
         await _resumeAndRemember();
       },
-      pageOverlaysBuilder: (context, pageRect, page) => <Widget>[
+      pageOverlaysBuilder: (context, pageRect, page) {
+        // Kotak halaman di layar disimpan supaya goresan stylus yang ditangkap
+        // di atas viewer tahu ia mendarat di halaman mana, dan di titik mana.
+        _pageRects[page.pageNumber] = pageRect;
+        _pageSizes[page.pageNumber] = Size(page.width, page.height);
+        return <Widget>[
         Positioned.fill(
           child: IgnorePointer(
             child: CustomPaint(
@@ -2101,11 +2220,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               color: colorFromHex(_color),
               strokeWidth: _inkWidth,
               stylusOnly: _stylusOnly,
+              liveStroke: _stylusOnly && _stylusPage == page.pageNumber ? _stylusLive : null,
+              liveRepaint: _stylusTick,
               strokes: _inkPage == page.pageNumber ? _pendingInk : const <InkPath>[],
               onStrokeFinished: (stroke) => _addStroke(page.pageNumber, stroke),
             ),
           ),
-      ],
+      ];
+      },
       // Bilah gulir yang bisa diseret: paper 40 halaman tidak pantas
       // dijelajahi dengan sapuan jari satu layar demi satu layar.
       viewerOverlayBuilder: (context, size, handleLinkTap) => <Widget>[

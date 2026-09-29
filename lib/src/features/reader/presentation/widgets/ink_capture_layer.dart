@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../library/domain/entities/zotero_annotation.dart';
@@ -21,15 +20,35 @@ class InkCaptureLayer extends StatefulWidget {
     required this.strokes,
     required this.onStrokeFinished,
     this.stylusOnly = false,
+    this.liveStroke,
+    this.liveRepaint,
     super.key,
   });
 
   /// Hanya stylus yang boleh menggambar.
   ///
   /// Penolak telapak tangan yang sebenarnya: tangan yang bertumpu di layar
-  /// tidak meninggalkan garis, karena sentuhannya tidak pernah sampai ke
-  /// pengenal gerakannya.
+  /// tidak meninggalkan garis. Di mode ini goresan dibaca dari **peristiwa
+  /// pointer mentah**, bukan lewat `GestureDetector`, dan itu bukan selera:
+  /// `GestureDetector` ikut menghalangi sentuhan jari sampai ke pembaca PDF di
+  /// belakangnya — terbukti di tablet — walaupun pengenalnya sudah dibatasi ke
+  /// stylus saja. Akibatnya dokumen terasa beku: tidak bisa digeser sama sekali
+  /// selama pena aktif. `Listener` tidak ikut arena gerakan, jadi jari tetap
+  /// milik halaman.
   final bool stylusOnly;
+
+  /// Goresan yang sedang ditarik, dalam koordinat kanvas halaman.
+  ///
+  /// Diisi pemanggilnya saat goresannya ditangkap di atas viewer (mode stylus
+  /// saja); null berarti lapisan ini yang menangkapnya sendiri.
+  final List<Offset>? liveStroke;
+
+  /// Memberi tahu kanvas bahwa [liveStroke] bertambah satu titik.
+  ///
+  /// Goresan stylus datang seratus kali sedetik, dan membangun ulang layar
+  /// pembaca sebanyak itu terasa tersendat persis di saat kelancaran paling
+  /// dibutuhkan. Lewat jalur ini yang terjadi hanya satu pengecatan ulang.
+  final Listenable? liveRepaint;
 
   final double pageWidth;
   final double pageHeight;
@@ -82,38 +101,42 @@ class _InkCaptureLayerState extends State<InkCaptureLayer> {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       _size = constraints.biggest;
+      final canvas = CustomPaint(
+        size: _size,
+        painter: _InkPainter(
+          repaint: widget.liveRepaint,
+          live: widget.liveStroke ?? _live,
+          strokes: widget.strokes,
+          color: widget.color,
+          strokeWidth: widget.strokeWidth,
+          pageWidth: widget.pageWidth,
+          pageHeight: widget.pageHeight,
+        ),
+      );
+
+      // Saat hanya stylus yang menggambar, lapisan ini **tidak menyentuh
+      // pointer sama sekali**: goresannya ditangkap di atas viewer, dan yang
+      // tersisa di sini hanya melukis. Percobaan di tablet membuktikan
+      // sebabnya harus begitu — `GestureDetector` maupun `Listener` di posisi
+      // ini sama-sama membuat pembaca PDF berhenti menanggapi jari, jadi
+      // dokumennya tidak bisa digeser selama pena aktif.
+      if (widget.stylusOnly) return IgnorePointer(child: canvas);
+
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
-        // Tetikus ikut diizinkan, supaya layar tanpa stylus tetap bisa dipakai.
-        supportedDevices: widget.stylusOnly
-            ? const <PointerDeviceKind>{
-                PointerDeviceKind.stylus,
-                PointerDeviceKind.invertedStylus,
-                PointerDeviceKind.mouse,
-              }
-            : null,
         onPanStart: (d) => _add(d.localPosition),
         onPanUpdate: (d) => _add(d.localPosition),
         onPanEnd: (_) => _finish(),
         onPanCancel: _finish,
-        child: CustomPaint(
-          size: _size,
-          painter: _InkPainter(
-            live: _live,
-            strokes: widget.strokes,
-            color: widget.color,
-            strokeWidth: widget.strokeWidth,
-            pageWidth: widget.pageWidth,
-            pageHeight: widget.pageHeight,
-          ),
-        ),
+        child: canvas,
       );
     },
   );
 }
 
 class _InkPainter extends CustomPainter {
-  const _InkPainter({
+  _InkPainter({
+    super.repaint,
     required this.live,
     required this.strokes,
     required this.color,
