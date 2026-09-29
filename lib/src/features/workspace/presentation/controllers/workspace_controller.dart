@@ -614,6 +614,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(settings: settings);
   }
 
+  /// Menyalakan atau mematikan "hanya stylus yang menggambar".
+  Future<void> setStylusOnly(bool value) async {
+    final settings = await ref
+        .read(settingsRepositoryProvider)
+        .updatePreferences(stylusOnly: value);
+    state = state.copyWith(settings: settings);
+  }
+
   /// Records that a paper was opened, and at which page it was left.
   Future<void> rememberRecent(RecentPaper entry) async {
     final settings = await ref.read(settingsRepositoryProvider).rememberRecent(entry);

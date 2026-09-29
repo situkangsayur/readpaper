@@ -170,7 +170,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   /// Hanya stylus yang menggambar. Tangan yang bertumpu di layar tidak
   /// meninggalkan garis — itu penolak telapak tangan yang sebenarnya.
-  bool _stylusOnly = false;
+  ///
+  /// Nilainya diambil dari setelan dan disimpan balik: ini sifat perangkatnya,
+  /// bukan pilihan sesaat, dan memilihnya ulang setiap kali membuka dokumen
+  /// adalah cara tercepat membuat orang berhenti memakainya.
+  late bool _stylusOnly = ref.read(workspaceControllerProvider).settings.stylusOnly;
+
+  void _setStylusOnly(bool value) {
+    setState(() => _stylusOnly = value);
+    ref.read(workspaceControllerProvider.notifier).setStylusOnly(value);
+    _say(
+      value
+          ? 'Stylus saja: tangan yang bertumpu tidak akan menggambar.'
+          : 'Jari dan stylus dua-duanya boleh menggambar.',
+    );
+  }
 
   /// Tint applied over the page while reading.
   PageTint _tint = PageTint.none;
@@ -435,9 +449,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _presentMode ? SystemUiMode.immersive : SystemUiMode.edgeToEdge,
     );
     if (_presentMode) {
-      // Satu putaran bingkai supaya tata letaknya sudah tanpa bilah saat
-      // ukurannya dihitung; kalau tidak, halamannya pas ke layar yang lama.
-      WidgetsBinding.instance.addPostFrameCallback((_) => _fitCurrentPage());
+      // Dua kali, dan itu bukan kelebihan hati-hati: tata letak mode menyajikan
+      // baru berlaku setelah viewer-nya disusun ulang, dan pemasangan yang
+      // dilakukan sebelum itu memakai tata letak yang lama — halaman pertama
+      // mendarat terlalu ke atas dan terlalu kecil. Yang kedua membetulkannya.
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await _fitCurrentPage();
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+        if (mounted && _presentMode) await _fitCurrentPage();
+      });
     }
   }
 
@@ -449,10 +469,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final layouts = <Rect>[];
     var y = gap / 2;
     for (final page in pages) {
-      layouts.add(Rect.fromLTWH((width - page.width) / 2 + gap / 2, y, page.width, page.height));
+      layouts.add(Rect.fromLTWH((width - page.width) / 2, y, page.width, page.height));
       y += page.height + gap;
     }
-    return PdfPageLayout(pageLayouts: layouts, documentSize: Size(width + gap, y + gap / 2));
+    // Lebarnya **tidak** dilebihkan. Dokumen yang lebih lebar dari halamannya
+    // membuat pemasangan awal memilih zum yang mengecilkan halaman — halaman
+    // pertama mendarat kecil dengan ruang gelap di sekelilingnya, dan itu
+    // keluhan yang sudah terbukti.
+    return PdfPageLayout(pageLayouts: layouts, documentSize: Size(width, y + gap / 2));
   }
 
   /// Memasang halaman yang sedang dilihat pas di layar.
@@ -462,7 +486,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// bawah adalah kalimat yang hilang.
   Future<void> _fitCurrentPage() async {
     if (!_controller.isReady) return;
-    await _controller.goToPage(pageNumber: _currentPage, anchor: PdfPageAnchor.all);
+
+    // Lewat `goToArea`, bukan `goToPage`: `goToPage` membatasi zumnya pada zum
+    // yang sedang berlaku (`zoomMax: _currentZoom` di dalam pdfrx), jadi
+    // halaman yang sedang kecil tidak pernah bisa membesar untuk memenuhi
+    // layar. Yang diminta "pas satu halaman ke layar" memang harus boleh
+    // memperbesar.
+    try {
+      final rect = _controller.layout.pageLayouts[_currentPage - 1];
+      await _controller.goToArea(rect: rect.inflate(6), anchor: PdfPageAnchor.all);
+    } on Object {
+      await _controller.goToPage(pageNumber: _currentPage, anchor: PdfPageAnchor.all);
+    }
   }
 
   /// Pindah [delta] halaman, berhenti di ujungnya.
@@ -676,7 +711,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   /// Saves the annotated PDF wherever the platform allows.
-  Future<void> _savePdf() => _canWriteInPlace ? _saveOverOriginal() : _savePdfThroughDialog();
+  Future<void> _savePdf() async {
+    // Goresan yang belum jadi anotasi ikut disimpan lebih dulu. Tanpa ini,
+    // menyimpan sambil pena masih aktif menghasilkan berkas tanpa coretan yang
+    // baru saja dibuat — dan yang menyimpannya tidak akan tahu sampai
+    // membukanya lagi.
+    if (_pendingInk.isNotEmpty) await _saveInk();
+    if (!mounted) return;
+    await (_canWriteInPlace ? _saveOverOriginal() : _savePdfThroughDialog());
+  }
 
   /// Writes the PDF through the system save dialog.
   Future<void> _savePdfThroughDialog() async {
@@ -1376,14 +1419,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       isSelected: _stylusOnly,
       selectedIcon: const Icon(Icons.do_not_touch_outlined),
       icon: const Icon(Icons.touch_app_outlined),
-      onPressed: () {
-        setState(() => _stylusOnly = !_stylusOnly);
-        _say(
-          _stylusOnly
-              ? 'Stylus saja: tangan yang bertumpu tidak akan menggambar.'
-              : 'Jari dan stylus dua-duanya boleh menggambar.',
-        );
-      },
+      onPressed: () => _setStylusOnly(!_stylusOnly),
     ),
     IconButton(
       // Dulu hanya ada di dalam menu simpan, dan di situ tidak ada yang
@@ -1771,6 +1807,22 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     ),
                     const VerticalDivider(width: 10, indent: 8, endIndent: 8),
                     IconButton(
+                      tooltip: 'Perkecil',
+                      icon: const Icon(Icons.zoom_out),
+                      onPressed: () => _controller.zoomDown(),
+                    ),
+                    IconButton(
+                      tooltip: 'Perbesar',
+                      icon: const Icon(Icons.zoom_in),
+                      onPressed: () => _controller.zoomUp(),
+                    ),
+                    IconButton(
+                      tooltip: 'Pas satu halaman ke layar',
+                      icon: const Icon(Icons.fit_screen_outlined),
+                      onPressed: _fitCurrentPage,
+                    ),
+                    const VerticalDivider(width: 10, indent: 8, endIndent: 8),
+                    IconButton(
                       tooltip: _penMode ? 'Selesai menggambar' : 'Coret-coret di halaman',
                       isSelected: _penMode,
                       selectedIcon: const Icon(Icons.draw),
@@ -1781,9 +1833,37 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                     // ada, dan mencari urungkan berarti keluar dari mode
                     // menyajikan di depan orang.
                     IconButton(
-                      tooltip: 'Urungkan',
+                      // Saat masih menggambar, yang diurungkan adalah **goresan
+                      // terakhir** — bukan seluruh gambar. Garis nyasar dari
+                      // telapak tangan harus bisa dibuang sendiri, tanpa
+                      // membuang semua yang sudah ditulis di halaman itu.
+                      tooltip: _pendingInk.isNotEmpty
+                          ? 'Urungkan goresan terakhir'
+                          : 'Urungkan',
                       icon: const Icon(Icons.undo),
-                      onPressed: _undoSteps.isEmpty ? null : _undoLast,
+                      onPressed: _pendingInk.isNotEmpty
+                          ? _undoStroke
+                          : (_undoSteps.isEmpty ? null : _undoLast),
+                    ),
+                    IconButton(
+                      tooltip: _stylusOnly
+                          ? 'Stylus saja — sentuhan tangan tidak menggambar'
+                          : 'Jari + stylus — ketuk untuk stylus saja',
+                      isSelected: _stylusOnly,
+                      selectedIcon: const Icon(Icons.do_not_touch_outlined),
+                      icon: const Icon(Icons.touch_app_outlined),
+                      onPressed: () => _setStylusOnly(!_stylusOnly),
+                    ),
+                    IconButton(
+                      // Menyimpan dari dalam mode menyajikan: coretan yang
+                      // dibuat saat menjelaskan sering justru yang paling
+                      // berharga, dan sebelumnya harus keluar dulu untuk
+                      // menyimpannya — kalau ingat.
+                      tooltip: _canWriteInPlace
+                          ? 'Simpan ke berkas ini'
+                          : 'Simpan sebagai PDF',
+                      icon: const Icon(Icons.save_outlined),
+                      onPressed: _savePdf,
                     ),
                     IconButton(
                       tooltip: 'Tambah lembar kosong untuk dicoreti',
@@ -1880,8 +1960,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // Saat menyajikan, gulir dan cubit dilepas sama sekali: yang menyajikan
       // ingin satu halaman penuh layar yang berganti, bukan dokumen panjang
       // yang bisa tergeser setengah halaman karena tangan menyenggol.
-      panEnabled: !_markerMode && !_penMode && !_presentMode,
-      scaleEnabled: !_presentMode,
+      // Menyajikan tetap boleh diperbesar dan digeser: yang menyajikan sering
+      // perlu menunjuk satu rumus atau satu sel tabel. Yang membuatnya terasa
+      // seperti slide bukan mengunci gerakannya, melainkan tata letak satu
+      // halaman per layar di bawah — tetangganya sejauh satu layar penuh — dan
+      // tombol "pas ke layar" yang selalu ada untuk kembali.
+      panEnabled: !_markerMode && !_penMode,
+      scaleEnabled: true,
       // Saat menyajikan, tiap halaman diberi jarak setinggi halaman terpanjang.
       // Tanpa itu halaman sebelumnya dan berikutnya tetap menyembul di atas dan
       // di bawah — dan yang menyajikan tidak sedang memamerkan dua slide

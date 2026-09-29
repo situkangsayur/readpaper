@@ -160,6 +160,7 @@ class AppSettings {
     this.lastAnnotationColor = AnnotationPalette.yellow,
     this.recents = const <RecentPaper>[],
     this.keepScreenOn = false,
+    this.stylusOnly = false,
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -175,6 +176,7 @@ class AppSettings {
         if (entry is Map) RecentPaper.fromJson(entry.cast<String, dynamic>()),
     ],
     keepScreenOn: json['keepScreenOn'] as bool? ?? false,
+    stylusOnly: json['stylusOnly'] as bool? ?? false,
   );
 
   final List<RepoProfile> profiles;
@@ -192,6 +194,13 @@ class AppSettings {
   /// aplikasi untuk semua orang.
   final bool keepScreenOn;
 
+  /// Hanya stylus yang boleh menggambar di halaman.
+  ///
+  /// Disimpan karena ini sifat perangkatnya, bukan pilihan sesaat: yang
+  /// memakai tablet dengan stylus akan memilihnya sekali dan berharap tetap
+  /// begitu besok.
+  final bool stylusOnly;
+
   RepoProfile? get activeProfile {
     if (profiles.isEmpty) return null;
     for (final profile in profiles) {
@@ -207,6 +216,7 @@ class AppSettings {
     'lastAnnotationColor': lastAnnotationColor,
     'recents': recents.map((r) => r.toJson()).toList(),
     'keepScreenOn': keepScreenOn,
+    'stylusOnly': stylusOnly,
   };
 
   AppSettings copyWith({
@@ -216,6 +226,7 @@ class AppSettings {
     String? lastAnnotationColor,
     List<RecentPaper>? recents,
     bool? keepScreenOn,
+    bool? stylusOnly,
     bool clearActive = false,
   }) => AppSettings(
     profiles: profiles ?? this.profiles,
@@ -224,6 +235,7 @@ class AppSettings {
     lastAnnotationColor: lastAnnotationColor ?? this.lastAnnotationColor,
     recents: recents ?? this.recents,
     keepScreenOn: keepScreenOn ?? this.keepScreenOn,
+    stylusOnly: stylusOnly ?? this.stylusOnly,
   );
 
   /// Puts [entry] at the front, replacing any earlier visit to the same file.

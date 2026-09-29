@@ -1106,6 +1106,34 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
 
 ### Pembaca
 
+- [x] **Halaman pertama mode menyajikan terpasang di tengah dan penuh layar**
+      (2026-09-29). Dua sebab, keduanya terukur: dokumennya dulu dibuat lebih
+      lebar dari halamannya sehingga pemasangan awal memilih zum yang
+      mengecilkan, dan `goToPage` di pdfrx membatasi zumnya pada zum yang sedang
+      berlaku (`zoomMax: _currentZoom`) sehingga halaman yang sudah kecil tidak
+      pernah bisa membesar. Sekarang lewat `goToArea` pada kotak halamannya, dan
+      pemasangannya diulang sekali setelah tata letaknya benar-benar berlaku
+- [x] **Zum tetap ada di mode menyajikan** (2026-09-29): cubitan diizinkan lagi,
+      plus tombol perkecil/perbesar/pas-ke-layar di bilahnya. Yang membuatnya
+      terasa seperti slide bukan mengunci gerakan, melainkan tata letak satu
+      halaman per layar dan tombol "pas ke layar" yang selalu ada
+- [x] **Urungkan saat menyajikan membuang goresan terakhir**, bukan seluruh
+      gambar (2026-09-29). Garis nyasar dari telapak tangan dulu hanya bisa
+      dibuang dengan mengurungkan semuanya, karena seluruh coretan di satu
+      halaman jadi satu anotasi
+- [x] **Sakelar "Stylus saja" ada juga di mode menyajikan**, dan nilainya
+      **disimpan** (2026-09-29) — ini sifat perangkatnya, bukan pilihan sesaat,
+      dan memilihnya ulang setiap kali membuka dokumen adalah cara tercepat
+      membuat orang berhenti memakainya
+- [x] **Menyimpan bisa dari dalam mode menyajikan** (2026-09-29): ke berkas itu
+      sendiri atau sebagai PDF baru. Coretan yang dibuat saat menjelaskan
+      sering justru yang paling berharga, dan sebelumnya harus keluar dulu untuk
+      menyimpannya — kalau ingat
+- [x] Goresan yang belum jadi anotasi ikut disimpan lebih dulu (2026-09-29):
+      menyimpan sambil pena masih aktif dulu menghasilkan berkas tanpa coretan
+      yang baru dibuat
+
+
 - [x] **Tombol hapus anotasi bekerja untuk PDF yang dibuka lepas** (2026-09-29).
       Sebabnya satu pagar `item == null` di pembungkus konfirmasinya: PDF dari
       panel berkas, dari koleksi catatan, atau lewat "buka dengan" tidak punya

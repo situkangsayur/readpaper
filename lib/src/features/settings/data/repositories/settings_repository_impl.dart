@@ -62,12 +62,14 @@ class SettingsRepositoryImpl implements SettingsRepository {
     String? themeMode,
     String? lastAnnotationColor,
     bool? keepScreenOn,
+    bool? stylusOnly,
   }) async {
     final settings = await _local.load();
     final updated = settings.copyWith(
       themeMode: themeMode,
       lastAnnotationColor: lastAnnotationColor,
       keepScreenOn: keepScreenOn,
+      stylusOnly: stylusOnly,
     );
     await _local.save(updated);
     return updated;
