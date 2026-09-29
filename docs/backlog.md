@@ -1106,6 +1106,16 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
 
 ### Pembaca
 
+- [x] **PDF hasil suntingan bisa disimpan ke folder kerja** (2026-09-29) — folder
+      yang sama dengan tempat papan tulis dan PDF yang disalin masuk tinggal,
+      beserta sub-foldernya. Sebelumnya di Android satu-satunya jalan adalah
+      dialog simpan sistem, dan berkas yang keluar dari sana tidak pernah muncul
+      lagi di panel berkas: "sudah disimpan" tetapi tidak ketemu. Dialog sistem
+      tetap ada sebagai pilihan "Tempat lain…"
+- [x] Satu definisi folder kerja dipakai bersama panel berkas dan setiap layar
+      yang menyimpan (2026-09-29) — sebelumnya tiap tempat menghitungnya sendiri
+
+
 - [x] **Halaman pertama mode menyajikan terpasang di tengah dan penuh layar**
       (2026-09-29). Dua sebab, keduanya terukur: dokumennya dulu dibuat lebih
       lebar dari halamannya sehingga pemasangan awal memilih zum yang

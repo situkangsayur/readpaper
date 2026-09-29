@@ -17,6 +17,7 @@ import '../../../../app/theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/formatting.dart';
 import '../../../../core/utils/layout_size.dart';
+import '../../../../core/utils/work_folder.dart';
 import '../../../../core/utils/zotero_key.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
@@ -718,7 +719,86 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     // membukanya lagi.
     if (_pendingInk.isNotEmpty) await _saveInk();
     if (!mounted) return;
-    await (_canWriteInPlace ? _saveOverOriginal() : _savePdfThroughDialog());
+    await (_canWriteInPlace ? _saveOverOriginal() : _savePdfSomewhere());
+  }
+
+  /// Menanyakan ke mana PDF hasil suntingan disimpan.
+  ///
+  /// Sebelumnya di Android satu-satunya jalan adalah dialog sistem, dan berkas
+  /// yang keluar dari sana tidak pernah muncul lagi di panel berkas — "sudah
+  /// disimpan" tetapi tidak ketemu. Folder kerja ditawarkan lebih dulu karena
+  /// di situlah papan tulis dan PDF yang disalin masuk tinggal, dan dari situ
+  /// berkasnya bisa langsung diseret ke sebuah koleksi.
+  Future<void> _savePdfSomewhere() async {
+    final folders = await WorkFolder.choices();
+    if (!mounted) return;
+
+    final chosen = await showModalBottomSheet<Object>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Text(
+                'Simpan PDF ke mana?',
+                style: Theme.of(sheet).textTheme.titleMedium,
+              ),
+            ),
+            for (final folder in folders)
+              ListTile(
+                dense: true,
+                leading: const Icon(Icons.folder_outlined),
+                title: Text(WorkFolder.label(folder)),
+                subtitle: const Text('muncul di panel berkas, bisa diseret ke koleksi'),
+                onTap: () => Navigator.of(sheet).pop(folder),
+              ),
+            const Divider(height: 12),
+            ListTile(
+              dense: true,
+              leading: const Icon(Icons.save_as_outlined),
+              title: const Text('Tempat lain…'),
+              subtitle: const Text('lewat dialog simpan bawaan sistem'),
+              onTap: () => Navigator.of(sheet).pop('dialog'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (chosen == null || !mounted) return;
+    if (chosen == 'dialog') {
+      await _savePdfThroughDialog();
+      return;
+    }
+    await _savePdfIntoFolder(chosen as Directory);
+  }
+
+  /// Menulis PDF beranotasi ke dalam folder kerja.
+  Future<void> _savePdfIntoFolder(Directory folder) async {
+    _say('Menyiapkan PDF…');
+    try {
+      final bytes = await _annotatedPdf();
+      final file = WorkFolder.freshFile(folder, '${_fileStem(widget.title)}-terisi', '.pdf');
+      await file.writeAsBytes(bytes, flush: true);
+      if (!mounted) return;
+      setState(() => _unsaved = false);
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 6),
+            content: Text(
+              'Tersimpan: ${p.basename(file.path)} di ${WorkFolder.label(folder)} '
+              '(${_size(bytes.length)})',
+            ),
+          ),
+        );
+    } on Object catch (e) {
+      _say('Gagal menyimpan: $e');
+    }
   }
 
   /// Writes the PDF through the system save dialog.

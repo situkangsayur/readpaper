@@ -4,9 +4,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 import '../../../core/utils/layout_size.dart';
+import '../../../core/utils/work_folder.dart';
 import '../../../shared/widgets/tree_drag.dart';
 import '../../markdown/presentation/screens/markdown_editor_screen.dart';
 import '../../notebook/data/note_document_store.dart';
@@ -53,12 +53,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
 
   /// Folder kerja bawaan: satu tempat milik aplikasi, supaya berkas yang
   /// disimpan dari dalam ReadPaper tidak tersebar.
-  Future<void> _openDefault() async {
-    final base = await getApplicationDocumentsDirectory();
-    final dir = Directory(p.join(base.path, 'readpaper'));
-    if (!dir.existsSync()) await dir.create(recursive: true);
-    await _open(dir);
-  }
+  Future<void> _openDefault() async => _open(await WorkFolder.dir());
 
   Future<void> _open(Directory dir) async {
     try {
