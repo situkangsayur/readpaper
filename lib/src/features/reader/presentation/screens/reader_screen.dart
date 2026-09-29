@@ -189,6 +189,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// Halaman tempat goresan itu mendarat.
   int? _stylusPage;
 
+  /// Pointer milik stylus yang sedang menggores.
+  ///
+  /// Wajib diingat, dan ini bukan kerapian: telapak tangan yang bertumpu di
+  /// layar — persis keadaan yang hendak dilayani mode "Stylus saja" — mengirim
+  /// pointer-nya sendiri, turun dan naik berkali-kali selama tangan bergerak.
+  /// Tanpa membedakan pointer, **setiap telapak yang terangkat mengakhiri
+  /// goresan yang sedang ditarik**; yang baru satu dua titik dibuang begitu
+  /// saja, dan geseran halaman menyala lagi di tengah tulisan. Itulah sebabnya
+  /// stylusnya terasa kadang jalan kadang tidak.
+  int? _stylusPointer;
+
   /// Hanya stylus yang menggambar. Tangan yang bertumpu di layar tidak
   /// meninggalkan garis — itu penolak telapak tangan yang sebenarnya.
   ///
@@ -1751,14 +1762,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                             width: _inkWidth,
                             onSelected: (value) => _switchPen(width: value),
                           ),
+                          // Lewat _switchPen, sama seperti tombol warna di
+                          // bilah atas: inilah tombol yang benar-benar dipakai
+                          // orang **sambil** menggambar, dan mengganti warna di
+                          // sini tanpa menutup goresan yang sedang terkumpul
+                          // akan mewarnai ulang semuanya.
                           _ColorButton(
                             color: _color,
-                            onSelected: (value) {
-                              setState(() => _color = value);
-                              ref
-                                  .read(workspaceControllerProvider.notifier)
-                                  .setLastAnnotationColor(value);
-                            },
+                            onSelected: (value) => _switchPen(color: value),
                           ),
                           IconButton(
                             tooltip: 'Urungkan goresan terakhir',
@@ -1856,7 +1867,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           event.kind == PointerDeviceKind.mouse);
 
   void _stylusDown(PointerDownEvent event) {
-    if (!_drawsWithStylus(event)) return;
+    // Satu goresan satu pointer. Stylus kedua — atau pantulan pena yang
+    // terbaca dua kali — tidak boleh membajak goresan yang sedang berjalan.
+    if (_stylusPointer != null || !_drawsWithStylus(event)) return;
     for (final entry in _pageRects.entries) {
       if (!entry.value.contains(event.localPosition)) continue;
       _stylusLive
@@ -1865,6 +1878,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _stylusTick.value++;
       setState(() {
         _stylusPage = entry.key;
+        _stylusPointer = event.pointer;
         _stylusDrawing = true;
       });
       return;
@@ -1872,7 +1886,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   void _stylusMove(PointerMoveEvent event) {
-    if (_stylusPage == null || !_drawsWithStylus(event)) return;
+    if (event.pointer != _stylusPointer || _stylusPage == null) return;
     final rect = _pageRects[_stylusPage];
     if (rect == null) return;
     final local = event.localPosition - rect.topLeft;
@@ -1883,8 +1897,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _stylusTick.value++;
   }
 
-  void _stylusFinish() {
-    if (_stylusPage == null && !_stylusDrawing) return;
+  void _stylusFinish(PointerEvent event) {
+    // Telapak tangan yang terangkat bukan pena yang diangkat.
+    if (event.pointer != _stylusPointer) return;
     final pageNumber = _stylusPage;
     final rect = pageNumber == null ? null : _pageRects[pageNumber];
     final size = pageNumber == null ? null : _pageSizes[pageNumber];
@@ -1893,6 +1908,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _stylusTick.value++;
     setState(() {
       _stylusPage = null;
+      _stylusPointer = null;
       _stylusDrawing = false;
     });
     if (rect == null || size == null || points.length < 2) return;
@@ -1922,13 +1938,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           // stylus tetap menulis.
           onPointerDown: _stylusDown,
           onPointerMove: _stylusMove,
-          onPointerUp: (_) {
+          onPointerUp: (event) {
             _onMarkerPointerUp();
-            _stylusFinish();
+            _stylusFinish(event);
           },
-          onPointerCancel: (_) {
+          onPointerCancel: (event) {
             _onMarkerPointerUp();
-            _stylusFinish();
+            _stylusFinish(event);
           },
           child: _tint.filter == null
               ? _buildPdf(scheme)

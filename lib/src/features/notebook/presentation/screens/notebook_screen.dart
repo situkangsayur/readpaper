@@ -231,7 +231,16 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       !_finger &&
       (event.kind == PointerDeviceKind.touch || event.kind == PointerDeviceKind.unknown);
 
+  /// Ada goresan, bangun ruang, atau kotak pilih yang sedang ditarik.
+  bool get _drawingNow => _live.isNotEmpty || _shapeFrom != null || _marquee != null;
+
   void _onPointerDown(PointerDownEvent event) {
+    // Tangan yang mendarat **selagi pena menulis** tidak berarti apa-apa: ia
+    // telapak yang bertumpu, bukan permintaan mencubit. Tanpa penjagaan ini
+    // jari kedua memicu [_startPinch], dan yang dibersihkannya adalah goresan
+    // yang sedang ditarik — tulisannya hilang tepat saat tangan menyentuh
+    // kertas, yang persis keadaan normal saat menulis dengan stylus.
+    if (_navigates(event) && _drawingNow) return;
     _pointers[event.pointer] = event.position;
     if (_pointers.length >= 2) {
       _startPinch();
@@ -247,6 +256,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   }
 
   void _onPointerMove(PointerMoveEvent event) {
+    // Pointer yang ditolak saat mendarat tetap ditolak selama bergerak.
+    if (!_pointers.containsKey(event.pointer)) return;
     _pointers[event.pointer] = event.position;
     if (_pointers.length >= 2) {
       _updatePinch();

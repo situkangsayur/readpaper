@@ -1281,6 +1281,23 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       (2026-09-29): stylus mengirim titik seratus kali sedetik, dan `setState`
       sebanyak itu terasa tersendat persis di saat kelancaran paling dibutuhkan
 
+- [x] **Telapak tangan tidak lagi memutus goresan stylus** (2026-09-29). Bug
+      yang membuat stylusnya terasa "kadang jalan kadang tidak": penangkap
+      goresan mengakhiri goresan pada **setiap** pointer yang terangkat, bukan
+      hanya pointer milik stylus. Telapak tangan yang bertumpu di layar —
+      justru keadaan yang dilayani mode "Stylus saja" — turun dan naik
+      berkali-kali selama tangan bergerak, jadi tiap kali itu terjadi goresan
+      yang sedang ditarik dipotong, dan yang baru satu dua titik dibuang.
+      Akibat lanjutannya: karena goresannya tidak pernah mendarat,
+      `_pendingInk` tetap kosong sehingga **tombol Urungkan dan tong sampah di
+      bilah pena ikut mati** — terlihat ada, tidak bisa ditekan. Sekarang
+      goresan terikat pada satu pointer, dan hanya pointer itu yang
+      mengakhirinya
+- [x] **Tombol warna di bilah pena ikut menutup goresan** (2026-09-29).
+      Perbaikan "ganti warna tidak mewarnai ulang coretan lama" sebelumnya
+      hanya mengenai tombol warna di bilah atas; tombol di bilah pena — yang
+      justru dipakai sambil menggambar — masih mengganti `_color` langsung
+
 ---
 
 ## Lintas fase — utang teknis
