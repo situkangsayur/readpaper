@@ -1,0 +1,96 @@
+name: Windows
+
+# Windows tidak bisa dibangun dari Linux: `flutter build windows` menuntut
+# Visual Studio dan toolchain MSVC, dan tidak ada jalur silang yang didukung.
+# Jadi satu-satunya cara jujur adalah membangunnya di mesin Windows sungguhan,
+# dan itulah yang dilakukan alur kerja ini.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag rilis yang akan dilampiri hasilnya (kosongkan untuk hanya membangun)'
+        required: false
+        default: ''
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.5'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Diperiksa di sini juga, bukan hanya di CI Linux: paket yang berbeda
+      # per platform bisa membuat kode yang sehat di satu sisi gagal di sisi
+      # lain, dan itu harus ketahuan sebelum .exe-nya terbit.
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      - name: Build
+        run: flutter build windows --release
+
+      - name: Versi
+        id: versi
+        shell: bash
+        run: echo "v=$(grep -m1 '^version:' pubspec.yaml | sed 's/^version:[[:space:]]*//; s/+.*//')" >> "$GITHUB_OUTPUT"
+
+      # Yang dibungkus adalah seluruh isi folder Release: readpaper.exe tidak
+      # berjalan tanpa `data/` dan DLL di sebelahnya — termasuk pdfium.dll,
+      # mesin yang membaca PDF-nya.
+      - name: Bungkus jadi zip portabel
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.versi.outputs.v }}"
+          $src = "build/windows/x64/runner/Release"
+          $out = "dist/readpaper-$ver-windows-x64"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          Copy-Item -Path "$src/*" -Destination $out -Recurse
+          Copy-Item -Path "LICENSE" -Destination $out
+          @"
+          # ReadPaper $ver — Windows x64
+
+          Portabel: jalankan ``readpaper.exe`` dari folder ini. Tidak ada yang
+          dipasang, tidak ada yang ditulis ke registry.
+
+          Windows SmartScreen akan memperingatkan karena berkasnya tidak
+          ditandatangani secara digital — sertifikat penandatangan kode berbayar,
+          dan aplikasi ini gratis. Pilih **More info → Run anyway**.
+
+          Isi folder ini harus tetap bersama: ``readpaper.exe`` tidak berjalan
+          tanpa folder ``data`` dan DLL di sebelahnya.
+          "@ | Out-File -FilePath "$out/PASANG.md" -Encoding utf8
+          Compress-Archive -Path $out -DestinationPath "dist/readpaper-$ver-windows-x64.zip"
+          Get-ChildItem dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: readpaper-windows-x64
+          path: dist/*.zip
+          if-no-files-found: error
+
+      # Dilampirkan ke rilis hanya kalau memang ada tag-nya. Membangun tanpa
+      # merilis tetap berguna: itu yang membuktikan Windows belum patah.
+      - name: Lampirkan ke rilis
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ inputs.release_tag }}"
+          [ -n "$tag" ] || tag="${GITHUB_REF_NAME}"
+          ver="${{ steps.versi.outputs.v }}"
+          gh release upload "$tag" \
+            "dist/readpaper-$ver-windows-x64.zip#ReadPaper $ver (Windows x64, portabel)" \
+            --clobber
