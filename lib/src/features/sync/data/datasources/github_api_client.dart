@@ -86,7 +86,34 @@ class GitHubApiClient {
   ///
   /// Without this a locked phone screen freezes the socket and the download
   /// hangs for good instead of failing and retrying.
+  ///
+  /// Ini batas untuk permintaan **kecil**. Mengunggah berkas besar memakai
+  /// [timeoutForBytes], karena tiga puluh detik adalah batas yang masuk akal
+  /// untuk membaca satu daftar, dan sama sekali tidak masuk akal untuk
+  /// mengunggah buku tiga puluh megabita.
   final Duration timeout;
+
+  /// Berapa lama sebuah unggahan sebesar [bytes] boleh berjalan.
+  ///
+  /// Satu buku PDF tiga puluh megabita menjadi empat puluh megabita setelah
+  /// disandikan base64. Menghabiskannya dalam tiga puluh detik menuntut
+  /// sebelas megabit per detik yang bertahan penuh — angka yang tidak dimiliki
+  /// tablet di jaringan biasa. Yang terjadi kemudian bukan pesan yang
+  /// menjelaskan, melainkan "koneksi terputus" setelah tiga kali mencoba dari
+  /// awal, yang terdengar seperti jaringan rusak padahal batas waktunya yang
+  /// keliru.
+  ///
+  /// Jatahnya: waktu dasar, ditambah satu menit untuk tiap megabita yang
+  /// dikirim. Itu setara dengan 140 kbit/detik — cukup lambat untuk memaafkan
+  /// jaringan yang buruk, dan tetap berbatas supaya soket yang benar-benar mati
+  /// tidak menggantung selamanya.
+  Duration timeoutForBytes(int bytes) {
+    final megabytes = bytes / (1024 * 1024);
+    final allowance = timeout + Duration(seconds: (megabytes * 60).round());
+    return allowance > _maxUploadTimeout ? _maxUploadTimeout : allowance;
+  }
+
+  static const Duration _maxUploadTimeout = Duration(minutes: 45);
 
   /// Attempts per request, for failures worth retrying (timeout, socket drop,
   /// 5xx, secondary rate limit).
@@ -163,13 +190,30 @@ class GitHubApiClient {
     return response.bodyBytes;
   }
 
+  /// Batas GitHub untuk satu blob lewat API git data.
+  ///
+  /// Di atas ini permintaannya ditolak, dan menolaknya lebih dulu di sini jauh
+  /// lebih berguna daripada mengunggah empat puluh menit untuk mendapat 4xx.
+  static const int maxBlobBytes = 100 * 1024 * 1024;
+
   Future<String> createBlob(List<int> content) async {
-    final response = await _post(_uri('/git/blobs'), <String, dynamic>{
-      'content': base64Encode(content),
-      'encoding': 'base64',
-    });
+    if (content.length > maxBlobBytes) {
+      throw GitFailure(
+        'Berkasnya ${_megabytes(content.length)} MB, di atas batas 100 MB yang '
+        'diterima API GitHub untuk satu berkas. Kirimkan lewat git biasa di '
+        'komputer, atau simpan lampirannya di luar repositori.',
+      );
+    }
+    final response = await _post(
+      _uri('/git/blobs'),
+      <String, dynamic>{'content': base64Encode(content), 'encoding': 'base64'},
+      // Base64 menambah sepertiga, dan itu yang benar-benar dikirim.
+      timeoutOverride: timeoutForBytes(content.length * 4 ~/ 3),
+    );
     return (jsonDecode(response.body) as Map<String, dynamic>)['sha'] as String;
   }
+
+  static String _megabytes(int bytes) => (bytes / (1024 * 1024)).toStringAsFixed(1);
 
   /// Creates a tree on top of [baseTreeSha]; only [entries] are changed.
   ///
@@ -224,8 +268,12 @@ class GitHubApiClient {
   Future<http.Response> _get(Uri uri, {String accept = 'application/vnd.github+json'}) =>
       _send(() => _client.get(uri, headers: _headers(accept: accept)), uri);
 
-  Future<http.Response> _post(Uri uri, Map<String, dynamic> body) =>
-      _send(() => _client.post(uri, headers: _headers(), body: jsonEncode(body)), uri);
+  Future<http.Response> _post(Uri uri, Map<String, dynamic> body, {Duration? timeoutOverride}) =>
+      _send(
+        () => _client.post(uri, headers: _headers(), body: jsonEncode(body)),
+        uri,
+        timeoutOverride: timeoutOverride,
+      );
 
   Future<http.Response> _patch(Uri uri, Map<String, dynamic> body) =>
       _send(() => _client.patch(uri, headers: _headers(), body: jsonEncode(body)), uri);
@@ -234,11 +282,16 @@ class GitHubApiClient {
   ///
   /// A write that GitHub rejected is never retried: only transport faults and
   /// server-side hiccups are, so a commit is not applied twice.
-  Future<http.Response> _send(Future<http.Response> Function() attempt, Uri uri) async {
+  Future<http.Response> _send(
+    Future<http.Response> Function() attempt,
+    Uri uri, {
+    Duration? timeoutOverride,
+  }) async {
+    final limit = timeoutOverride ?? timeout;
     Object? lastError;
     for (var tries = 1; tries <= maxAttempts; tries++) {
       try {
-        final response = await attempt().timeout(timeout);
+        final response = await attempt().timeout(limit);
         if (_isRetryableStatus(response.statusCode) && tries < maxAttempts) {
           await Future<void>.delayed(_backoff(tries));
           continue;

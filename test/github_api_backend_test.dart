@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:path/path.dart' as p;
+import 'package:readpaper/src/core/errors/failure.dart';
 import 'package:readpaper/src/features/sync/data/datasources/github_api_backend.dart';
 import 'package:readpaper/src/features/sync/data/datasources/github_api_client.dart';
 import 'package:readpaper/src/features/sync/data/datasources/github_sync_state.dart';
@@ -164,6 +165,52 @@ void main() {
         'https://git.example.com/api/v3',
       );
       expect(GitHubRepoRef.parse('bukan-url'), isNull);
+    });
+  });
+
+  group('batas waktu unggahan', () {
+    GitHubApiClient client() => GitHubApiClient(
+      ref: GitHubRepoRef.parse(remote)!,
+      token: 'x',
+      client: server.client,
+    );
+
+    test('permintaan kecil tetap memakai batas waktu yang pendek', () {
+      // Membaca satu daftar tidak pantas menunggu lama; kalau diam, ia memang
+      // tersangkut.
+      expect(client().timeoutForBytes(0), const Duration(seconds: 30));
+    });
+
+    test('unggahan besar diberi waktu sebanding dengan ukurannya', () {
+      // Satu buku tiga puluh megabita tidak akan pernah selesai dalam tiga
+      // puluh detik dari tablet di jaringan biasa, dan yang terjadi kemudian
+      // bukan pesan yang menjelaskan melainkan "koneksi terputus" setelah tiga
+      // kali mencoba dari awal.
+      const tigaPuluhMB = 30 * 1024 * 1024;
+      final jatah = client().timeoutForBytes(tigaPuluhMB);
+      expect(jatah.inMinutes, greaterThanOrEqualTo(30));
+    });
+
+    test('tetap berbatas, supaya soket yang mati tidak menggantung selamanya', () {
+      const duaGigabita = 2 * 1024 * 1024 * 1024;
+      expect(client().timeoutForBytes(duaGigabita), const Duration(minutes: 45));
+    });
+
+    test('berkas di atas batas GitHub ditolak sebelum diunggah', () async {
+      // Mengunggah empat puluh menit untuk mendapat penolakan di ujungnya
+      // adalah cara terburuk menyampaikan kabar yang sudah bisa diketahui di
+      // awal.
+      final terlaluBesar = List<int>.filled(GitHubApiClient.maxBlobBytes + 1, 0);
+      await expectLater(
+        client().createBlob(terlaluBesar),
+        throwsA(
+          isA<GitFailure>().having(
+            (e) => e.message,
+            'pesan',
+            allOf(contains('100 MB'), contains('git biasa')),
+          ),
+        ),
+      );
     });
   });
 
