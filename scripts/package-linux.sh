@@ -133,9 +133,33 @@ for size in 16 24 32 48 64 128 256 512; do
 done
 cp LICENSE "$deb/usr/share/doc/readpaper/copyright"
 
-# Nama paket GTK berganti di Ubuntu 24.04 (transisi time_t 64-bit), jadi
-# keduanya disebut sebagai pilihan. Tanpa itu paketnya menolak dipasang di
-# salah satu dari dua dunia yang sama-sama "turunan Debian".
+# Dependensinya dihitung, tidak ditebak.
+#
+# Daftar yang ditulis tangan sebelumnya menyebut "libgtk-3-0t64 | libgtk-3-0"
+# tanpa versi, dan akibatnya apt dengan senang hati memasangnya di Debian 12 —
+# lalu aplikasinya mati saat dijalankan dengan "undefined symbol:
+# g_once_init_enter_pointer", simbol yang baru ada di glib 2.80. Diuji di
+# kontainer Debian 12, bukan ditemukan oleh pemakainya.
+#
+# `dpkg-shlibdeps` membaca simbol yang benar-benar dipakai binernya dan
+# menghasilkan syarat versi yang tepat. Kalau sistemnya terlalu tua, apt
+# menolak memasang dengan alasan yang jelas — jauh lebih baik daripada
+# memasang lalu gagal.
+shlibwork="$(mktemp -d)"
+mkdir -p "$shlibwork/debian"
+printf 'Source: readpaper\n\nPackage: readpaper\nArchitecture: amd64\n' \
+  > "$shlibwork/debian/control"
+computed="$(cd "$shlibwork" && dpkg-shlibdeps -O --ignore-missing-info \
+  -l"$payload/lib" "$payload/readpaper" "$payload"/lib/*.so 2>/dev/null \
+  | sed 's/^shlibs:Depends=//')"
+rm -rf "$shlibwork"
+[ -n "$computed" ] || { echo "GAGAL: dpkg-shlibdeps tidak menghasilkan apa-apa"; exit 1; }
+
+# Yang tidak bisa dilihat dpkg-shlibdeps: Flutter membuka libEGL.so.1 dan
+# libGLESv2.so.2 dengan dlopen saat berjalan, bukan menautnya. Keduanya tidak
+# muncul di `ldd` sama sekali, jadi tidak ada satu pun perkakas yang bisa
+# menemukannya sendiri — ketahuannya waktu aplikasinya mati di kontainer
+# Ubuntu 24.04 yang bersih dengan "Couldn't open libEGL.so.1".
 cat > "$deb/DEBIAN/control" <<CONTROL
 Package: readpaper
 Version: $version
@@ -143,7 +167,8 @@ Section: science
 Priority: optional
 Architecture: amd64
 Maintainer: Hendri Karisma <situkangsayur@gmail.com>
-Depends: libgtk-3-0t64 | libgtk-3-0, libglib2.0-0t64 | libglib2.0-0, libstdc++6, libc6 (>= 2.35)
+Depends: $computed, libegl1, libgles2
+Recommends: libgl1-mesa-dri, fonts-dejavu-core
 Homepage: https://github.com/situkangsayur/readpaper
 Description: Pembaca dan penganotasi paper dari library Zotero
  ReadPaper membaca library Zotero yang disinkronkan ke git: menelusuri koleksi,

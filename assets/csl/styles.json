@@ -1,0 +1,78 @@
+{
+  "source": {
+    "styles": "https://raw.githubusercontent.com/citation-style-language/styles/master",
+    "locales": "https://raw.githubusercontent.com/citation-style-language/locales/master"
+  },
+  "note": "Dikelola oleh scripts/csl-style.py. Jangan disunting tangan.",
+  "styles": [
+    {
+      "id": "american-medical-association",
+      "file": "styles/american-medical-association.csl",
+      "title": "AMA Manual of Style 11th edition",
+      "kind": "independent",
+      "format": "numeric"
+    },
+    {
+      "id": "apa",
+      "file": "styles/apa.csl",
+      "title": "APA Style 7th edition",
+      "kind": "independent",
+      "format": "author-date"
+    },
+    {
+      "id": "chicago-author-date",
+      "file": "styles/chicago-author-date.csl",
+      "title": "Chicago Manual of Style 18th edition (author-date)",
+      "kind": "independent",
+      "format": "author-date"
+    },
+    {
+      "id": "harvard-cite-them-right",
+      "file": "styles/harvard-cite-them-right.csl",
+      "title": "Cite Them Right 12th edition (author-date/Harvard)",
+      "kind": "independent",
+      "format": "author-date"
+    },
+    {
+      "id": "ieee",
+      "file": "styles/ieee.csl",
+      "title": "IEEE Reference Guide version 11.29.2023",
+      "kind": "independent",
+      "format": "numeric"
+    },
+    {
+      "id": "modern-language-association",
+      "file": "styles/modern-language-association.csl",
+      "title": "MLA Handbook 9th edition (in-text citations)",
+      "kind": "independent",
+      "format": "author"
+    },
+    {
+      "id": "nlm-citation-sequence",
+      "file": "styles/nlm-citation-sequence.csl",
+      "title": "NLM/Vancouver: Citing Medicine 2nd edition (citation-sequence)",
+      "kind": "independent",
+      "format": "numeric"
+    },
+    {
+      "id": "vancouver-ama",
+      "file": "styles/vancouver-ama.csl",
+      "title": "Vancouver - AMA",
+      "kind": "dependent",
+      "format": "numeric",
+      "parent": "american-medical-association"
+    },
+    {
+      "id": "vancouver-nlm",
+      "file": "styles/vancouver-nlm.csl",
+      "title": "Vancouver - NLM (citation-sequence)",
+      "kind": "dependent",
+      "format": "numeric",
+      "parent": "nlm-citation-sequence"
+    }
+  ],
+  "locales": [
+    "en-US",
+    "id-ID"
+  ]
+}

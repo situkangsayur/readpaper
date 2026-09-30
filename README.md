@@ -34,8 +34,8 @@ for the library repository.
 
 | File | For | Size |
 | --- | --- | --- |
-| `readpaper-<version>-linux-x64.tar.gz` | Anything: unpack and run `./readpaper` | 16 MB |
-| `readpaper_<version>_amd64.deb` | Debian, Ubuntu, Mint, Pop!_OS, … | 13 MB |
+| `readpaper-<version>-linux-x64.tar.gz` | Anything, Arch and CachyOS included: unpack and run `./readpaper` | 16 MB |
+| `readpaper_<version>_amd64.deb` | Debian 12+, Ubuntu 22.04+, Mint, Pop!_OS | 12 MB |
 | `PKGBUILD` | Arch, CachyOS, Manjaro, EndeavourOS | — |
 
 ```sh
@@ -51,9 +51,16 @@ cd readpaper-<version>-linux-x64 && ./readpaper
 ```
 
 It needs GTK 3.24 and the usual desktop libraries — nothing else. **No Java
-runtime**: the JNI library that Flutter builds for every platform is stripped
-out of the package, and `scripts/package-linux.sh` fails the build if anything
-ever links against a JVM again.
+runtime**: `path_provider_android` 2.3.0 started pulling in the `jni` FFI
+plugin, which Flutter then builds for every platform, so the package is pinned
+to 2.2.23 and `pubspec.lock` has no `jni` at all.
+
+The packages are built **inside a Debian 12 container**
+(`scripts/build-linux-in-debian12.sh`), not on the Ubuntu 24.04 development
+machine: a binary built there installs on Debian 12 and then dies with
+`undefined symbol: g_once_init_enter_pointer`. Every release is installed and
+**actually run** under Xvfb in Debian 12, Ubuntu 22.04, Ubuntu 24.04 and Arch
+containers by `scripts/test-linux-packages.sh` before it ships.
 
 The desktop build exists because word processors do. Citation plugins for
 OnlyOffice, LibreOffice and Word talk to ReadPaper running on the same machine,

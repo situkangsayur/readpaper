@@ -431,8 +431,8 @@ sitasi menyusul.
 
 | Bentuk | Untuk | Cara pasang |
 |---|---|---|
-| `.tar.gz` | apa saja | dibongkar, jalankan `./readpaper` |
-| `.deb` | turunan Debian | `apt install ./readpaper_*.deb` |
+| `.tar.gz` | apa saja, termasuk Arch dan CachyOS | dibongkar, jalankan `./readpaper` |
+| `.deb` | Debian 12+, Ubuntu 22.04+ | `apt install ./readpaper_*.deb` |
 | `PKGBUILD` | Arch, CachyOS | `makepkg -si` |
 
 Tiga hal yang perlu diingat kalau skrip itu disentuh:
@@ -447,13 +447,62 @@ tepat di sebelah binernya, jadi seluruhnya duduk di `/opt/readpaper` dan
 sebagai pilihan (`libgtk-3-0t64 | libgtk-3-0`); menyebut satu saja berarti
 menolak dipasang di separuh dunia turunan Debian.
 
-**Tidak ada JVM.** `path_provider_android` adalah plugin FFI, dan plugin FFI
-dibangun untuk setiap platform — termasuk Linux, tempat ia tidak pernah
-dipanggil karena yang dipakai `path_provider_linux`. Tetapi `libdartjni.so`
-tertaut ke `libjvm.so`, jadi membiarkannya berarti paket ini seolah menuntut
-Java. Berkas itu dibuang dari muatannya, dan skripnya memeriksa sendiri dengan
-`ldd`: kalau suatu hari ada paket yang menyeret Java masuk lagi, paketannya
-gagal alih-alih diam-diam menuntut JVM di mesin orang lain.
+**Tidak ada JVM, dan bukan dengan membuangnya belakangan.**
+`path_provider_android` 2.3.0 mulai memakai paket `jni`, dan `jni` adalah
+plugin FFI — Flutter membangunnya untuk **setiap** platform, termasuk Linux
+tempat ia tidak pernah dipanggil karena yang dipakai `path_provider_linux`.
+Akibatnya dua, dan keduanya terbukti: `libdartjni.so` ikut ke dalam bundel
+sambil tertaut ke `libjvm.so`, dan `ninja` berhenti dengan "libjvm.so missing"
+saat dibangun di kontainer Debian 12 yang bersih — artinya membangun ReadPaper
+untuk Linux menuntut JDK terpasang.
+
+Jalan keluarnya di akarnya: `path_provider_android` dipin ke **2.2.23**, rilis
+terakhir sebelum perubahan itu, lewat `dependency_overrides`. Sekarang tidak
+ada `jni` sama sekali di `pubspec.lock`, dan daftar plugin FFI Linux kosong.
+Pemeriksaan `ldd` di skrip paketan tetap ada sebagai jaring pengaman.
+
+### Dibangun di Debian 12, bukan di mesin pengembangan
+
+Mesin pengembangannya Ubuntu 24.04, dan itu bukan tempat yang netral. Ubuntu
+24.04 membawa transisi `time_t` 64-bit: nama paketnya berakhiran `t64` dan
+glib-nya 2.80. Biner yang dibangun di sana **terpasang** di Debian 12 lalu
+mati seketika dengan `undefined symbol: g_once_init_enter_pointer` — simbol
+yang baru ada di glib 2.80, sementara Debian 12 membawa 2.74.
+
+`scripts/build-linux-in-debian12.sh` membangunnya di dalam kontainer Debian 12
+dengan Flutter yang dipasang **di dalam citra** (SDK yang ditumpangkan dari
+luar membuat artefak dua sistem bercampur, dan galatnya menyesatkan: "Offset
+isn't defined", yang terdengar seperti salah kode padahal salah lingkungan).
+Sumbernya disalin masuk, bukan disunting di tempat, supaya `.dart_tool` milik
+mesin pengembangan tidak ikut ditulisi.
+
+Hasilnya berjalan di Debian 12 ke atas **dan** Ubuntu 22.04 ke atas, karena
+glibc dan glib menjaga kompatibilitas maju.
+
+### Dependensinya dihitung, dan ada satu yang tidak bisa dihitung
+
+`dpkg-shlibdeps` membaca simbol yang benar-benar dipakai binernya dan
+menghasilkan syarat versi yang tepat. Daftar yang ditulis tangan sebelumnya
+menyebut `libgtk-3-0t64 | libgtk-3-0` tanpa versi, dan apt dengan senang hati
+memasangnya di sistem yang terlalu tua.
+
+Satu hal yang **tidak bisa** ditemukan perkakas mana pun: Flutter membuka
+`libEGL.so.1` dan `libGLESv2.so.2` dengan `dlopen` saat berjalan, bukan
+menautnya. Keduanya tidak muncul di `ldd` sama sekali. Ketahuannya waktu
+aplikasinya mati di kontainer Ubuntu 24.04 yang bersih dengan "Couldn't open
+libEGL.so.1", jadi `libegl1` dan `libgles2` ditulis tangan di `Depends`.
+
+### Diuji di distribusinya, bukan diandaikan
+
+`scripts/test-linux-packages.sh` memasang dan **menjalankan** paketnya di
+dalam kontainer Debian 12, Ubuntu 22.04, Ubuntu 24.04, dan Arch, masing-masing
+di bawah Xvfb. Kode keluar 124 — `timeout` yang menghentikannya — berarti
+aplikasinya masih hidup saat waktu habis; kode lain berarti ia berhenti
+sendiri, dan itu kegagalan.
+
+Dua bug di atas ditemukan oleh skrip ini, bukan oleh pemakainya. Mesin
+pengembangan punya segalanya; kontainer yang bersih tidak, dan itu justru
+gunanya.
 
 Windows dan macOS belum ada. Keduanya tidak bisa dibangun dari Linux — masing-
 masing menuntut mesinnya sendiri — jadi jalurnya lewat CI, dan itu dikerjakan

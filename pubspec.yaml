@@ -1,7 +1,7 @@
 name: readpaper
 description: "ReadPaper — Zotero-style paper reader with GitHub sync, highlights and comments. Free software, AGPL-3.0-or-later."
 publish_to: 'none'
-version: 0.22.0+40
+version: 0.22.1+41
 
 environment:
   sdk: ^3.10.0
@@ -50,6 +50,20 @@ dependencies:
   # Menulis PDF dengan teks sungguhan — dipakai ekspor Markdown → PDF,
   # yang hasilnya harus tetap bisa dicari dan disalin.
   pdf: ^3.13.1
+# Menjauhkan JVM dari seluruh pohon paket.
+#
+# path_provider_android 2.3.0 mulai memakai paket `jni`, dan `jni` adalah
+# plugin FFI — Flutter membangunnya untuk **setiap** platform, termasuk Linux
+# tempat ia tidak pernah dipanggil karena yang dipakai path_provider_linux.
+# Dua akibatnya nyata dan sudah terbukti: membangun ReadPaper untuk Linux jadi
+# menuntut JDK terpasang (ninja berhenti dengan "libjvm.so missing" di
+# kontainer Debian 12 yang bersih), dan bundelnya membawa libdartjni.so yang
+# tertaut ke libjvm.so sehingga paketnya seolah menuntut Java di mesin
+# pemakainya. 2.2.23 adalah rilis terakhir sebelum perubahan itu, dan di
+# Android ia bekerja persis sama.
+dependency_overrides:
+  path_provider_android: 2.2.23
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -57,3 +71,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Gaya dan locale CSL, dikelola oleh scripts/csl-style.py. Ikut ke dalam
+  # aplikasi supaya sitasi bisa dirender tanpa jaringan — yang sedang menulis
+  # di pesawat tetap butuh daftar pustakanya.
+  assets:
+    - assets/csl/styles.json
+    - assets/csl/styles/
+    - assets/csl/locales/
