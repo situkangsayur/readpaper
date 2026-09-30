@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/errors/failure.dart';
@@ -203,7 +204,11 @@ class GitHubApiBackend implements GitBackend {
       }
       final stat = file.statSync();
       if (stat.size == entry.value.size &&
-          stat.modified.millisecondsSinceEpoch == entry.value.mtimeMs) {
+          stat.modified.millisecondsSinceEpoch == entry.value.mtimeMs &&
+          !isRacilyClean(
+            knownMtimeMs: entry.value.mtimeMs,
+            stateFileMtimeMs: state.savedFileMtimeMs,
+          )) {
         continue;
       }
       if (gitBlobShaOfFile(file) != entry.value.sha) {
@@ -220,6 +225,27 @@ class GitHubApiBackend implements GitBackend {
     changes.sort((a, b) => a.path.compareTo(b.path));
     return changes;
   }
+
+  /// Berkas yang "bersih karena balapan" — istilah git untuk keadaan ini.
+  ///
+  /// Pemeriksaan murah membandingkan ukuran dan waktu ubah, dan itu bisa
+  /// salah: berkas yang disunting **di dalam detak jam berkas yang sama**
+  /// dengan saat catatan sinkronisasi ditulis akan punya waktu ubah yang
+  /// persis sama. Kalau ukurannya kebetulan juga sama — `{"a":1}` menjadi
+  /// `{"a":2}` — perubahannya tidak pernah terlihat, dan yang menulisnya
+  /// mengira sudah tersimpan.
+  ///
+  /// Di Linux waktu ubahnya sehalus nanodetik sehingga tabrakan itu hampir
+  /// tidak pernah terjadi; di Windows jauh lebih kasar, dan runner-nya
+  /// menangkapnya sebagai dua tes merah: perubahan yang tidak terdeteksi, dan
+  /// push yang tidak menolak padahal GitHub sudah maju.
+  ///
+  /// Jadi berkas yang waktu ubahnya tidak lebih tua dari berkas catatan itu
+  /// sendiri selalu dibaca isinya, tidak dipercaya begitu saja. Keduanya
+  /// berasal dari jam berkas yang sama, jadi perbandingannya setara.
+  @visibleForTesting
+  static bool isRacilyClean({required int knownMtimeMs, required int stateFileMtimeMs}) =>
+      stateFileMtimeMs != 0 && knownMtimeMs >= stateFileMtimeMs;
 
   /// Jalur relatif terhadap akar repositori, dalam bentuk yang dipakai git.
   ///

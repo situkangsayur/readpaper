@@ -208,6 +208,40 @@ void main() {
   });
 
   group('status', () {
+    test('berkas yang bersih karena balapan selalu dibaca ulang isinya', () {
+      // Pemeriksaan murah "ukuran dan waktu ubahnya sama" bisa salah kalau
+      // berkasnya disunting di dalam detak jam berkas yang sama dengan saat
+      // catatan sinkronisasi ditulis. Di Linux waktu ubahnya sehalus
+      // nanodetik sehingga hampir tidak pernah bertabrakan; di Windows jauh
+      // lebih kasar, dan runner-nya menangkapnya sebagai dua tes merah —
+      // perubahan yang tidak terdeteksi, dan push yang tidak menolak padahal
+      // GitHub sudah maju. Aturannya diuji langsung supaya tidak bergantung
+      // pada kehalusan jam mesin yang menjalankan tes ini.
+      const catatan = 1000;
+
+      // Lebih tua dari catatannya: aman dipercaya.
+      expect(
+        GitHubApiBackend.isRacilyClean(knownMtimeMs: 999, stateFileMtimeMs: catatan),
+        isFalse,
+      );
+      // Sedetak dengan catatannya: tidak bisa dibedakan, harus dibaca.
+      expect(
+        GitHubApiBackend.isRacilyClean(knownMtimeMs: 1000, stateFileMtimeMs: catatan),
+        isTrue,
+      );
+      // Lebih baru dari catatannya: jelas harus dibaca.
+      expect(
+        GitHubApiBackend.isRacilyClean(knownMtimeMs: 1001, stateFileMtimeMs: catatan),
+        isTrue,
+      );
+      // Catatan lama yang waktunya tidak diketahui: perilakunya seperti dulu,
+      // bukan tiba-tiba membaca ulang seluruh library.
+      expect(
+        GitHubApiBackend.isRacilyClean(knownMtimeMs: 5000, stateFileMtimeMs: 0),
+        isFalse,
+      );
+    });
+
     test('reports files edited since the last sync', () async {
       await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
 
