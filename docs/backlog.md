@@ -413,6 +413,35 @@ Tujuan: menulis di Word/LibreOffice/OnlyOffice/Google Docs, menekan satu
 tombol, mencari referensi di library ReadPaper, dan sitasi beserta daftar
 pustakanya masuk ke dokumen — dengan ReadPaper berjalan sebagai sumbernya.
 
+### Dua aturan yang mengikat seluruh rancangan
+
+Keduanya datang dari memakai Zotero dan Mendeley bertahun-tahun, bukan dari
+membaca dokumentasinya (dicatat 2026-09-30):
+
+1. **Daftar pustaka diturunkan dari dokumen, tidak pernah ditimbun.**
+   Keluhannya persis: "ketika sitasi dikurangi atau sitasi satu reference
+   sudah tidak ada, di daftar reference masih ada". Itu kelas bug yang lahir
+   dari menyimpan daftar "item yang disitasi" di samping dokumen, lalu
+   berharap daftar itu tetap sejalan dengan isi dokumen. Ia tidak akan pernah
+   tetap sejalan — penulis menghapus paragraf, membatalkan perubahan, menempel
+   dari dokumen lain.
+
+   Jadi ReadPaper tidak boleh punya daftar seperti itu sama sekali. Setiap
+   kali daftar pustaka dibangun, dokumennya **dipindai** dari awal, medan
+   sitasinya dikumpulkan, dan daftar pustakanya dibuat **hanya** dari yang
+   benar-benar ditemukan. Item yang sitasinya sudah tidak ada tidak bisa
+   tertinggal, karena tidak ada tempat untuk tertinggal. Satu-satunya
+   pengecualian adalah item yang sengaja ditandai "masuk daftar pustaka tanpa
+   disitasi", dan penandanya pun disimpan **di dalam dokumen**, bukan di luar.
+
+2. **Menyisipkan sitasi harus terasa ringan.** "Cara Zotero insert citasi
+   masih agak berat, tapi lebih ringan dibanding Mendeley." Ukurannya bukan
+   selera: dialognya harus muncul dan siap diketik dalam sepersekian detik,
+   pencariannya berjalan sambil mengetik tanpa menunggu, dan menyisipkan satu
+   sitasi tidak boleh menunggu seluruh dokumen dibangun ulang. Pembangunan
+   ulang daftar pustaka — yang memang memindai seluruh dokumen — adalah
+   perintah tersendiri, bukan ekor dari setiap penyisipan.
+
 ### 10.1 Fondasi: ReadPaper sebagai server lokal
 - [ ] API lokal di `127.0.0.1` (HTTP + WebSocket) yang hanya hidup selama
       ReadPaper berjalan, dilindungi token yang dibuat per pemasangan.

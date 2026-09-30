@@ -1,7 +1,7 @@
 name: readpaper
 description: "ReadPaper — Zotero-style paper reader with GitHub sync, highlights and comments. Free software, AGPL-3.0-or-later."
 publish_to: 'none'
-version: 0.21.1+39
+version: 0.22.0+40
 
 environment:
   sdk: ^3.10.0
@@ -35,6 +35,9 @@ dependencies:
 
   # Menulis JPG; dart:ui hanya bisa PNG
   image: ^4.5.4
+
+  # Membaca gaya dan locale CSL, yang berbentuk XML
+  xml: ^7.0.1
 
   # Utils
   collection: ^1.19.1

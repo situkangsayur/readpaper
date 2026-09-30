@@ -24,13 +24,40 @@ outside the Zotero export.*
 
 | File | Platform | Size |
 | --- | --- | --- |
-| `readpaper-v0.1.6-arm64.apk` | Android 7.0+, arm64 · phone and tablet | 25 MB |
+| `readpaper-<version>-arm64.apk` | Android 7.0+, arm64 · phone and tablet | 29 MB |
 
 It is signed with a debug key, so Android warns about an unknown source on
 install. Sync needs a GitHub fine-grained token with *Contents: read and write*
 for the library repository.
 
-**Linux desktop** — build from source, see [Running it](#running-it).
+**Linux desktop, x86-64** — three shapes, from the same release:
+
+| File | For | Size |
+| --- | --- | --- |
+| `readpaper-<version>-linux-x64.tar.gz` | Anything: unpack and run `./readpaper` | 16 MB |
+| `readpaper_<version>_amd64.deb` | Debian, Ubuntu, Mint, Pop!_OS, … | 13 MB |
+| `PKGBUILD` | Arch, CachyOS, Manjaro, EndeavourOS | — |
+
+```sh
+# Debian and derivatives
+sudo apt install ./readpaper_<version>_amd64.deb
+
+# Arch and derivatives (CachyOS included)
+makepkg -si          # in the folder holding PKGBUILD
+
+# Anywhere else
+tar xzf readpaper-<version>-linux-x64.tar.gz
+cd readpaper-<version>-linux-x64 && ./readpaper
+```
+
+It needs GTK 3.24 and the usual desktop libraries — nothing else. **No Java
+runtime**: the JNI library that Flutter builds for every platform is stripped
+out of the package, and `scripts/package-linux.sh` fails the build if anything
+ever links against a JVM again.
+
+The desktop build exists because word processors do. Citation plugins for
+OnlyOffice, LibreOffice and Word talk to ReadPaper running on the same machine,
+so it has to be installable there first.
 
 ## What it does today
 

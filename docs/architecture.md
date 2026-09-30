@@ -416,3 +416,45 @@ $XDG_DATA_HOME/readpaper/            (default ~/.local/share/readpaper)
 Berpindah repositori = mengganti `activeProfileId`. Karena tiap profil punya
 folder clone sendiri, perpindahan antar repo yang sudah pernah di-clone terjadi
 seketika.
+
+---
+
+## Desktop: satu basis kode, tiga bentuk paket
+
+ReadPaper dibangun untuk Android **dan** Linux desktop dari basis kode yang
+sama. Desktop bukan pelengkap: penyunting dokumen — OnlyOffice, LibreOffice,
+Word — hidup di sana, dan sitasi hanya bisa disisipkan kalau sumbernya berjalan
+di mesin yang sama. Jadi urutannya memang begitu: desktop dulu, penyambung
+sitasi menyusul.
+
+`scripts/package-linux.sh` menghasilkan tiga bentuk dari satu bundel:
+
+| Bentuk | Untuk | Cara pasang |
+|---|---|---|
+| `.tar.gz` | apa saja | dibongkar, jalankan `./readpaper` |
+| `.deb` | turunan Debian | `apt install ./readpaper_*.deb` |
+| `PKGBUILD` | Arch, CachyOS | `makepkg -si` |
+
+Tiga hal yang perlu diingat kalau skrip itu disentuh:
+
+**Muatannya tidak dipecah.** Bundel Flutter menuntut `data/` dan `lib/` berada
+tepat di sebelah binernya, jadi seluruhnya duduk di `/opt/readpaper` dan
+`/usr/bin/readpaper` hanya symlink. Menyebarnya ke `/usr/lib` dan
+`/usr/share` menuntut tambalan jalur pencarian pustaka tanpa untung apa pun.
+
+**Nama paket GTK ada dua.** Ubuntu 24.04 mengganti `libgtk-3-0` jadi
+`libgtk-3-0t64` karena transisi `time_t` 64-bit. Paketnya menyebut keduanya
+sebagai pilihan (`libgtk-3-0t64 | libgtk-3-0`); menyebut satu saja berarti
+menolak dipasang di separuh dunia turunan Debian.
+
+**Tidak ada JVM.** `path_provider_android` adalah plugin FFI, dan plugin FFI
+dibangun untuk setiap platform — termasuk Linux, tempat ia tidak pernah
+dipanggil karena yang dipakai `path_provider_linux`. Tetapi `libdartjni.so`
+tertaut ke `libjvm.so`, jadi membiarkannya berarti paket ini seolah menuntut
+Java. Berkas itu dibuang dari muatannya, dan skripnya memeriksa sendiri dengan
+`ldd`: kalau suatu hari ada paket yang menyeret Java masuk lagi, paketannya
+gagal alih-alih diam-diam menuntut JVM di mesin orang lain.
+
+Windows dan macOS belum ada. Keduanya tidak bisa dibangun dari Linux — masing-
+masing menuntut mesinnya sendiri — jadi jalurnya lewat CI, dan itu dikerjakan
+setelah penyambung sitasi di Linux terbukti.
