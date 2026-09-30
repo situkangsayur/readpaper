@@ -161,7 +161,15 @@ Tujuan: menjawab "siapa pengarangnya" dan "apa detail buku/paper ini".
 - [ ] Pengayaan metadata dari DOI (Crossref / OpenAlex) untuk item yang datanya kosong
 - [ ] Ekstraksi metadata dari isi PDF ketika item tidak punya metadata sama sekali
 - [ ] Ekspor sitasi per item atau per koleksi — dipindahkan ke Fase 9
-- [ ] Statistik library: jumlah per tahun, per jenis, pengarang terbanyak
+- [x] **Statistik library** (2026-09-30): jumlah per tahun, per jenis,
+      pengarang tersering, dan tag tersering, beserta angka yang paling sering
+      mengejutkan — berapa persen item yang berkasnya benar-benar ada.
+      Library yang separuhnya tanpa berkas adalah daftar bacaan, bukan
+      perpustakaan, jadi angka itu memerah di bawah 50%. Item tanpa tahun dan
+      tanpa judul dihitung terpisah alih-alih dipaksa masuk kelompok mana pun:
+      keduanya biasanya sisa impor yang gagal, dan menyembunyikannya berarti
+      tidak pernah diperbaiki. Batangnya digambar dari `FractionallySizedBox`,
+      bukan dari pustaka grafik — yang dibutuhkan hanya perbandingan panjang.
 
 ---
 

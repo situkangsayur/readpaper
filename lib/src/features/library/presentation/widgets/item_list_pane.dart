@@ -9,6 +9,7 @@ import '../../domain/entities/zotero_item.dart';
 import '../../../../shared/widgets/tree_drag.dart';
 import '../controllers/library_controllers.dart';
 import '../screens/duplicate_screen.dart';
+import '../screens/library_stats_screen.dart';
 import 'creator_facet_sheet.dart';
 import 'recent_papers_card.dart';
 
@@ -237,6 +238,13 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
                 ),
               );
             },
+          ),
+          IconButton(
+            tooltip: 'Statistik library',
+            icon: const Icon(Icons.insights_outlined, size: 18),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const LibraryStatsScreen()),
+            ),
           ),
           IconButton(
             tooltip: 'Telusuri berdasarkan pengarang',

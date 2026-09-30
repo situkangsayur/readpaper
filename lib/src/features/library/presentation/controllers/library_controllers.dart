@@ -5,6 +5,7 @@ import '../../domain/duplicate_finder.dart';
 import '../../domain/entities/library_index.dart';
 import '../../domain/entities/search_query.dart';
 import '../../domain/entities/zotero_item.dart';
+import '../../domain/library_stats.dart';
 
 /// How the item list is ordered.
 enum ItemSort {
@@ -122,6 +123,13 @@ final duplicateGroupsProvider = Provider<List<DuplicateGroup>>((ref) {
   final index = ref.watch(workspaceControllerProvider).index;
   if (index == null) return const <DuplicateGroup>[];
   return DuplicateFinder.find(index.allItems.toList());
+});
+
+/// Ringkasan angka library, dihitung sekali per indeks.
+final libraryStatsProvider = Provider<LibraryStats>((ref) {
+  final index = ref.watch(workspaceControllerProvider).index;
+  if (index == null) return LibraryStats.of(const <ZoteroItem>[]);
+  return LibraryStats.of(index.allItems.toList());
 });
 
 /// Berapa item yang ada di library, apa pun koleksi yang sedang dipilih.
