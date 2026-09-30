@@ -68,22 +68,43 @@ done
 
 # --- 3. Berkas .desktop -----------------------------------------------------
 #
+# Namanya **harus** sama dengan APPLICATION_ID di linux/CMakeLists.txt, yaitu
+# com.situkangsayur.readpaper. Runner Flutter memanggil g_set_prgname dengan id
+# itu, jadi itulah nama yang dipakai dok untuk mencari peluncurnya. Sebelumnya
+# berkas ini bernama readpaper.desktop dengan Icon=readpaper, dan akibatnya
+# terlihat langsung di dok Linux: aplikasinya berjalan **tanpa ikon**, dengan
+# nama mentah "com.situkangsayur.readpaper". Nama ikonnya ikut app id untuk
+# alasan yang sama.
+#
 # MimeType membuat ReadPaper muncul di "Buka dengan" untuk PDF, sama seperti
-# di Android. StartupWMClass supaya jendelanya menempel ke ikon yang benar di
-# dok GNOME dan KDE.
-cat > "$out/readpaper.desktop" <<'DESKTOP'
+# di Android. StartupWMClass adalah cadangan untuk dok yang mencocokkan lewat
+# WM_CLASS alih-alih lewat id aplikasi.
+appid="com.situkangsayur.readpaper"
+
+# Dijaga, bukan diingat: kalau APPLICATION_ID di linux/CMakeLists.txt berganti
+# dan berkas .desktop-nya tidak ikut, akibatnya tidak terlihat di mana pun
+# kecuali di dok orang — aplikasi berjalan tanpa ikon.
+declared="$(sed -n 's/^set(APPLICATION_ID "\(.*\)")$/\1/p' linux/CMakeLists.txt)"
+if [ "$declared" != "$appid" ]; then
+  echo "GAGAL: APPLICATION_ID di linux/CMakeLists.txt adalah '$declared',"
+  echo "       sedangkan berkas .desktop dibuat untuk '$appid'."
+  echo "       Dok tidak akan bisa mencocokkan jendelanya dengan peluncurnya."
+  exit 1
+fi
+
+cat > "$out/$appid.desktop" <<'DESKTOP'
 [Desktop Entry]
 Type=Application
 Name=ReadPaper
 GenericName=Pembaca paper
 Comment=Membaca, menandai, dan memberi komentar pada paper dari library Zotero
 Exec=readpaper %f
-Icon=readpaper
+Icon=com.situkangsayur.readpaper
 Terminal=false
 Categories=Office;Education;Science;Viewer;
 MimeType=application/pdf;
 Keywords=zotero;paper;pdf;sitasi;anotasi;
-StartupWMClass=readpaper
+StartupWMClass=com.situkangsayur.readpaper
 DESKTOP
 
 # --- 4. Tarball portabel ----------------------------------------------------
@@ -91,8 +112,8 @@ tarname="readpaper-$version-linux-x64"
 tardir="$out/$tarname"
 mkdir -p "$tardir"
 cp -a "$payload/." "$tardir/"
-cp "$out/readpaper.desktop" "$tardir/"
-cp "$icons/readpaper-512.png" "$tardir/readpaper.png"
+cp "$out/$appid.desktop" "$tardir/"
+cp "$icons/readpaper-512.png" "$tardir/$appid.png"
 cp LICENSE "$tardir/"
 cat > "$tardir/PASANG.md" <<MD
 # ReadPaper $version — Linux x86-64
@@ -104,8 +125,8 @@ Untuk memasangnya ke menu aplikasi (tanpa root):
     mkdir -p ~/.local/opt ~/.local/bin ~/.local/share/applications ~/.local/share/icons/hicolor/512x512/apps
     cp -r . ~/.local/opt/readpaper
     ln -sf ~/.local/opt/readpaper/readpaper ~/.local/bin/readpaper
-    cp readpaper.desktop ~/.local/share/applications/
-    cp readpaper.png ~/.local/share/icons/hicolor/512x512/apps/
+    cp com.situkangsayur.readpaper.desktop ~/.local/share/applications/
+    cp com.situkangsayur.readpaper.png ~/.local/share/icons/hicolor/512x512/apps/
     update-desktop-database ~/.local/share/applications 2>/dev/null || true
 
 Yang dibutuhkan sistem: GTK 3.24 ke atas beserta pustaka biasanya
@@ -125,11 +146,11 @@ mkdir -p "$deb/DEBIAN" "$deb/opt/readpaper" "$deb/usr/bin" \
          "$deb/usr/share/applications" "$deb/usr/share/doc/readpaper"
 cp -a "$payload/." "$deb/opt/readpaper/"
 ln -s /opt/readpaper/readpaper "$deb/usr/bin/readpaper"
-cp "$out/readpaper.desktop" "$deb/usr/share/applications/"
+cp "$out/$appid.desktop" "$deb/usr/share/applications/"
 for size in 16 24 32 48 64 128 256 512; do
   dir="$deb/usr/share/icons/hicolor/${size}x${size}/apps"
   mkdir -p "$dir"
-  cp "$icons/readpaper-$size.png" "$dir/readpaper.png"
+  cp "$icons/readpaper-$size.png" "$dir/$appid.png"
 done
 cp LICENSE "$deb/usr/share/doc/readpaper/copyright"
 
@@ -228,15 +249,16 @@ package() {
   install -dm755 "\$pkgdir/usr/bin"
   ln -s /opt/readpaper/readpaper "\$pkgdir/usr/bin/readpaper"
 
-  install -Dm644 readpaper.desktop "\$pkgdir/usr/share/applications/readpaper.desktop"
-  install -Dm644 readpaper.png \\
-    "\$pkgdir/usr/share/icons/hicolor/512x512/apps/readpaper.png"
+  install -Dm644 com.situkangsayur.readpaper.desktop \\
+    "\$pkgdir/usr/share/applications/com.situkangsayur.readpaper.desktop"
+  install -Dm644 com.situkangsayur.readpaper.png \\
+    "\$pkgdir/usr/share/icons/hicolor/512x512/apps/com.situkangsayur.readpaper.png"
   install -Dm644 LICENSE "\$pkgdir/usr/share/licenses/\$pkgname/LICENSE"
 }
 PKGBUILD
 echo "  $out/arch/PKGBUILD"
 
-rm -rf "$payload" "$icons" "$out/readpaper.desktop"
+rm -rf "$payload" "$icons" "$out/$appid.desktop"
 echo
 echo "Selesai. Isi $out:"
 ls -la "$out"
