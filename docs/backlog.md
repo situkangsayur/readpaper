@@ -326,8 +326,9 @@ merusak berkas aslinya.
       terbaca biru); itu konsekuensi membalik seluruh halaman, dikatakan di
       snackbar-nya, dan karena itu bukan mode bawaan.
 - [ ] Gulir menerus dan kunci orientasi (belum).
-- [ ] Layar tetap menyala saat mode baca — butuh `wakelock_plus`, belum ada di
-      cache paket, jadi ditunda.
+- [x] **Layar tetap menyala saat membaca** — keping lampu di bilah atas
+      menyalakannya, dan `dispose` mematikannya lagi supaya tidak ada layar
+      yang menyala terus setelah pembacanya ditutup.
 - [ ] **Baca nyaring (read aloud / TTS)**
       - Dwibahasa sejak awal: Inggris dan Indonesia, suara dipilih per paper
         mengikuti bahasa item.
@@ -363,9 +364,25 @@ merusak berkas aslinya.
 - [ ] **Pindahkan dokumen antar koleksi** (seret-lepas dan menu), termasuk
       menyalin ke koleksi lain tanpa memindahkan — Zotero mengizinkan satu item
       berada di banyak koleksi.
-- [ ] **Deteksi duplikat**: cocokkan DOI, lalu ISBN, lalu judul+tahun+pengarang
-      yang dinormalkan; tampilkan berdampingan dan tawarkan penggabungan yang
-      mempertahankan anotasi dari kedua salinan.
+- [~] **Deteksi duplikat** (2026-09-30). Pencocokannya bertingkat dari yang
+      pasti ke yang menduga: DOI, lalu ISBN, lalu judul + tahun + nama belakang
+      pengarang pertama — ketiganya dinormalkan, dan ISBN-10 diubah ke ISBN-13
+      supaya satu buku yang sama tidak tampak berbeda hanya karena dua salinan
+      mencatatnya dengan panjang yang berbeda. Kecocokan lewat jalan mana pun
+      menyatukan kelompok yang sama (union-find), jadi tiga salinan yang
+      bertaut A–B lewat DOI dan B–C lewat judul tetap jadi satu.
+
+      Diuji pada library sungguhan: **1.741 item → 147 kelompok, 384 salinan,
+      dalam 65 milidetik**; satu paper masuk tujuh kali. Nol kelompok punya
+      anotasi di lebih dari satu salinan, jadi tidak ada pekerjaan yang
+      berisiko hilang.
+
+      **Penggabungannya sengaja belum ada.** Menggabungkan berarti salah satu
+      item hilang, dan library Zotero adalah pekerjaan bertahun-tahun yang
+      dijaga byte-for-byte oleh plugin sinkronisasi. Layarnya menunjukkan
+      kelompoknya berdampingan beserta alasannya, menandai salinan yang paling
+      pantas dipertahankan, dan memperingatkan kalau anotasinya tersebar —
+      lalu berhenti di situ, dan mengatakannya di layar.
 - [ ] Pencarian referensi berdasarkan **judul, pengarang, dan abstrak**
       (lihat juga Fase 2 — ini perluasannya ke abstrak dan ke isi catatan).
 

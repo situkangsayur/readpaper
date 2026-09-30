@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
+import '../../domain/duplicate_finder.dart';
 import '../../domain/entities/library_index.dart';
 import '../../domain/entities/search_query.dart';
 import '../../domain/entities/zotero_item.dart';
@@ -109,6 +110,23 @@ class SelectedItemController extends Notifier<String?> {
 
 final selectedItemKeyProvider = NotifierProvider<SelectedItemController, String?>(
   SelectedItemController.new,
+);
+
+/// Kelompok item yang tampaknya salinan dari karya yang sama.
+///
+/// Dihitung sekali per indeks library, bukan setiap kali bilah atas dibangun
+/// ulang: pada library 1.741 item pencariannya 65 milidetik, dan itu terlalu
+/// mahal untuk dibayar setiap ketikan. Riverpod menyimpan hasilnya sampai
+/// indeksnya benar-benar berganti.
+final duplicateGroupsProvider = Provider<List<DuplicateGroup>>((ref) {
+  final index = ref.watch(workspaceControllerProvider).index;
+  if (index == null) return const <DuplicateGroup>[];
+  return DuplicateFinder.find(index.allItems.toList());
+});
+
+/// Berapa item yang ada di library, apa pun koleksi yang sedang dipilih.
+final libraryItemCountProvider = Provider<int>(
+  (ref) => ref.watch(workspaceControllerProvider).index?.itemCount ?? 0,
 );
 
 /// The items shown in the middle pane: selection + search + sort applied.

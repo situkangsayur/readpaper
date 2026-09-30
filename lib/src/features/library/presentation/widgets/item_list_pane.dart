@@ -8,6 +8,7 @@ import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/entities/zotero_item.dart';
 import '../../../../shared/widgets/tree_drag.dart';
 import '../controllers/library_controllers.dart';
+import '../screens/duplicate_screen.dart';
 import 'creator_facet_sheet.dart';
 import 'recent_papers_card.dart';
 
@@ -212,6 +213,27 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
                     filePath: path,
                     title: p.basenameWithoutExtension(path),
                   ),
+                ),
+              );
+            },
+          ),
+          // Jumlahnya ikut di tombolnya: "ada 147 kelompok" adalah alasan
+          // untuk menekannya, sementara ikon yang diam tidak memberi tahu
+          // bahwa ada yang perlu dilihat sama sekali.
+          Builder(
+            builder: (context) {
+              final groups = ref.watch(duplicateGroupsProvider);
+              return IconButton(
+                tooltip: groups.isEmpty
+                    ? 'Cari item yang masuk lebih dari sekali'
+                    : '${groups.length} kemungkinan duplikat',
+                icon: Badge(
+                  isLabelVisible: groups.isNotEmpty,
+                  label: Text('${groups.length}'),
+                  child: const Icon(Icons.copy_all_outlined, size: 18),
+                ),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const DuplicateScreen()),
                 ),
               );
             },

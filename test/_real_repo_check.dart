@@ -12,6 +12,7 @@ import 'package:readpaper/src/features/library/data/datasources/repo_layout_dete
 import 'package:readpaper/src/features/library/data/datasources/zotero_fs_datasource.dart';
 import 'package:readpaper/src/features/library/data/datasources/zotero_json.dart';
 import 'package:readpaper/src/features/library/data/datasources/zotero_writer.dart';
+import 'package:readpaper/src/features/library/domain/duplicate_finder.dart';
 
 /// Clone to check; the tests are skipped when it is not set or not there.
 final String repoRoot = Platform.environment['READPAPER_TEST_REPO'] ?? '';
@@ -60,6 +61,48 @@ void main() {
       'sample: ${sample!.title} attachments=${sample.attachments.length} ann=${sample.annotationCount}',
     );
     print('sample attachment path: ${sample.attachments.first.relativePath}');
+  });
+
+  test('menemukan duplikat di library sungguhan', skip: _skipReason, () async {
+    final layout = await const RepoLayoutDetector().detect(repoRoot);
+    final library = layout!.libraries.first;
+    final index = parseLibrarySync(
+      library.directoryPath,
+      library.name,
+      library.directoryName,
+      library.type,
+    );
+
+    final sw = Stopwatch()..start();
+    final groups = DuplicateFinder.find(index.allItems.toList());
+    sw.stop();
+
+    final copies = groups.fold<int>(0, (sum, g) => sum + g.items.length);
+    print(
+      '${index.itemCount} item → ${groups.length} kelompok duplikat '
+      '($copies salinan) dalam ${sw.elapsedMilliseconds} md',
+    );
+    for (final reason in DuplicateReason.values) {
+      final count = groups.where((g) => g.strongest == reason).length;
+      print('  ${reason.label}: $count kelompok');
+    }
+    final risky = groups.where((g) => g.annotationsOnMoreThanOne).length;
+    print('  kelompok dengan anotasi di lebih dari satu salinan: $risky');
+
+    for (final group in groups.take(8)) {
+      print('');
+      print('[${group.strongest.label}]');
+      for (final copy in group.items) {
+        print(
+          '  ${copy.key}  ann=${copy.annotationCount}  '
+          '${copy.year.isEmpty ? '----' : copy.year}  '
+          '${copy.title.length > 70 ? '${copy.title.substring(0, 70)}…' : copy.title}',
+        );
+      }
+    }
+
+    // Tidak ada yang disentuh; ini hanya laporan.
+    expect(groups, isA<List<DuplicateGroup>>());
   });
 
   test(
