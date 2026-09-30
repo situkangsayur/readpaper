@@ -363,15 +363,44 @@ class GitHubApiBackend implements GitBackend {
     final state = GitHubSyncState.load(repoPath);
     if (state == null) return _notMirrored;
 
+    // Lampiran tidak pernah ikut dikirim lewat jalur ini, dan ini bukan
+    // kerapian melainkan keselamatan data. Berkas di `attachments-lfs/`
+    // disimpan di repositori sebagai **penunjuk** Git LFS sepanjang seratus
+    // bita, bukan sebagai isinya; mengirim PDF-nya sendiri ke sana akan
+    // menimpa penunjuk itu dan merusak LFS repositorinya. Dan berkas di
+    // `attachments/` berukuran puluhan megabita, yang ditolak API GitHub.
+    //
+    // Yang terjadi sebelum ini: satu berkas lampiran yang entah bagaimana
+    // pernah masuk antrean akan terbawa terus — `commitAll` menyalin ulang
+    // antrean lama setiap kali — dan setiap pengiriman berhenti di berkas itu
+    // dengan galat yang menyuruh menarik perubahan, yang tidak pernah bisa
+    // menolong. Antreannya tidak punya jalan keluar.
+    final dropped = <String>{};
     final pendingPaths = <String>{
       for (final change in _localChanges(repoPath, state)) change.path,
       for (final change in state.pending.expand((c) => c.paths)) change,
-    };
+    }..removeWhere((path) {
+        if (!isAttachmentPath(path)) return false;
+        dropped.add(path);
+        return true;
+      });
     if (paths.isNotEmpty) {
       pendingPaths.removeWhere((path) => !paths.contains(path));
     }
     if (pendingPaths.isEmpty) {
-      return const GitResult(ok: true, exitCode: 0, message: 'Tidak ada perubahan untuk di-commit');
+      // Antrean yang isinya hanya lampiran tetap harus dikosongkan, kalau
+      // tidak ia akan dicoba lagi selamanya.
+      if (dropped.isNotEmpty && state.pending.isNotEmpty) {
+        state.pending.clear();
+        await state.save(repoPath);
+      }
+      return GitResult(
+        ok: true,
+        exitCode: 0,
+        message: dropped.isEmpty
+            ? 'Tidak ada perubahan untuk di-commit'
+            : '${dropped.length} lampiran dilewati; tidak ada perubahan lain untuk dikirim',
+      );
     }
 
     // Changes are staged locally; [push] turns them into a commit on GitHub.
@@ -381,7 +410,14 @@ class GitHubApiBackend implements GitBackend {
         PendingChange(message: message, paths: pendingPaths.toList()..sort(), at: DateTime.now()),
       );
     await state.save(repoPath);
-    return GitResult(ok: true, exitCode: 0, message: '${pendingPaths.length} berkas siap dikirim');
+    return GitResult(
+      ok: true,
+      exitCode: 0,
+      message: dropped.isEmpty
+          ? '${pendingPaths.length} berkas siap dikirim'
+          : '${pendingPaths.length} berkas siap dikirim; '
+                '${dropped.length} lampiran dilewati (kirim lewat git di komputer)',
+    );
   }
 
   @override
@@ -410,7 +446,21 @@ class GitHubApiBackend implements GitBackend {
       final treeEntries = <Map<String, dynamic>>[];
       var uploaded = 0;
 
-      for (final path in pending.paths) {
+      // Jaring pengaman untuk antrean yang sudah terlanjur tersimpan sebelum
+      // penyaringan di commitAll ada: tanpa ini, memasang versi baru saja
+      // tidak akan menyembuhkan perangkat yang antreannya sudah teracuni.
+      final sendable = pending.paths.where((path) => !isAttachmentPath(path)).toList();
+      if (sendable.isEmpty) {
+        state.pending.clear();
+        await state.save(repoPath);
+        return const GitResult(
+          ok: true,
+          exitCode: 0,
+          message: 'Antrean hanya berisi lampiran; tidak ada yang bisa dikirim lewat jalur ini.',
+        );
+      }
+
+      for (final path in sendable) {
         final file = File(p.join(repoPath, path));
         if (!file.existsSync()) {
           treeEntries.add(<String, dynamic>{
@@ -425,9 +475,9 @@ class GitHubApiBackend implements GitBackend {
         onProgress?.call(
           SyncProgress(
             message: 'Mengunggah berkas',
-            fraction: uploaded / pending.paths.length,
+            fraction: uploaded / sendable.length,
             current: uploaded,
-            total: pending.paths.length,
+            total: sendable.length,
             detail: p.basename(path),
           ),
         );
@@ -453,7 +503,7 @@ class GitHubApiBackend implements GitBackend {
 
       // The mirror now matches the new commit: refresh the bookkeeping so the
       // files stop showing up as local changes.
-      for (final path in pending.paths) {
+      for (final path in sendable) {
         final file = File(p.join(repoPath, path));
         if (!file.existsSync()) {
           state.files.remove(path);
@@ -473,7 +523,7 @@ class GitHubApiBackend implements GitBackend {
         ..pending.clear();
       await state.save(repoPath);
 
-      return GitResult(ok: true, exitCode: 0, message: 'Terkirim: ${pending.paths.length} berkas');
+      return GitResult(ok: true, exitCode: 0, message: 'Terkirim: ${sendable.length} berkas');
     });
   }
 

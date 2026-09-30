@@ -343,10 +343,43 @@ class GitHubApiClient {
       case 409:
         return 'Branch di GitHub sudah berubah. Tarik perubahan dulu, lalu kirim ulang.';
       case 422:
-        return 'GitHub menolak perubahan (kemungkinan branch sudah bergerak). '
-            'Tarik perubahan dulu, lalu kirim ulang.';
+        // Dulu di sini tertulis "kemungkinan branch sudah bergerak, tarik
+        // perubahan dulu" — sebuah tebakan, dan tebakan yang mahal. 422 juga
+        // dipakai GitHub untuk menolak berkas yang terlalu besar, dan yang
+        // membacanya lalu menarik perubahan berulang kali tanpa pernah bisa
+        // berhasil. Sekarang alasan GitHub sendiri yang ditampilkan.
+        final reason = _reasonFrom(response);
+        return reason.isEmpty
+            ? 'GitHub menolak perubahan ini (422), tanpa menyebut alasannya.'
+            : 'GitHub menolak perubahan ini: $reason';
       default:
-        return 'GitHub membalas dengan kode ${response.statusCode}.';
+        final reason = _reasonFrom(response);
+        return reason.isEmpty
+            ? 'GitHub membalas dengan kode ${response.statusCode}.'
+            : 'GitHub membalas dengan kode ${response.statusCode}: $reason';
+    }
+  }
+
+  /// Alasan yang ditulis GitHub sendiri di badan jawabannya.
+  ///
+  /// Bentuknya `{"message": "...", "errors": [{"message": "..."}]}`, dan yang
+  /// di dalam `errors` biasanya lebih tepat menyebut apa yang salah.
+  static String _reasonFrom(http.Response response) {
+    try {
+      final body = jsonDecode(response.body);
+      if (body is! Map) return '';
+      final errors = body['errors'];
+      if (errors is List) {
+        for (final error in errors) {
+          if (error is Map && error['message'] is String) {
+            return (error['message'] as String).trim();
+          }
+        }
+      }
+      final message = body['message'];
+      return message is String ? message.trim() : '';
+    } on FormatException {
+      return '';
     }
   }
 }

@@ -168,6 +168,59 @@ void main() {
     });
   });
 
+  group('lampiran tidak pernah dikirim lewat API', () {
+    test('lampiran LFS di antrean lama tidak lagi menggagalkan pengiriman', () async {
+      // Berkas di attachments-lfs/ disimpan di repositori sebagai penunjuk Git
+      // LFS sepanjang seratus bita, bukan sebagai isinya. Mengirim PDF-nya ke
+      // sana akan menimpa penunjuk itu; dan kalaupun tidak, API GitHub
+      // menolaknya karena ukurannya. Yang dulu terjadi: berkasnya terbawa
+      // terus di antrean, dan setiap pengiriman berhenti di situ dengan galat
+      // yang menyuruh menarik perubahan — yang tidak pernah bisa menolong.
+      await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
+
+      final lfs = 'zotero/my-library/attachments-lfs/BI/BIG00001/book.pdf';
+      File(path(lfs))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('isi buku yang sebenarnya, bukan penunjuk');
+
+      final state = GitHubSyncState.load(mirror.path)!;
+      state.pending.add(
+        PendingChange(message: 'Antrean lama', paths: <String>[lfs], at: DateTime.now()),
+      );
+      await state.save(mirror.path);
+
+      final pushed = await backend.push(repoPath: mirror.path, auth: auth);
+      expect(pushed.ok, isTrue, reason: 'antreannya harus punya jalan keluar');
+      expect(pushed.message, contains('lampiran'));
+      expect(server.createdCommits, isEmpty, reason: 'tidak ada yang pantas dikirim');
+      expect(
+        GitHubSyncState.load(mirror.path)!.pending,
+        isEmpty,
+        reason: 'antrean yang tidak bisa dikirim harus dikosongkan, bukan dicoba selamanya',
+      );
+    });
+
+    test('lampiran tidak ikut disiapkan saat commit', () async {
+      await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
+
+      final lfs = 'zotero/my-library/attachments-lfs/BI/BIG00001/book.pdf';
+      File(path(lfs))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('isi buku');
+      File(path('zotero/my-library/items/IT/ITEMKEY1.json')).writeAsStringSync('{"a":9}\n');
+
+      final committed = await backend.commitAll(
+        repoPath: mirror.path,
+        message: 'Ubah item dan lampiran',
+        paths: <String>[lfs, 'zotero/my-library/items/IT/ITEMKEY1.json'],
+      );
+      expect(committed.ok, isTrue);
+
+      final pending = GitHubSyncState.load(mirror.path)!.pending.single;
+      expect(pending.paths, <String>['zotero/my-library/items/IT/ITEMKEY1.json']);
+    });
+  });
+
   group('batas waktu unggahan', () {
     GitHubApiClient client() => GitHubApiClient(
       ref: GitHubRepoRef.parse(remote)!,
