@@ -205,9 +205,21 @@ Two things are worth knowing before changing anything:
   `git`; Android speaks the GitHub git data API. Everything above that seam —
   the whole UI and `WorkspaceController` — is identical on both.
 
-[docs/architecture.md](docs/architecture.md) has the layer rules, the data
-format, the annotation coordinate system, and the measurements behind the lean
-clone.
+[docs/tech-stack.md](docs/tech-stack.md) is the single page that answers
+"what is it made of, how is it laid out, and what can it do": the dependency
+table and why each one is there, the layer rules, the patterns that repeat
+across the codebase, and the feature list.
+
+One thing it says up front, because it is easy to assume otherwise:
+**ReadPaper has no Rust in it.** Every line of its own logic is Dart. The only
+native code it ships is pdfium (C++, brought in by `pdfrx`) and the Flutter
+engine itself. Rust lives in the sibling app, WritePaperTeX, where a crate
+wraps Tectonic and libgit2 — Android has no TeX Live, so the TeX engine has to
+travel inside the app.
+
+[docs/architecture.md](docs/architecture.md) goes deeper on the data format,
+the annotation coordinate system, desktop packaging, and the measurements
+behind the lean clone.
 
 ## Tests
 

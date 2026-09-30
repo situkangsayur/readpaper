@@ -1,5 +1,9 @@
 # Arsitektur ReadPaper
 
+> Ringkasan satu halaman tentang tumpukan teknologi, pola, dan daftar fitur
+> ada di [tech-stack.md](tech-stack.md). Berkas ini yang lebih dalam: format
+> data, sistem koordinat anotasi, paketan desktop, dan pengukurannya.
+
 ## Lapisan
 
 Struktur *feature-first* dengan pemisahan `domain` / `data` / `presentation`
