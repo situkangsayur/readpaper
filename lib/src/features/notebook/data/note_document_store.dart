@@ -2,6 +2,8 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
 import '../../../core/errors/failure.dart';
 import '../domain/note_document.dart';
 
@@ -26,8 +28,14 @@ class NoteDocumentStore {
   static bool isNoteDocument(String path) => path.toLowerCase().endsWith(extension);
 
   /// Nama berkas ekspor yang sepadan: `rapat.catatan.json` → `rapat`.
+  ///
+  /// Dipotong dengan `p.basename`, bukan dengan [Platform.pathSeparator].
+  /// Di Windows pemisahnya `\`, jadi jalur bergaris miring maju — yang datang
+  /// dari dialog berkas, dari berkas yang disimpan di platform lain, dan dari
+  /// uji — tidak terpotong sama sekali, dan nama ekspornya menjadi seluruh
+  /// jalurnya. Ketahuan saat tesnya dijalankan di runner Windows.
   static String stemOf(String path) {
-    final name = path.split(Platform.pathSeparator).last;
+    final name = p.basename(path);
     return name.toLowerCase().endsWith(extension)
         ? name.substring(0, name.length - extension.length)
         : name;

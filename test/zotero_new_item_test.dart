@@ -70,7 +70,9 @@ void main() {
     final attachment = File(created.attachmentPath);
     expect(attachment.existsSync(), isTrue);
     expect(attachment.lengthSync(), File(pdf).lengthSync());
-    expect(created.attachmentPath, contains(p.join('attachments', created.attachmentKey[0])));
+    // Selalu garis miring maju: jalur lampiran adalah bagian dari format
+    // Zotero, bukan jalur sistem, dan `p.join` akan memakai `\` di Windows.
+    expect(created.attachmentPath, contains('attachments/${created.attachmentKey[0]}'));
   });
 
   test('berkasnya ditulis dengan tab dan kunci berurut, seperti plugin', () async {

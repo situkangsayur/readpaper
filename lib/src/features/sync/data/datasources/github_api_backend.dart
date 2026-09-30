@@ -212,7 +212,7 @@ class GitHubApiBackend implements GitBackend {
     }
 
     for (final file in _mirroredFiles(repoPath)) {
-      final relative = p.relative(file.path, from: repoPath);
+      final relative = _repoRelative(file.path, repoPath);
       if (seen.contains(relative)) continue;
       changes.add(GitChange(status: '??', path: relative));
     }
@@ -221,13 +221,24 @@ class GitHubApiBackend implements GitBackend {
     return changes;
   }
 
+  /// Jalur relatif terhadap akar repositori, dalam bentuk yang dipakai git.
+  ///
+  /// Selalu garis miring maju, apa pun sistemnya. `p.relative` memakai pemisah
+  /// platform, dan di Windows itu `\` — sementara GitHub, berkas catatan
+  /// sinkronisasi, dan format Zotero semuanya memakai `/`. Tanpa penyeragaman
+  /// ini **setiap** berkas tampak berubah, karena jalur yang dibandingkan
+  /// tidak pernah cocok. Ketahuan saat tesnya dijalankan di runner Windows:
+  /// status melaporkan tiga perubahan pada cermin yang sebenarnya bersih.
+  String _repoRelative(String absolute, String repoPath) =>
+      p.relative(absolute, from: repoPath).replaceAll(r'\', '/');
+
   /// Every metadata file in the mirror (attachments and bookkeeping excluded).
   Iterable<File> _mirroredFiles(String repoPath) sync* {
     final root = Directory(repoPath);
     if (!root.existsSync()) return;
     for (final entity in root.listSync(recursive: true, followLinks: false)) {
       if (entity is! File) continue;
-      final relative = p.relative(entity.path, from: repoPath);
+      final relative = _repoRelative(entity.path, repoPath);
       if (relative.startsWith(GitHubSyncState.dirName)) continue;
       if (isAttachmentPath(relative)) continue;
       yield entity;
@@ -452,7 +463,7 @@ class GitHubApiBackend implements GitBackend {
     final state = GitHubSyncState.load(repoPath);
     if (state == null) return _notMirrored;
 
-    final relative = p.relative(absoluteFilePath, from: repoPath);
+    final relative = _repoRelative(absoluteFilePath, repoPath);
     final known = state.attachments[relative];
     if (known == null) {
       return GitResult(

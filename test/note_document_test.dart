@@ -230,6 +230,19 @@ void main() {
       expect(NoteDocumentStore.isNoteDocument('/a/rapat.catatan.json'), isTrue);
       expect(NoteDocumentStore.isNoteDocument('/a/rapat.md'), isFalse);
     });
+
+    test('jalur dengan pemisah sistem ini pun terpotong benar', () {
+      // Dulu dipotong dengan Platform.pathSeparator, dan di Windows itu `\`
+      // sehingga jalur bergaris miring maju tidak terpotong sama sekali —
+      // nama ekspornya menjadi seluruh jalurnya. Ketahuan waktu tesnya
+      // dijalankan di runner Windows.
+      final jalur = p.join('satu', 'dua', 'rapat.catatan.json');
+      expect(NoteDocumentStore.stemOf(jalur), 'rapat');
+    });
+
+    test('berkas tanpa folder pun tetap benar', () {
+      expect(NoteDocumentStore.stemOf('rapat.catatan.json'), 'rapat');
+    });
   });
 
   group('urungkan', () {
