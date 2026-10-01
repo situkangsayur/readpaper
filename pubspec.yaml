@@ -37,7 +37,7 @@ dependencies:
   image: ^4.5.4
 
   # Membaca gaya dan locale CSL, yang berbentuk XML
-  xml: ^7.0.1
+  xml: ^7.1.0
 
   # Utils
   collection: ^1.19.1
