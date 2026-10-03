@@ -15,7 +15,7 @@ dependencies:
   flutter_riverpod: ^3.4.3
 
   # PDF rendering + text selection
-  pdfrx: ^2.4.8
+  pdfrx: ^2.5.0
   # Same PDFium module pdfrx loads; used to write ink annotations into an
   # exported copy of a paper.
   pdfium_dart: ^0.2.5
