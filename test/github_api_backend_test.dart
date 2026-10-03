@@ -427,6 +427,82 @@ void main() {
     });
   });
 
+  group('berkas yang ditolak GitHub', () {
+    test('tidak menahan berkas lain, dan tidak diunggah ulang selama isinya sama', () async {
+      await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
+      const book = 'catatan/berkas/CP/CPGBOOK1/Introduction to CpG.pdf';
+      File(path(book))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('buku yang ditolak');
+      File(path('zotero/my-library/items/IT/ITEMKEY1.json')).writeAsStringSync('{"a":5}\n');
+
+      var bookUploads = 0;
+      backend = GitHubApiBackend(
+        clientFactory: (ref, token) => GitHubApiClient(
+          ref: ref,
+          token: token,
+          client: MockClient((request) async {
+            if (request.method == 'POST' && request.url.path.endsWith('/git/blobs')) {
+              final body = jsonDecode(request.body) as Map<String, dynamic>;
+              if (utf8.decode(base64Decode(body['content'] as String)) == 'buku yang ditolak') {
+                bookUploads++;
+                return http.Response(
+                  jsonEncode(<String, dynamic>{'message': 'content is too large'}),
+                  422,
+                );
+              }
+            }
+            return server.handle(request);
+          }),
+        ),
+        concurrency: 2,
+      );
+
+      await backend.commitAll(repoPath: mirror.path, message: 'Catatan dan buku');
+      final pushed = await backend.push(repoPath: mirror.path, auth: auth);
+      expect(pushed.ok, isFalse, reason: 'yang tertinggal harus terlihat');
+      expect(pushed.message, contains('1 berkas terkirim'));
+      expect(pushed.message, contains('Introduction to CpG.pdf'));
+      expect(pushed.message, contains('content is too large'));
+
+      final entries = (server.createdTrees.single['tree'] as List).cast<Map>();
+      expect(entries.map((e) => e['path']), <String>['zotero/my-library/items/IT/ITEMKEY1.json']);
+      expect(server.commitSha, 'commit-1', reason: 'yang lain tetap sampai');
+
+      final state = GitHubSyncState.load(mirror.path)!;
+      expect(state.pending.single.paths, <String>[book], reason: 'tidak dibuang diam-diam');
+
+      await backend.commitAll(repoPath: mirror.path, message: 'Coba lagi');
+      final again = await backend.push(repoPath: mirror.path, auth: auth);
+      expect(again.ok, isFalse);
+      expect(bookUploads, 1, reason: 'isi yang sama tidak diunggah lagi untuk ditolak lagi');
+    });
+
+    test('jalur yang tidak pernah ada di GitHub tidak diminta dihapus', () async {
+      await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
+      File(path('zotero/my-library/items/IT/ITEMKEY1.json')).writeAsStringSync('{"a":6}\n');
+      final state = GitHubSyncState.load(mirror.path)!;
+      state.pending.add(
+        PendingChange(
+          message: 'Antrean lama',
+          paths: <String>['catatan/item/XX/SEMENTARA.json', 'zotero/my-library/collections.json'],
+          at: DateTime.now(),
+        ),
+      );
+      await state.save(mirror.path);
+
+      await backend.commitAll(repoPath: mirror.path, message: 'Ubah item');
+      final pushed = await backend.push(repoPath: mirror.path, auth: auth);
+      expect(pushed.ok, isTrue, reason: pushed.message);
+      final entries = (server.createdTrees.single['tree'] as List).cast<Map>();
+      expect(
+        entries.map((e) => e['path']),
+        <String>['zotero/my-library/items/IT/ITEMKEY1.json'],
+        reason: 'berkas sementara tidak dihapus, berkas yang tidak berubah tidak diunggah',
+      );
+    });
+  });
+
   group('attachments', () {
     test('are downloaded on demand', () async {
       await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');

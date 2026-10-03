@@ -202,6 +202,7 @@ class GitHubApiClient {
         'Berkasnya ${_megabytes(content.length)} MB, di atas batas 100 MB yang '
         'diterima API GitHub untuk satu berkas. Kirimkan lewat git biasa di '
         'komputer, atau simpan lampirannya di luar repositori.',
+        exitCode: 413,
       );
     }
     final response = await _post(
@@ -292,6 +293,15 @@ class GitHubApiClient {
     for (var tries = 1; tries <= maxAttempts; tries++) {
       try {
         final response = await attempt().timeout(limit);
+        // Batas kecepatan sekunder: GitHub menahan tulisan yang datang
+        // beruntun — ratusan berkas satu per satu, misalnya — dengan 403 atau
+        // 429 dan memberi tahu berapa lama harus menunggu. Itu bukan penolakan;
+        // menunggu sebentar lalu mencoba lagi memang jawabannya.
+        final wait = _rateLimitWait(response);
+        if (wait != null && tries < maxAttempts) {
+          await Future<void>.delayed(wait);
+          continue;
+        }
         if (_isRetryableStatus(response.statusCode) && tries < maxAttempts) {
           await Future<void>.delayed(_backoff(tries));
           continue;
@@ -313,6 +323,21 @@ class GitHubApiClient {
     );
   }
 
+  /// Lama menunggu yang diminta GitHub, kalau jawaban ini batas kecepatan
+  /// sekunder; `null` kalau bukan. Dibatasi satu menit supaya pengiriman
+  /// tidak tampak macet tanpa sebab.
+  static Duration? _rateLimitWait(http.Response response) {
+    if (response.statusCode != 403 && response.statusCode != 429) return null;
+    final retryAfter = int.tryParse(response.headers['retry-after'] ?? '');
+    final secondary = _isSecondaryLimit(response);
+    if (retryAfter == null && !secondary) return null;
+    final seconds = (retryAfter ?? 30).clamp(1, 60);
+    return Duration(seconds: seconds);
+  }
+
+  static bool _isSecondaryLimit(http.Response response) =>
+      response.body.toLowerCase().contains('secondary rate limit');
+
   static bool _isRetryableStatus(int code) => code >= 500 || code == 429 || code == 408;
 
   static Duration _backoff(int attempt) => Duration(milliseconds: 400 * attempt * attempt);
@@ -323,7 +348,11 @@ class GitHubApiClient {
 
     if (response.statusCode >= 200 && response.statusCode < 300) return response;
 
-    throw GitFailure(_message(response), details: '${uri.path} → ${response.statusCode}');
+    throw GitFailure(
+      _message(response),
+      details: '${uri.path} → ${response.statusCode}',
+      exitCode: response.statusCode,
+    );
   }
 
   String _message(http.Response response) {
@@ -335,6 +364,10 @@ class GitHubApiClient {
         if (remaining == '0') {
           return 'Kuota permintaan GitHub habis. Coba lagi setelah kuota pulih '
               '(sekitar satu jam), atau pakai token dengan kuota lebih besar.';
+        }
+        if (_isSecondaryLimit(response) || response.headers['retry-after'] != null) {
+          return 'GitHub meminta pengiriman diperlambat karena terlalu banyak berkas '
+              'beruntun. Tunggu beberapa menit lalu kirim lagi.';
         }
         return 'Akses ditolak. Token perlu izin "Contents: read and write" untuk repositori ini.';
       case 404:

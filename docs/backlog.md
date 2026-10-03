@@ -1352,6 +1352,45 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       hanya mengenai tombol warna di bilah atas; tombol di bilah pena — yang
       justru dipakai sambil menggambar — masih mengganti `_color` langsung
 
+- [x] **Separuh halaman tidak bisa ditulisi setelah lama dipakai**
+      (2026-10-03), di mode "Stylus saja". Kotak halaman yang dipakai untuk
+      menentukan goresan jatuh di halaman mana dicatat saat lapisan halaman
+      dibangun — dan halaman yang sudah keluar layar tidak dibangun lagi, jadi
+      kotaknya tertinggal di tempat terakhir ia terlihat. Setelah menggulir
+      cukup lama, kotak basi itu menutupi separuh halaman yang sedang dibuka
+      dan goresannya mendarat di halaman lain yang tidak terlihat. Sekarang
+      kotaknya dihitung dari tata letak dan zum yang sedang berlaku setiap
+      kali stylus turun
+- [x] **Alat pena ada di bilah bawah mode menyajikan** (2026-10-03): warna,
+      tebal, urungkan, buang, stylus saja, dan Selesai. Bilah pena di atas
+      tidak muncul lagi saat menyajikan — tanpa AppBar ia duduk di bawah bilah
+      status dan lubang kamera, jadi Selesai dan Buang di ujung kanannya
+      terlihat tetapi sentuhannya diambil sistem. Bilah bawahnya bisa digulir
+      ke samping kalau layarnya sempit
+- [x] **Telapak tangan tidak lagi menggeser halaman** di mode "Stylus saja"
+      (2026-10-03). Jari memang tetap milik halaman, tetapi sentuhan yang
+      datang saat stylus melayang di dekat layar, sedang menulis, atau baru
+      diangkat (800 ms), atau yang bidang sentuhnya selebar telapak, dianggap
+      telapak: selama ada satu, geser dan cubit dimatikan
+
+### Sinkronisasi
+
+- [x] **Satu berkas yang ditolak GitHub tidak lagi menahan semua yang lain**
+      (2026-10-03). Pengiriman berhenti di 20/32 pada sebuah buku PDF, dan
+      karena antreannya terus bertambah, setiap percobaan gagal di tempat yang
+      sama dengan antrean yang makin panjang (635 perubahan). Sekarang berkas
+      yang ditolak (422, atau di atas 100 MB) disisihkan, yang lain tetap
+      terkirim dalam satu commit, dan yang ditolak tetap di antrean dengan
+      namanya dan alasan GitHub disebut. Isi yang sama tidak diunggah ulang
+      hanya untuk ditolak lagi
+- [x] Berkas yang dibuat lalu dihapus sebelum sempat terkirim tidak lagi
+      diminta dihapus di GitHub — GitHub menolak seluruh pohon untuk itu — dan
+      berkas di antrean yang isinya sudah sama dengan GitHub tidak diunggah
+- [x] Batas kecepatan sekunder GitHub (403/429 dengan `Retry-After`) ditunggu
+      lalu dicoba lagi, dan tidak lagi tampil sebagai "token perlu izin"
+- [ ] Blob yang sudah terunggah diingat, supaya pengiriman yang terputus di
+      tengah tidak mengulang dari awal
+
 ---
 
 ## Lintas fase — utang teknis

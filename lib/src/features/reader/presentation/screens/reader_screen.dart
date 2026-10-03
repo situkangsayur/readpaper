@@ -208,6 +208,64 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// adalah cara tercepat membuat orang berhenti memakainya.
   late bool _stylusOnly = ref.read(workspaceControllerProvider).settings.stylusOnly;
 
+  /// Sentuhan tangan yang dianggap telapak, bukan jari yang hendak menggeser.
+  ///
+  /// "Stylus saja" menyerahkan jari ke halaman supaya dokumen tetap bisa
+  /// digeser sambil menulis. Harganya: telapak yang mendarat sebelum ujung
+  /// pena menyentuh layar ikut terhitung jari, dan halamannya bergeser di
+  /// bawah tangan — persis saat orang hendak mulai menulis. Sentuhan yang
+  /// datang ketika stylus sedang dekat layar (melayang), sedang menulis, atau
+  /// baru saja diangkat, atau yang bidang sentuhnya selebar telapak, dicatat
+  /// di sini, dan selama ada satu saja halaman tidak menerima geser maupun
+  /// cubit.
+  final Set<int> _palmPointers = <int>{};
+
+  /// Stylus terlihat — melayang atau menyentuh — belum lama ini.
+  bool _stylusNear = false;
+  Timer? _stylusNearTimer;
+
+  /// Selama ini sejak stylus terakhir terlihat, tangan masih dianggap tangan
+  /// yang sedang menulis.
+  static const Duration _stylusGrace = Duration(milliseconds: 800);
+
+  /// Jari-jari bidang sentuh, dalam titik logis, yang sudah pasti bukan ujung
+  /// jari. Perangkat yang tidak melaporkannya mengirim nol, dan aturan
+  /// melayang di atas tetap bekerja.
+  static const double _palmRadius = 16;
+
+  bool get _handLocked =>
+      _penMode && _stylusOnly && (_stylusDrawing || _stylusNear || _palmPointers.isNotEmpty);
+
+  bool _isStylus(PointerEvent event) =>
+      event.kind == PointerDeviceKind.stylus || event.kind == PointerDeviceKind.invertedStylus;
+
+  void _noteStylusNear() {
+    _stylusNearTimer?.cancel();
+    _stylusNearTimer = Timer(_stylusGrace, () {
+      if (mounted && _stylusNear) setState(() => _stylusNear = false);
+    });
+    if (!_stylusNear) setState(() => _stylusNear = true);
+  }
+
+  void _handDown(PointerDownEvent event) {
+    if (!_penMode || !_stylusOnly) return;
+    if (_isStylus(event)) {
+      _noteStylusNear();
+      return;
+    }
+    if (event.kind != PointerDeviceKind.touch) return;
+    final palm =
+        _stylusNear || _stylusDrawing || _palmPointers.isNotEmpty || event.radiusMajor > _palmRadius;
+    if (palm) setState(() => _palmPointers.add(event.pointer));
+  }
+
+  void _handUp(PointerEvent event) {
+    if (_isStylus(event) && _penMode) _noteStylusNear();
+    if (_palmPointers.contains(event.pointer)) {
+      setState(() => _palmPointers.remove(event.pointer));
+    }
+  }
+
   void _setStylusOnly(bool value) {
     setState(() => _stylusOnly = value);
     ref.read(workspaceControllerProvider.notifier).setStylusOnly(value);
@@ -242,6 +300,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   @override
   void dispose() {
+    _stylusNearTimer?.cancel();
     // Leaving within the debounce window would otherwise throw away the very
     // page the reader stopped on, which is the one worth keeping. The
     // notifier is held from initState because it outlives this widget, so a
@@ -1740,7 +1799,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       ),
                     ),
                   ),
-                if (_penMode)
+                // Saat menyajikan, alat pena pindah ke bilah bawah. Di atas
+                // sini, tanpa AppBar dan dengan mode imersif, bilah ini duduk
+                // di bawah bilah status dan lubang kamera: Selesai dan Buang di
+                // ujung kanannya terlihat, tetapi sentuhannya diambil sistem.
+                if (_penMode && !_presentMode)
                   Material(
                     color: scheme.primaryContainer,
                     child: Padding(
@@ -1866,18 +1929,43 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           event.kind == PointerDeviceKind.invertedStylus ||
           event.kind == PointerDeviceKind.mouse);
 
+  /// Kotak halaman [pageNumber] di layar **saat ini**.
+  ///
+  /// Dihitung dari tata letak dan zum yang sedang berlaku, bukan diambil dari
+  /// [_pageRects] begitu saja. Kotak di sana dicatat saat lapisan halaman
+  /// dibangun, dan halaman yang sudah keluar layar tidak pernah dibangun lagi
+  /// — kotaknya tertinggal di tempat terakhir ia terlihat. Setelah lama
+  /// menggulir, kotak basi itu menutupi separuh halaman yang sedang dibuka,
+  /// goresannya jatuh ke halaman yang tidak terlihat, dan yang tersisa di
+  /// layar adalah "separuh halaman tidak bisa ditulisi".
+  Rect? _pageRectNow(int pageNumber) {
+    if (!_controller.isReady) return _pageRects[pageNumber];
+    final layouts = _controller.layout.pageLayouts;
+    if (pageNumber < 1 || pageNumber > layouts.length) return null;
+    final doc = layouts[pageNumber - 1];
+    return Rect.fromPoints(
+      _controller.documentToLocal(doc.topLeft),
+      _controller.documentToLocal(doc.bottomRight),
+    );
+  }
+
   void _stylusDown(PointerDownEvent event) {
     // Satu goresan satu pointer. Stylus kedua — atau pantulan pena yang
     // terbaca dua kali — tidak boleh membajak goresan yang sedang berjalan.
     if (_stylusPointer != null || !_drawsWithStylus(event)) return;
-    for (final entry in _pageRects.entries) {
-      if (!entry.value.contains(event.localPosition)) continue;
+    final pages = _controller.isReady
+        ? List<int>.generate(_controller.pages.length, (i) => i + 1)
+        : _pageRects.keys.toList();
+    for (final pageNumber in pages) {
+      final rect = _pageRectNow(pageNumber);
+      if (rect == null || !rect.contains(event.localPosition)) continue;
+      _pageRects[pageNumber] = rect;
       _stylusLive
         ..clear()
-        ..add(event.localPosition - entry.value.topLeft);
+        ..add(event.localPosition - rect.topLeft);
       _stylusTick.value++;
       setState(() {
-        _stylusPage = entry.key;
+        _stylusPage = pageNumber;
         _stylusPointer = event.pointer;
         _stylusDrawing = true;
       });
@@ -1902,7 +1990,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (event.pointer != _stylusPointer) return;
     final pageNumber = _stylusPage;
     final rect = pageNumber == null ? null : _pageRects[pageNumber];
-    final size = pageNumber == null ? null : _pageSizes[pageNumber];
+    final size = pageNumber == null
+        ? null
+        : (_pageSizes[pageNumber] ??
+            (_controller.isReady
+                ? Size(_controller.pages[pageNumber - 1].width, _controller.pages[pageNumber - 1].height)
+                : null));
     final points = List<Offset>.of(_stylusLive);
     _stylusLive.clear();
     _stylusTick.value++;
@@ -1936,15 +2029,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           // sana, jadi dokumennya beku selama pena aktif. `Listener` yang
           // membungkus penampil hanya menyimak — jari tetap menggeser halaman,
           // stylus tetap menulis.
-          onPointerDown: _stylusDown,
+          onPointerDown: (event) {
+            _handDown(event);
+            _stylusDown(event);
+          },
           onPointerMove: _stylusMove,
+          onPointerHover: (event) {
+            if (_penMode && _stylusOnly && _isStylus(event)) _noteStylusNear();
+          },
           onPointerUp: (event) {
             _onMarkerPointerUp();
             _stylusFinish(event);
+            _handUp(event);
           },
           onPointerCancel: (event) {
             _onMarkerPointerUp();
             _stylusFinish(event);
+            _handUp(event);
           },
           child: _tint.filter == null
               ? _buildPdf(scheme)
@@ -1989,15 +2090,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // yang memperebutkannya — dan ibu jari memang sudah di situ.
       if (_presentMode)
         Positioned(
-          left: 0,
-          right: 0,
+          left: 8 + MediaQuery.viewPaddingOf(context).left,
+          right: 8 + MediaQuery.viewPaddingOf(context).right,
           bottom: 8 + MediaQuery.viewPaddingOf(context).bottom,
           child: Center(
             child: Material(
               color: scheme.surface.withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(28),
               elevation: 6,
-              child: Padding(
+              clipBehavior: Clip.antiAlias,
+              // Bisa digulir ke samping kalau layarnya lebih sempit dari
+              // bilahnya — tombol yang terpotong di ujung sama saja dengan
+              // tombol yang tidak ada.
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -2017,75 +2123,116 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       onPressed: () => _stepPage(1),
                     ),
                     const VerticalDivider(width: 10, indent: 8, endIndent: 8),
-                    IconButton(
-                      tooltip: 'Perkecil',
-                      icon: const Icon(Icons.zoom_out),
-                      onPressed: () => _controller.zoomDown(),
-                    ),
-                    IconButton(
-                      tooltip: 'Perbesar',
-                      icon: const Icon(Icons.zoom_in),
-                      onPressed: () => _controller.zoomUp(),
-                    ),
-                    IconButton(
-                      tooltip: 'Pas satu halaman ke layar',
-                      icon: const Icon(Icons.fit_screen_outlined),
-                      onPressed: _fitCurrentPage,
-                    ),
-                    const VerticalDivider(width: 10, indent: 8, endIndent: 8),
-                    IconButton(
-                      tooltip: _penMode ? 'Selesai menggambar' : 'Coret-coret di halaman',
-                      isSelected: _penMode,
-                      selectedIcon: const Icon(Icons.draw),
-                      icon: const Icon(Icons.draw_outlined),
-                      onPressed: _togglePen,
-                    ),
-                    // Urungkan ikut di sini: saat menyajikan, bilah atas tidak
-                    // ada, dan mencari urungkan berarti keluar dari mode
-                    // menyajikan di depan orang.
-                    IconButton(
-                      // Saat masih menggambar, yang diurungkan adalah **goresan
-                      // terakhir** — bukan seluruh gambar. Garis nyasar dari
-                      // telapak tangan harus bisa dibuang sendiri, tanpa
-                      // membuang semua yang sudah ditulis di halaman itu.
-                      tooltip: _pendingInk.isNotEmpty
-                          ? 'Urungkan goresan terakhir'
-                          : 'Urungkan',
-                      icon: const Icon(Icons.undo),
-                      onPressed: _pendingInk.isNotEmpty
-                          ? _undoStroke
-                          : (_undoSteps.isEmpty ? null : _undoLast),
-                    ),
-                    IconButton(
-                      tooltip: _stylusOnly
-                          ? 'Stylus saja — sentuhan tangan tidak menggambar'
-                          : 'Jari + stylus — ketuk untuk stylus saja',
-                      isSelected: _stylusOnly,
-                      selectedIcon: const Icon(Icons.do_not_touch_outlined),
-                      icon: const Icon(Icons.touch_app_outlined),
-                      onPressed: () => _setStylusOnly(!_stylusOnly),
-                    ),
-                    IconButton(
-                      // Menyimpan dari dalam mode menyajikan: coretan yang
-                      // dibuat saat menjelaskan sering justru yang paling
-                      // berharga, dan sebelumnya harus keluar dulu untuk
-                      // menyimpannya — kalau ingat.
-                      tooltip: _canWriteInPlace
-                          ? 'Simpan ke berkas ini'
-                          : 'Simpan sebagai PDF',
-                      icon: const Icon(Icons.save_outlined),
-                      onPressed: _savePdf,
-                    ),
-                    IconButton(
-                      tooltip: 'Tambah lembar kosong untuk dicoreti',
-                      icon: const Icon(Icons.note_add_outlined),
-                      onPressed: _addBlankPages,
-                    ),
-                    IconButton(
-                      tooltip: 'Keluar dari mode menyajikan',
-                      icon: const Icon(Icons.close_fullscreen),
-                      onPressed: _togglePresent,
-                    ),
+                    if (_penMode) ...<Widget>[
+                      // Alat pena di bilah bawah juga, karena bilah atas tidak
+                      // ada saat menyajikan: mengganti warna adalah hal yang
+                      // paling sering dilakukan sambil menjelaskan, dan tanpa
+                      // ini satu-satunya warna adalah warna yang dipilih
+                      // sebelum mulai menyajikan.
+                      _WidthButton(
+                        width: _inkWidth,
+                        onSelected: (value) => _switchPen(width: value),
+                      ),
+                      _ColorButton(
+                        color: _color,
+                        onSelected: (value) => _switchPen(color: value),
+                      ),
+                      IconButton(
+                        tooltip: 'Urungkan goresan terakhir',
+                        icon: const Icon(Icons.undo),
+                        onPressed: _pendingInk.isNotEmpty
+                            ? _undoStroke
+                            : (_undoSteps.isEmpty ? null : _undoLast),
+                      ),
+                      IconButton(
+                        tooltip: 'Buang semua goresan yang belum disimpan',
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: _pendingInk.isEmpty ? null : _discardInk,
+                      ),
+                      IconButton(
+                        tooltip: _stylusOnly
+                            ? 'Stylus saja — sentuhan tangan tidak menggambar'
+                            : 'Jari + stylus — ketuk untuk stylus saja',
+                        isSelected: _stylusOnly,
+                        selectedIcon: const Icon(Icons.do_not_touch_outlined),
+                        icon: const Icon(Icons.touch_app_outlined),
+                        onPressed: () => _setStylusOnly(!_stylusOnly),
+                      ),
+                      const SizedBox(width: 4),
+                      FilledButton.tonal(onPressed: _togglePen, child: const Text('Selesai')),
+                      const SizedBox(width: 4),
+                    ] else ...<Widget>[
+                      const VerticalDivider(width: 10, indent: 8, endIndent: 8),
+                      IconButton(
+                        tooltip: 'Perkecil',
+                        icon: const Icon(Icons.zoom_out),
+                        onPressed: () => _controller.zoomDown(),
+                      ),
+                      IconButton(
+                        tooltip: 'Perbesar',
+                        icon: const Icon(Icons.zoom_in),
+                        onPressed: () => _controller.zoomUp(),
+                      ),
+                      IconButton(
+                        tooltip: 'Pas satu halaman ke layar',
+                        icon: const Icon(Icons.fit_screen_outlined),
+                        onPressed: _fitCurrentPage,
+                      ),
+                      const VerticalDivider(width: 10, indent: 8, endIndent: 8),
+                      IconButton(
+                        tooltip: _penMode ? 'Selesai menggambar' : 'Coret-coret di halaman',
+                        isSelected: _penMode,
+                        selectedIcon: const Icon(Icons.draw),
+                        icon: const Icon(Icons.draw_outlined),
+                        onPressed: _togglePen,
+                      ),
+                      // Urungkan ikut di sini: saat menyajikan, bilah atas tidak
+                      // ada, dan mencari urungkan berarti keluar dari mode
+                      // menyajikan di depan orang.
+                      IconButton(
+                        // Saat masih menggambar, yang diurungkan adalah **goresan
+                        // terakhir** — bukan seluruh gambar. Garis nyasar dari
+                        // telapak tangan harus bisa dibuang sendiri, tanpa
+                        // membuang semua yang sudah ditulis di halaman itu.
+                        tooltip: _pendingInk.isNotEmpty
+                            ? 'Urungkan goresan terakhir'
+                            : 'Urungkan',
+                        icon: const Icon(Icons.undo),
+                        onPressed: _pendingInk.isNotEmpty
+                            ? _undoStroke
+                            : (_undoSteps.isEmpty ? null : _undoLast),
+                      ),
+                      IconButton(
+                        tooltip: _stylusOnly
+                            ? 'Stylus saja — sentuhan tangan tidak menggambar'
+                            : 'Jari + stylus — ketuk untuk stylus saja',
+                        isSelected: _stylusOnly,
+                        selectedIcon: const Icon(Icons.do_not_touch_outlined),
+                        icon: const Icon(Icons.touch_app_outlined),
+                        onPressed: () => _setStylusOnly(!_stylusOnly),
+                      ),
+                      IconButton(
+                        // Menyimpan dari dalam mode menyajikan: coretan yang
+                        // dibuat saat menjelaskan sering justru yang paling
+                        // berharga, dan sebelumnya harus keluar dulu untuk
+                        // menyimpannya — kalau ingat.
+                        tooltip: _canWriteInPlace
+                            ? 'Simpan ke berkas ini'
+                            : 'Simpan sebagai PDF',
+                        icon: const Icon(Icons.save_outlined),
+                        onPressed: _savePdf,
+                      ),
+                      IconButton(
+                        tooltip: 'Tambah lembar kosong untuk dicoreti',
+                        icon: const Icon(Icons.note_add_outlined),
+                        onPressed: _addBlankPages,
+                      ),
+                      IconButton(
+                        tooltip: 'Keluar dari mode menyajikan',
+                        icon: const Icon(Icons.close_fullscreen),
+                        onPressed: _togglePresent,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -2184,8 +2331,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // halaman**: menggeser dokumen tetap bisa sambil mencoret. Selama stylus
       // benar-benar menggores, geseran dimatikan sebentar — kalau tidak,
       // halamannya ikut bergeser di bawah pena.
-      panEnabled: !_markerMode && (!_penMode || (_stylusOnly && !_stylusDrawing)),
-      scaleEnabled: true,
+      //
+      // Telapak tangan juga tidak boleh menggeser: lihat [_palmPointers].
+      panEnabled: !_markerMode && (!_penMode || (_stylusOnly && !_handLocked)),
+      scaleEnabled: !_handLocked,
       // Saat menyajikan, tiap halaman diberi jarak setinggi halaman terpanjang.
       // Tanpa itu halaman sebelumnya dan berikutnya tetap menyembul di atas dan
       // di bawah — dan yang menyajikan tidak sedang memamerkan dua slide

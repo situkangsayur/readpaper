@@ -444,7 +444,6 @@ class GitHubApiBackend implements GitBackend {
 
       final pending = state.pending.first;
       final treeEntries = <Map<String, dynamic>>[];
-      var uploaded = 0;
 
       // Jaring pengaman untuk antrean yang sudah terlanjur tersimpan sebelum
       // penyaringan di commitAll ada: tanpa ini, memasang versi baru saja
@@ -460,35 +459,93 @@ class GitHubApiBackend implements GitBackend {
         );
       }
 
+      // Berkas yang ditolak GitHub — terlalu besar, atau ditolak dengan 422 —
+      // disisihkan, bukan menggagalkan seluruh pengiriman. Dulu satu buku PDF
+      // di urutan ke-20 dari 32 membuat 31 berkas lain ikut tertahan, dan
+      // karena antreannya terus bertambah, setiap percobaan berikutnya gagal
+      // di tempat yang sama dengan antrean yang makin panjang.
+      final rejectedNow = <String, RejectedFile>{};
+      final sent = <String>[];
+      var index = 0;
       for (final path in sendable) {
+        index++;
         final file = File(p.join(repoPath, path));
         if (!file.existsSync()) {
-          treeEntries.add(<String, dynamic>{
-            'path': path,
-            'mode': '100644',
-            'type': 'blob',
-            'sha': null,
-          });
+          // Hanya jalur yang memang ada di commit induknya yang bisa dihapus.
+          // Berkas yang dibuat lalu dihapus lagi sebelum sempat terkirim
+          // tidak pernah ada di GitHub, dan meminta GitHub menghapusnya
+          // dijawab dengan penolakan untuk seluruh pohonnya.
+          if (state.files.containsKey(path)) {
+            treeEntries.add(<String, dynamic>{
+              'path': path,
+              'mode': '100644',
+              'type': 'blob',
+              'sha': null,
+            });
+          }
+          sent.add(path);
           continue;
         }
-        uploaded++;
+        final localSha = gitBlobShaOfFile(file);
+        if (state.files[path]?.sha == localSha) {
+          // Isinya sama dengan yang sudah ada di GitHub: tidak ada yang perlu
+          // diunggah. Antrean lama sering berisi berkas seperti ini.
+          sent.add(path);
+          continue;
+        }
+        final known = state.rejected[path];
+        if (known != null && known.sha == localSha) {
+          rejectedNow[path] = known;
+          continue;
+        }
         onProgress?.call(
           SyncProgress(
             message: 'Mengunggah berkas',
-            fraction: uploaded / sendable.length,
-            current: uploaded,
+            fraction: index / sendable.length,
+            current: index,
             total: sendable.length,
             detail: p.basename(path),
           ),
         );
-        final bytes = await file.readAsBytes();
-        final blobSha = await client.createBlob(bytes);
+        final String blobSha;
+        try {
+          blobSha = await client.createBlob(await file.readAsBytes());
+        } on GitFailure catch (e) {
+          if (!_isRejection(e)) rethrow;
+          rejectedNow[path] = RejectedFile(sha: localSha, reason: e.message);
+          continue;
+        }
+        sent.add(path);
         treeEntries.add(<String, dynamic>{
           'path': path,
           'mode': '100644',
           'type': 'blob',
           'sha': blobSha,
         });
+      }
+
+      if (treeEntries.isEmpty) {
+        // Tidak ada yang berubah di GitHub: entah semuanya ditolak, entah
+        // semuanya ternyata sudah sama. Antreannya tetap dirapikan.
+        state.pending
+          ..clear()
+          ..addAll(<PendingChange>[
+            if (rejectedNow.isNotEmpty)
+              PendingChange(message: pending.message, paths: rejectedNow.keys.toList(), at: pending.at),
+          ]);
+        state.rejected
+          ..clear()
+          ..addAll(rejectedNow);
+        await state.save(repoPath);
+        if (rejectedNow.isEmpty) {
+          return const GitResult(ok: true, exitCode: 0, message: 'Tidak ada yang perlu dikirim');
+        }
+        return GitResult(
+          ok: false,
+          exitCode: 1,
+          message: _rejectionMessage(rejectedNow, sentCount: 0),
+          stderr: _rejectionDetails(rejectedNow),
+        );
       }
 
       final baseTree = await client.treeShaOfCommit(state.commitSha);
@@ -503,7 +560,7 @@ class GitHubApiBackend implements GitBackend {
 
       // The mirror now matches the new commit: refresh the bookkeeping so the
       // files stop showing up as local changes.
-      for (final path in sendable) {
+      for (final path in sent) {
         final file = File(p.join(repoPath, path));
         if (!file.existsSync()) {
           state.files.remove(path);
@@ -521,9 +578,27 @@ class GitHubApiBackend implements GitBackend {
         ..lastCommitSubject = pending.message.split('\n').first
         ..lastCommitDate = DateTime.now()
         ..pending.clear();
+      // Yang ditolak tetap menunggu di antrean — tidak dibuang diam-diam —
+      // tetapi tidak lagi menghalangi yang lain.
+      if (rejectedNow.isNotEmpty) {
+        state.pending.add(
+          PendingChange(message: pending.message, paths: rejectedNow.keys.toList(), at: pending.at),
+        );
+      }
+      state.rejected
+        ..clear()
+        ..addAll(rejectedNow);
       await state.save(repoPath);
 
-      return GitResult(ok: true, exitCode: 0, message: 'Terkirim: ${sendable.length} berkas');
+      if (rejectedNow.isNotEmpty) {
+        return GitResult(
+          ok: false,
+          exitCode: 1,
+          message: _rejectionMessage(rejectedNow, sentCount: sent.length),
+          stderr: _rejectionDetails(rejectedNow),
+        );
+      }
+      return GitResult(ok: true, exitCode: 0, message: 'Terkirim: ${sent.length} berkas');
     });
   }
 
@@ -592,6 +667,29 @@ class GitHubApiBackend implements GitBackend {
   );
 
   /// True for paths inside `attachments/` or `attachments-lfs/`.
+  /// GitHub menolak isi berkas ini sendiri — bukan jaringan, bukan token.
+  ///
+  /// 413 dipakai pemeriksaan ukuran sebelum mengunggah; 422 adalah jawaban
+  /// GitHub untuk berkas yang tidak mau diterimanya.
+  static bool _isRejection(GitFailure failure) =>
+      failure.exitCode == 413 || failure.exitCode == 422;
+
+  static String _rejectionMessage(Map<String, RejectedFile> rejected, {required int sentCount}) {
+    final names = rejected.keys.map(p.basename).toList();
+    final shown = names.take(3).join(', ');
+    final more = names.length > 3 ? ' dan ${names.length - 3} lainnya' : '';
+    final reason = rejected.values.first.reason;
+    final head = sentCount == 0
+        ? 'Tidak ada yang terkirim'
+        : '$sentCount berkas terkirim';
+    return '$head; ${names.length} berkas ditolak GitHub dan tetap menunggu: '
+        '$shown$more. $reason';
+  }
+
+  static String _rejectionDetails(Map<String, RejectedFile> rejected) => <String>[
+    for (final entry in rejected.entries) '${entry.key} — ${entry.value.reason}',
+  ].join('\n');
+
   static bool isAttachmentPath(String path) {
     final segments = p.split(path);
     return segments.any(attachmentDirs.contains);
