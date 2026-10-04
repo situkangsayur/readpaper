@@ -772,6 +772,11 @@ besar"), tetapi yang lebih kecil tetap lebih baik.
       itemnya muncul di koleksi, commit-nya terbentuk
 - [x] Di penjelajah berkas: **folder baru**, **masuk/keluar folder**, **buka
       folder kerja lain**, dan **salin berkas ke sini**
+- [x] **Koleksi baru langsung dari "Tambahkan ke koleksi"** di pembaca
+      (2026-10-04), di akar atau sebagai sub-koleksi. Koleksi tujuan sering
+      belum ada — dokumen kuliah hari ini, misalnya — dan sebelumnya harus
+      keluar ke pohon koleksi dulu. Lewat penulis `collections.json` yang sama,
+      jadi tetap terbaca Zotero
 - [ ] Seret **antar koleksi** (memindahkan item yang sudah ada di library)
 - [x] **Papan tulis baru** dari panel ini (2026-09-28)
 - [x] **Ganti nama** dan **hapus berkas** dari panel ini (2026-09-28)

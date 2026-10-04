@@ -984,12 +984,27 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 subtitle: const Text('masuk library, tidak masuk koleksi mana pun'),
                 onTap: () => Navigator.of(context).pop(const _CollectionChoice(null)),
               ),
+              // Koleksi yang dicari sering belum ada — dokumen kuliah hari ini
+              // misalnya — dan menyuruh keluar ke pohon koleksi dulu berarti
+              // kehilangan apa yang sedang dikerjakan.
+              ListTile(
+                leading: const Icon(Icons.create_new_folder_outlined),
+                title: const Text('Koleksi baru…'),
+                subtitle: const Text('dibuat lalu langsung dipakai'),
+                onTap: () => Navigator.of(context).pop(const _CollectionChoice.create(null)),
+              ),
               const Divider(),
               for (final collection in index.collections.values)
                 ListTile(
                   leading: const Icon(Icons.folder_outlined),
                   title: Text(collection.name),
                   subtitle: collection.path == collection.name ? null : Text(collection.path),
+                  trailing: IconButton(
+                    tooltip: 'Sub-koleksi baru di dalam ${collection.name}',
+                    icon: const Icon(Icons.create_new_folder_outlined),
+                    onPressed: () =>
+                        Navigator.of(context).pop(_CollectionChoice.create(collection.key)),
+                  ),
                   onTap: () => Navigator.of(context).pop(_CollectionChoice(collection.key)),
                 ),
             ],
@@ -998,6 +1013,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       ),
     );
     if (chosen == null || !mounted) return;
+
+    var collectionKey = chosen.key;
+    if (chosen.create) {
+      final parent = chosen.key == null ? null : index.collections[chosen.key];
+      final name = await _askCollectionName(parent?.name);
+      if (name == null || name.trim().isEmpty || !mounted) return;
+      // Lewat jalur yang sama dengan pohon koleksi: satu-satunya penulis
+      // collections.json, jadi koleksinya tetap terbaca oleh Zotero.
+      collectionKey = await _workspace.createCollection(name: name.trim(), parentKey: chosen.key);
+      if (!mounted) return;
+      if (collectionKey == null) {
+        _say(ref.read(workspaceControllerProvider).error ?? 'Gagal membuat koleksi');
+        return;
+      }
+    }
 
     final title = await showDialog<String>(
       context: context,
@@ -1027,7 +1057,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final created = await _workspace.addPdfToLibrary(
       pdfPath: _path,
       title: title.trim(),
-      collectionKey: chosen.key,
+      collectionKey: collectionKey,
     );
     if (!mounted) return;
     _say(
@@ -1036,6 +1066,33 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           : 'Masuk library sebagai ${created.itemKey}',
     );
   }
+
+  Future<String?> _askCollectionName(String? parentName) => showDialog<String>(
+    context: context,
+    builder: (context) {
+      final controller = TextEditingController();
+      return AlertDialog(
+        title: Text(parentName == null ? 'Koleksi baru' : 'Sub-koleksi di $parentName'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            hintText: 'Nama koleksi',
+            helperText: 'Ditulis ke collections.json, ikut tersinkron ke GitHub',
+          ),
+          onSubmitted: (value) => Navigator.of(context).pop(value),
+        ),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Buat'),
+          ),
+        ],
+      );
+    },
+  );
 
   /// Mencetak dokumen yang sedang dibuka.
   ///
@@ -3046,7 +3103,11 @@ class _UndoStep {
 /// Koleksi yang dipilih saat memasukkan berkas ke library; null berarti
 /// tidak masuk koleksi mana pun.
 class _CollectionChoice {
-  const _CollectionChoice(this.key);
+  const _CollectionChoice(this.key) : create = false;
+
+  /// Membuat koleksi baru dulu, di dalam [key] (null berarti di akar).
+  const _CollectionChoice.create(this.key) : create = true;
 
   final String? key;
+  final bool create;
 }
