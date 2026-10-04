@@ -36,7 +36,9 @@ class WorkFolder {
     } on FileSystemException {
       // Folder yang tidak bisa dibaca cukup tidak ditawarkan.
     }
-    out.sort((a, b) => p.basename(a.path).toLowerCase().compareTo(p.basename(b.path).toLowerCase()));
+    out.sort(
+      (a, b) => p.basename(a.path).toLowerCase().compareTo(p.basename(b.path).toLowerCase()),
+    );
     return out;
   }
 

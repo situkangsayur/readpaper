@@ -30,7 +30,9 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       ProviderScope(
-        child: MaterialApp(home: NotebookScreen(path: path, title: 'Rapat')),
+        child: MaterialApp(
+          home: NotebookScreen(path: path, title: 'Rapat'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -238,7 +240,11 @@ void main() {
       ..padding = const FakeViewPadding(bottom: 48);
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      ProviderScope(child: MaterialApp(home: NotebookScreen(path: path, title: 'Rapat'))),
+      ProviderScope(
+        child: MaterialApp(
+          home: NotebookScreen(path: path, title: 'Rapat'),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -265,7 +271,11 @@ void main() {
       ..devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      ProviderScope(child: MaterialApp(home: NotebookScreen(path: path, title: 'Rapat'))),
+      ProviderScope(
+        child: MaterialApp(
+          home: NotebookScreen(path: path, title: 'Rapat'),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -353,7 +363,9 @@ void main() {
     await tester.pumpAndSettle();
     await save(tester);
 
-    final left = NoteDocumentStore.decodeSync(File(path).readAsStringSync()).pages.single.components;
+    final left = NoteDocumentStore.decodeSync(
+      File(path).readAsStringSync(),
+    ).pages.single.components;
     expect(left.map((c) => c.id), <String>['jauh'], reason: 'yang di luar kotak tetap ada');
   });
 
@@ -389,8 +401,9 @@ void main() {
     await tester.pumpAndSettle();
     await save(tester);
 
-    final text = NoteDocumentStore.decodeSync(File(path).readAsStringSync())
-        .pages.single.components.single as NoteText;
+    final text =
+        NoteDocumentStore.decodeSync(File(path).readAsStringSync()).pages.single.components.single
+            as NoteText;
     expect(text.text, 'Halo');
   });
 
@@ -424,7 +437,8 @@ void main() {
 
     final fit = find.byTooltip('Pas ke layar — kembalikan zum');
     expect(
-      tester.widget<IconButton>(find.ancestor(of: fit, matching: find.byType(IconButton)).first)
+      tester
+          .widget<IconButton>(find.ancestor(of: fit, matching: find.byType(IconButton)).first)
           .onPressed,
       isNull,
       reason: 'belum ada zum yang perlu dikembalikan',
@@ -433,7 +447,8 @@ void main() {
     await tester.tap(find.byTooltip('Perbesar'));
     await tester.pumpAndSettle();
     expect(
-      tester.widget<IconButton>(find.ancestor(of: fit, matching: find.byType(IconButton)).first)
+      tester
+          .widget<IconButton>(find.ancestor(of: fit, matching: find.byType(IconButton)).first)
           .onPressed,
       isNotNull,
     );
@@ -441,7 +456,8 @@ void main() {
     await tester.tap(fit);
     await tester.pumpAndSettle();
     expect(
-      tester.widget<IconButton>(find.ancestor(of: fit, matching: find.byType(IconButton)).first)
+      tester
+          .widget<IconButton>(find.ancestor(of: fit, matching: find.byType(IconButton)).first)
           .onPressed,
       isNull,
     );
@@ -495,7 +511,11 @@ void _pressureTests() {
       ..devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      ProviderScope(child: MaterialApp(home: NotebookScreen(path: path, title: 'Tekanan'))),
+      ProviderScope(
+        child: MaterialApp(
+          home: NotebookScreen(path: path, title: 'Tekanan'),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 

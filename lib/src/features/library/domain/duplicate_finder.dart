@@ -37,11 +37,9 @@ class DuplicateGroup {
   ///
   /// Angka ini yang membuat penggabungan terasa berisiko atau tidak: dua
   /// salinan yang sama-sama punya coretan tidak boleh digabung sembarangan.
-  int get totalAnnotations =>
-      items.fold(0, (sum, item) => sum + item.annotationCount);
+  int get totalAnnotations => items.fold(0, (sum, item) => sum + item.annotationCount);
 
-  bool get annotationsOnMoreThanOne =>
-      items.where((item) => item.annotationCount > 0).length > 1;
+  bool get annotationsOnMoreThanOne => items.where((item) => item.annotationCount > 0).length > 1;
 }
 
 /// Menemukan item yang sebenarnya karya yang sama, masuk dua kali.
@@ -60,11 +58,7 @@ class DuplicateFinder {
   const DuplicateFinder._();
 
   /// Jenis item yang tidak pernah ikut dibandingkan.
-  static const Set<String> _ignoredTypes = <String>{
-    'attachment',
-    'note',
-    'annotation',
-  };
+  static const Set<String> _ignoredTypes = <String>{'attachment', 'note', 'annotation'};
 
   static List<DuplicateGroup> find(List<ZoteroItem> items) {
     final candidates = <ZoteroItem>[
@@ -104,9 +98,7 @@ class DuplicateFinder {
     // Jadi dikumpulkan ulang di akhir, bukan diandalkan apa adanya.
     final merged = <int, Set<DuplicateReason>>{};
     for (final entry in reasons.entries) {
-      (merged[union.find(entry.key)] ??= <DuplicateReason>{}).addAll(
-        entry.value,
-      );
+      (merged[union.find(entry.key)] ??= <DuplicateReason>{}).addAll(entry.value);
     }
 
     final members = <int, List<ZoteroItem>>{};
@@ -119,9 +111,7 @@ class DuplicateFinder {
         if (entry.value.length > 1)
           DuplicateGroup(
             items: <ZoteroItem>[...entry.value]..sort(_mostCompleteFirst),
-            reasons:
-                merged[entry.key] ??
-                <DuplicateReason>{DuplicateReason.titleYearAuthor},
+            reasons: merged[entry.key] ?? <DuplicateReason>{DuplicateReason.titleYearAuthor},
           ),
     ];
 
@@ -131,9 +121,7 @@ class DuplicateFinder {
       if (byReason != 0) return byReason;
       final byCount = b.items.length.compareTo(a.items.length);
       if (byCount != 0) return byCount;
-      return a.items.first.title.toLowerCase().compareTo(
-        b.items.first.title.toLowerCase(),
-      );
+      return a.items.first.title.toLowerCase().compareTo(b.items.first.title.toLowerCase());
     });
     return groups;
   }
@@ -146,9 +134,7 @@ class DuplicateFinder {
   static int _mostCompleteFirst(ZoteroItem a, ZoteroItem b) {
     final byAnnotations = b.annotationCount.compareTo(a.annotationCount);
     if (byAnnotations != 0) return byAnnotations;
-    final byFile = (b.hasReadableFile ? 1 : 0).compareTo(
-      a.hasReadableFile ? 1 : 0,
-    );
+    final byFile = (b.hasReadableFile ? 1 : 0).compareTo(a.hasReadableFile ? 1 : 0);
     if (byFile != 0) return byFile;
     final byFields = _richness(b).compareTo(_richness(a));
     if (byFields != 0) return byFields;
@@ -226,10 +212,7 @@ class DuplicateFinder {
 
   /// Judul tanpa tanda baca, tanpa kata sandang di depan, huruf kecil semua.
   static String normalizeTitle(String title) {
-    var value = title
-        .toLowerCase()
-        .replaceAll(RegExp('[^a-z0-9]+'), ' ')
-        .trim();
+    var value = title.toLowerCase().replaceAll(RegExp('[^a-z0-9]+'), ' ').trim();
     for (final article in const <String>['the ', 'a ', 'an ']) {
       if (value.startsWith(article)) {
         value = value.substring(article.length);
@@ -258,11 +241,7 @@ class DuplicateFinder {
       if (key.isNotEmpty) return key;
     }
     for (final raw in item.creators) {
-      final key = raw
-          .split(',')
-          .first
-          .toLowerCase()
-          .replaceAll(RegExp('[^a-z]+'), '');
+      final key = raw.split(',').first.toLowerCase().replaceAll(RegExp('[^a-z]+'), '');
       if (key.isNotEmpty) return key;
     }
     return '';

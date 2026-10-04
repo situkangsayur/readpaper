@@ -9,12 +9,7 @@ import 'package:meta/meta.dart';
 /// besar menghasilkan berkas yang sama.
 @immutable
 class BoardStroke {
-  const BoardStroke({
-    required this.points,
-    required this.color,
-    required this.width,
-    this.widths,
-  });
+  const BoardStroke({required this.points, required this.color, required this.width, this.widths});
 
   final List<Offset> points;
   final Color color;

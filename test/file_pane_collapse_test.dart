@@ -39,8 +39,7 @@ void main() {
     expect(find.byTooltip('Buku catatan baru'), findsNothing);
   });
 
-  testWidgets('menu buat memuat papan tulis, buku catatan, markdown, dan folder',
-      (tester) async {
+  testWidgets('menu buat memuat papan tulis, buku catatan, markdown, dan folder', (tester) async {
     await pump(tester, collapsed: false);
     await tester.tap(find.byTooltip('Buat baru di folder ini'));
     await tester.pumpAndSettle();

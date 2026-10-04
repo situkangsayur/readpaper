@@ -289,10 +289,7 @@ class NotesStore {
     final sorted = <NoteCollection>[...collections]..sort((a, b) => a.key.compareTo(b.key));
     final file = _collectionsFile;
     await file.parent.create(recursive: true);
-    await file.writeAsString(
-      _encode(<dynamic>[for (final c in sorted) c.toJson()]),
-      flush: true,
-    );
+    await file.writeAsString(_encode(<dynamic>[for (final c in sorted) c.toJson()]), flush: true);
   }
 
   /// Kunci yang belum dipakai berkas item mana pun.

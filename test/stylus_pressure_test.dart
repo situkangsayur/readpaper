@@ -45,7 +45,9 @@ void main() {
                 id: 'i1',
                 position: Offset.zero,
                 size: const Size(60, 4),
-                strokes: <NoteStroke>[stroke(widths: const <double>[1.5, 2.5, 4, 2])],
+                strokes: <NoteStroke>[
+                  stroke(widths: const <double>[1.5, 2.5, 4, 2]),
+                ],
               ),
             ],
           ),

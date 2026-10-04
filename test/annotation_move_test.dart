@@ -63,13 +63,7 @@ void main() {
 
   group('memindahkan', () {
     test('goresan bergeser utuh', () {
-      final moved = AnnotationMove.shift(
-        ink(),
-        dx: 30,
-        dy: -50,
-        pageWidth: 595,
-        pageHeight: 842,
-      );
+      final moved = AnnotationMove.shift(ink(), dx: 30, dy: -50, pageWidth: 595, pageHeight: 842);
       final path = moved.paths.single;
       expect(path.xAt(0), 130);
       expect(path.yAt(0), 150);
@@ -93,33 +87,23 @@ void main() {
 
     test('tidak bisa didorong keluar halaman', () {
       // Yang terdorong keluar bukan "di tempat lain", melainkan hilang.
-      final moved = AnnotationMove.shift(
-        ink(),
-        dx: -500,
-        dy: 0,
-        pageWidth: 595,
-        pageHeight: 842,
-      );
+      final moved = AnnotationMove.shift(ink(), dx: -500, dy: 0, pageWidth: 595, pageHeight: 842);
       expect(moved.paths.single.xAt(0), greaterThanOrEqualTo(0));
     });
 
     test('urutan di daftar samping ikut diperbarui', () {
       final before = ink();
-      final moved = AnnotationMove.shift(
-        before,
-        dx: 0,
-        dy: -300,
-        pageWidth: 595,
-        pageHeight: 842,
-      );
+      final moved = AnnotationMove.shift(before, dx: 0, dy: -300, pageWidth: 595, pageHeight: 842);
       expect(moved.sortIndex, isNot(before.sortIndex));
     });
 
     test('geseran nol mengembalikan yang sama persis', () {
       final before = ink();
       expect(
-        identical(AnnotationMove.shift(before, dx: 0, dy: 0, pageWidth: 595, pageHeight: 842),
-            before),
+        identical(
+          AnnotationMove.shift(before, dx: 0, dy: 0, pageWidth: 595, pageHeight: 842),
+          before,
+        ),
         isTrue,
       );
     });
@@ -154,12 +138,7 @@ void main() {
     });
 
     test('tebal penanya ikut, supaya tidak terlihat ditarik', () {
-      final scaled = AnnotationMove.transform(
-        square(),
-        scale: 2,
-        pageWidth: 595,
-        pageHeight: 842,
-      );
+      final scaled = AnnotationMove.transform(square(), scale: 2, pageWidth: 595, pageHeight: 842);
       expect(scaled.inkWidth, closeTo(4, 0.01));
     });
 
@@ -223,12 +202,7 @@ void main() {
     });
 
     test('tidak bisa diperbesar sampai keluar halaman', () {
-      final huge = AnnotationMove.transform(
-        square(),
-        scale: 30,
-        pageWidth: 595,
-        pageHeight: 842,
-      );
+      final huge = AnnotationMove.transform(square(), scale: 30, pageWidth: 595, pageHeight: 842);
       final box = AnnotationMove.rectsOf(huge).single;
       expect(box.left, greaterThanOrEqualTo(-0.01));
       expect(box.bottom, greaterThanOrEqualTo(-0.01));

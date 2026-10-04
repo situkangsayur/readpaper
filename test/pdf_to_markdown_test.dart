@@ -10,14 +10,7 @@ void main() {
     double size = 10,
     double left = 72,
     double right = 523,
-  }) => PdfTextLine(
-    page: page,
-    text: text,
-    top: y + size,
-    bottom: y,
-    left: left,
-    right: right,
-  );
+  }) => PdfTextLine(page: page, text: text, top: y + size, bottom: y, left: left, right: right);
 
   group('paragraf', () {
     test('baris berdekatan digabung jadi satu paragraf', () {
@@ -90,21 +83,17 @@ void main() {
     });
 
     test('judul dari luar dipakai kalau dokumennya tidak punya tajuk', () {
-      final md = PdfToMarkdown.fromLines(
-        <PdfTextLine>[line('Hanya badan teks.', y: 700)],
-        title: 'Berkas Pindaian',
-      );
+      final md = PdfToMarkdown.fromLines(<PdfTextLine>[
+        line('Hanya badan teks.', y: 700),
+      ], title: 'Berkas Pindaian');
       expect(md, startsWith('# Berkas Pindaian'));
     });
 
     test('judul dari luar tidak ditambahkan kalau sudah ada tajuknya', () {
-      final md = PdfToMarkdown.fromLines(
-        <PdfTextLine>[
-          line('Judulnya Sendiri', y: 740, size: 20),
-          line('Badan teks yang panjangnya wajar, supaya ada patokan ukuran.', y: 700),
-        ],
-        title: 'Nama Berkas',
-      );
+      final md = PdfToMarkdown.fromLines(<PdfTextLine>[
+        line('Judulnya Sendiri', y: 740, size: 20),
+        line('Badan teks yang panjangnya wajar, supaya ada patokan ukuran.', y: 700),
+      ], title: 'Nama Berkas');
       expect(md.contains('Nama Berkas'), isFalse);
     });
   });

@@ -83,26 +83,20 @@ void main() {
         item(key: 'C', date: 'Mei 2019'),
       ]);
 
-      expect(stats.byYear, <StatTally>[
-        (label: '2020', count: 2),
-        (label: '2019', count: 1),
-      ]);
+      expect(stats.byYear, <StatTally>[(label: '2020', count: 2), (label: '2019', count: 1)]);
       expect(stats.earliestYear, 2019);
       expect(stats.latestYear, 2020);
     });
 
-    test(
-      'item tanpa tahun dihitung terpisah, bukan dipaksa masuk satu tahun',
-      () {
-        final stats = LibraryStats.of(<ZoteroItem>[
-          item(key: 'A', year: '2020'),
-          item(key: 'B'),
-          item(key: 'C', date: 'tanpa tanggal'),
-        ]);
-        expect(stats.withoutYear, 2);
-        expect(stats.byYear, hasLength(1));
-      },
-    );
+    test('item tanpa tahun dihitung terpisah, bukan dipaksa masuk satu tahun', () {
+      final stats = LibraryStats.of(<ZoteroItem>[
+        item(key: 'A', year: '2020'),
+        item(key: 'B'),
+        item(key: 'C', date: 'tanpa tanggal'),
+      ]);
+      expect(stats.withoutYear, 2);
+      expect(stats.byYear, hasLength(1));
+    });
 
     test('tahun yang mustahil tidak dipercaya', () {
       final stats = LibraryStats.of(<ZoteroItem>[item(key: 'A', year: '99')]);
@@ -115,11 +109,7 @@ void main() {
         item(key: 'B', year: '2024'),
         item(key: 'C', year: '2011'),
       ]);
-      expect(stats.byYear.map((t) => t.label), <String>[
-        '2024',
-        '2011',
-        '1999',
-      ]);
+      expect(stats.byYear.map((t) => t.label), <String>['2024', '2011', '1999']);
     });
   });
 
@@ -155,8 +145,7 @@ void main() {
 
     test('daftarnya dibatasi supaya tetap jadi ringkasan', () {
       final stats = LibraryStats.of(<ZoteroItem>[
-        for (var i = 0; i < 40; i++)
-          item(key: 'K$i', authors: <String>['Orang$i']),
+        for (var i = 0; i < 40; i++) item(key: 'K$i', authors: <String>['Orang$i']),
       ], topCount: 5);
       expect(stats.topCreators, hasLength(5));
     });
@@ -167,11 +156,7 @@ void main() {
         item(key: 'B', authors: <String>['Adi']),
         item(key: 'C', authors: <String>['Mira']),
       ]);
-      expect(stats.topCreators.map((t) => t.label), <String>[
-        'Adi',
-        'Mira',
-        'Zubair',
-      ]);
+      expect(stats.topCreators.map((t) => t.label), <String>['Adi', 'Mira', 'Zubair']);
     });
   });
 

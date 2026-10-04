@@ -296,12 +296,7 @@ class MarkdownDoc {
       final image = RegExp(r'^\s*!\[([^\]]*)\]\(([^)]+)\)\s*$').firstMatch(line);
       if (image != null) {
         blocks.add(
-          MdImage(
-            alt: image.group(1)!,
-            path: image.group(2)!.trim(),
-            startLine: i,
-            endLine: i,
-          ),
+          MdImage(alt: image.group(1)!, path: image.group(2)!.trim(), startLine: i, endLine: i),
         );
         i++;
         continue;
@@ -412,11 +407,7 @@ class MarkdownDoc {
     }
     final ordered = RegExp(r'^(\s*)(\d+)[.)]\s+(.*)$').firstMatch(line);
     if (ordered != null) {
-      return _Bullet(
-        ordered: true,
-        depth: ordered.group(1)!.length ~/ 2,
-        text: ordered.group(3)!,
-      );
+      return _Bullet(ordered: true, depth: ordered.group(1)!.length ~/ 2, text: ordered.group(3)!);
     }
     return null;
   }
@@ -494,7 +485,8 @@ class MarkdownDoc {
         // `_` di tengah kata — `snake_case` — bukan penanda gaya.
         final before = i == 0 ? ' ' : source[i - 1];
         final after = i + 1 < source.length ? source[i + 1] : ' ';
-        final insideWord = rest.startsWith('_') && before.trim().isNotEmpty && after.trim().isNotEmpty;
+        final insideWord =
+            rest.startsWith('_') && before.trim().isNotEmpty && after.trim().isNotEmpty;
         if (!insideWord) {
           flush();
           italic = !italic;

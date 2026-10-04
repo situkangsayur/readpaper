@@ -17,8 +17,11 @@ void main() {
     '.dart_tool/hooks_runner/shared/pdfium_dart/build/chromium_7811/linux-x64/libpdfium.so',
   ].where((path) => File(path).existsSync()).firstOrNull;
   if (module == null) {
-    test('PDF jadi buku catatan', () {},
-        skip: 'libpdfium.so belum ada — jalankan flutter build dulu');
+    test(
+      'PDF jadi buku catatan',
+      () {},
+      skip: 'libpdfium.so belum ada — jalankan flutter build dulu',
+    );
     return;
   }
   Pdfrx.pdfiumModulePath = module;
@@ -37,9 +40,7 @@ void main() {
       }
     }
     final path = p.join(dir.path, 'dokumen.pdf');
-    File(path).writeAsBytesSync(
-      await MarkdownPdf.build(MarkdownDoc.parse(markdown.toString())),
-    );
+    File(path).writeAsBytesSync(await MarkdownPdf.build(MarkdownDoc.parse(markdown.toString())));
     return path;
   }
 
@@ -80,10 +81,7 @@ void main() {
     expect(page.size.width, lessThanOrEqualTo(NoteSheet.width + 0.01));
     expect(page.size.height, lessThanOrEqualTo(NoteSheet.height + 0.01));
     // A4 ke A4: perbandingan sisinya tidak berubah.
-    expect(
-      page.size.width / page.size.height,
-      closeTo(NoteSheet.width / NoteSheet.height, 0.02),
-    );
+    expect(page.size.width / page.size.height, closeTo(NoteSheet.width / NoteSheet.height, 0.02));
   });
 
   test('warnanya tidak tertukar jadi kebiruan', () async {
@@ -92,9 +90,7 @@ void main() {
     final pdf = await samplePdf(pages: 1);
     final notePath = await PdfToNotebook.convert(pdfPath: pdf, targetDir: dir.path);
     final document = await NoteDocumentStore.read(notePath);
-    final file = File(
-      p.join(dir.path, (document.pages.first.components.single as NoteImage).file),
-    );
+    final file = File(p.join(dir.path, (document.pages.first.components.single as NoteImage).file));
 
     final decoded = img.decodePng(file.readAsBytesSync());
     expect(decoded, isNotNull);
@@ -131,10 +127,7 @@ void main() {
       expect(image.file, startsWith('buku-berkas/sisipan-'));
       expect(File(p.join(dir.path, image.file)).existsSync(), isTrue, reason: image.file);
     }
-    expect(
-      Directory(p.join(dir.path, 'buku-berkas')).listSync().length,
-      pages.length,
-    );
+    expect(Directory(p.join(dir.path, 'buku-berkas')).listSync().length, pages.length);
   });
 
   test('menyisipkan dua kali tidak menimpa gambar sisipan pertama', () async {

@@ -39,10 +39,7 @@ class MarkdownView extends StatelessWidget {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: Text(
-            'Dokumen masih kosong.',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          child: Text('Dokumen masih kosong.', style: Theme.of(context).textTheme.bodySmall),
         ),
       );
     }
@@ -151,10 +148,7 @@ class MarkdownView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   if (block.language.isNotEmpty)
-                    Text(
-                      block.language,
-                      style: text.labelSmall?.copyWith(color: scheme.outline),
-                    ),
+                    Text(block.language, style: text.labelSmall?.copyWith(color: scheme.outline)),
                   SelectableText(
                     block.text,
                     style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),

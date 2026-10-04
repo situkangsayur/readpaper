@@ -46,9 +46,7 @@ class BoardExport {
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round,
         width: stroke.width * scale,
-        widths: stroke.widths == null
-            ? null
-            : <double>[for (final w in stroke.widths!) w * scale],
+        widths: stroke.widths == null ? null : <double>[for (final w in stroke.widths!) w * scale],
       );
     }
 

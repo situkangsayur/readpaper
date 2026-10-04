@@ -81,12 +81,8 @@ void main() {
   });
 
   group('penghubung antar objek', () {
-    NoteShape box(String id, Offset at) => NoteShape(
-      id: id,
-      position: at,
-      size: const Size(80, 50),
-      shape: ShapeKind.kotak,
-    );
+    NoteShape box(String id, Offset at) =>
+        NoteShape(id: id, position: at, size: const Size(80, 50), shape: ShapeKind.kotak);
 
     test('ujungnya berhenti di tepi kedua benda, bukan di tengahnya', () {
       final page = NotePage(

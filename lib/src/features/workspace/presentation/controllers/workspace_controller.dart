@@ -448,11 +448,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     try {
       final created = await ref
           .read(libraryRepositoryProvider)
-          .createCollection(
-            libraryDir: library.directoryPath,
-            name: name,
-            parentKey: parentKey,
-          );
+          .createCollection(libraryDir: library.directoryPath, name: name, parentKey: parentKey);
       await _commitAnnotation(profile: profile, message: 'Tambah koleksi: ${created.path}');
       await reloadLibrary();
       return created.key;

@@ -53,11 +53,7 @@ class MermaidPdf {
     // Lebar huruf Helvetica ditaksir dari jumlah hurufnya. Tidak seteliti
     // pengukur di layar, tetapi cukup: yang penting kotaknya tidak pernah
     // lebih sempit dari isinya.
-    final layout = MermaidLayout.of(
-      graph,
-      measure: (line) => line.length * 6.1,
-      lineHeight: 14,
-    );
+    final layout = MermaidLayout.of(graph, measure: (line) => line.length * 6.1, lineHeight: 14);
     // Bentuknya digambar ke kanvas, tetapi **labelnya tetap widget teks** —
     // supaya isi diagram di dalam PDF masih bisa dicari dan disalin, bukan
     // sekadar garis.
@@ -168,7 +164,6 @@ class MermaidPdf {
           )
           ..fillPath();
       }
-
     }
 
     for (final node in layout.nodes) {
@@ -190,12 +185,7 @@ class MermaidPdf {
             ..fillAndStrokePath();
         case MermaidShape.circle:
           canvas
-            ..drawEllipse(
-              node.centerX,
-              flip(node.centerY),
-              node.width / 2,
-              node.height / 2,
-            )
+            ..drawEllipse(node.centerX, flip(node.centerY), node.width / 2, node.height / 2)
             ..fillAndStrokePath();
         case MermaidShape.rounded || MermaidShape.stadium:
           final radius = node.node.shape == MermaidShape.stadium
@@ -209,7 +199,6 @@ class MermaidPdf {
             ..drawRect(node.left, bottom, node.width, node.height)
             ..fillAndStrokePath();
       }
-
     }
   }
 }

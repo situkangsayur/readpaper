@@ -168,8 +168,7 @@ class CollectionTreePane extends ConsumerWidget {
                 selectionController.select(LibrarySelection.noteCollection(collection.key)),
             onLongPress: () => _noteCollectionMenu(context, ref, collection),
             onAddChild: () => _newNoteCollection(context, ref, parentKey: collection.key),
-            onDrop: (drag) =>
-                _dropIntoNotes(context, ref, drag, collection.key, collection.name),
+            onDrop: (drag) => _dropIntoNotes(context, ref, drag, collection.key, collection.name),
           ),
         );
         if (!isExpanded) return;
@@ -246,13 +245,11 @@ class _Header extends ConsumerWidget {
             tooltip: 'Buka semua',
             iconSize: 18,
             icon: const Icon(Icons.unfold_more),
-            onPressed: () => ref
-                .read(expandedCollectionsProvider.notifier)
-                .expandAll(<String>[
-                  paperRootNodeKey,
-                  notesRootNodeKey,
-                  ...index.collections.keys,
-                ]),
+            onPressed: () => ref.read(expandedCollectionsProvider.notifier).expandAll(<String>[
+              paperRootNodeKey,
+              notesRootNodeKey,
+              ...index.collections.keys,
+            ]),
           ),
         ],
       ),
@@ -558,10 +555,7 @@ Future<void> _newPaperCollection(
     );
     return;
   }
-  ref.read(expandedCollectionsProvider.notifier).expandAll(<String>[
-    paperRootNodeKey,
-    ?parentKey,
-  ]);
+  ref.read(expandedCollectionsProvider.notifier).expandAll(<String>[paperRootNodeKey, ?parentKey]);
   ref.read(selectionProvider.notifier).select(LibrarySelection.collection(key));
 }
 

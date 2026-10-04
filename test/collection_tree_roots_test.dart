@@ -94,9 +94,7 @@ void main() {
       index: libraryWith(<ZoteroCollection>[
         const ZoteroCollection(key: 'PAPER001', name: 'Kriptografi', path: 'Kriptografi'),
       ]),
-      notes: notesWith(<NoteCollection>[
-        const NoteCollection(key: 'CATATAN1', name: 'Rapat'),
-      ]),
+      notes: notesWith(<NoteCollection>[const NoteCollection(key: 'CATATAN1', name: 'Rapat')]),
     );
 
     // Akar paper memakai nama library-nya, akar catatan bernama "Catatan".
@@ -113,9 +111,7 @@ void main() {
       index: libraryWith(<ZoteroCollection>[
         const ZoteroCollection(key: 'PAPER001', name: 'Kriptografi', path: 'Kriptografi'),
       ]),
-      notes: notesWith(<NoteCollection>[
-        const NoteCollection(key: 'CATATAN1', name: 'Rapat'),
-      ]),
+      notes: notesWith(<NoteCollection>[const NoteCollection(key: 'CATATAN1', name: 'Rapat')]),
     );
 
     await tester.tap(find.text('Kriptografi'));
@@ -147,9 +143,7 @@ void main() {
       index: libraryWith(<ZoteroCollection>[
         const ZoteroCollection(key: 'PAPER001', name: 'Kriptografi', path: 'Kriptografi'),
       ]),
-      notes: notesWith(<NoteCollection>[
-        const NoteCollection(key: 'CATATAN1', name: 'Rapat'),
-      ]),
+      notes: notesWith(<NoteCollection>[const NoteCollection(key: 'CATATAN1', name: 'Rapat')]),
     );
 
     container.read(expandedCollectionsProvider.notifier).toggle(paperRootNodeKey);

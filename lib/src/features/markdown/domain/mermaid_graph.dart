@@ -158,7 +158,9 @@ class MermaidGraph {
       final body = line.replaceAll(RegExp(r';$'), '').trim();
       if (body.isEmpty) continue;
       // Baris pengaturan yang tidak menggambar apa pun dilewati diam-diam.
-      if (RegExp(r'^(subgraph|end|style|classDef|class|linkStyle|click|direction)\b').hasMatch(body)) {
+      if (RegExp(
+        r'^(subgraph|end|style|classDef|class|linkStyle|click|direction)\b',
+      ).hasMatch(body)) {
         continue;
       }
 
@@ -377,7 +379,8 @@ class MermaidLayout {
     // sederhana dan hasilnya sama.
     final totalAlong = along - gapAlong + padding;
     final totalAcross = widest + padding * 2;
-    final flip = graph.direction == MermaidDirection.bottomUp ||
+    final flip =
+        graph.direction == MermaidDirection.bottomUp ||
         graph.direction == MermaidDirection.rightLeft;
 
     final nodes = <MermaidPlacedNode>[
@@ -413,13 +416,7 @@ class MermaidLayout {
       if (from == null || to == null) continue;
       final ends = _connect(from, to);
       drawnEdges.add(
-        MermaidPlacedEdge(
-          edge: edge,
-          fromX: ends.$1,
-          fromY: ends.$2,
-          toX: ends.$3,
-          toY: ends.$4,
-        ),
+        MermaidPlacedEdge(edge: edge, fromX: ends.$1, fromY: ends.$2, toX: ends.$3, toY: ends.$4),
       );
     }
 
@@ -467,10 +464,7 @@ class MermaidLayout {
 
   /// Titik keluar dan masuk sebuah garis: dari tepi kotak yang saling
   /// berhadapan, bukan dari titik tengahnya, supaya panahnya tidak menembus.
-  static (double, double, double, double) _connect(
-    MermaidPlacedNode from,
-    MermaidPlacedNode to,
-  ) {
+  static (double, double, double, double) _connect(MermaidPlacedNode from, MermaidPlacedNode to) {
     final dx = to.centerX - from.centerX;
     final dy = to.centerY - from.centerY;
     if (dy.abs() >= dx.abs()) {

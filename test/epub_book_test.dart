@@ -36,7 +36,8 @@ const _opf3 = '''<?xml version="1.0"?>
   <spine><itemref idref="c1"/><itemref idref="c2"/></spine>
 </package>''';
 
-const _nav = '''<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
+const _nav =
+    '''<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">
 <body><nav epub:type="toc"><ol>
   <li><a href="teks/bab1.xhtml">Pendahuluan</a>
     <ol><li><a href="teks/bab1.xhtml#latar">Latar</a></li></ol></li>
@@ -107,7 +108,9 @@ void main() {
     final archive = Archive()..addFile(ArchiveFile('a.txt', 1, <int>[65]));
     expect(
       () => EpubBook.parse(ZipEncoder().encode(archive)),
-      throwsA(isA<FormatException>().having((e) => e.message, 'message', contains('container.xml'))),
+      throwsA(
+        isA<FormatException>().having((e) => e.message, 'message', contains('container.xml')),
+      ),
     );
   });
 
@@ -123,7 +126,11 @@ void main() {
       }),
     );
     final html = book.chapters.first.html;
-    expect(html, contains('<a id="bab1"></a>BAB I'), reason: 'bukan tautan yang tak pernah ditutup');
+    expect(
+      html,
+      contains('<a id="bab1"></a>BAB I'),
+      reason: 'bukan tautan yang tak pernah ditutup',
+    );
     expect(html, contains('<br/>'), reason: 'elemen kosong tetap apa adanya');
     expect(html, contains('<img src="epub:OEBPS/gambar/a.png"/>'));
     expect(html, isNot(contains('<svg')));

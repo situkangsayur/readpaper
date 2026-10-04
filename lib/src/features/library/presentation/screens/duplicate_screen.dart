@@ -72,11 +72,7 @@ class _Empty extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(
-            Icons.verified_outlined,
-            size: 40,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+          Icon(Icons.verified_outlined, size: 40, color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 12),
           const Text('Tidak ada yang tampak ganda.', textAlign: TextAlign.center),
           const SizedBox(height: 8),
@@ -129,10 +125,7 @@ class _GroupCard extends ConsumerWidget {
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
                   labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-                  label: Text(
-                    group.strongest.label,
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
+                  label: Text(group.strongest.label, style: Theme.of(context).textTheme.labelSmall),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -210,9 +203,9 @@ class _CopyRow extends ConsumerWidget {
                   if (facts.isNotEmpty)
                     Text(
                       facts.join(' · '),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
                     ),
                 ],
               ),

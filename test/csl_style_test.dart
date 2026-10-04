@@ -6,8 +6,7 @@ import 'package:readpaper/src/features/citation/domain/csl_style.dart';
 
 CslCatalog catalog() => CslCatalog.parse(File('assets/csl/styles.json').readAsStringSync());
 
-CslStyle load(String id) =>
-    CslStyle.parse(File('assets/csl/styles/$id.csl').readAsStringSync());
+CslStyle load(String id) => CslStyle.parse(File('assets/csl/styles/$id.csl').readAsStringSync());
 
 void main() {
   test('setiap gaya independen yang dibawa benar-benar terbaca', () {

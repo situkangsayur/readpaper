@@ -216,12 +216,12 @@ void main() {
     test('berkas dari versi yang lebih baru ditolak dengan jelas', () async {
       // Membaca setengah-setengah lalu menyimpan balik akan merusak isinya.
       final path = p.join(dir.path, 'masa-depan${NoteDocumentStore.extension}');
-      File(path).writeAsStringSync(jsonEncode(<String, dynamic>{'version': 99, 'pages': <dynamic>[]}));
+      File(
+        path,
+      ).writeAsStringSync(jsonEncode(<String, dynamic>{'version': 99, 'pages': <dynamic>[]}));
       await expectLater(
         NoteDocumentStore.read(path),
-        throwsA(
-          predicate((Object e) => e.toString().contains('lebih baru'), 'menyebut sebabnya'),
-        ),
+        throwsA(predicate((Object e) => e.toString().contains('lebih baru'), 'menyebut sebabnya')),
       );
     });
 
@@ -250,7 +250,11 @@ void main() {
       final history = NoteHistory(NoteDocument.blank());
       expect(history.canUndo, isFalse);
 
-      final satu = NoteDocument(pages: <NotePage>[NotePage(components: <NoteComponent>[ink()])]);
+      final satu = NoteDocument(
+        pages: <NotePage>[
+          NotePage(components: <NoteComponent>[ink()]),
+        ],
+      );
       history.push(satu);
       final dua = satu.replacePage(
         0,
@@ -267,9 +271,21 @@ void main() {
 
     test('menulis sesuatu yang baru membuang yang sudah diurungkan', () {
       final history = NoteHistory(NoteDocument.blank())
-        ..push(NoteDocument(pages: <NotePage>[NotePage(components: <NoteComponent>[ink()])]));
+        ..push(
+          NoteDocument(
+            pages: <NotePage>[
+              NotePage(components: <NoteComponent>[ink()]),
+            ],
+          ),
+        );
       history.undo();
-      history.push(NoteDocument(pages: <NotePage>[NotePage(components: <NoteComponent>[text()])]));
+      history.push(
+        NoteDocument(
+          pages: <NotePage>[
+            NotePage(components: <NoteComponent>[text()]),
+          ],
+        ),
+      );
 
       expect(history.canRedo, isFalse);
       expect((history.current.pages.first.components.single as NoteText).id, 't1');
@@ -278,7 +294,13 @@ void main() {
     test('riwayatnya dibatasi, tidak tumbuh selamanya', () {
       final history = NoteHistory(NoteDocument.blank(), limit: 5);
       for (var i = 0; i < 20; i++) {
-        history.push(NoteDocument(pages: <NotePage>[NotePage(components: <NoteComponent>[ink(id: 'i$i')])]));
+        history.push(
+          NoteDocument(
+            pages: <NotePage>[
+              NotePage(components: <NoteComponent>[ink(id: 'i$i')]),
+            ],
+          ),
+        );
       }
       var langkah = 0;
       while (history.canUndo) {
@@ -293,11 +315,13 @@ void main() {
     test('ukuran seri A, tegak dan mendatar', () {
       expect(NotePaper.a4.sizeFor(NoteOrientation.tegak).width, closeTo(595.28, 0.01));
       expect(NotePaper.a4.sizeFor(NoteOrientation.mendatar).width, closeTo(841.89, 0.01));
-      expect(NotePaper.a5.longSide, closeTo(NotePaper.a4.shortSide, 0.01),
-          reason: 'A5 adalah A4 yang dilipat dua');
+      expect(
+        NotePaper.a5.longSide,
+        closeTo(NotePaper.a4.shortSide, 0.01),
+        reason: 'A5 adalah A4 yang dilipat dua',
+      );
       expect(NotePaper.a3.shortSide, closeTo(NotePaper.a4.longSide, 0.01));
-      expect(NotePaper.values.map((p) => p.label),
-          <String>['A5', 'A4', 'A3', 'A2', 'A1']);
+      expect(NotePaper.values.map((p) => p.label), <String>['A5', 'A4', 'A3', 'A2', 'A1']);
     });
 
     test('tiap lembar punya kertasnya sendiri', () {
@@ -314,9 +338,7 @@ void main() {
 
     test('kertas dan arahnya bertahan setelah dibaca ulang', () {
       const document = NoteDocument(
-        pages: <NotePage>[
-          NotePage(paper: NotePaper.a2, orientation: NoteOrientation.mendatar),
-        ],
+        pages: <NotePage>[NotePage(paper: NotePaper.a2, orientation: NoteOrientation.mendatar)],
       );
       final kembali = NoteDocumentStore.decodeSync(NoteDocumentStore.encode(document));
       expect(kembali.pages.single.paper, NotePaper.a2);

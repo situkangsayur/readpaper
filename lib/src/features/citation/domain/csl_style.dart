@@ -270,9 +270,7 @@ class CslNameOptions {
     delimiterPrecedesEtAl: over.delimiterPrecedesEtAl,
     initialize: over.initialize,
     initializeWith: over.initializeWith ?? initializeWith,
-    nameAsSortOrder: over.nameAsSortOrder.isEmpty
-        ? nameAsSortOrder
-        : over.nameAsSortOrder,
+    nameAsSortOrder: over.nameAsSortOrder.isEmpty ? nameAsSortOrder : over.nameAsSortOrder,
     sortSeparator: over.sortSeparator,
     etAlMin: over.etAlMin == 0 ? etAlMin : over.etAlMin,
     etAlUseFirst: over.etAlUseFirst == 0 ? etAlUseFirst : over.etAlUseFirst,
@@ -309,11 +307,7 @@ class CslNamesNode extends CslNode {
 /// Satu kunci pengurutan.
 @immutable
 class CslSortKey {
-  const CslSortKey({
-    this.variable = '',
-    this.macro = '',
-    this.descending = false,
-  });
+  const CslSortKey({this.variable = '', this.macro = '', this.descending = false});
 
   final String variable;
   final String macro;
@@ -340,13 +334,11 @@ class CslLayout {
   /// `second-field-align`, `collapse`, `disambiguate-add-year-suffix`.
   final Map<String, String> options;
 
-  String option(String name, [String fallback = '']) =>
-      options[name] ?? fallback;
+  String option(String name, [String fallback = '']) => options[name] ?? fallback;
 
   bool flag(String name) => options[name] == 'true';
 
-  int number(String name, [int fallback = 0]) =>
-      int.tryParse(options[name] ?? '') ?? fallback;
+  int number(String name, [int fallback = 0]) => int.tryParse(options[name] ?? '') ?? fallback;
 }
 
 /// Satu gaya sitasi CSL yang sudah terbaca.
@@ -397,9 +389,7 @@ class CslStyle {
         CslTextNode(:final variable) => variable == 'citation-number',
         CslNumberNode(:final variable) => variable == 'citation-number',
         CslGroupNode(:final children) => _usesVariable(children, variable),
-        CslChooseNode(:final branches) => branches.any(
-          (b) => _usesVariable(b.children, variable),
-        ),
+        CslChooseNode(:final branches) => branches.any((b) => _usesVariable(b.children, variable)),
         _ => false,
       };
       if (found) return true;
@@ -416,12 +406,9 @@ class CslStyle {
     final root = XmlDocument.parse(xml).rootElement;
     final info = root.getElement('info', namespaceUri: _ns);
 
-    String infoText(String tag) =>
-        info?.getElement(tag, namespaceUri: _ns)?.innerText.trim() ?? '';
+    String infoText(String tag) => info?.getElement(tag, namespaceUri: _ns)?.innerText.trim() ?? '';
 
-    for (final link
-        in info?.findElements('link', namespaceUri: _ns) ??
-            const <XmlElement>[]) {
+    for (final link in info?.findElements('link', namespaceUri: _ns) ?? const <XmlElement>[]) {
       if (link.getAttribute('rel') == 'independent-parent') {
         final parent = (link.getAttribute('href') ?? '').split('/').last;
         throw CslStyleIsDependent(infoText('id').split('/').last, parent);
@@ -437,10 +424,7 @@ class CslStyle {
     final locales = <String, CslLocale>{};
     for (final locale in root.findElements('locale', namespaceUri: _ns)) {
       final language =
-          locale.getAttribute(
-            'lang',
-            namespaceUri: 'http://www.w3.org/XML/1998/namespace',
-          ) ??
+          locale.getAttribute('lang', namespaceUri: 'http://www.w3.org/XML/1998/namespace') ??
           locale.getAttribute('xml:lang') ??
           '';
       locales[language] = CslLocale.parse(locale.toXmlString());
@@ -457,10 +441,7 @@ class CslStyle {
       styleClass: root.getAttribute('class') ?? 'in-text',
       macros: macros,
       citation: _layout(citation),
-      bibliography: switch (root.getElement(
-        'bibliography',
-        namespaceUri: _ns,
-      )) {
+      bibliography: switch (root.getElement('bibliography', namespaceUri: _ns)) {
         final XmlElement e => _layout(e),
         null => null,
       },
@@ -468,8 +449,7 @@ class CslStyle {
       defaultLocale: root.getAttribute('default-locale') ?? '',
       localeOverrides: locales,
       globals: <String, String>{
-        for (final attribute in root.attributes)
-          attribute.name.local: attribute.value,
+        for (final attribute in root.attributes) attribute.name.local: attribute.value,
       },
     );
   }
@@ -482,9 +462,7 @@ class CslStyle {
       delimiter: layout?.getAttribute('delimiter') ?? '',
       format: layout == null ? const CslFormat() : CslFormat.of(layout),
       sort: <CslSortKey>[
-        for (final key
-            in sort?.findElements('key', namespaceUri: _ns) ??
-                const <XmlElement>[])
+        for (final key in sort?.findElements('key', namespaceUri: _ns) ?? const <XmlElement>[])
           CslSortKey(
             variable: key.getAttribute('variable') ?? '',
             macro: key.getAttribute('macro') ?? '',
@@ -492,8 +470,7 @@ class CslStyle {
           ),
       ],
       options: <String, String>{
-        for (final attribute in block.attributes)
-          attribute.name.local: attribute.value,
+        for (final attribute in block.attributes) attribute.name.local: attribute.value,
       },
     );
   }
@@ -566,9 +543,7 @@ class CslStyle {
     // namanya: "Diedit oleh Ada" lawan "Ada (ed.)".
     var labelFirst = false;
     if (label != null && name != null) {
-      labelFirst =
-          e.childElements.toList().indexOf(label) <
-          e.childElements.toList().indexOf(name);
+      labelFirst = e.childElements.toList().indexOf(label) < e.childElements.toList().indexOf(name);
     }
 
     return CslNamesNode(
@@ -578,9 +553,7 @@ class CslStyle {
       label: label == null ? null : _node(label) as CslLabelNode?,
       labelBeforeName: labelFirst,
       etAlTerm: etAl?.getAttribute('term') ?? 'et-al',
-      substitute: substitute == null
-          ? const <CslNode>[]
-          : _children(substitute),
+      substitute: substitute == null ? const <CslNode>[] : _children(substitute),
       delimiter: e.getAttribute('delimiter') ?? '',
       format: CslFormat.of(e),
     );
@@ -595,14 +568,9 @@ class CslStyle {
     return CslNameOptions(
       form: e.getAttribute('form') ?? '',
       and: e.getAttribute('and') ?? '',
-      delimiter:
-          e.getAttribute('name-delimiter') ??
-          e.getAttribute('delimiter') ??
-          ', ',
-      delimiterPrecedesLast:
-          e.getAttribute('delimiter-precedes-last') ?? 'contextual',
-      delimiterPrecedesEtAl:
-          e.getAttribute('delimiter-precedes-et-al') ?? 'contextual',
+      delimiter: e.getAttribute('name-delimiter') ?? e.getAttribute('delimiter') ?? ', ',
+      delimiterPrecedesLast: e.getAttribute('delimiter-precedes-last') ?? 'contextual',
+      delimiterPrecedesEtAl: e.getAttribute('delimiter-precedes-et-al') ?? 'contextual',
       initialize: e.getAttribute('initialize') != 'false',
       initializeWith: initializeWith,
       nameAsSortOrder: e.getAttribute('name-as-sort-order') ?? '',
@@ -612,8 +580,7 @@ class CslStyle {
       etAlUseLast: e.getAttribute('et-al-use-last') == 'true',
       parts: <String, CslFormat>{
         for (final part in e.findElements('name-part', namespaceUri: _ns))
-          if (part.getAttribute('name') case final String name)
-            name: CslFormat.of(part),
+          if (part.getAttribute('name') case final String name) name: CslFormat.of(part),
       },
     );
   }

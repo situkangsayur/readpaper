@@ -112,8 +112,7 @@ class NoteExport {
   /// Benda yang tergambar, bukan tertulis: tinta, bangun, dan penghubung.
   static List<NoteComponent> drawnOf(NotePage page) => <NoteComponent>[
     for (final component in page.components)
-      if (component is NoteInk || component is NoteShape || component is NoteConnector)
-        component,
+      if (component is NoteInk || component is NoteShape || component is NoteConnector) component,
   ];
 
   /// Menggambar seluruh lapisan gambar satu lembar jadi PNG berlatar tembus
@@ -200,10 +199,7 @@ class NoteExport {
           paint.strokeWidth = component.strokeWidth;
           canvas.drawLine(ends.$1, ends.$2, paint);
           if (!component.arrow) continue;
-          canvas.drawPath(
-            _pathOf(ShapeGeometry.arrowHead(tip: ends.$2, from: ends.$1)),
-            paint,
-          );
+          canvas.drawPath(_pathOf(ShapeGeometry.arrowHead(tip: ends.$2, from: ends.$1)), paint);
 
         case NoteText():
         case NoteImage():
@@ -307,12 +303,13 @@ class NoteExport {
           color: PdfColor.fromInt(component.color).shade(1),
         ),
       ),
-      NoteImage() => images[component.file] == null
-          ? pw.Text(
-              '[gambar tidak ditemukan: ${component.file}]',
-              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
-            )
-          : pw.Image(images[component.file]!, fit: pw.BoxFit.contain),
+      NoteImage() =>
+        images[component.file] == null
+            ? pw.Text(
+                '[gambar tidak ditemukan: ${component.file}]',
+                style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+              )
+            : pw.Image(images[component.file]!, fit: pw.BoxFit.contain),
       NoteDiagram() => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: MermaidPdf.widgets(component.source),

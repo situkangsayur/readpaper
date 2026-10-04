@@ -82,11 +82,7 @@ class _Summary extends StatelessWidget {
         ),
         if (span != null) _Tile(label: 'Rentang tahun', value: span),
         if (stats.untitledCount > 0)
-          _Tile(
-            label: 'Tanpa judul',
-            value: '${stats.untitledCount}',
-            tint: scheme.error,
-          ),
+          _Tile(label: 'Tanpa judul', value: '${stats.untitledCount}', tint: scheme.error),
       ],
     );
   }
@@ -115,16 +111,13 @@ class _Tile extends StatelessWidget {
         children: <Widget>[
           Text(label, style: Theme.of(context).textTheme.labelSmall),
           const SizedBox(height: 2),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: tint),
-          ),
+          Text(value, style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: tint)),
           if (note != null)
             Text(
               note!,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: tint ?? scheme.onSurfaceVariant,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: tint ?? scheme.onSurfaceVariant),
             ),
         ],
       ),

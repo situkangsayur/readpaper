@@ -233,18 +233,18 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
                   label: Text('${groups.length}'),
                   child: const Icon(Icons.copy_all_outlined, size: 18),
                 ),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(builder: (_) => const DuplicateScreen()),
-                ),
+                onPressed: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute<void>(builder: (_) => const DuplicateScreen())),
               );
             },
           ),
           IconButton(
             tooltip: 'Statistik library',
             icon: const Icon(Icons.insights_outlined, size: 18),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const LibraryStatsScreen()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute<void>(builder: (_) => const LibraryStatsScreen())),
           ),
           IconButton(
             tooltip: 'Telusuri berdasarkan pengarang',

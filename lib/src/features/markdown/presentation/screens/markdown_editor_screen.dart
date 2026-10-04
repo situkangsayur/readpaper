@@ -20,12 +20,7 @@ enum MarkdownPane { sunting, pratinjau, keduanya }
 /// mermaid — membawa kursor ke barisnya di sumber. Itulah yang membuat
 /// diagram "bisa disunting" dan bukan sekadar dilihat.
 class MarkdownEditorScreen extends StatefulWidget {
-  const MarkdownEditorScreen({
-    required this.path,
-    this.title,
-    this.startInEdit = false,
-    super.key,
-  });
+  const MarkdownEditorScreen({required this.path, this.title, this.startInEdit = false, super.key});
 
   /// Berkas `.md` yang dibuka. Boleh belum ada — dibuat saat disimpan.
   final String path;
@@ -345,7 +340,9 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
           ],
         ),
         body: _error != null
-            ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(_error!)))
+            ? Center(
+                child: Padding(padding: const EdgeInsets.all(24), child: Text(_error!)),
+              )
             : Column(
                 children: <Widget>[
                   if (pane != MarkdownPane.pratinjau) _Toolbar(onInsert: _insert),
@@ -389,11 +386,8 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
     ),
   );
 
-  Widget _preview() => MarkdownView(
-    doc: _doc,
-    baseDir: p.dirname(widget.path),
-    onEditBlock: _editBlock,
-  );
+  Widget _preview() =>
+      MarkdownView(doc: _doc, baseDir: p.dirname(widget.path), onEditBlock: _editBlock);
 }
 
 /// Tombol sisip untuk hal-hal yang sulit diingat tandanya.
@@ -409,11 +403,7 @@ class _Toolbar extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: <Widget>[
-          _Insert(
-            icon: Icons.title,
-            tooltip: 'Tajuk',
-            onTap: () => onInsert('## Tajuk\n'),
-          ),
+          _Insert(icon: Icons.title, tooltip: 'Tajuk', onTap: () => onInsert('## Tajuk\n')),
           _Insert(
             icon: Icons.format_bold,
             tooltip: 'Tebal',
@@ -424,21 +414,9 @@ class _Toolbar extends StatelessWidget {
             tooltip: 'Miring',
             onTap: () => onInsert('**', caretBack: 1),
           ),
-          _Insert(
-            icon: Icons.format_list_bulleted,
-            tooltip: 'Daftar',
-            onTap: () => onInsert('- '),
-          ),
-          _Insert(
-            icon: Icons.checklist,
-            tooltip: 'Daftar tugas',
-            onTap: () => onInsert('- [ ] '),
-          ),
-          _Insert(
-            icon: Icons.format_quote,
-            tooltip: 'Kutipan',
-            onTap: () => onInsert('> '),
-          ),
+          _Insert(icon: Icons.format_list_bulleted, tooltip: 'Daftar', onTap: () => onInsert('- ')),
+          _Insert(icon: Icons.checklist, tooltip: 'Daftar tugas', onTap: () => onInsert('- [ ] ')),
+          _Insert(icon: Icons.format_quote, tooltip: 'Kutipan', onTap: () => onInsert('> ')),
           _Insert(
             icon: Icons.code,
             tooltip: 'Kode',

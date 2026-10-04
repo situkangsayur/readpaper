@@ -53,9 +53,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _openIncoming(String path) {
     if (p.extension(path).toLowerCase() == '.epub') {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => EpubReaderScreen(path: path)),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => EpubReaderScreen(path: path)));
       return;
     }
     Navigator.of(context).push(
@@ -262,9 +262,7 @@ class _TreeAndFilesState extends State<_TreeAndFiles> {
       if (_filesOpen)
         Expanded(
           flex: 2,
-          child: FileBrowserPane(
-            onToggleCollapsed: () => setState(() => _filesOpen = false),
-          ),
+          child: FileBrowserPane(onToggleCollapsed: () => setState(() => _filesOpen = false)),
         )
       else
         FileBrowserPane(

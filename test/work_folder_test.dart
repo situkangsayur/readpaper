@@ -21,8 +21,10 @@ void main() {
     expect(p.basename(dua.path), 'paper-terisi-2.pdf');
     dua.writeAsStringSync('x');
 
-    expect(p.basename(WorkFolder.freshFile(dir, 'paper-terisi', '.pdf').path),
-        'paper-terisi-3.pdf');
+    expect(
+      p.basename(WorkFolder.freshFile(dir, 'paper-terisi', '.pdf').path),
+      'paper-terisi-3.pdf',
+    );
     expect(satu.readAsStringSync(), 'x', reason: 'yang pertama utuh');
   });
 

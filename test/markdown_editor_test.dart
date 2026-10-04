@@ -27,8 +27,7 @@ graph TD
 ```
 ''';
 
-  File write(String name, String body) =>
-      File(p.join(dir.path, name))..writeAsStringSync(body);
+  File write(String name, String body) => File(p.join(dir.path, name))..writeAsStringSync(body);
 
   /// Menunggu pekerjaan berkas yang sungguhan selesai.
   ///
@@ -41,7 +40,9 @@ graph TD
 
   Future<void> open(WidgetTester tester, String path, {bool startInEdit = false}) async {
     await tester.pumpWidget(
-      MaterialApp(home: MarkdownEditorScreen(path: path, startInEdit: startInEdit)),
+      MaterialApp(
+        home: MarkdownEditorScreen(path: path, startInEdit: startInEdit),
+      ),
     );
     await settle(tester);
   }

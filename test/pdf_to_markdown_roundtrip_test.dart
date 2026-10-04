@@ -23,8 +23,11 @@ void main() {
   ];
   final module = candidates.where((path) => File(path).existsSync()).firstOrNull;
   if (module == null) {
-    test('bolak-balik Markdown → PDF → Markdown', () {},
-        skip: 'libpdfium.so belum ada — jalankan flutter build dulu');
+    test(
+      'bolak-balik Markdown → PDF → Markdown',
+      () {},
+      skip: 'libpdfium.so belum ada — jalankan flutter build dulu',
+    );
     return;
   }
   Pdfrx.pdfiumModulePath = module;
@@ -65,9 +68,7 @@ Rilis berikutnya dikerjakan setelah pengujian selesai, bukan sebelumnya.
       panjang.writeln('Paragraf nomor $i yang isinya cukup untuk memenuhi halaman.\n');
     }
     final pdfPath = p.join(dir.path, 'panjang.pdf');
-    File(pdfPath).writeAsBytesSync(
-      await MarkdownPdf.build(MarkdownDoc.parse(panjang.toString())),
-    );
+    File(pdfPath).writeAsBytesSync(await MarkdownPdf.build(MarkdownDoc.parse(panjang.toString())));
 
     final back = await PdfToMarkdown.fromFile(pdfPath);
     expect(back, contains('Paragraf nomor 0'));

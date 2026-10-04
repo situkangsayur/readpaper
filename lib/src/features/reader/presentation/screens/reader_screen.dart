@@ -258,7 +258,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
     if (event.kind != PointerDeviceKind.touch) return;
     final palm =
-        _stylusNear || _stylusDrawing || _palmPointers.isNotEmpty || event.radiusMajor > _palmRadius;
+        _stylusNear ||
+        _stylusDrawing ||
+        _palmPointers.isNotEmpty ||
+        event.radiusMajor > _palmRadius;
     if (palm) setState(() => _palmPointers.add(event.pointer));
   }
 
@@ -872,10 +875,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-              child: Text(
-                'Simpan PDF ke mana?',
-                style: Theme.of(sheet).textTheme.titleMedium,
-              ),
+              child: Text('Simpan PDF ke mana?', style: Theme.of(sheet).textTheme.titleMedium),
             ),
             for (final folder in folders)
               ListTile(
@@ -1097,10 +1097,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       if (!mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute<String>(
-          builder: (_) => NotebookScreen(
-            path: notePath,
-            title: NoteDocumentStore.stemOf(notePath),
-          ),
+          builder: (_) => NotebookScreen(path: notePath, title: NoteDocumentStore.stemOf(notePath)),
         ),
       );
     } on Object catch (e) {
@@ -1281,12 +1278,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       final stem = p.basenameWithoutExtension(_path);
       final target = p.join(dir.path, '$stem-papan-${DateTime.now().millisecondsSinceEpoch}.pdf');
 
-      await PdfPageEditor.addBlankPages(
-        source: _path,
-        target: target,
-        count: count,
-        at: at,
-      );
+      await PdfPageEditor.addBlankPages(source: _path, target: target, count: count, at: at);
 
       final before = _controller.pages.length;
       if (!mounted) return;
@@ -1492,273 +1484,267 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final isWide = LayoutSize.of(context) == LayoutSize.expanded;
 
     final tools = <Widget>[
-    // Labelled on purpose: a bare icon left people swiping at the page
-    // and wondering why nothing was marked.
-    if (isTouchPlatform)
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: FilledButton.tonalIcon(
-          style: FilledButton.styleFrom(
-            visualDensity: VisualDensity.compact,
-            backgroundColor: _markerMode ? colorFromHex(_color) : null,
-            foregroundColor: _markerMode ? Colors.black87 : null,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+      // Labelled on purpose: a bare icon left people swiping at the page
+      // and wondering why nothing was marked.
+      if (isTouchPlatform)
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: FilledButton.tonalIcon(
+            style: FilledButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              backgroundColor: _markerMode ? colorFromHex(_color) : null,
+              foregroundColor: _markerMode ? Colors.black87 : null,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            onPressed: () => setState(() {
+              _markerMode = !_markerMode;
+              if (_markerMode) {
+                _noteMode = false;
+                _penMode = false;
+              }
+            }),
+            icon: Icon(_markerMode ? Icons.border_color : Icons.border_color_outlined, size: 18),
+            label: Text(_markerMode ? 'Menandai' : 'Tandai'),
           ),
-          onPressed: () => setState(() {
-            _markerMode = !_markerMode;
-            if (_markerMode) {
-              _noteMode = false;
-              _penMode = false;
-            }
-          }),
-          icon: Icon(
-            _markerMode ? Icons.border_color : Icons.border_color_outlined,
-            size: 18,
-          ),
-          label: Text(_markerMode ? 'Menandai' : 'Tandai'),
         ),
+      IconButton(
+        tooltip: _noteMode
+            ? 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)'
+            : 'Tempel catatan di halaman',
+        isSelected: _noteMode,
+        selectedIcon: const Icon(Icons.sticky_note_2),
+        icon: const Icon(Icons.sticky_note_2_outlined),
+        onPressed: () => setState(() {
+          _noteMode = !_noteMode;
+          if (_noteMode) {
+            _markerMode = false;
+            _penMode = false;
+          }
+        }),
       ),
-    IconButton(
-      tooltip: _noteMode
-          ? 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)'
-          : 'Tempel catatan di halaman',
-      isSelected: _noteMode,
-      selectedIcon: const Icon(Icons.sticky_note_2),
-      icon: const Icon(Icons.sticky_note_2_outlined),
-      onPressed: () => setState(() {
-        _noteMode = !_noteMode;
-        if (_noteMode) {
-          _markerMode = false;
-          _penMode = false;
-        }
-      }),
-    ),
-    IconButton(
-      tooltip: _penMode ? 'Selesai menggambar' : 'Tulis atau gambar di halaman',
-      isSelected: _penMode,
-      selectedIcon: const Icon(Icons.draw),
-      icon: const Icon(Icons.draw_outlined),
-      onPressed: _togglePen,
-    ),
-    _ColorButton(color: _color, onSelected: (value) => _switchPen(color: value)),
-    IconButton(
-      tooltip: _textMode
-          ? 'Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)'
-          : 'Isi teks di halaman — untuk mengisi formulir',
-      isSelected: _textMode,
-      selectedIcon: const Icon(Icons.text_fields),
-      icon: const Icon(Icons.text_fields_outlined),
-      onPressed: () => setState(() {
-        _textMode = !_textMode;
-        if (_textMode) {
-          _markerMode = false;
-          _noteMode = false;
-          _penMode = false;
-          _pendingSignature = null;
-        }
-      }),
-    ),
-    IconButton(
-      tooltip: _keepScreenOn
-          ? 'Layar tetap menyala — tekan untuk mematikan'
-          : 'Biarkan layar menyala selama membaca',
-      isSelected: _keepScreenOn,
-      selectedIcon: const Icon(Icons.lightbulb),
-      icon: const Icon(Icons.lightbulb_outline),
-      onPressed: () async {
-        final value = !_keepScreenOn;
-        await _applyKeepScreenOn(value);
-        // Diingat untuk pembacaan berikutnya: yang menyalakannya
-        // sekali biasanya menginginkannya selalu.
-        await _workspace.setKeepScreenOn(value);
-        if (mounted) {
-          _say(
-            value
-                ? 'Layar akan tetap menyala selama membaca'
-                : 'Layar kembali mati sendiri',
-          );
-        }
-      },
-    ),
-    IconButton(
-      tooltip: 'Sajikan — satu halaman penuh layar',
-      icon: const Icon(Icons.slideshow_outlined),
-      onPressed: _togglePresent,
-    ),
-    IconButton(
-      tooltip: _undoSteps.isEmpty
-          ? 'Belum ada yang bisa diurungkan'
-          : 'Urungkan: ${_undoSteps.last.label}',
-      icon: const Icon(Icons.undo),
-      onPressed: _undoSteps.isEmpty ? null : _undoLast,
-    ),
-    IconButton(
-      tooltip: 'Tanda tangan',
-      isSelected: _pendingSignature != null,
-      selectedIcon: const Icon(Icons.draw),
-      icon: const Icon(Icons.gesture),
-      onPressed: _loading ? null : _drawSignature,
-    ),
-    PopupMenuButton<String>(
-      tooltip: 'Simpan dan bagikan',
-      icon: const Icon(Icons.ios_share),
-      onSelected: (choice) => switch (choice) {
-        'simpan' => _savePdf(),
-        'simpan-sebagai' => _exportImages(),
-        'halaman-kosong' => _addBlankPages(),
-        'cetak' => _print(),
-        'ke-markdown' => _convertToMarkdown(),
-        'ke-koleksi' => _addToCollection(),
-        'ke-catatan' => _convertToNotebook(),
-        _ => _shareAnnotated(),
-      },
-      itemBuilder: (_) => <PopupMenuEntry<String>>[
-        if (widget.isStandalone)
+      IconButton(
+        tooltip: _penMode ? 'Selesai menggambar' : 'Tulis atau gambar di halaman',
+        isSelected: _penMode,
+        selectedIcon: const Icon(Icons.draw),
+        icon: const Icon(Icons.draw_outlined),
+        onPressed: _togglePen,
+      ),
+      _ColorButton(
+        color: _color,
+        onSelected: (value) => _switchPen(color: value),
+      ),
+      IconButton(
+        tooltip: _textMode
+            ? 'Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)'
+            : 'Isi teks di halaman — untuk mengisi formulir',
+        isSelected: _textMode,
+        selectedIcon: const Icon(Icons.text_fields),
+        icon: const Icon(Icons.text_fields_outlined),
+        onPressed: () => setState(() {
+          _textMode = !_textMode;
+          if (_textMode) {
+            _markerMode = false;
+            _noteMode = false;
+            _penMode = false;
+            _pendingSignature = null;
+          }
+        }),
+      ),
+      IconButton(
+        tooltip: _keepScreenOn
+            ? 'Layar tetap menyala — tekan untuk mematikan'
+            : 'Biarkan layar menyala selama membaca',
+        isSelected: _keepScreenOn,
+        selectedIcon: const Icon(Icons.lightbulb),
+        icon: const Icon(Icons.lightbulb_outline),
+        onPressed: () async {
+          final value = !_keepScreenOn;
+          await _applyKeepScreenOn(value);
+          // Diingat untuk pembacaan berikutnya: yang menyalakannya
+          // sekali biasanya menginginkannya selalu.
+          await _workspace.setKeepScreenOn(value);
+          if (mounted) {
+            _say(value ? 'Layar akan tetap menyala selama membaca' : 'Layar kembali mati sendiri');
+          }
+        },
+      ),
+      IconButton(
+        tooltip: 'Sajikan — satu halaman penuh layar',
+        icon: const Icon(Icons.slideshow_outlined),
+        onPressed: _togglePresent,
+      ),
+      IconButton(
+        tooltip: _undoSteps.isEmpty
+            ? 'Belum ada yang bisa diurungkan'
+            : 'Urungkan: ${_undoSteps.last.label}',
+        icon: const Icon(Icons.undo),
+        onPressed: _undoSteps.isEmpty ? null : _undoLast,
+      ),
+      IconButton(
+        tooltip: 'Tanda tangan',
+        isSelected: _pendingSignature != null,
+        selectedIcon: const Icon(Icons.draw),
+        icon: const Icon(Icons.gesture),
+        onPressed: _loading ? null : _drawSignature,
+      ),
+      PopupMenuButton<String>(
+        tooltip: 'Simpan dan bagikan',
+        icon: const Icon(Icons.ios_share),
+        onSelected: (choice) => switch (choice) {
+          'simpan' => _savePdf(),
+          'simpan-sebagai' => _exportImages(),
+          'halaman-kosong' => _addBlankPages(),
+          'cetak' => _print(),
+          'ke-markdown' => _convertToMarkdown(),
+          'ke-koleksi' => _addToCollection(),
+          'ke-catatan' => _convertToNotebook(),
+          _ => _shareAnnotated(),
+        },
+        itemBuilder: (_) => <PopupMenuEntry<String>>[
+          if (widget.isStandalone)
+            const PopupMenuItem<String>(
+              value: 'ke-koleksi',
+              child: ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.library_add_outlined),
+                title: Text('Tambahkan ke koleksi…'),
+                subtitle: Text('masuk library dan ikut tersinkron'),
+              ),
+            ),
           const PopupMenuItem<String>(
-            value: 'ke-koleksi',
+            value: 'cetak',
             child: ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.library_add_outlined),
-              title: Text('Tambahkan ke koleksi…'),
-              subtitle: Text('masuk library dan ikut tersinkron'),
+              leading: Icon(Icons.print_outlined),
+              title: Text('Cetak…'),
+              subtitle: Text('ke pencetak, atau simpan sebagai PDF'),
             ),
           ),
-        const PopupMenuItem<String>(
-          value: 'cetak',
-          child: ListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.print_outlined),
-            title: Text('Cetak…'),
-            subtitle: Text('ke pencetak, atau simpan sebagai PDF'),
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'ke-markdown',
-          child: ListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.notes_outlined),
-            title: Text('Ubah ke Markdown'),
-            subtitle: Text('teksnya jadi dokumen yang bisa disunting'),
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'ke-catatan',
-          child: ListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.auto_stories_outlined),
-            title: Text('Jadikan buku catatan'),
-            subtitle: Text('halamannya jadi alas, bisa disunting lagi'),
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'halaman-kosong',
-          child: ListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.note_add_outlined),
-            title: Text('Tambah halaman kosong'),
-            subtitle: Text('papan tulis di akhir dokumen'),
-          ),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem<String>(
-          value: 'simpan',
-          child: ListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.save_outlined),
-            title: Text(_canWriteInPlace ? 'Simpan ke berkas ini' : 'Simpan PDF'),
-            subtitle: Text(
-              _canWriteInPlace ? 'yang asli disalin dulu' : 'pilih tempatnya sendiri',
+          const PopupMenuItem<String>(
+            value: 'ke-markdown',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.notes_outlined),
+              title: Text('Ubah ke Markdown'),
+              subtitle: Text('teksnya jadi dokumen yang bisa disunting'),
             ),
           ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'simpan-sebagai',
-          child: ListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.save_as_outlined),
-            title: Text('Simpan sebagai…'),
-            subtitle: Text('PDF, PNG, atau JPG'),
+          const PopupMenuItem<String>(
+            value: 'ke-catatan',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.auto_stories_outlined),
+              title: Text('Jadikan buku catatan'),
+              subtitle: Text('halamannya jadi alas, bisa disunting lagi'),
+            ),
           ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'bagikan',
-          child: ListTile(
-            dense: true,
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.share_outlined),
-            title: Text('Bagikan'),
-            subtitle: Text('chat, surel, atau aplikasi lain'),
+          const PopupMenuItem<String>(
+            value: 'halaman-kosong',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.note_add_outlined),
+              title: Text('Tambah halaman kosong'),
+              subtitle: Text('papan tulis di akhir dokumen'),
+            ),
           ),
-        ),
-      ],
-    ),
-    IconButton(
-      // Penolak telapak tangan. Tangan yang bertumpu di layar sambil menulis
-      // dengan stylus dulu meninggalkan garisnya sendiri, dan itu cukup untuk
-      // membuat orang berhenti memakai penanya.
-      tooltip: _stylusOnly
-          ? 'Stylus saja — sentuhan tangan tidak menggambar'
-          : 'Jari + stylus boleh menggambar — ketuk untuk stylus saja',
-      isSelected: _stylusOnly,
-      selectedIcon: const Icon(Icons.do_not_touch_outlined),
-      icon: const Icon(Icons.touch_app_outlined),
-      onPressed: () => _setStylusOnly(!_stylusOnly),
-    ),
-    IconButton(
-      // Dulu hanya ada di dalam menu simpan, dan di situ tidak ada yang
-      // mencarinya: yang mau menambah lembar catatan tidak sedang berpikir
-      // tentang menyimpan.
-      tooltip: 'Tambah lembar kosong',
-      icon: const Icon(Icons.note_add_outlined),
-      onPressed: _loading ? null : _addBlankPages,
-    ),
-    IconButton(
-      tooltip: 'Warna halaman: ${_tint.label}',
-      icon: Icon(_tint.icon),
-      onPressed: _cycleTint,
-    ),
-    IconButton(
-      tooltip: 'Mode baca — sembunyikan semua bilah',
-      icon: const Icon(Icons.fullscreen),
-      onPressed: _loading ? null : _toggleReadingMode,
-    ),
-    IconButton(
-      tooltip: 'Simpan salinan beranotasi (PNG, JPG, PDF)',
-      icon: const Icon(Icons.image_outlined),
-      onPressed: _loading ? null : _exportImages,
-    ),
-    IconButton(
-      tooltip: 'Perkecil',
-      icon: const Icon(Icons.zoom_out),
-      onPressed: () => _controller.zoomDown(),
-    ),
-    IconButton(
-      tooltip: 'Perbesar',
-      icon: const Icon(Icons.zoom_in),
-      onPressed: () => _controller.zoomUp(),
-    ),
-    IconButton(
-      tooltip: 'Panel anotasi',
-      icon: Badge(
-        isLabelVisible: !isWide && _annotations.isNotEmpty,
-        label: Text('${_annotations.length}'),
-        child: Icon(
-          _showSidebar && isWide ? Icons.view_sidebar : Icons.view_sidebar_outlined,
-        ),
+          const PopupMenuDivider(),
+          PopupMenuItem<String>(
+            value: 'simpan',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.save_outlined),
+              title: Text(_canWriteInPlace ? 'Simpan ke berkas ini' : 'Simpan PDF'),
+              subtitle: Text(
+                _canWriteInPlace ? 'yang asli disalin dulu' : 'pilih tempatnya sendiri',
+              ),
+            ),
+          ),
+          const PopupMenuItem<String>(
+            value: 'simpan-sebagai',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.save_as_outlined),
+              title: Text('Simpan sebagai…'),
+              subtitle: Text('PDF, PNG, atau JPG'),
+            ),
+          ),
+          const PopupMenuItem<String>(
+            value: 'bagikan',
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.share_outlined),
+              title: Text('Bagikan'),
+              subtitle: Text('chat, surel, atau aplikasi lain'),
+            ),
+          ),
+        ],
       ),
-      // Wide layouts dock the panel; a phone opens it as a drawer.
-      onPressed: isWide
-          ? () => setState(() => _showSidebar = !_showSidebar)
-          : () => _scaffoldKey.currentState?.openEndDrawer(),
-    ),
-    const SizedBox(width: 4),
+      IconButton(
+        // Penolak telapak tangan. Tangan yang bertumpu di layar sambil menulis
+        // dengan stylus dulu meninggalkan garisnya sendiri, dan itu cukup untuk
+        // membuat orang berhenti memakai penanya.
+        tooltip: _stylusOnly
+            ? 'Stylus saja — sentuhan tangan tidak menggambar'
+            : 'Jari + stylus boleh menggambar — ketuk untuk stylus saja',
+        isSelected: _stylusOnly,
+        selectedIcon: const Icon(Icons.do_not_touch_outlined),
+        icon: const Icon(Icons.touch_app_outlined),
+        onPressed: () => _setStylusOnly(!_stylusOnly),
+      ),
+      IconButton(
+        // Dulu hanya ada di dalam menu simpan, dan di situ tidak ada yang
+        // mencarinya: yang mau menambah lembar catatan tidak sedang berpikir
+        // tentang menyimpan.
+        tooltip: 'Tambah lembar kosong',
+        icon: const Icon(Icons.note_add_outlined),
+        onPressed: _loading ? null : _addBlankPages,
+      ),
+      IconButton(
+        tooltip: 'Warna halaman: ${_tint.label}',
+        icon: Icon(_tint.icon),
+        onPressed: _cycleTint,
+      ),
+      IconButton(
+        tooltip: 'Mode baca — sembunyikan semua bilah',
+        icon: const Icon(Icons.fullscreen),
+        onPressed: _loading ? null : _toggleReadingMode,
+      ),
+      IconButton(
+        tooltip: 'Simpan salinan beranotasi (PNG, JPG, PDF)',
+        icon: const Icon(Icons.image_outlined),
+        onPressed: _loading ? null : _exportImages,
+      ),
+      IconButton(
+        tooltip: 'Perkecil',
+        icon: const Icon(Icons.zoom_out),
+        onPressed: () => _controller.zoomDown(),
+      ),
+      IconButton(
+        tooltip: 'Perbesar',
+        icon: const Icon(Icons.zoom_in),
+        onPressed: () => _controller.zoomUp(),
+      ),
+      IconButton(
+        tooltip: 'Panel anotasi',
+        icon: Badge(
+          isLabelVisible: !isWide && _annotations.isNotEmpty,
+          label: Text('${_annotations.length}'),
+          child: Icon(_showSidebar && isWide ? Icons.view_sidebar : Icons.view_sidebar_outlined),
+        ),
+        // Wide layouts dock the panel; a phone opens it as a drawer.
+        onPressed: isWide
+            ? () => setState(() => _showSidebar = !_showSidebar)
+            : () => _scaffoldKey.currentState?.openEndDrawer(),
+      ),
+      const SizedBox(width: 4),
     ];
 
     return Scaffold(
@@ -2090,9 +2076,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final size = pageNumber == null
         ? null
         : (_pageSizes[pageNumber] ??
-            (_controller.isReady
-                ? Size(_controller.pages[pageNumber - 1].width, _controller.pages[pageNumber - 1].height)
-                : null));
+              (_controller.isReady
+                  ? Size(
+                      _controller.pages[pageNumber - 1].width,
+                      _controller.pages[pageNumber - 1].height,
+                    )
+                  : null));
     final points = List<Offset>.of(_stylusLive);
     _stylusLive.clear();
     _stylusTick.value++;
@@ -2291,9 +2280,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         // terakhir** — bukan seluruh gambar. Garis nyasar dari
                         // telapak tangan harus bisa dibuang sendiri, tanpa
                         // membuang semua yang sudah ditulis di halaman itu.
-                        tooltip: _pendingInk.isNotEmpty
-                            ? 'Urungkan goresan terakhir'
-                            : 'Urungkan',
+                        tooltip: _pendingInk.isNotEmpty ? 'Urungkan goresan terakhir' : 'Urungkan',
                         icon: const Icon(Icons.undo),
                         onPressed: _pendingInk.isNotEmpty
                             ? _undoStroke
@@ -2313,9 +2300,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         // dibuat saat menjelaskan sering justru yang paling
                         // berharga, dan sebelumnya harus keluar dulu untuk
                         // menyimpannya — kalau ingat.
-                        tooltip: _canWriteInPlace
-                            ? 'Simpan ke berkas ini'
-                            : 'Simpan sebagai PDF',
+                        tooltip: _canWriteInPlace ? 'Simpan ke berkas ini' : 'Simpan sebagai PDF',
                         icon: const Icon(Icons.save_outlined),
                         onPressed: _savePdf,
                       ),
@@ -2455,40 +2440,40 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         _pageRects[page.pageNumber] = pageRect;
         _pageSizes[page.pageNumber] = Size(page.width, page.height);
         return <Widget>[
-        Positioned.fill(
-          child: IgnorePointer(
-            child: CustomPaint(
-              painter: AnnotationOverlayPainter(
-                annotations: _onPage(page.pageNumber),
-                pageWidth: page.width,
-                pageHeight: page.height,
-                selectedKey: _selectedAnnotationKey,
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: AnnotationOverlayPainter(
+                  annotations: _onPage(page.pageNumber),
+                  pageWidth: page.width,
+                  pageHeight: page.height,
+                  selectedKey: _selectedAnnotationKey,
+                ),
               ),
             ),
           ),
-        ),
-        // Anotasi yang sedang dipilih bisa digeser, selama tidak ada alat
-        // lain yang aktif — dua hal yang menerima seretan di tempat yang sama
-        // akan saling merebut.
-        if (!_penMode && !_markerMode) ..._moveLayersFor(page: page, pageRect: pageRect),
-        if (_penMode)
-          Positioned.fill(
-            child: InkCaptureLayer(
-              // Rebuilt from scratch when the colour or width changes, so the
-              // live stroke never keeps the previous pen's look.
-              key: ValueKey<String>('ink-${page.pageNumber}-$_color-$_inkWidth'),
-              pageWidth: page.width,
-              pageHeight: page.height,
-              color: colorFromHex(_color),
-              strokeWidth: _inkWidth,
-              stylusOnly: _stylusOnly,
-              liveStroke: _stylusOnly && _stylusPage == page.pageNumber ? _stylusLive : null,
-              liveRepaint: _stylusTick,
-              strokes: _inkPage == page.pageNumber ? _pendingInk : const <InkPath>[],
-              onStrokeFinished: (stroke) => _addStroke(page.pageNumber, stroke),
+          // Anotasi yang sedang dipilih bisa digeser, selama tidak ada alat
+          // lain yang aktif — dua hal yang menerima seretan di tempat yang sama
+          // akan saling merebut.
+          if (!_penMode && !_markerMode) ..._moveLayersFor(page: page, pageRect: pageRect),
+          if (_penMode)
+            Positioned.fill(
+              child: InkCaptureLayer(
+                // Rebuilt from scratch when the colour or width changes, so the
+                // live stroke never keeps the previous pen's look.
+                key: ValueKey<String>('ink-${page.pageNumber}-$_color-$_inkWidth'),
+                pageWidth: page.width,
+                pageHeight: page.height,
+                color: colorFromHex(_color),
+                strokeWidth: _inkWidth,
+                stylusOnly: _stylusOnly,
+                liveStroke: _stylusOnly && _stylusPage == page.pageNumber ? _stylusLive : null,
+                liveRepaint: _stylusTick,
+                strokes: _inkPage == page.pageNumber ? _pendingInk : const <InkPath>[],
+                onStrokeFinished: (stroke) => _addStroke(page.pageNumber, stroke),
+              ),
             ),
-          ),
-      ];
+        ];
       },
       // Bilah gulir yang bisa diseret: paper 40 halaman tidak pantas
       // dijelajahi dengan sapuan jari satu layar demi satu layar.

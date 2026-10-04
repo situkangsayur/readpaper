@@ -222,11 +222,8 @@ void main() {
   });
 
   group('batas waktu unggahan', () {
-    GitHubApiClient client() => GitHubApiClient(
-      ref: GitHubRepoRef.parse(remote)!,
-      token: 'x',
-      client: server.client,
-    );
+    GitHubApiClient client() =>
+        GitHubApiClient(ref: GitHubRepoRef.parse(remote)!, token: 'x', client: server.client);
 
     test('permintaan kecil tetap memakai batas waktu yang pendek', () {
       // Membaca satu daftar tidak pantas menunggu lama; kalau diam, ia memang
@@ -320,26 +317,14 @@ void main() {
       const catatan = 1000;
 
       // Lebih tua dari catatannya: aman dipercaya.
-      expect(
-        GitHubApiBackend.isRacilyClean(knownMtimeMs: 999, stateFileMtimeMs: catatan),
-        isFalse,
-      );
+      expect(GitHubApiBackend.isRacilyClean(knownMtimeMs: 999, stateFileMtimeMs: catatan), isFalse);
       // Sedetak dengan catatannya: tidak bisa dibedakan, harus dibaca.
-      expect(
-        GitHubApiBackend.isRacilyClean(knownMtimeMs: 1000, stateFileMtimeMs: catatan),
-        isTrue,
-      );
+      expect(GitHubApiBackend.isRacilyClean(knownMtimeMs: 1000, stateFileMtimeMs: catatan), isTrue);
       // Lebih baru dari catatannya: jelas harus dibaca.
-      expect(
-        GitHubApiBackend.isRacilyClean(knownMtimeMs: 1001, stateFileMtimeMs: catatan),
-        isTrue,
-      );
+      expect(GitHubApiBackend.isRacilyClean(knownMtimeMs: 1001, stateFileMtimeMs: catatan), isTrue);
       // Catatan lama yang waktunya tidak diketahui: perilakunya seperti dulu,
       // bukan tiba-tiba membaca ulang seluruh library.
-      expect(
-        GitHubApiBackend.isRacilyClean(knownMtimeMs: 5000, stateFileMtimeMs: 0),
-        isFalse,
-      );
+      expect(GitHubApiBackend.isRacilyClean(knownMtimeMs: 5000, stateFileMtimeMs: 0), isFalse);
     });
 
     test('reports files edited since the last sync', () async {

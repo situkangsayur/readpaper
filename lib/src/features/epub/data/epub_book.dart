@@ -262,8 +262,20 @@ class EpubBook {
   }
 
   static const Set<String> _voidTags = <String>{
-    'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source',
-    'track', 'wbr', 'image',
+    'area',
+    'base',
+    'br',
+    'col',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'link',
+    'meta',
+    'source',
+    'track',
+    'wbr',
+    'image',
   };
 
   /// Menyesuaikan XHTML dengan pembaca HTML.
@@ -276,18 +288,18 @@ class EpubBook {
   /// `<img>` biasa.
   static String _htmlFriendly(String body) {
     var out = body.replaceAllMapped(
-      RegExp(r'<svg\b[^>]*>.*?<image\b[^>]*\bsrc="(epub:[^"]+)"[^>]*>.*?</svg>',
-          caseSensitive: false, dotAll: true),
+      RegExp(
+        r'<svg\b[^>]*>.*?<image\b[^>]*\bsrc="(epub:[^"]+)"[^>]*>.*?</svg>',
+        caseSensitive: false,
+        dotAll: true,
+      ),
       (m) => '<img src="${m.group(1)}"/>',
     );
-    out = out.replaceAllMapped(
-      RegExp(r'<([a-zA-Z][\w:-]*)(\s[^<>]*?)?\s*/>'),
-      (m) {
-        final tag = m.group(1)!;
-        if (_voidTags.contains(tag.toLowerCase())) return m.group(0)!;
-        return '<$tag${m.group(2) ?? ''}></$tag>';
-      },
-    );
+    out = out.replaceAllMapped(RegExp(r'<([a-zA-Z][\w:-]*)(\s[^<>]*?)?\s*/>'), (m) {
+      final tag = m.group(1)!;
+      if (_voidTags.contains(tag.toLowerCase())) return m.group(0)!;
+      return '<$tag${m.group(2) ?? ''}></$tag>';
+    });
     return out;
   }
 }

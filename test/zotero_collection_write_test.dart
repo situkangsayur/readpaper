@@ -10,7 +10,8 @@ void main() {
 
   /// Dua koleksi seperti yang ditulis plugin: array beridentasi tab, kunci
   /// terurut, `parentKey: null` untuk akar, `relations: {}`.
-  const asli = '[\n'
+  const asli =
+      '[\n'
       '\t{\n'
       '\t\t"key": "EUVLSS2L",\n'
       '\t\t"name": "Astri",\n'
@@ -123,9 +124,7 @@ void main() {
     test('nama kembar di bawah induk yang sama', () async {
       await expectLater(
         const ZoteroWriter().createCollection(libraryDir: library.path, name: 'astri'),
-        throwsA(
-          predicate((Object e) => e.toString().contains('Sudah ada'), 'menyebut sebabnya'),
-        ),
+        throwsA(predicate((Object e) => e.toString().contains('Sudah ada'), 'menyebut sebabnya')),
       );
       // Nama yang sama di bawah induk berbeda tetap boleh.
       final ok = await const ZoteroWriter().createCollection(
@@ -151,9 +150,7 @@ void main() {
       File(p.join(library.path, 'collections.json')).writeAsStringSync('{"bukan":"daftar"}');
       await expectLater(
         const ZoteroWriter().createCollection(libraryDir: library.path, name: 'X'),
-        throwsA(
-          predicate((Object e) => e.toString().contains('menolak'), 'menolak menulisinya'),
-        ),
+        throwsA(predicate((Object e) => e.toString().contains('menolak'), 'menolak menulisinya')),
       );
     });
 

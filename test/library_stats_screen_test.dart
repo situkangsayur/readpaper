@@ -68,10 +68,7 @@ void main() {
   });
 
   testWidgets('item tanpa tahun disebut sebagai catatan, bukan disembunyikan', (tester) async {
-    await pump(
-      tester,
-      stats(withoutYear: 7, byYear: const <StatTally>[(label: '2024', count: 3)]),
-    );
+    await pump(tester, stats(withoutYear: 7, byYear: const <StatTally>[(label: '2024', count: 3)]));
 
     expect(find.textContaining('7 item tanpa tahun'), findsOneWidget);
   });

@@ -24,9 +24,8 @@ enum NotePaper {
   final double shortSide;
   final double longSide;
 
-  Size sizeFor(NoteOrientation orientation) => orientation == NoteOrientation.tegak
-      ? Size(shortSide, longSide)
-      : Size(longSide, shortSide);
+  Size sizeFor(NoteOrientation orientation) =>
+      orientation == NoteOrientation.tegak ? Size(shortSide, longSide) : Size(longSide, shortSide);
 
   static NotePaper parse(String name) =>
       values.firstWhere((v) => v.name == name, orElse: () => NotePaper.a4);
@@ -37,8 +36,7 @@ enum NotePaper {
   /// mendarat di kertas A4 mendatar, bukan dipaksa tegak lalu menyisakan dua
   /// pita kosong di atas dan di bawah.
   static ({NotePaper paper, NoteOrientation orientation}) closestTo(Size size) {
-    final orientation =
-        size.width > size.height ? NoteOrientation.mendatar : NoteOrientation.tegak;
+    final orientation = size.width > size.height ? NoteOrientation.mendatar : NoteOrientation.tegak;
     final short = math.min(size.width, size.height);
     final long = math.max(size.width, size.height);
     var best = NotePaper.a4;
@@ -199,9 +197,7 @@ class NoteStroke {
         NoteStroke(
           points: <Offset>[for (final entry in piece) entry.point],
           width: width,
-          widths: widths == null
-              ? null
-              : <double>[for (final entry in piece) entry.width ?? width],
+          widths: widths == null ? null : <double>[for (final entry in piece) entry.width ?? width],
         ),
     ];
   }
@@ -304,10 +300,7 @@ sealed class NoteComponent {
       (json['x'] as num?)?.toDouble() ?? 0,
       (json['y'] as num?)?.toDouble() ?? 0,
     );
-    final size = Size(
-      (json['w'] as num?)?.toDouble() ?? 1,
-      (json['h'] as num?)?.toDouble() ?? 1,
-    );
+    final size = Size((json['w'] as num?)?.toDouble() ?? 1, (json['h'] as num?)?.toDouble() ?? 1);
     final rotation = (json['rotation'] as num?)?.toDouble() ?? 0;
     final opacity = (json['opacity'] as num?)?.toDouble() ?? 1;
     final color = (json['color'] as num?)?.toInt() ?? 0xFF000000;
@@ -807,8 +800,7 @@ class NotePage {
     components: <NoteComponent>[
       for (final component in components)
         if (component.id != id &&
-            !(component is NoteConnector &&
-                (component.fromId == id || component.toId == id)))
+            !(component is NoteConnector && (component.fromId == id || component.toId == id)))
           component,
     ],
   );

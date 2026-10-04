@@ -21,12 +21,8 @@ void main() {
     ],
   );
 
-  NoteText text(String body, {double y = 100}) => NoteText(
-    id: 't-$y',
-    position: Offset(40, y),
-    size: const Size(400, 40),
-    text: body,
-  );
+  NoteText text(String body, {double y = 100}) =>
+      NoteText(id: 't-$y', position: Offset(40, y), size: const Size(400, 40), text: body);
 
   String textOf(List<int> bytes) {
     final raw = latin1.decode(bytes, allowInvalid: true);
@@ -101,9 +97,11 @@ void main() {
 
     test('tinta tidak dibuang: digambar jadi PNG dan dirujuk', () async {
       // Konversi yang menghilangkan coretan adalah konversi yang merusak.
-      final document = NoteDocument(pages: <NotePage>[
-        NotePage(components: <NoteComponent>[ink()]),
-      ]);
+      final document = NoteDocument(
+        pages: <NotePage>[
+          NotePage(components: <NoteComponent>[ink()]),
+        ],
+      );
       final md = await NoteExport.toMarkdown(document, assetDir: dir.path);
 
       // Satu PNG per lembar, bukan per benda: penghubung membentang antara
@@ -140,8 +138,10 @@ void main() {
       final bytes = await NoteExport.toPdf(document);
       final raw = textOf(bytes);
       expect(latin1.decode(bytes.sublist(0, 8)), startsWith('%PDF-'));
-      expect('/Type /Page'.allMatches(raw).length + '/Type/Page'.allMatches(raw).length,
-          greaterThanOrEqualTo(2));
+      expect(
+        '/Type /Page'.allMatches(raw).length + '/Type/Page'.allMatches(raw).length,
+        greaterThanOrEqualTo(2),
+      );
       // Kotak halamannya seukuran kertas A4 sungguhan, dalam titik PDF.
       expect(raw, contains('595'));
       expect(raw, contains('841'));
@@ -149,9 +149,11 @@ void main() {
 
     test('teksnya tetap teks, jadi masih bisa dicari', () async {
       final bytes = await NoteExport.toPdf(
-        NoteDocument(pages: <NotePage>[
-          NotePage(components: <NoteComponent>[text('Rapat mulai pukul sembilan')]),
-        ]),
+        NoteDocument(
+          pages: <NotePage>[
+            NotePage(components: <NoteComponent>[text('Rapat mulai pukul sembilan')]),
+          ],
+        ),
       );
       final raw = textOf(bytes);
       expect(raw, contains('Rapat'));
@@ -163,7 +165,11 @@ void main() {
       // Vektor tetap tajam diperbesar sejauh apa pun, dan berkasnya jauh lebih
       // kecil daripada raster.
       final bytes = await NoteExport.toPdf(
-        NoteDocument(pages: <NotePage>[NotePage(components: <NoteComponent>[ink()])]),
+        NoteDocument(
+          pages: <NotePage>[
+            NotePage(components: <NoteComponent>[ink()]),
+          ],
+        ),
       );
       final raw = textOf(bytes);
       expect(raw.contains('/DCTDecode'), isFalse);
@@ -177,16 +183,20 @@ void main() {
 
     test('gambar yang hilang disebutkan, bukan dilewati diam-diam', () async {
       final bytes = await NoteExport.toPdf(
-        NoteDocument(pages: <NotePage>[
-          NotePage(components: <NoteComponent>[
-            const NoteImage(
-              id: 'g1',
-              position: Offset(20, 20),
-              size: Size(100, 80),
-              file: 'tidak-ada.png',
+        NoteDocument(
+          pages: <NotePage>[
+            NotePage(
+              components: <NoteComponent>[
+                const NoteImage(
+                  id: 'g1',
+                  position: Offset(20, 20),
+                  size: Size(100, 80),
+                  file: 'tidak-ada.png',
+                ),
+              ],
             ),
-          ]),
-        ]),
+          ],
+        ),
         baseDir: dir.path,
       );
       expect(textOf(bytes), contains('ditemukan'));
@@ -194,16 +204,20 @@ void main() {
 
     test('diagram ikut tergambar beserta labelnya', () async {
       final bytes = await NoteExport.toPdf(
-        NoteDocument(pages: <NotePage>[
-          NotePage(components: <NoteComponent>[
-            const NoteDiagram(
-              id: 'd1',
-              position: Offset(30, 40),
-              size: Size(300, 220),
-              source: 'graph TD\n  A[Mulai] --> B[Selesai]',
+        NoteDocument(
+          pages: <NotePage>[
+            NotePage(
+              components: <NoteComponent>[
+                const NoteDiagram(
+                  id: 'd1',
+                  position: Offset(30, 40),
+                  size: Size(300, 220),
+                  source: 'graph TD\n  A[Mulai] --> B[Selesai]',
+                ),
+              ],
             ),
-          ]),
-        ]),
+          ],
+        ),
       );
       final raw = textOf(bytes);
       expect(raw, contains('Mulai'));

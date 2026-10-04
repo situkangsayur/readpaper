@@ -30,12 +30,7 @@ class CslDateFormat {
 }
 
 class CslDatePart {
-  const CslDatePart({
-    required this.name,
-    this.form = '',
-    this.prefix = '',
-    this.suffix = '',
-  });
+  const CslDatePart({required this.name, this.form = '', this.prefix = '', this.suffix = ''});
 
   final String name;
   final String form;
@@ -67,8 +62,7 @@ class CslLocale {
   static const String _ns = 'http://purl.org/net/xbiblio/csl';
 
   /// Kunci penyimpanan istilah: nama beserta bentuknya.
-  static String keyOf(String name, String form) =>
-      form.isEmpty ? name : '$name/$form';
+  static String keyOf(String name, String form) => form.isEmpty ? name : '$name/$form';
 
   /// Istilah [name] dalam [form], dengan aturan mundur milik CSL.
   ///
@@ -111,10 +105,7 @@ class CslLocale {
     final doc = XmlDocument.parse(xml);
     final root = doc.rootElement;
     final language =
-        root.getAttribute(
-          'lang',
-          namespaceUri: 'http://www.w3.org/XML/1998/namespace',
-        ) ??
+        root.getAttribute('lang', namespaceUri: 'http://www.w3.org/XML/1998/namespace') ??
         root.getAttribute('xml:lang') ??
         '';
 
@@ -124,9 +115,7 @@ class CslLocale {
       if (name == null) continue;
       final form = element.getAttribute('form') ?? '';
       final single = element.getElement('single', namespaceUri: _ns)?.innerText;
-      final multiple = element
-          .getElement('multiple', namespaceUri: _ns)
-          ?.innerText;
+      final multiple = element.getElement('multiple', namespaceUri: _ns)?.innerText;
       final term = single == null && multiple == null
           ? CslTerm.same(element.innerText.trim())
           : CslTerm(
@@ -158,10 +147,8 @@ class CslLocale {
       language: language,
       terms: terms,
       dates: dates,
-      punctuationInQuote:
-          options?.getAttribute('punctuation-in-quote') == 'true',
-      limitDayOrdinalsToDay1:
-          options?.getAttribute('limit-day-ordinals-to-day-1') == 'true',
+      punctuationInQuote: options?.getAttribute('punctuation-in-quote') == 'true',
+      limitDayOrdinalsToDay1: options?.getAttribute('limit-day-ordinals-to-day-1') == 'true',
     );
   }
 
@@ -175,7 +162,6 @@ class CslLocale {
     terms: <String, CslTerm>{..._terms, ...over._terms},
     dates: <String, CslDateFormat>{..._dates, ...over._dates},
     punctuationInQuote: over.punctuationInQuote || punctuationInQuote,
-    limitDayOrdinalsToDay1:
-        over.limitDayOrdinalsToDay1 || limitDayOrdinalsToDay1,
+    limitDayOrdinalsToDay1: over.limitDayOrdinalsToDay1 || limitDayOrdinalsToDay1,
   );
 }

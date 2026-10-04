@@ -376,14 +376,15 @@ class GitHubApiBackend implements GitBackend {
     // dengan galat yang menyuruh menarik perubahan, yang tidak pernah bisa
     // menolong. Antreannya tidak punya jalan keluar.
     final dropped = <String>{};
-    final pendingPaths = <String>{
-      for (final change in _localChanges(repoPath, state)) change.path,
-      for (final change in state.pending.expand((c) => c.paths)) change,
-    }..removeWhere((path) {
-        if (!isAttachmentPath(path)) return false;
-        dropped.add(path);
-        return true;
-      });
+    final pendingPaths =
+        <String>{
+          for (final change in _localChanges(repoPath, state)) change.path,
+          for (final change in state.pending.expand((c) => c.paths)) change,
+        }..removeWhere((path) {
+          if (!isAttachmentPath(path)) return false;
+          dropped.add(path);
+          return true;
+        });
     if (paths.isNotEmpty) {
       pendingPaths.removeWhere((path) => !paths.contains(path));
     }
@@ -531,7 +532,11 @@ class GitHubApiBackend implements GitBackend {
           ..clear()
           ..addAll(<PendingChange>[
             if (rejectedNow.isNotEmpty)
-              PendingChange(message: pending.message, paths: rejectedNow.keys.toList(), at: pending.at),
+              PendingChange(
+                message: pending.message,
+                paths: rejectedNow.keys.toList(),
+                at: pending.at,
+              ),
           ]);
         state.rejected
           ..clear()
@@ -679,9 +684,7 @@ class GitHubApiBackend implements GitBackend {
     final shown = names.take(3).join(', ');
     final more = names.length > 3 ? ' dan ${names.length - 3} lainnya' : '';
     final reason = rejected.values.first.reason;
-    final head = sentCount == 0
-        ? 'Tidak ada yang terkirim'
-        : '$sentCount berkas terkirim';
+    final head = sentCount == 0 ? 'Tidak ada yang terkirim' : '$sentCount berkas terkirim';
     return '$head; ${names.length} berkas ditolak GitHub dan tetap menunggu: '
         '$shown$more. $reason';
   }

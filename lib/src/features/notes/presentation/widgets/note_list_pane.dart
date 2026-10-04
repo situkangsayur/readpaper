@@ -59,10 +59,7 @@ class NoteListPane extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(title, style: Theme.of(context).textTheme.titleSmall),
-                    Text(
-                      '${notes.length} catatan',
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
+                    Text('${notes.length} catatan', style: Theme.of(context).textTheme.labelSmall),
                   ],
                 ),
               ),
@@ -70,7 +67,8 @@ class NoteListPane extends ConsumerWidget {
                 tooltip: 'Buku catatan baru',
                 icon: const Icon(Icons.auto_stories_outlined, size: 20),
                 onPressed: () => _newNotebook(context, ref, selection),
-              ),              IconButton(
+              ),
+              IconButton(
                 tooltip: 'Catatan Markdown baru',
                 icon: const Icon(Icons.post_add_outlined, size: 20),
                 onPressed: () => _newMarkdown(context, ref, selection),
@@ -85,10 +83,7 @@ class NoteListPane extends ConsumerWidget {
         ),
         const Divider(height: 1),
         if (error != null)
-          _NoteBanner(
-            message: error,
-            onClose: () => ref.read(notesErrorProvider.notifier).clear(),
-          ),
+          _NoteBanner(message: error, onClose: () => ref.read(notesErrorProvider.notifier).clear()),
         if (asyncNotes.isLoading && asyncNotes.value == null)
           const Expanded(child: Center(child: CircularProgressIndicator(strokeWidth: 3)))
         else
@@ -165,11 +160,11 @@ class _NoteTile extends StatelessWidget {
     final icon = note.isNotebook
         ? Icons.auto_stories_outlined
         : switch (note.extension) {
-      '.pdf' => Icons.picture_as_pdf_outlined,
-      '.md' || '.txt' => Icons.notes_outlined,
-      '.png' || '.jpg' || '.jpeg' || '.webp' => Icons.image_outlined,
-      _ => Icons.insert_drive_file_outlined,
-    };
+            '.pdf' => Icons.picture_as_pdf_outlined,
+            '.md' || '.txt' => Icons.notes_outlined,
+            '.png' || '.jpg' || '.jpeg' || '.webp' => Icons.image_outlined,
+            _ => Icons.insert_drive_file_outlined,
+          };
     return ListTile(
       dense: true,
       leading: Icon(icon, size: 20),
@@ -281,10 +276,7 @@ Future<void> _newNotebook(BuildContext context, WidgetRef ref, LibrarySelection 
   if (note == null) return;
   await Navigator.of(context).push(
     MaterialPageRoute<String>(
-      builder: (_) => NotebookScreen(
-        path: p.join(index.directory, note.file),
-        title: note.title,
-      ),
+      builder: (_) => NotebookScreen(path: p.join(index.directory, note.file), title: note.title),
     ),
   );
   await controller.touch(itemKey: key, message: 'Ubah catatan: ${note.title}');
@@ -336,12 +328,7 @@ Future<void> _newMarkdown(BuildContext context, WidgetRef ref, LibrarySelection 
   await controller.touch(itemKey: key, message: 'Ubah catatan: ${note.title}');
 }
 
-Future<void> _open(
-  BuildContext context,
-  WidgetRef ref,
-  NoteItem note,
-  NotesIndex index,
-) async {
+Future<void> _open(BuildContext context, WidgetRef ref, NoteItem note, NotesIndex index) async {
   final path = p.join(index.directory, note.file);
   if (note.isNotebook) {
     await Navigator.of(context).push(
@@ -377,7 +364,9 @@ Future<void> _open(
   }
   if (note.extension == '.epub') {
     await Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => EpubReaderScreen(path: path, title: note.title)),
+      MaterialPageRoute<void>(
+        builder: (_) => EpubReaderScreen(path: path, title: note.title),
+      ),
     );
     return;
   }
@@ -455,10 +444,7 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
     case 'pindah':
       final target = await _pickCollection(context, index);
       if (target == null) return;
-      await controller.fileInto(
-        itemKey: note.key,
-        collectionKey: target.isEmpty ? null : target,
-      );
+      await controller.fileInto(itemKey: note.key, collectionKey: target.isEmpty ? null : target);
     case 'hapus':
       final yes = await showDialog<bool>(
         context: context,
@@ -483,28 +469,29 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
 
 /// Mengembalikan kunci koleksi, string kosong untuk "tanpa koleksi", atau
 /// null kalau dibatalkan.
-Future<String?> _pickCollection(BuildContext context, NotesIndex index) => showModalBottomSheet<String>(
-  context: context,
-  builder: (sheet) => SafeArea(
-    child: ListView(
-      shrinkWrap: true,
-      children: <Widget>[
-        ListTile(
-          leading: const Icon(Icons.folder_off_outlined),
-          title: const Text('Tanpa koleksi'),
-          onTap: () => Navigator.of(sheet).pop(''),
+Future<String?> _pickCollection(BuildContext context, NotesIndex index) =>
+    showModalBottomSheet<String>(
+      context: context,
+      builder: (sheet) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: <Widget>[
+            ListTile(
+              leading: const Icon(Icons.folder_off_outlined),
+              title: const Text('Tanpa koleksi'),
+              onTap: () => Navigator.of(sheet).pop(''),
+            ),
+            const Divider(height: 1),
+            for (final collection in index.collections)
+              ListTile(
+                leading: const Icon(Icons.folder_outlined),
+                title: Text(collection.name),
+                onTap: () => Navigator.of(sheet).pop(collection.key),
+              ),
+          ],
         ),
-        const Divider(height: 1),
-        for (final collection in index.collections)
-          ListTile(
-            leading: const Icon(Icons.folder_outlined),
-            title: Text(collection.name),
-            onTap: () => Navigator.of(sheet).pop(collection.key),
-          ),
-      ],
-    ),
-  ),
-);
+      ),
+    );
 
 Future<String?> _askText(BuildContext context, {required String title, String initial = ''}) {
   final controller = TextEditingController(text: initial);

@@ -132,9 +132,7 @@ class LibrarySelection {
 
   /// Seluruh catatan, apa pun koleksinya — akar catatan itu sendiri.
   const LibrarySelection.notes() : collectionKey = null, kind = SelectionKind.notes;
-  const LibrarySelection.notesUnfiled()
-    : collectionKey = null,
-      kind = SelectionKind.notesUnfiled;
+  const LibrarySelection.notesUnfiled() : collectionKey = null, kind = SelectionKind.notesUnfiled;
   const LibrarySelection.noteCollection(String key)
     : collectionKey = key,
       kind = SelectionKind.noteCollection;
@@ -151,8 +149,7 @@ class LibrarySelection {
   };
 
   /// Kunci koleksi catatan yang dipilih, kalau memang koleksi catatan.
-  String? get noteCollectionKey =>
-      kind == SelectionKind.noteCollection ? collectionKey : null;
+  String? get noteCollectionKey => kind == SelectionKind.noteCollection ? collectionKey : null;
 
   @override
   bool operator ==(Object other) =>

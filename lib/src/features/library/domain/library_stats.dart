@@ -55,8 +55,7 @@ class LibraryStats {
   bool get isEmpty => itemCount == 0;
 
   /// Berapa persen item yang berkasnya ada, dibulatkan.
-  int get filePercent =>
-      itemCount == 0 ? 0 : (withFile * 100 / itemCount).round();
+  int get filePercent => itemCount == 0 ? 0 : (withFile * 100 / itemCount).round();
 
   /// Jenis item Zotero → nama yang enak dibaca.
   ///
@@ -86,8 +85,7 @@ class LibraryStats {
     'note': 'Catatan',
   };
 
-  static String labelForType(String itemType) =>
-      typeLabels[itemType] ?? itemType;
+  static String labelForType(String itemType) => typeLabels[itemType] ?? itemType;
 
   /// Menghitung ringkasan dari daftar item.
   ///
@@ -158,9 +156,7 @@ class LibraryStats {
       annotationTotal: annotationTotal,
       untitledCount: untitled,
       withoutYear: withoutYear,
-      byYear: <StatTally>[
-        for (final year in yearKeys) (label: '$year', count: years[year]!),
-      ],
+      byYear: <StatTally>[for (final year in yearKeys) (label: '$year', count: years[year]!)],
       byType: _ranked(types, types.length),
       topCreators: _ranked(creators, topCount),
       topTags: _ranked(tags, topCount),
@@ -175,13 +171,10 @@ class LibraryStats {
     final entries = counts.entries.toList()
       ..sort((a, b) {
         final byCount = b.value.compareTo(a.value);
-        return byCount != 0
-            ? byCount
-            : a.key.toLowerCase().compareTo(b.key.toLowerCase());
+        return byCount != 0 ? byCount : a.key.toLowerCase().compareTo(b.key.toLowerCase());
       });
     return <StatTally>[
-      for (final entry in entries.take(limit))
-        (label: entry.key, count: entry.value),
+      for (final entry in entries.take(limit)) (label: entry.key, count: entry.value),
     ];
   }
 

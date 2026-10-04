@@ -226,16 +226,16 @@ class _AttachmentCard extends ConsumerWidget {
                     builder: (_) => attachment.isEpub
                         ? EpubReaderScreen(path: file!.path, title: item.title)
                         : ReaderScreen(
-                      itemKey: item.key,
-                      itemFilePath: item.filePath,
-                      attachmentKey: attachment.key,
-                      filePath: file!.path,
-                      title: item.title,
-                      subtitle: <String>[
-                        if (item.creatorLabel.isNotEmpty) item.creatorLabel,
-                        if (item.year.isNotEmpty) item.year,
-                      ].join(' · '),
-                    ),
+                            itemKey: item.key,
+                            itemFilePath: item.filePath,
+                            attachmentKey: attachment.key,
+                            filePath: file!.path,
+                            title: item.title,
+                            subtitle: <String>[
+                              if (item.creatorLabel.isNotEmpty) item.creatorLabel,
+                              if (item.year.isNotEmpty) item.year,
+                            ].join(' · '),
+                          ),
                   ),
                 ),
                 icon: const Icon(Icons.chrome_reader_mode_outlined, size: 18),

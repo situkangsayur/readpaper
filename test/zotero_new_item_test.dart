@@ -202,10 +202,7 @@ void main() {
     test('menolak berkas di luar library sama sekali', () async {
       final luar = File(p.join(library.parent.path, 'luar.json'))..writeAsStringSync('{}');
       await expectLater(
-        const ZoteroWriter().deleteItem(
-          libraryDir: library.path,
-          itemFilePath: luar.path,
-        ),
+        const ZoteroWriter().deleteItem(libraryDir: library.path, itemFilePath: luar.path),
         throwsA(isA<Exception>()),
       );
       expect(luar.existsSync(), isTrue);

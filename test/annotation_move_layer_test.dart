@@ -40,11 +40,7 @@ void main() {
 
   testWidgets('hapus bisa ditekan untuk anotasi di tengah halaman', (tester) async {
     var deleted = 0;
-    await pump(
-      tester,
-      bounds: const Rect.fromLTWH(100, 150, 80, 40),
-      onDelete: () => deleted++,
-    );
+    await pump(tester, bounds: const Rect.fromLTWH(100, 150, 80, 40), onDelete: () => deleted++);
     await tester.tap(find.byIcon(Icons.delete_outline));
     await tester.pumpAndSettle();
     expect(deleted, 1);
@@ -66,17 +62,10 @@ void main() {
 
   testWidgets('pegangan di sudut kanan bawah juga tetap di dalam halaman', (tester) async {
     var deleted = 0;
-    await pump(
-      tester,
-      bounds: const Rect.fromLTWH(240, 360, 60, 40),
-      onDelete: () => deleted++,
-    );
+    await pump(tester, bounds: const Rect.fromLTWH(240, 360, 60, 40), onDelete: () => deleted++);
 
     final page = tester.getRect(find.byType(Stack).first);
-    for (final tooltip in <String>[
-      'Seret untuk mengubah ukuran',
-      'Seret untuk memutar',
-    ]) {
+    for (final tooltip in <String>['Seret untuk mengubah ukuran', 'Seret untuk memutar']) {
       final grip = tester.getRect(find.byTooltip(tooltip));
       expect(grip.right, lessThanOrEqualTo(page.right + 0.01), reason: tooltip);
       expect(grip.bottom, lessThanOrEqualTo(page.bottom + 0.01), reason: tooltip);
@@ -87,8 +76,9 @@ void main() {
     expect(deleted, 1);
   });
 
-  testWidgets('bingkainya tetap menempel di anotasinya meski kotaknya digeser masuk',
-      (tester) async {
+  testWidgets('bingkainya tetap menempel di anotasinya meski kotaknya digeser masuk', (
+    tester,
+  ) async {
     await pump(tester, bounds: const Rect.fromLTWH(0, 0, 60, 30), onDelete: () {});
     // Bingkai dalamnya digambar oleh DecoratedBox di dalam Padding; letaknya
     // harus tetap sama dengan batas anotasinya, bukan ikut bergeser.

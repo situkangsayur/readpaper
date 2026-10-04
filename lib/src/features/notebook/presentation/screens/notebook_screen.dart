@@ -153,9 +153,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   /// jalan memperbesar.
   void _zoomBy(double factor) {
     final box = _viewportKey.currentContext?.findRenderObject() as RenderBox?;
-    final centre = box == null
-        ? Offset.zero
-        : Offset(box.size.width / 2, box.size.height / 2);
+    final centre = box == null ? Offset.zero : Offset(box.size.width / 2, box.size.height / 2);
     final scene = (centre - _userOffset) / _userScale;
     setState(() {
       _userScale = (_userScale * factor).clamp(1.0, 8.0);

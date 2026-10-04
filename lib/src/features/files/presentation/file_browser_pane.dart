@@ -274,11 +274,8 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
 
     final saved = await Navigator.of(context).push<String>(
       MaterialPageRoute<String>(
-        builder: (_) => WhiteboardScreen(
-          background: chosen,
-          saveDir: dir.path,
-          orientation: orientation,
-        ),
+        builder: (_) =>
+            WhiteboardScreen(background: chosen, saveDir: dir.path, orientation: orientation),
       ),
     );
     await _open(dir);
@@ -414,7 +411,9 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     }
     if (!mounted) return;
     await Navigator.of(context).push(
-      MaterialPageRoute<String>(builder: (_) => NotebookScreen(path: target, title: stem)),
+      MaterialPageRoute<String>(
+        builder: (_) => NotebookScreen(path: target, title: stem),
+      ),
     );
     await _open(dir);
   }
@@ -424,24 +423,22 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     if (NoteDocumentStore.isNoteDocument(file.path)) {
       Navigator.of(context).push(
         MaterialPageRoute<String>(
-          builder: (_) => NotebookScreen(
-            path: file.path,
-            title: NoteDocumentStore.stemOf(file.path),
-          ),
+          builder: (_) =>
+              NotebookScreen(path: file.path, title: NoteDocumentStore.stemOf(file.path)),
         ),
       );
       return;
     }
     if (extension == '.md') {
-      Navigator.of(context).push(
-        MaterialPageRoute<String>(builder: (_) => MarkdownEditorScreen(path: file.path)),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute<String>(builder: (_) => MarkdownEditorScreen(path: file.path)));
       return;
     }
     if (extension == '.epub') {
-      Navigator.of(context).push(
-        MaterialPageRoute<void>(builder: (_) => EpubReaderScreen(path: file.path)),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute<void>(builder: (_) => EpubReaderScreen(path: file.path)));
       return;
     }
     if (extension != '.pdf') return;
@@ -579,29 +576,29 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
         if (!widget.collapsed)
           Expanded(
             child: _entries.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      'Folder ini kosong.\n\nBuat papan tulis, atau salin PDF ke '
-                      'sini dengan tombol unduh di atas — lalu seret ke sebuah '
-                      'koleksi untuk memasukkannya ke library.',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall,
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Folder ini kosong.\n\nBuat papan tulis, atau salin PDF ke '
+                        'sini dengan tombol unduh di atas — lalu seret ke sebuah '
+                        'koleksi untuk memasukkannya ke library.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: _entries.length,
+                    itemBuilder: (context, i) => _EntryRow(
+                      entry: _entries[i],
+                      onOpenDir: _open,
+                      onOpenFile: _openFile,
+                      onRename: _rename,
+                      onDelete: _deleteFile,
                     ),
                   ),
-                )
-              : ListView.builder(
-                  itemCount: _entries.length,
-                  itemBuilder: (context, i) => _EntryRow(
-                    entry: _entries[i],
-                    onOpenDir: _open,
-                    onOpenFile: _openFile,
-                    onRename: _rename,
-                    onDelete: _deleteFile,
-                  ),
-                ),
-        ),
+          ),
       ],
     );
   }
@@ -700,8 +697,7 @@ class _EntryRow extends StatelessWidget {
                   _ => onDelete(file),
                 },
                 itemBuilder: (_) => <PopupMenuEntry<String>>[
-                  if (canOpen)
-                    const PopupMenuItem<String>(value: 'buka', child: Text('Buka')),
+                  if (canOpen) const PopupMenuItem<String>(value: 'buka', child: Text('Buka')),
                   const PopupMenuItem<String>(value: 'bagikan', child: Text('Bagikan')),
                   const PopupMenuItem<String>(value: 'ganti-nama', child: Text('Ganti nama')),
                   const PopupMenuItem<String>(value: 'hapus', child: Text('Hapus berkas')),

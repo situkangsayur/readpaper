@@ -22,7 +22,11 @@ void main() {
   ];
   final module = candidates.where((path) => File(path).existsSync()).firstOrNull;
   if (module == null) {
-    test('penyunting halaman PDF', () {}, skip: 'libpdfium.so belum ada — jalankan flutter build dulu');
+    test(
+      'penyunting halaman PDF',
+      () {},
+      skip: 'libpdfium.so belum ada — jalankan flutter build dulu',
+    );
     return;
   }
   PdfPageEditor.modulePath = module;
@@ -36,13 +40,7 @@ void main() {
     final jpg = Uint8List.fromList(img.encodeJpg(page, quality: 70));
     final bytes = writeImagePdf(<PdfImagePage>[
       for (var i = 0; i < pages; i++)
-        PdfImagePage(
-          jpeg: jpg,
-          pixelWidth: 60,
-          pixelHeight: 80,
-          widthPt: 300,
-          heightPt: 400,
-        ),
+        PdfImagePage(jpeg: jpg, pixelWidth: 60, pixelHeight: 80, widthPt: 300, heightPt: 400),
     ]);
     final path = p.join(dir.path, name);
     File(path).writeAsBytesSync(bytes);

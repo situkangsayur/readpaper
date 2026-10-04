@@ -233,11 +233,7 @@ void main() {
   });
 
   test('banyak item sekaligus mempertahankan urutannya', () {
-    final all = CslJson.ofAll(<ZoteroItem>[
-      item(key: 'SATU'),
-      item(key: 'DUA'),
-      item(key: 'TIGA'),
-    ]);
+    final all = CslJson.ofAll(<ZoteroItem>[item(key: 'SATU'), item(key: 'DUA'), item(key: 'TIGA')]);
     expect(all.map((e) => e['id']), <String>['SATU', 'DUA', 'TIGA']);
   });
 }

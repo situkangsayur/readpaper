@@ -23,9 +23,7 @@ class NotesController extends AsyncNotifier<NotesIndex> {
     // Commit terakhir ikut diperhatikan: sebuah pull mengubah isi folder
     // catatan di disk tanpa aplikasi ini menyentuhnya, dan daftar yang masih
     // memperlihatkan keadaan sebelum pull adalah daftar yang salah.
-    ref.watch(
-      workspaceControllerProvider.select((s) => s.gitStatus?.lastCommitDate),
-    );
+    ref.watch(workspaceControllerProvider.select((s) => s.gitStatus?.lastCommitDate));
     return store.read();
   }
 
@@ -49,11 +47,10 @@ class NotesController extends AsyncNotifier<NotesIndex> {
         return key;
       });
 
-  Future<String?> deleteCollection(String key) =>
-      _guard('Hapus koleksi catatan', (store) async {
-        await store.deleteCollection(key);
-        return key;
-      });
+  Future<String?> deleteCollection(String key) => _guard('Hapus koleksi catatan', (store) async {
+    await store.deleteCollection(key);
+    return key;
+  });
 
   /// Menyalin sebuah berkas ke folder catatan.
   Future<String?> addFile({
@@ -89,21 +86,17 @@ class NotesController extends AsyncNotifier<NotesIndex> {
         return itemKey;
       });
 
-  Future<String?> deleteItem(String itemKey) =>
-      _guard('Hapus catatan', (store) async {
-        await store.deleteItem(itemKey);
-        return itemKey;
-      });
+  Future<String?> deleteItem(String itemKey) => _guard('Hapus catatan', (store) async {
+    await store.deleteItem(itemKey);
+    return itemKey;
+  });
 
   /// Menjalankan satu perubahan, membaca ulang, lalu menyimpannya ke git.
   ///
   /// Catatan hidup di dalam repositori yang sama dengan papernya, jadi
   /// perubahannya ikut di-commit — kalau tidak, catatan hanya ada di satu
   /// perangkat dan janji "tersinkron" jadi bohong.
-  Future<String?> _guard(
-    String message,
-    Future<String> Function(NotesStore store) action,
-  ) async {
+  Future<String?> _guard(String message, Future<String> Function(NotesStore store) action) async {
     final store = _store;
     if (store == null) {
       _fail('Belum ada repositori aktif untuk menyimpan catatan.');
@@ -144,8 +137,9 @@ final notesErrorProvider = NotifierProvider<NotesErrorController, String?>(
 
 /// Catatan yang tampil di panel tengah untuk pilihan yang sedang aktif.
 List<NoteItem> notesFor(NotesIndex index, LibrarySelection selection) => switch (selection.kind) {
-  SelectionKind.notes => <NoteItem>[...index.items]
-    ..sort((a, b) => b.dateModified.compareTo(a.dateModified)),
+  SelectionKind.notes => <NoteItem>[
+    ...index.items,
+  ]..sort((a, b) => b.dateModified.compareTo(a.dateModified)),
   SelectionKind.notesUnfiled => index.unfiled,
   SelectionKind.noteCollection => index.inCollection(selection.collectionKey!),
   _ => const <NoteItem>[],

@@ -53,18 +53,9 @@ void main() {
     test('papan gelap mendapat pena terang, dan sebaliknya', () {
       // Pena hitam di atas papan hitam adalah cara tercepat membuat orang
       // mengira aplikasinya rusak.
-      expect(
-        BoardBackgrounds.penFor(BoardBackgrounds.black).computeLuminance(),
-        greaterThan(0.5),
-      );
-      expect(
-        BoardBackgrounds.penFor(BoardBackgrounds.white).computeLuminance(),
-        lessThan(0.5),
-      );
-      expect(
-        BoardBackgrounds.penFor(BoardBackgrounds.green).computeLuminance(),
-        greaterThan(0.5),
-      );
+      expect(BoardBackgrounds.penFor(BoardBackgrounds.black).computeLuminance(), greaterThan(0.5));
+      expect(BoardBackgrounds.penFor(BoardBackgrounds.white).computeLuminance(), lessThan(0.5));
+      expect(BoardBackgrounds.penFor(BoardBackgrounds.green).computeLuminance(), greaterThan(0.5));
     });
   });
 

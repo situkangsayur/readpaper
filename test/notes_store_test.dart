@@ -142,11 +142,7 @@ void main() {
     test('hitungan koleksi mencakup keturunannya', () async {
       final atas = await store.createCollection(name: 'Kuliah');
       final bawah = await store.createCollection(name: 'Semester 1', parentKey: atas.key);
-      await store.addFile(
-        sourcePath: sample('a.md').path,
-        title: 'A',
-        collectionKey: bawah.key,
-      );
+      await store.addFile(sourcePath: sample('a.md').path, title: 'A', collectionKey: bawah.key);
 
       final index = await store.read();
       expect(index.countIn(atas.key), 1);
@@ -199,8 +195,7 @@ void main() {
   });
 
   group('bentuk di disk', () {
-    test('JSON beridentasi tab dengan kunci terurut, seperti di sebelah',
-        () async {
+    test('JSON beridentasi tab dengan kunci terurut, seperti di sebelah', () async {
       final note = await store.addFile(sourcePath: sample('bentuk.md').path, title: 'Bentuk');
       final raw = File(
         p.join(store.directory, 'item', note.key.substring(0, 2), '${note.key}.json'),

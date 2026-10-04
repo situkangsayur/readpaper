@@ -81,18 +81,15 @@ class NoteItem {
     'title': title,
   };
 
-  NoteItem copyWith({
-    String? title,
-    List<String>? collectionKeys,
-    DateTime? dateModified,
-  }) => NoteItem(
-    key: key,
-    title: title ?? this.title,
-    file: file,
-    collectionKeys: collectionKeys ?? this.collectionKeys,
-    dateAdded: dateAdded,
-    dateModified: dateModified ?? DateTime.now(),
-  );
+  NoteItem copyWith({String? title, List<String>? collectionKeys, DateTime? dateModified}) =>
+      NoteItem(
+        key: key,
+        title: title ?? this.title,
+        file: file,
+        collectionKeys: collectionKeys ?? this.collectionKeys,
+        dateAdded: dateAdded,
+        dateModified: dateModified ?? DateTime.now(),
+      );
 
   static String _stamp(DateTime when) => '${when.toUtc().toIso8601String().split('.').first}Z';
 }

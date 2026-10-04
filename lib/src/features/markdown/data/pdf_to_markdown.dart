@@ -296,8 +296,10 @@ class PdfToMarkdown {
     // ruang kosong di antaranya. Tanpa pagar ini, badan teks yang kebetulan
     // berpola — "Isi halaman 3." — ikut terbuang, dan yang hilang adalah
     // isinya sendiri.
-    final samePage = <PdfTextLine>[for (final l in all) if (l.page == line.page) l]
-      ..sort((a, b) => b.top.compareTo(a.top));
+    final samePage = <PdfTextLine>[
+      for (final l in all)
+        if (l.page == line.page) l,
+    ]..sort((a, b) => b.top.compareTo(a.top));
     if (samePage.length < 2) return false;
     final at = samePage.indexOf(line);
     final double gap;

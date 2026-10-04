@@ -50,7 +50,11 @@ void main() {
   testWidgets('tiap kelompok menyebut alasannya dan berapa salinannya', (tester) async {
     await pump(tester, <DuplicateGroup>[
       DuplicateGroup(
-        items: <ZoteroItem>[item(key: 'A'), item(key: 'B'), item(key: 'C')],
+        items: <ZoteroItem>[
+          item(key: 'A'),
+          item(key: 'B'),
+          item(key: 'C'),
+        ],
         reasons: const <DuplicateReason>{DuplicateReason.doi},
       ),
     ], items: 10);
@@ -68,7 +72,10 @@ void main() {
   ) async {
     await pump(tester, <DuplicateGroup>[
       DuplicateGroup(
-        items: <ZoteroItem>[item(key: 'A', annotations: 5), item(key: 'B')],
+        items: <ZoteroItem>[
+          item(key: 'A', annotations: 5),
+          item(key: 'B'),
+        ],
         reasons: const <DuplicateReason>{DuplicateReason.doi},
       ),
     ]);
@@ -81,7 +88,10 @@ void main() {
   testWidgets('anotasi di lebih dari satu salinan diberi peringatan', (tester) async {
     await pump(tester, <DuplicateGroup>[
       DuplicateGroup(
-        items: <ZoteroItem>[item(key: 'A', annotations: 3), item(key: 'B', annotations: 2)],
+        items: <ZoteroItem>[
+          item(key: 'A', annotations: 3),
+          item(key: 'B', annotations: 2),
+        ],
         reasons: const <DuplicateReason>{DuplicateReason.titleYearAuthor},
       ),
     ]);
@@ -93,7 +103,10 @@ void main() {
   testWidgets('kelompok tanpa risiko tidak diberi peringatan', (tester) async {
     await pump(tester, <DuplicateGroup>[
       DuplicateGroup(
-        items: <ZoteroItem>[item(key: 'A', annotations: 3), item(key: 'B')],
+        items: <ZoteroItem>[
+          item(key: 'A', annotations: 3),
+          item(key: 'B'),
+        ],
         reasons: const <DuplicateReason>{DuplicateReason.doi},
       ),
     ]);
@@ -107,7 +120,10 @@ void main() {
     // library Zotero adalah pekerjaan bertahun-tahun.
     await pump(tester, <DuplicateGroup>[
       DuplicateGroup(
-        items: <ZoteroItem>[item(key: 'A'), item(key: 'B')],
+        items: <ZoteroItem>[
+          item(key: 'A'),
+          item(key: 'B'),
+        ],
         reasons: const <DuplicateReason>{DuplicateReason.doi},
       ),
     ]);

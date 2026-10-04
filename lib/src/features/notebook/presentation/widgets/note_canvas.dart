@@ -73,14 +73,18 @@ class NoteCanvas extends StatelessWidget {
       child: Stack(
         children: <Widget>[
           Positioned.fill(
-            child: CustomPaint(painter: _SheetPainter(page: page, scale: scale)),
+            child: CustomPaint(
+              painter: _SheetPainter(page: page, scale: scale),
+            ),
           ),
           // Tinta, bangun, dan penghubung digambar sebagai satu lapisan dalam
           // koordinat lembar: penghubung membentang antara dua benda, jadi
           // tidak bisa tinggal di dalam salah satunya.
           Positioned.fill(
             child: IgnorePointer(
-              child: CustomPaint(painter: _DrawingPainter(page: page, scale: scale)),
+              child: CustomPaint(
+                painter: _DrawingPainter(page: page, scale: scale),
+              ),
             ),
           ),
           for (final component in page.components)
@@ -89,9 +93,7 @@ class NoteCanvas extends StatelessWidget {
           if (selectedId != null)
             for (final component in page.components)
               if (component.id == selectedId &&
-                  (component is NoteInk ||
-                      component is NoteShape ||
-                      component is NoteConnector))
+                  (component is NoteInk || component is NoteShape || component is NoteConnector))
                 _selectionBox(component),
           for (final component in page.components)
             if (pickedIds.contains(component.id)) _pickedBox(component),
@@ -178,9 +180,7 @@ class NoteCanvas extends StatelessWidget {
           angle: component.rotation,
           child: selected
               ? DecoratedBox(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0x552196F3)),
-                  ),
+                  decoration: BoxDecoration(border: Border.all(color: const Color(0x552196F3))),
                   child: body,
                 )
               : body,
@@ -289,9 +289,7 @@ class _Picture extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final path = component.file;
-    final file = p.isAbsolute(path) || baseDir == null
-        ? File(path)
-        : File(p.join(baseDir!, path));
+    final file = p.isAbsolute(path) || baseDir == null ? File(path) : File(p.join(baseDir!, path));
     if (path.isEmpty || !file.existsSync()) {
       return DecoratedBox(
         decoration: BoxDecoration(border: Border.all(color: Theme.of(context).colorScheme.outline)),
@@ -355,8 +353,7 @@ class _PreviewShapePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final berarah =
-        preview.kind == ShapeKind.garis || preview.kind == ShapeKind.panah;
+    final berarah = preview.kind == ShapeKind.garis || preview.kind == ShapeKind.panah;
     final box = Rect.fromPoints(preview.from, preview.to);
     final origin = berarah ? preview.from : box.topLeft;
     final extent = berarah

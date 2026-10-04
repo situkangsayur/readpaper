@@ -203,10 +203,7 @@ class CslJson {
   /// atau LibreOffice sebagai identitas sitasi, jadi ia harus tahan lama dan
   /// bukan nomor urut yang berubah tiap kali library dimuat ulang.
   static Map<String, dynamic> of(ZoteroItem item) {
-    final out = <String, dynamic>{
-      'id': item.key,
-      'type': itemTypes[item.itemType] ?? 'document',
-    };
+    final out = <String, dynamic>{'id': item.key, 'type': itemTypes[item.itemType] ?? 'document'};
 
     void put(String field, Object? value) {
       if (value == null) return;
@@ -265,8 +262,9 @@ class CslJson {
   }
 
   /// CSL-JSON untuk banyak item sekaligus, urutannya dipertahankan.
-  static List<Map<String, dynamic>> ofAll(Iterable<ZoteroItem> items) =>
-      <Map<String, dynamic>>[for (final item in items) of(item)];
+  static List<Map<String, dynamic>> ofAll(Iterable<ZoteroItem> items) => <Map<String, dynamic>>[
+    for (final item in items) of(item),
+  ];
 
   /// Nama-nama dikelompokkan menurut perannya di CSL.
   static Map<String, List<Map<String, String>>> _creatorsOf(ZoteroItem item) {
@@ -300,9 +298,7 @@ class CslJson {
     final given = creator.firstName.trim();
     if (family.isEmpty && given.isEmpty) {
       final whole = creator.name.trim();
-      return whole.isEmpty
-          ? const <String, String>{}
-          : <String, String>{'literal': whole};
+      return whole.isEmpty ? const <String, String>{} : <String, String>{'literal': whole};
     }
     if (family.isEmpty) return <String, String>{'literal': given};
     if (given.isEmpty) {

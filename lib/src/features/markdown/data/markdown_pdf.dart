@@ -76,9 +76,7 @@ class MarkdownPdf {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.fromLTRB(48, 48, 48, 56),
-        build: (context) => children.isEmpty
-            ? <pw.Widget>[pw.Text('(dokumen kosong)')]
-            : children,
+        build: (context) => children.isEmpty ? <pw.Widget>[pw.Text('(dokumen kosong)')] : children,
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
@@ -128,25 +126,19 @@ class MarkdownPdf {
               children: <pw.Widget>[
                 for (var i = 0; i < block.items.length; i++)
                   pw.Padding(
-                    padding: pw.EdgeInsets.only(
-                      left: 6 + block.items[i].depth * 14.0,
-                      bottom: 2,
-                    ),
+                    padding: pw.EdgeInsets.only(left: 6 + block.items[i].depth * 14.0, bottom: 2),
                     child: pw.Row(
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: <pw.Widget>[
                         pw.SizedBox(
                           width: 20,
-                          child: pw.Text(
-                            switch (block.items[i].checked) {
-                              true => '[x]',
-                              false => '[ ]',
-                              // Butir ditulis dengan tanda hubung, bukan
-                              // bulatan: bulatannya tidak ada di font bawaan.
-                              null => block.ordered ? '${i + 1}.' : '-',
-                            },
-                            style: const pw.TextStyle(fontSize: _base),
-                          ),
+                          child: pw.Text(switch (block.items[i].checked) {
+                            true => '[x]',
+                            false => '[ ]',
+                            // Butir ditulis dengan tanda hubung, bukan
+                            // bulatan: bulatannya tidak ada di font bawaan.
+                            null => block.ordered ? '${i + 1}.' : '-',
+                          }, style: const pw.TextStyle(fontSize: _base)),
                         ),
                         pw.Expanded(child: pw.RichText(text: _spans(block.items[i].spans))),
                       ],
@@ -277,5 +269,4 @@ class MarkdownPdf {
         ),
     ],
   );
-
 }

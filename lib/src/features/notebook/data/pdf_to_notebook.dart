@@ -74,10 +74,7 @@ class PdfToNotebook {
           // A4 mendatar mendarat di kertas A4 mendatar, bukan dipaksa tegak
           // lalu menyisakan dua pita kosong di atas dan di bawah.
           final chosen = NotePaper.closestTo(Size(page.width, page.height));
-          final box = _fit(
-            Size(page.width, page.height),
-            chosen.paper.sizeFor(chosen.orientation),
-          );
+          final box = _fit(Size(page.width, page.height), chosen.paper.sizeFor(chosen.orientation));
           pages.add(
             NotePage(
               paper: chosen.paper,

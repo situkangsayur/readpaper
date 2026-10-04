@@ -219,10 +219,7 @@ class ZoteroWriter {
       },
     ];
 
-    await file.writeAsString(
-      '${_pretty.convert(ZoteroJson.sortKeys(written))}\n',
-      flush: true,
-    );
+    await file.writeAsString('${_pretty.convert(ZoteroJson.sortKeys(written))}\n', flush: true);
     return created;
   }
 
