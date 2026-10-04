@@ -225,6 +225,234 @@ class ZoteroWriter {
 
   static final JsonEncoder _pretty = JsonEncoder.withIndent('\t');
 
+  // ------------------------------------------------- mengubah koleksi paper
+
+  /// Mengganti nama koleksi paper.
+  ///
+  /// Kuncinya tetap — itu yang dipakai Zotero untuk keanggotaan item — tetapi
+  /// `path` koleksi ini dan semua keturunannya ikut berubah, begitu juga jalur
+  /// nama di `meta.collections` item anggotanya. Yang terakhir itu untuk
+  /// manusia yang membaca repositorinya; tanpa diperbarui ia menyebut nama
+  /// yang sudah tidak ada.
+  Future<List<String>> renameCollection({
+    required String libraryDir,
+    required String key,
+    required String name,
+  }) async {
+    final trimmed = _checkName(name);
+    final collections = await _readCollections(libraryDir);
+    final target = _find(collections, key);
+    _rejectTwin(collections, parentKey: target['parentKey'] as String?, name: trimmed, except: key);
+    target['name'] = trimmed;
+    return _rewriteTree(libraryDir, collections);
+  }
+
+  /// Memindahkan koleksi paper ke bawah induk lain; null berarti ke akar.
+  Future<List<String>> moveCollection({
+    required String libraryDir,
+    required String key,
+    required String? newParentKey,
+  }) async {
+    final collections = await _readCollections(libraryDir);
+    final target = _find(collections, key);
+    if (newParentKey != null) {
+      _find(collections, newParentKey);
+      // Koleksi tidak boleh masuk ke keturunannya sendiri: pohonnya jadi
+      // lingkaran, dan Zotero menolak mengimpornya.
+      if (_descendants(collections, key).contains(newParentKey) || newParentKey == key) {
+        throw const LibraryFailure('Koleksi tidak bisa dipindah ke dalam dirinya sendiri');
+      }
+    }
+    _rejectTwin(
+      collections,
+      parentKey: newParentKey,
+      name: (target['name'] as String?) ?? '',
+      except: key,
+    );
+    target['parentKey'] = newParentKey;
+    return _rewriteTree(libraryDir, collections);
+  }
+
+  /// Menghapus koleksi paper. **Itemnya tidak ikut terhapus** — hanya dilepas
+  /// dari koleksi ini, sama seperti menghapus koleksi di Zotero.
+  ///
+  /// [withChildren] menghapus sub-koleksinya juga; kalau false, sub-koleksinya
+  /// naik satu tingkat ke induk koleksi yang dihapus.
+  Future<List<String>> deleteCollection({
+    required String libraryDir,
+    required String key,
+    required bool withChildren,
+  }) async {
+    final collections = await _readCollections(libraryDir);
+    final target = _find(collections, key);
+    final removed = <String>{key, if (withChildren) ..._descendants(collections, key)};
+    if (!withChildren) {
+      for (final child in collections.where((c) => c['parentKey'] == key)) {
+        _rejectTwin(
+          collections,
+          parentKey: target['parentKey'] as String?,
+          name: (child['name'] as String?) ?? '',
+          except: child['key'] as String,
+        );
+        child['parentKey'] = target['parentKey'];
+      }
+    }
+    collections.removeWhere((c) => removed.contains(c['key']));
+    return _rewriteTree(libraryDir, collections, removed: removed);
+  }
+
+  /// Seberapa besar akibat menghapus [key]: jumlah sub-koleksi dan item.
+  Future<({int children, int items})> collectionReach(String libraryDir, String key) async {
+    final collections = await _readCollections(libraryDir);
+    final reach = <String>{key, ..._descendants(collections, key)};
+    var items = 0;
+    await for (final file in _itemFiles(libraryDir)) {
+      final keys = _memberships(await file.readAsString());
+      if (keys.any(reach.contains)) items++;
+    }
+    return (children: reach.length - 1, items: items);
+  }
+
+  static String _checkName(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) throw const LibraryFailure('Nama koleksi tidak boleh kosong');
+    if (trimmed.contains('/')) {
+      throw const LibraryFailure('Nama koleksi tidak boleh memuat garis miring');
+    }
+    return trimmed;
+  }
+
+  Future<List<Map<String, dynamic>>> _readCollections(String libraryDir) async {
+    final file = File(p.join(libraryDir, 'collections.json'));
+    if (!file.existsSync()) throw const LibraryFailure('collections.json tidak ada');
+    final decoded = jsonDecode(await file.readAsString());
+    if (decoded is! List || decoded.any((e) => e is! Map)) {
+      throw LibraryFailure(
+        'collections.json tidak berisi daftar koleksi — menolak menulisinya',
+        details: file.path,
+      );
+    }
+    return <Map<String, dynamic>>[for (final e in decoded) (e as Map).cast<String, dynamic>()];
+  }
+
+  static Map<String, dynamic> _find(List<Map<String, dynamic>> collections, String key) =>
+      collections.where((c) => c['key'] == key).firstOrNull ??
+      (throw LibraryFailure('Koleksi tidak ada lagi', details: key));
+
+  static void _rejectTwin(
+    List<Map<String, dynamic>> collections, {
+    required String? parentKey,
+    required String name,
+    required String except,
+  }) {
+    final twin = collections.any(
+      (c) =>
+          c['key'] != except &&
+          (c['parentKey'] as String?) == parentKey &&
+          ((c['name'] as String?) ?? '').toLowerCase() == name.toLowerCase(),
+    );
+    if (twin) throw LibraryFailure('Sudah ada koleksi bernama "$name" di tempat yang sama');
+  }
+
+  static Set<String> _descendants(List<Map<String, dynamic>> collections, String key) {
+    final out = <String>{};
+    var frontier = <String>{key};
+    while (frontier.isNotEmpty) {
+      final next = <String>{
+        for (final c in collections)
+          if (frontier.contains(c['parentKey']) && !out.contains(c['key'])) c['key'] as String,
+      };
+      out.addAll(next);
+      frontier = next;
+    }
+    return out;
+  }
+
+  /// Menulis ulang `collections.json` dengan `path` yang dihitung ulang, lalu
+  /// memperbarui setiap item yang keanggotaannya tersentuh.
+  Future<List<String>> _rewriteTree(
+    String libraryDir,
+    List<Map<String, dynamic>> collections, {
+    Set<String> removed = const <String>{},
+  }) async {
+    final oldPaths = <String, String>{
+      for (final c in await _readCollections(libraryDir))
+        c['key'] as String: (c['path'] as String?) ?? (c['name'] as String? ?? ''),
+    };
+    final byKey = <String, Map<String, dynamic>>{
+      for (final c in collections) c['key'] as String: c,
+    };
+    String pathOf(String key, [int depth = 0]) {
+      final c = byKey[key]!;
+      final parent = c['parentKey'] as String?;
+      final name = (c['name'] as String?) ?? '';
+      if (parent == null || !byKey.containsKey(parent) || depth > 64) return name;
+      return '${pathOf(parent, depth + 1)}/$name';
+    }
+
+    final newPaths = <String, String>{};
+    for (final c in collections) {
+      final path = pathOf(c['key'] as String);
+      c['path'] = path;
+      newPaths[c['key'] as String] = path;
+    }
+    final file = File(p.join(libraryDir, 'collections.json'));
+    await file.writeAsString('${_pretty.convert(ZoteroJson.sortKeys(collections))}\n', flush: true);
+
+    final changed = <String>[file.path];
+    final touched = <String>{
+      ...removed,
+      for (final e in newPaths.entries)
+        if (oldPaths[e.key] != e.value) e.key,
+    };
+    if (touched.isEmpty) return changed;
+
+    await for (final itemFile in _itemFiles(libraryDir)) {
+      final source = await itemFile.readAsString();
+      final keys = _memberships(source);
+      if (!keys.any(touched.contains)) continue;
+      final json = ZoteroJson.decodeObject(source);
+      final zotero = (json['zotero'] as Map).cast<String, dynamic>();
+      final kept = <String>[
+        for (final k in keys)
+          if (!removed.contains(k)) k,
+      ];
+      if (kept.length != keys.length) {
+        // Keanggotaan di Zotero berubah: itu perubahan item sungguhan.
+        zotero['collections'] = kept;
+        zotero['dateModified'] = _stamp(DateTime.now());
+      }
+      final meta = (json['meta'] as Map?)?.cast<String, dynamic>();
+      if (meta != null) {
+        meta['collections'] = <String>[for (final k in kept) newPaths[k] ?? oldPaths[k] ?? k];
+      }
+      await itemFile.writeAsString(ZoteroJson.encodeFile(json), flush: true);
+      changed.add(itemFile.path);
+    }
+    return changed;
+  }
+
+  static List<String> _memberships(String itemSource) {
+    // Pemeriksaan murah lebih dulu: hampir semua item tidak tersentuh, dan
+    // membaca JSON 1.700 berkas untuk menemukan belasan itu sia-sia.
+    if (!itemSource.contains('"collections"')) return const <String>[];
+    try {
+      final json = ZoteroJson.decodeObject(itemSource);
+      final list = (json['zotero'] as Map?)?['collections'];
+      return list is List ? list.whereType<String>().toList() : const <String>[];
+    } on FormatException {
+      return const <String>[];
+    }
+  }
+
+  static Stream<File> _itemFiles(String libraryDir) async* {
+    final dir = Directory(p.join(libraryDir, 'items'));
+    if (!dir.existsSync()) return;
+    await for (final entity in dir.list(recursive: true)) {
+      if (entity is File && entity.path.endsWith('.json')) yield entity;
+    }
+  }
+
   /// Memindahkan sebuah item ke koleksi lain.
   ///
   /// Zotero menyimpan keanggotaan koleksi **di dalam berkas itemnya**, bukan di

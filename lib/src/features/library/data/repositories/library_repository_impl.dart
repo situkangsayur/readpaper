@@ -91,6 +91,39 @@ class LibraryRepositoryImpl implements LibraryRepository {
   );
 
   @override
+  Future<List<String>> renameCollection({
+    required String libraryDir,
+    required String key,
+    required String name,
+  }) => const ZoteroWriter().renameCollection(libraryDir: libraryDir, key: key, name: name);
+
+  @override
+  Future<List<String>> moveCollection({
+    required String libraryDir,
+    required String key,
+    required String? newParentKey,
+  }) => const ZoteroWriter().moveCollection(
+    libraryDir: libraryDir,
+    key: key,
+    newParentKey: newParentKey,
+  );
+
+  @override
+  Future<List<String>> deleteCollection({
+    required String libraryDir,
+    required String key,
+    required bool withChildren,
+  }) => const ZoteroWriter().deleteCollection(
+    libraryDir: libraryDir,
+    key: key,
+    withChildren: withChildren,
+  );
+
+  @override
+  Future<({int children, int items})> collectionReach(String libraryDir, String key) =>
+      const ZoteroWriter().collectionReach(libraryDir, key);
+
+  @override
   Future<List<String>> setItemCollections({
     required String libraryDir,
     required String itemFilePath,

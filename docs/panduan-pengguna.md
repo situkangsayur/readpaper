@@ -300,6 +300,23 @@ koleksi. Akar paper hanya menerima PDF.
 Ikon **Koleksi paper baru** di samping nama library membuat koleksi di akar;
 ikon **Sub-koleksi baru di sini** pada sebuah baris membuat sub-koleksi.
 
+### Ganti nama, pindahkan, dan hapus
+
+Tombol **⋮** di setiap koleksi, paper maupun catatan, membuka **Ubah nama**,
+**Pindahkan ke…**, dan **Hapus koleksi**. Menu yang sama juga terbuka dengan
+tekan lama.
+
+- **Ubah nama** dan **Pindahkan** menjaga kunci koleksinya, jadi paper di
+  dalamnya tetap anggota dan Zotero tetap mengenalinya. Koleksi tidak bisa
+  dipindah ke dalam sub-koleksinya sendiri.
+- **Hapus koleksi** tidak menghapus paper. Paper hanya dilepas dari koleksi
+  itu, sama seperti di Zotero. Kalau koleksinya punya sub-koleksi, pilih
+  **Hapus semuanya** atau **Sub-koleksi naik** satu tingkat.
+
+Di **panel berkas**, tombol ⋮ di baris folder membuka **Ganti nama** dan
+**Hapus folder**. Hapus menyebut berapa berkas yang ikut terhapus. Folder kerja
+itu sendiri tidak bisa dihapus dari sana.
+
 ### Penting untuk Android
 
 Di Android, item Zotero dan koleksinya terkirim ke GitHub, tetapi **PDF-nya

@@ -31,6 +31,9 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   `collections.json` dengan bentuk yang sama persis seperti tulisan plugin,
   jadi Zotero tetap membacanya. Nama kembar di tempat yang sama dan nama
   bergaris miring ditolak.
+- **Ganti nama, pindahkan, dan hapus koleksi paper** lewat tombol ⋮. Kuncinya
+  tetap, jadi keanggotaan paper tidak hilang. Menghapus koleksi melepas paper
+  dari koleksi itu, tanpa menghapusnya, sama seperti di Zotero.
 - **Memindahkan paper antar koleksi** dengan menyeretnya di pohon. Keanggotaan
   koleksi Zotero tersimpan di berkas itemnya, dan itu yang diperbarui.
 - **Koleksi catatan** bisa dibuat, diganti nama, dan dihapus. Menghapus

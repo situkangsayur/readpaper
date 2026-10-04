@@ -92,6 +92,7 @@ class CollectionTreePane extends ConsumerWidget {
             onToggle: () => expandedController.toggle(node.key),
             onTap: () => selectionController.select(LibrarySelection.collection(node.key)),
             onAddChild: () => _newPaperCollection(context, ref, parentKey: node.key),
+            onMenu: () => _paperCollectionMenu(context, ref, node.key),
             onDrop: (drag) => _dropIntoPapers(context, ref, drag, node.key, node.name),
           ),
         );
@@ -166,7 +167,7 @@ class CollectionTreePane extends ConsumerWidget {
             onToggle: () => expandedController.toggle(nodeKey),
             onTap: () =>
                 selectionController.select(LibrarySelection.noteCollection(collection.key)),
-            onLongPress: () => _noteCollectionMenu(context, ref, collection),
+            onMenu: () => _noteCollectionMenu(context, ref, collection),
             onAddChild: () => _newNoteCollection(context, ref, parentKey: collection.key),
             onDrop: (drag) => _dropIntoNotes(context, ref, drag, collection.key, collection.name),
           ),
@@ -285,10 +286,10 @@ class _TreeRow extends StatelessWidget {
     this.isExpanded = false,
     this.isRoot = false,
     this.onToggle,
-    this.onLongPress,
     this.onDrop,
     this.trailing,
     this.onAddChild,
+    this.onMenu,
   });
 
   final String label;
@@ -304,7 +305,6 @@ class _TreeRow extends StatelessWidget {
   final bool isRoot;
   final VoidCallback onTap;
   final VoidCallback? onToggle;
-  final VoidCallback? onLongPress;
 
   /// Dipanggil saat sesuatu dilepas di atas baris ini.
   final void Function(TreeDrag drag)? onDrop;
@@ -316,6 +316,11 @@ class _TreeRow extends StatelessWidget {
   /// pernah menemukannya, dan itu memang yang terjadi.
   final VoidCallback? onAddChild;
 
+  /// Menu ubah nama, pindah, dan hapus. Tombol ⋮ yang terlihat, bukan hanya
+  /// tekan lama: di desktop tekan lama nyaris tidak pernah dicoba, dan menu
+  /// yang tidak ditemukan sama saja dengan menu yang tidak ada.
+  final VoidCallback? onMenu;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -325,7 +330,7 @@ class _TreeRow extends StatelessWidget {
       onAcceptWithDetails: (details) => onDrop?.call(details.data),
       builder: (context, candidate, rejected) => InkWell(
         onTap: onTap,
-        onLongPress: onLongPress,
+        onLongPress: onMenu,
         child: Container(
           height: treeRowHeight,
           padding: EdgeInsets.only(left: 4 + depth * 14.0, right: 8),
@@ -384,6 +389,16 @@ class _TreeRow extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   icon: const Icon(Icons.add),
                   onPressed: onAddChild,
+                ),
+              if (onMenu != null)
+                IconButton(
+                  tooltip: 'Ubah nama, pindahkan, atau hapus',
+                  iconSize: 15,
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.more_vert),
+                  onPressed: onMenu,
                 ),
               ?trailing,
             ],
@@ -585,6 +600,191 @@ Future<void> _newNoteCollection(
     if (parentKey != null) noteNodeKey(parentKey),
   ]);
   ref.read(selectionProvider.notifier).select(LibrarySelection.noteCollection(key));
+}
+
+/// Menu satu koleksi paper: sub-koleksi, ubah nama, pindahkan, hapus.
+///
+/// Semuanya menulis struktur Zotero, jadi semuanya lewat penulis yang sama
+/// dengan "Koleksi baru" dan berakhir dengan commit yang menyebut namanya.
+Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String key) async {
+  final index = ref.read(workspaceControllerProvider).index;
+  final collection = index?.collections[key];
+  if (index == null || collection == null) return;
+
+  final action = await showModalBottomSheet<String>(
+    context: context,
+    builder: (sheet) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          ListTile(
+            dense: true,
+            title: Text(collection.name, style: Theme.of(sheet).textTheme.titleSmall),
+            subtitle: collection.path == collection.name ? null : Text(collection.path),
+          ),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.create_new_folder_outlined),
+            title: const Text('Sub-koleksi baru'),
+            onTap: () => Navigator.of(sheet).pop('baru'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.drive_file_rename_outline),
+            title: const Text('Ubah nama'),
+            onTap: () => Navigator.of(sheet).pop('nama'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.drive_file_move_outline),
+            title: const Text('Pindahkan ke…'),
+            onTap: () => Navigator.of(sheet).pop('pindah'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.folder_delete_outlined),
+            title: const Text('Hapus koleksi'),
+            subtitle: const Text('Paper di dalamnya tidak ikut terhapus'),
+            onTap: () => Navigator.of(sheet).pop('hapus'),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (action == null || !context.mounted) return;
+
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  void report(bool ok, String done) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            ok ? done : (ref.read(workspaceControllerProvider).error ?? 'Gagal mengubah koleksi'),
+          ),
+          duration: Duration(seconds: ok ? 3 : 6),
+        ),
+      );
+  }
+
+  switch (action) {
+    case 'baru':
+      await _newPaperCollection(context, ref, parentKey: key);
+    case 'nama':
+      final name = await _askName(
+        context,
+        title: 'Ubah nama koleksi',
+        initial: collection.name,
+        hint: 'Paper di dalamnya tetap; jalur sub-koleksinya ikut berubah',
+      );
+      if (name == null || name.trim().isEmpty || name.trim() == collection.name) return;
+      final ok = await controller.changePaperCollection(
+        message: 'Ubah nama koleksi: ${collection.path} → ${name.trim()}',
+        change: (repo, dir) => repo.renameCollection(libraryDir: dir, key: key, name: name),
+      );
+      report(ok, 'Koleksi diubah namanya jadi "${name.trim()}"');
+    case 'pindah':
+      if (!context.mounted) return;
+      final target = await _pickPaperParent(context, index, collection);
+      if (target == null) return;
+      final parentKey = target.isEmpty ? null : target;
+      if (parentKey == collection.parentKey) return;
+      final parentName = parentKey == null ? 'akar' : index.collections[parentKey]!.path;
+      final ok = await controller.changePaperCollection(
+        message: 'Pindahkan koleksi ${collection.path} ke $parentName',
+        change: (repo, dir) =>
+            repo.moveCollection(libraryDir: dir, key: key, newParentKey: parentKey),
+      );
+      report(ok, 'Koleksi dipindah ke $parentName');
+    case 'hapus':
+      final reach = await controller.paperCollectionReach(key);
+      if (reach == null || !context.mounted) return;
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+          title: Text('Hapus koleksi "${collection.name}"?'),
+          content: Text(
+            <String>[
+              if (reach.items > 0)
+                '${reach.items} paper di dalamnya tidak ikut terhapus — hanya dilepas dari '
+                    'koleksi ini, sama seperti di Zotero.',
+              if (reach.children > 0)
+                'Koleksi ini punya ${reach.children} sub-koleksi. Ikut dihapus, atau naik '
+                    'satu tingkat?',
+              if (reach.items == 0 && reach.children == 0) 'Koleksinya kosong.',
+            ].join('\n\n'),
+          ),
+          actions: <Widget>[
+            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Batal')),
+            if (reach.children > 0)
+              TextButton(
+                onPressed: () => Navigator.of(dialog).pop('naik'),
+                child: const Text('Sub-koleksi naik'),
+              ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialog).pop('semua'),
+              child: Text(reach.children > 0 ? 'Hapus semuanya' : 'Hapus'),
+            ),
+          ],
+        ),
+      );
+      if (choice == null) return;
+      final selected = ref.read(selectionProvider).collectionKey;
+      final ok = await controller.changePaperCollection(
+        message: 'Hapus koleksi: ${collection.path}',
+        change: (repo, dir) =>
+            repo.deleteCollection(libraryDir: dir, key: key, withChildren: choice == 'semua'),
+      );
+      if (ok && ref.read(workspaceControllerProvider).index?.collections[selected] == null) {
+        ref.read(selectionProvider.notifier).select(const LibrarySelection.all());
+      }
+      report(ok, 'Koleksi "${collection.name}" dihapus; paper-nya tetap ada');
+  }
+}
+
+/// Memilih induk baru; string kosong berarti akar. Koleksi itu sendiri dan
+/// keturunannya tidak ditawarkan — memindah ke dalam diri sendiri membuat
+/// pohonnya jadi lingkaran.
+Future<String?> _pickPaperParent(
+  BuildContext context,
+  LibraryIndex index,
+  ZoteroCollection moving,
+) {
+  final candidates =
+      index.collections.values
+          .where((c) => c.key != moving.key && !c.path.startsWith('${moving.path}/'))
+          .toList()
+        ..sort((a, b) => a.path.toLowerCase().compareTo(b.path.toLowerCase()));
+  return showModalBottomSheet<String>(
+    context: context,
+    isScrollControlled: true,
+    builder: (sheet) => SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(sheet).height * 0.7),
+        child: ListView(
+          shrinkWrap: true,
+          children: <Widget>[
+            ListTile(dense: true, title: Text('Pindahkan "${moving.name}" ke…')),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.local_library_outlined),
+              title: const Text('Akar library'),
+              subtitle: const Text('tanpa induk'),
+              enabled: moving.parentKey != null,
+              onTap: () => Navigator.of(sheet).pop(''),
+            ),
+            for (final c in candidates)
+              ListTile(
+                dense: true,
+                leading: const Icon(Icons.folder_outlined),
+                title: Text(c.name),
+                subtitle: c.path == c.name ? null : Text(c.path),
+                enabled: c.key != moving.parentKey,
+                onTap: () => Navigator.of(sheet).pop(c.key),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 Future<void> _noteCollectionMenu(

@@ -1414,30 +1414,30 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       dibuktikan dengan git sungguhan, dan kini `git add --sparse` di clone
       ramping
 
-### Ganti nama dan hapus — diminta 2026-10-04, belum dikerjakan
+### Ganti nama dan hapus — diminta 2026-10-04, dikerjakan 2026-10-05
 
-Yang sudah ada saat ini: berkas di panel berkas bisa diganti nama dan dihapus
-(menu ⋮ per baris); koleksi catatan bisa diubah nama dan dihapus, tetapi hanya
-lewat **tekan lama** — tidak ada tanda yang memberitahu itu; catatan di daftar
-catatan bisa diubah judul dan dihapus; item paper bisa dihapus dari panel
-detail.
-
-- [ ] **Folder di panel berkas**: ganti nama dan hapus. Sekarang baris folder
-      hanya bisa dibuka; menu ⋮ hanya ada untuk berkas. Hapus folder harus
-      menyebut berapa berkas di dalamnya dan meminta konfirmasi
-- [ ] **Koleksi paper (Zotero)**: ganti nama, hapus, dan pindah induk. Sekarang
-      hanya bisa dibuat. Menulis `collections.json` lewat penulis yang sama
-      dengan "Koleksi baru" supaya tetap terbaca plugin dan aplikasi Zotero;
-      menghapus koleksi **tidak** menghapus itemnya — item hanya dilepas dari
-      koleksi itu, sama seperti di Zotero. Sub-koleksinya ikut terhapus atau
-      naik satu tingkat: harus ditanyakan
-- [ ] **Koleksi catatan**: ubah nama dan hapus juga dari tombol ⋮ yang terlihat,
-      bukan hanya tekan lama — di desktop tekan lama nyaris tidak pernah dicoba
-- [ ] Hapus dan ganti nama ikut di-commit dengan pesan yang menyebut namanya,
-      dan bentroknya ditangani penggabung JSON yang sama dengan pull (koleksi
-      yang diubah nama di satu perangkat dan dihapus di perangkat lain)
-- [ ] Uji: nama ganda, nama kosong, nama dengan `/`, hapus koleksi yang sedang
-      dipilih, dan hapus folder kerja itu sendiri (harus ditolak)
+- [x] **Folder di panel berkas**: menu ⋮ dengan Buka, Ganti nama, dan Hapus
+      folder. Hapus menyebut jumlah berkas di dalamnya ("Hapus 12 berkas") dan
+      menolak menghapus folder kerja itu sendiri
+- [x] **Koleksi paper (Zotero)**: Ubah nama, Pindahkan ke…, dan Hapus koleksi
+      lewat ⋮. Kuncinya tetap; `path` koleksi dan keturunannya dihitung ulang,
+      jalur di `meta.collections` item anggotanya ikut, dan `dateModified` item
+      hanya berubah bila keanggotaannya di Zotero memang berubah. Hapus tidak
+      menghapus paper — hanya melepasnya, seperti di Zotero — dan menanyakan
+      nasib sub-koleksinya: ikut terhapus, atau naik satu tingkat. Pindah
+      menolak masuk ke keturunan sendiri. Diuji pada salinan library asli
+      (61 koleksi, 1.741 item): ganti nama koleksi bersarang mengubah tiga baris
+      `collections.json` dan satu jalur di satu item, tidak lebih
+- [x] **Koleksi catatan**: menu yang sama sekarang lewat ⋮ yang terlihat, bukan
+      hanya tekan lama
+- [x] Setiap perubahan di-commit dengan pesan yang menyebut namanya
+      ("Ubah nama koleksi: jejakin/projects → proyek"), dan bentrok antar
+      perangkat ditangani penggabung JSON yang sama dengan pull
+- [x] Uji: nama kembar, kosong, dan bergaris miring; pindah ke keturunan
+      sendiri; hapus dengan dan tanpa sub-koleksi; item yang tidak tersentuh
+      tidak ditulis ulang
+- [ ] Ganti nama koleksi memindai semua item (±2 detik pada 1.741 item di
+      desktop). Indeks keanggotaan di memori akan membuatnya seketika
 
 ### Sinkronisasi
 

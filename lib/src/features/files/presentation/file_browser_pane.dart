@@ -135,8 +135,8 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   /// Papan tulis baru: pilih warna latarnya, gambar, lalu hasilnya tersimpan
   /// sebagai PDF di folder ini — langsung terlihat, dan bisa diseret ke
   /// koleksi seperti berkas lain.
-  /// Mengganti nama berkas di folder kerja.
-  Future<void> _rename(File file) async {
+  /// Mengganti nama berkas atau folder di folder kerja.
+  Future<void> _rename(FileSystemEntity file) async {
     final name = await showDialog<String>(
       context: context,
       builder: (context) {
@@ -164,17 +164,68 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     // Nama yang mengandung pemisah folder akan memindahkan berkasnya ke
     // tempat lain, bukan mengganti namanya.
     final safe = trimmed.replaceAll(RegExp(r'[\\/]'), '-');
-    final target = File(p.join(file.parent.path, safe));
-    if (target.existsSync()) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Sudah ada berkas bernama itu')));
-      }
+    final target = p.join(file.parent.path, safe);
+    if (FileSystemEntity.typeSync(target) != FileSystemEntityType.notFound) {
+      _say('Sudah ada berkas atau folder bernama itu');
       return;
     }
-    await file.rename(target.path);
+    try {
+      await file.rename(target);
+    } on FileSystemException catch (e) {
+      _say('Gagal mengganti nama: ${e.osError?.message ?? e.message}');
+    }
     await _open(file.parent);
+  }
+
+  /// Menghapus folder beserta isinya.
+  ///
+  /// Jumlah berkasnya disebut lebih dulu: "hapus folder" yang ternyata
+  /// membawa tiga puluh papan tulis adalah kejutan yang tidak bisa diurungkan.
+  /// Folder kerja itu sendiri ditolak — tanpanya panel ini tidak punya
+  /// tempat lagi.
+  Future<void> _deleteFolder(Directory folder) async {
+    final root = await WorkFolder.dir();
+    if (p.equals(p.normalize(folder.path), p.normalize(root.path))) {
+      _say('Folder kerja itu sendiri tidak bisa dihapus dari sini.');
+      return;
+    }
+    var files = 0;
+    try {
+      files = folder.listSync(recursive: true).whereType<File>().length;
+    } on FileSystemException {
+      files = -1;
+    }
+    if (!mounted) return;
+    final yakin = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Hapus folder ini?'),
+        content: Text(
+          '${p.basename(folder.path)}\n\n'
+          '${files == 0
+              ? 'Foldernya kosong.'
+              : files < 0
+              ? 'Isinya tidak bisa dihitung.'
+              : '$files berkas di dalamnya ikut terhapus.'} '
+          'Salinan yang sudah masuk library tidak tersentuh.',
+        ),
+        actions: <Widget>[
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(files > 0 ? 'Hapus $files berkas' : 'Hapus'),
+          ),
+        ],
+      ),
+    );
+    if (yakin != true) return;
+    try {
+      await folder.delete(recursive: true);
+    } on FileSystemException catch (e) {
+      _say('Gagal menghapus: ${e.osError?.message ?? e.message}');
+    }
+    await _open(folder.parent);
   }
 
   /// Menghapus berkas dari folder kerja.
@@ -596,6 +647,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                       onOpenFile: _openFile,
                       onRename: _rename,
                       onDelete: _deleteFile,
+                      onDeleteFolder: _deleteFolder,
                     ),
                   ),
           ),
@@ -611,13 +663,15 @@ class _EntryRow extends StatelessWidget {
     required this.onOpenFile,
     required this.onRename,
     required this.onDelete,
+    required this.onDeleteFolder,
   });
 
   final FileSystemEntity entry;
   final void Function(Directory dir) onOpenDir;
   final void Function(File file) onOpenFile;
-  final void Function(File file) onRename;
+  final void Function(FileSystemEntity entry) onRename;
   final void Function(File file) onDelete;
+  final void Function(Directory dir) onDeleteFolder;
 
   @override
   Widget build(BuildContext context) {
@@ -641,6 +695,21 @@ class _EntryRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                ),
+                PopupMenuButton<String>(
+                  tooltip: 'Tindakan folder',
+                  icon: Icon(Icons.more_vert, size: 16, color: scheme.outline),
+                  padding: EdgeInsets.zero,
+                  onSelected: (choice) => switch (choice) {
+                    'buka' => onOpenDir(entry as Directory),
+                    'ganti-nama' => onRename(entry),
+                    _ => onDeleteFolder(entry as Directory),
+                  },
+                  itemBuilder: (_) => const <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(value: 'buka', child: Text('Buka')),
+                    PopupMenuItem<String>(value: 'ganti-nama', child: Text('Ganti nama')),
+                    PopupMenuItem<String>(value: 'hapus', child: Text('Hapus folder')),
+                  ],
                 ),
                 Icon(Icons.chevron_right, size: 16, color: scheme.outline),
               ],

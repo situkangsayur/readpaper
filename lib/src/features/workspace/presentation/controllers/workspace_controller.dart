@@ -4,6 +4,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/failure.dart';
+import '../../../library/domain/repositories/library_repository.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../library/data/datasources/zotero_writer.dart';
 import '../../../library/domain/entities/library_index.dart';
@@ -459,6 +460,41 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       state = state.copyWith(error: 'Gagal membuat koleksi: $e');
       return null;
     }
+  }
+
+  /// Mengganti nama, memindah, atau menghapus koleksi paper, lalu meng-commit.
+  ///
+  /// Satu pintu untuk ketiganya: semua menulis `collections.json` dan item
+  /// anggotanya, dan semua harus berakhir dengan commit yang menyebut apa yang
+  /// terjadi — kalau nanti ada yang perlu ditelusuri, riwayatnya ada.
+  Future<bool> changePaperCollection({
+    required String message,
+    required Future<List<String>> Function(LibraryRepository repo, String libraryDir) change,
+  }) async {
+    final library = state.library;
+    final profile = state.profile;
+    if (library == null || profile == null) {
+      state = state.copyWith(error: 'Tidak ada library aktif.');
+      return false;
+    }
+    try {
+      await change(ref.read(libraryRepositoryProvider), library.directoryPath);
+      await _commitAnnotation(profile: profile, message: message);
+      await reloadLibrary();
+      return true;
+    } on Failure catch (e) {
+      state = state.copyWith(error: e.message);
+      return false;
+    } on Object catch (e) {
+      state = state.copyWith(error: 'Gagal mengubah koleksi: $e');
+      return false;
+    }
+  }
+
+  Future<({int children, int items})?> paperCollectionReach(String key) async {
+    final library = state.library;
+    if (library == null) return null;
+    return ref.read(libraryRepositoryProvider).collectionReach(library.directoryPath, key);
   }
 
   /// Memindahkan sebuah item ke koleksi lain — jalur seret-dan-lepas di pohon.

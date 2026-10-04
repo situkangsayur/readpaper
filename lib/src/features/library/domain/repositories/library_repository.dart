@@ -50,6 +50,30 @@ abstract class LibraryRepository {
     String? parentKey,
   });
 
+  /// Mengganti nama koleksi; jalur koleksi dan item anggotanya ikut.
+  Future<List<String>> renameCollection({
+    required String libraryDir,
+    required String key,
+    required String name,
+  });
+
+  /// Memindahkan koleksi ke induk lain; null berarti ke akar.
+  Future<List<String>> moveCollection({
+    required String libraryDir,
+    required String key,
+    required String? newParentKey,
+  });
+
+  /// Menghapus koleksi tanpa menghapus itemnya.
+  Future<List<String>> deleteCollection({
+    required String libraryDir,
+    required String key,
+    required bool withChildren,
+  });
+
+  /// Jumlah sub-koleksi dan item yang tersentuh bila [key] dihapus.
+  Future<({int children, int items})> collectionReach(String libraryDir, String key);
+
   /// Memindahkan item ke koleksi lain; daftar kosong berarti tanpa koleksi.
   Future<List<String>> setItemCollections({
     required String libraryDir,
