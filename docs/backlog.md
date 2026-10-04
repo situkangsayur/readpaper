@@ -1439,6 +1439,39 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
 - [ ] Ganti nama koleksi memindai semua item (±2 detik pada 1.741 item di
       desktop). Indeks keanggotaan di memori akan membuatnya seketika
 
+- [x] **Layar Repositori kosong di semua platform** (2026-10-05). Footer versi
+      di bawahnya memakai Column dengan tinggi maksimum, dan sebagai
+      bottomNavigationBar ia mengambil seluruh layar: daftar profil setinggi
+      nol, tombol "Tambah repositori" tertutup. Akibatnya repo dan token tidak
+      bisa disunting, dan repo kedua tidak pernah bisa ditambahkan — sehingga
+      pengalih repositori di bilah atas, yang hanya aktif bila ada lebih dari
+      satu, tidak pernah muncul. Dilaporkan dari CachyOS, direproduksi dengan
+      rilis Linux di Xvfb, dan dijaga uji widget
+
+### Banyak repositori — diminta 2026-10-05 untuk versi berikutnya
+
+Yang sudah ada: beberapa profil repositori, satu yang aktif, dan pengalih di
+bilah atas (aktif bila ada lebih dari satu).
+
+- [ ] **Ukuran tiap repositori** di layar Repositori dan di pengalihnya:
+      ukuran clone di disk, jumlah item dan koleksi, dan berapa yang belum
+      terkirim. Di Android ukuran lampiran yang sudah diunduh disebut terpisah,
+      karena itu yang bisa dibuang untuk menghemat ruang
+- [ ] **Pindah repositori lebih cepat**: indeks library tiap repo disimpan
+      supaya berpindah tidak memuat ulang dari nol
+- [ ] **Memindahkan dokumen (item) ke koleksi di repositori lain**: item
+      Zotero beserta anotasi, catatan, dan lampirannya disalin ke repo tujuan
+      dengan kunci baru bila bentrok, lalu dihapus dari repo asal — dua
+      commit, satu per repo. Untuk catatan lepas sama, di akar Catatan
+- [ ] **Memindahkan koleksi beserta isinya ke repositori lain**: sub-koleksi
+      ikut, struktur `collections.json` di repo tujuan ditulis dengan penulis
+      yang sama
+- [ ] Pilihan **salin** di samping **pindah** — yang kedua menghapus dari asal
+- [ ] Lampiran LFS dan lampiran yang belum diunduh: harus diunduh dulu sebelum
+      bisa dipindah; dikatakan, bukan diam-diam dipindah tanpa PDF-nya
+- [ ] Seret dan lepas antar repositori bila keduanya terbuka berdampingan
+      (desktop), selain lewat menu "Pindahkan ke repositori…"
+
 ### Sinkronisasi
 
 - [x] **Pull yang bentrok tidak lagi menggantung, dan tidak lagi menimpa**

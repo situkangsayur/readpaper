@@ -214,7 +214,13 @@ class _VersionFooter extends StatelessWidget {
       final small = Theme.of(context).textTheme.labelSmall?.copyWith(color: outline);
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        // `min`, dan itu bukan kerapian. Sebagai bottomNavigationBar, Column
+        // yang memakai tinggi maksimum mengambil seluruh layar: daftar
+        // repositori jadi setinggi nol dan tombol "Tambah repositori"
+        // tertutup. Layar ini tampak kosong di semua platform, dan profil
+        // tidak bisa disunting maupun ditambah.
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
