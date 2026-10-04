@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:async';
 import 'dart:io';
 
@@ -10,6 +11,7 @@ import '../../domain/entities/sync_progress.dart';
 import '../../domain/repositories/git_backend.dart';
 import 'github_api_client.dart';
 import 'github_sync_state.dart';
+import '../../domain/json_merge.dart';
 
 /// Sync backend for platforms without a `git` binary — notably Android.
 ///
@@ -318,12 +320,14 @@ class GitHubApiBackend implements GitBackend {
 
       onProgress?.call(SyncProgress.message('Membandingkan dengan commit $head…'));
       final entries = await client.tree(head);
+      final merges = <String>[];
       final downloaded = await _mirror(
         client: client,
         entries: entries,
         repoPath: repoPath,
         state: state,
         onProgress: onProgress,
+        merges: merges,
       );
 
       state.commitSha = head;
@@ -332,9 +336,12 @@ class GitHubApiBackend implements GitBackend {
       return GitResult(
         ok: true,
         exitCode: 0,
-        message: downloaded == 0
-            ? 'Tidak ada perubahan metadata'
-            : 'Pull selesai: $downloaded berkas diperbarui',
+        message: <String>[
+          downloaded == 0
+              ? 'Tidak ada perubahan metadata'
+              : 'Pull selesai: $downloaded berkas diperbarui',
+          ...merges,
+        ].join('. '),
       );
     });
   }
@@ -706,6 +713,7 @@ class GitHubApiBackend implements GitBackend {
     required String repoPath,
     required GitHubSyncState state,
     void Function(SyncProgress progress)? onProgress,
+    List<String>? merges,
   }) async {
     final wanted = <GitTreeEntry>[];
     final remotePaths = <String>{};
@@ -727,7 +735,11 @@ class GitHubApiBackend implements GitBackend {
     for (final path in state.files.keys.toList()) {
       if (remotePaths.contains(path)) continue;
       final file = File(p.join(repoPath, path));
-      if (file.existsSync()) await file.delete();
+      // Dihapus di GitHub tetapi diubah di sini: perubahannya dipertahankan.
+      // Berkasnya jadi berkas baru di mata sinkronisasi dan ikut terkirim
+      // lagi, daripada pekerjaan di perangkat ini lenyap tanpa jejak.
+      final editedHere = file.existsSync() && gitBlobShaOfFile(file) != state.files[path]!.sha;
+      if (file.existsSync() && !editedHere) await file.delete();
       state.files.remove(path);
     }
 
@@ -766,14 +778,37 @@ class GitHubApiBackend implements GitBackend {
         }
 
         final file = File(p.join(repoPath, entry.path));
-        await file.parent.create(recursive: true);
-        await file.writeAsBytes(bytes, flush: true);
-        final stat = file.statSync();
-        state.files[entry.path] = MirroredFile(
-          sha: entry.sha,
-          size: stat.size,
-          mtimeMs: stat.modified.millisecondsSinceEpoch,
-        );
+        final known = state.files[entry.path];
+        final localSha = file.existsSync() ? gitBlobShaOfFile(file) : null;
+        // Berkas ini diubah di perangkat ini **dan** di GitHub. Dulu versi
+        // GitHub langsung menimpanya: anotasi atau catatan yang belum terkirim
+        // hilang begitu saja saat menarik perubahan.
+        final editedHere =
+            localSha != null && localSha != entry.sha && (known == null || localSha != known.sha);
+        if (editedHere) {
+          final note = await _mergeIntoLocal(
+            client: client,
+            repoPath: repoPath,
+            path: entry.path,
+            baseSha: known?.sha,
+            remote: bytes,
+            local: await file.readAsBytes(),
+          );
+          if (note != null) merges?.add(note);
+          // Basisnya kini versi GitHub; berkas lokal yang berbeda darinya
+          // terbaca sebagai perubahan dan ikut terkirim berikutnya. Waktu ubah
+          // nol memaksa isinya dibaca ulang, bukan dipercaya dari ukurannya.
+          state.files[entry.path] = MirroredFile(sha: entry.sha, size: bytes.length, mtimeMs: 0);
+        } else {
+          await file.parent.create(recursive: true);
+          await file.writeAsBytes(bytes, flush: true);
+          final stat = file.statSync();
+          state.files[entry.path] = MirroredFile(
+            sha: entry.sha,
+            size: stat.size,
+            mtimeMs: stat.modified.millisecondsSinceEpoch,
+          );
+        }
         done++;
         sinceCheckpoint++;
 
@@ -806,6 +841,51 @@ class GitHubApiBackend implements GitBackend {
       await state.save(repoPath);
     }
     return total;
+  }
+
+  /// Menyatukan versi GitHub [remote] ke berkas yang juga diubah di sini.
+  ///
+  /// Aturannya sama dengan sinkronisasi desktop: JSON digabung per kunci
+  /// ([JsonMerge]); berkas lain di bawah `zotero/` mengikuti GitHub karena
+  /// plugin menulisnya ulang dari datanya; selebihnya versi lokal
+  /// dipertahankan dan versi GitHub disimpan di sebelahnya.
+  Future<String?> _mergeIntoLocal({
+    required GitHubApiClient client,
+    required String repoPath,
+    required String path,
+    required String? baseSha,
+    required List<int> remote,
+    required List<int> local,
+  }) async {
+    final file = File(p.join(repoPath, path));
+    String? base;
+    if (baseSha != null) {
+      try {
+        base = utf8.decode(await client.blob(baseSha), allowMalformed: true);
+      } on Object {
+        base = null;
+      }
+    }
+    final merged = JsonMerge.mergeText(
+      base: base,
+      remote: utf8.decode(remote, allowMalformed: true),
+      local: utf8.decode(local, allowMalformed: true),
+    );
+    if (merged != null) {
+      await file.writeAsString(merged, flush: true);
+      return 'Digabung otomatis: ${p.basename(path)}';
+    }
+    if (p.split(path).first == 'zotero') {
+      await file.writeAsBytes(remote, flush: true);
+      return null;
+    }
+    final day = DateTime.now().toIso8601String().substring(0, 10);
+    final copy = p.join(
+      p.dirname(file.path),
+      '${p.basenameWithoutExtension(path)} (versi GitHub $day)${p.extension(path)}',
+    );
+    await File(copy).writeAsBytes(remote, flush: true);
+    return 'Versi GitHub disimpan sebagai ${p.basename(copy)}';
   }
 
   Future<GitResult> _withClient(

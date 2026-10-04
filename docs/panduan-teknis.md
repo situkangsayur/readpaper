@@ -334,6 +334,36 @@ yang dijanjikan GitHub (blob terpotong ditolak), dan menyimpan pembukuan setiap
 `truncated` ditolak dengan pesan; itu batas API untuk repositori yang sangat
 besar.
 
+### 5.2a Bentrok: tidak ada yang ditimpa, tidak ada yang menggantung
+
+Kedua backend memakai satu penggabung, `sync/domain/json_merge.dart`. Ia
+menggabungkan tiga arah (basis, GitHub, lokal): map per kolom, dan daftar
+benda yang punya `key` per kunci. Penghapusan di satu sisi dihormati. Kalau
+satu kolom diubah di dua sisi, lokal menang. Hasilnya ditulis dengan format
+plugin (tab, kunci terurut, baris baru di akhir).
+
+- **Git CLI.** `pull` lebih dulu memanggil `_recoverInterrupted`: rebase atau
+  merge yang tertinggal dicadangkan ke `refs/readpaper/cadangan/<waktu>`
+  (ditambah `-kerja` untuk berkas yang belum di-commit, lewat `stash create`),
+  lalu dibatalkan, lalu perubahan yang belum di-commit dipasang ulang. Bentrok
+  saat `pull --rebase` diselesaikan per berkas lewat tahap indeks
+  `:1:`/`:2:`/`:3:` (basis/GitHub/lokal), lalu `rebase --continue` sampai
+  selesai. `commitAll` memanggil pemulihan yang sama. Dulu commit di tengah
+  rebase yang berhenti memasukkan penanda `<<<<<<<` ke `catatan/koleksi.json`
+  sebuah laptop.
+- **GitHub API.** `_mirror` tidak lagi menimpa berkas yang berbeda dari
+  basisnya. Basisnya diambil lewat `blob(sha)`, digabung, dan dicatat dengan
+  sha GitHub plus waktu ubah nol, sehingga hasil gabungan terbaca sebagai
+  perubahan lokal dan ikut terkirim. Berkas yang dihapus di GitHub tetapi
+  diubah di sini dipertahankan.
+- **Non-JSON.** Di bawah `zotero/` mengikuti GitHub, karena itu berkas turunan
+  plugin. Di tempat lain lokal dipertahankan, dan versi GitHub disimpan sebagai
+  `<nama> (versi GitHub <tanggal>).<ext>`.
+
+Ujinya: `json_merge_test.dart`, `git_cli_conflict_test.dart` (git sungguhan,
+dua clone, termasuk rebase macet yang meniru kejadian di laptop), dan grup
+*pull tidak menimpa perubahan lokal* di `github_api_backend_test.dart`.
+
 ### 5.3 Push dan berkas yang ditolak
 
 `push` di Android:

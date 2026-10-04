@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../../domain/entities/git_entities.dart';
+import '../../domain/json_merge.dart';
 import '../../domain/entities/sync_progress.dart';
 import '../../domain/repositories/git_backend.dart';
 
@@ -276,14 +277,40 @@ class GitCliBackend implements GitBackend {
     required GitAuth auth,
     void Function(SyncProgress progress)? onProgress,
   }) async {
-    final result = await _run(
+    final notes = <String>[];
+    final recovered = await _recoverInterrupted(repoPath);
+    if (recovered != null && !recovered.ok) return recovered;
+    if (recovered != null) notes.add(recovered.message);
+
+    var result = await _run(
       args: <String>['pull', '--rebase', '--autostash', '--progress'],
       workingDirectory: repoPath,
       auth: auth,
       onProgress: onProgress,
       successMessage: 'Pull selesai',
     );
-    if (!result.ok) return result;
+    if (!result.ok) {
+      // Gagal karena jaringan atau token: tidak ada rebase yang tertinggal,
+      // dan pesannya dikembalikan apa adanya.
+      if (await _interruptedOperation(repoPath) == null) return result;
+      // Gagal karena bentrok: diselesaikan di sini, bukan ditinggal
+      // menggantung. Rebase yang ditinggal adalah yang membuat setiap pull
+      // berikutnya gagal dengan "there is already a rebase-merge directory".
+      final resolved = await _finishRebase(repoPath);
+      if (!resolved.ok) return resolved;
+      notes.add(resolved.message);
+    }
+    // --autostash memasang ulang perubahan yang belum di-commit; kalau itu
+    // yang bentrok, git meninggalkan penanda konflik di berkasnya.
+    final stash = await _resolveUnmerged(repoPath, keepUnstaged: true);
+    if (stash != null) notes.add(stash);
+    if (notes.isNotEmpty) {
+      result = GitResult(
+        ok: true,
+        exitCode: 0,
+        message: <String>['Pull selesai', ...notes].join('. '),
+      );
+    }
 
     // Never pull Git LFS objects automatically on a lazy working copy: they are
     // attachments too. One real library holds 136 MB of them in two books, so
@@ -292,6 +319,219 @@ class GitCliBackend implements GitBackend {
       await lfsPull(repoPath: repoPath, auth: auth, onProgress: onProgress);
     }
     return result;
+  }
+
+  // ------------------------------------------------------------ bentrok
+
+  /// Rebase atau merge yang berhenti di tengah: `rebase`, `merge`, atau null.
+  Future<String?> _interruptedOperation(String repoPath) async {
+    for (final (name, operation) in const <(String, String)>[
+      ('rebase-merge', 'rebase'),
+      ('rebase-apply', 'rebase'),
+      ('MERGE_HEAD', 'merge'),
+    ]) {
+      final relative = (await _capture(repoPath, <String>['rev-parse', '--git-path', name])).trim();
+      if (relative.isEmpty) continue;
+      final path = p.isAbsolute(relative) ? relative : p.join(repoPath, relative);
+      if (FileSystemEntity.typeSync(path) != FileSystemEntityType.notFound) return operation;
+    }
+    return null;
+  }
+
+  /// Membatalkan rebase atau merge yang ditinggal versi lama, tanpa membuang
+  /// apa pun.
+  ///
+  /// Sebelum dibatalkan, keadaannya dicadangkan sebagai ref
+  /// `refs/readpaper/cadangan/<waktu>` — termasuk commit yang sempat dibuat
+  /// di tengahnya — dan perubahan yang belum di-commit dipasang ulang setelah
+  /// pembatalan. Membatalkan saja akan mengembalikan berkas kerja ke keadaan
+  /// sebelum rebase, dan anotasi yang ditulis sesudahnya hilang.
+  Future<GitResult?> _recoverInterrupted(String repoPath) async {
+    final operation = await _interruptedOperation(repoPath);
+    if (operation == null) return null;
+
+    final stamp = DateTime.now().toUtc().toIso8601String().replaceAll(RegExp(r'[^0-9]'), '');
+    final backup = 'refs/readpaper/cadangan/${stamp.substring(0, 14)}';
+    await _git(repoPath, <String>['update-ref', backup, 'HEAD']);
+    // `stash create` menyimpan berkas kerja sebagai commit tanpa mengubah
+    // apa pun. Ia gagal kalau masih ada berkas bentrok di indeks — dan berkas
+    // seperti itu memang hanya berisi penanda konflik, bukan pekerjaan.
+    // Berkas yang masih bentrok dikembalikan dulu ke versi HEAD: isinya hanya
+    // penanda konflik, dan selama ia ada `stash create` menolak bekerja —
+    // perubahan lain yang ditulis selama macet ikut tidak tercadang.
+    final unmerged = await _unmergedPaths(repoPath);
+    if (unmerged.isNotEmpty) {
+      await _git(repoPath, <String>['checkout', 'HEAD', '--', ...unmerged]);
+    }
+    final work = (await _git(repoPath, <String>['stash', 'create'])).stdout.toString().trim();
+    if (work.isNotEmpty) await _git(repoPath, <String>['update-ref', '$backup-kerja', work]);
+
+    final abort = await _git(repoPath, <String>[operation, '--abort']);
+    if (abort.exitCode != 0) {
+      return GitResult(
+        ok: false,
+        exitCode: abort.exitCode,
+        message:
+            'Sinkronisasi sebelumnya berhenti di tengah $operation dan tidak bisa dibatalkan '
+            'otomatis. Keadaannya dicadangkan di $backup.',
+        stderr: abort.stderr.toString(),
+      );
+    }
+    if (work.isNotEmpty) {
+      final apply = await _git(repoPath, <String>['stash', 'apply', work]);
+      if (apply.exitCode != 0) await _resolveUnmerged(repoPath, keepUnstaged: true);
+    }
+    return GitResult(
+      ok: true,
+      exitCode: 0,
+      message: 'Sinkronisasi yang dulu berhenti di tengah sudah dipulihkan (cadangan: $backup)',
+    );
+  }
+
+  /// Menyelesaikan rebase yang berhenti karena bentrok, commit demi commit.
+  Future<GitResult> _finishRebase(String repoPath) async {
+    final merged = <String>{};
+    for (var step = 0; step < 200 && await _interruptedOperation(repoPath) == 'rebase'; step++) {
+      final note = await _resolveUnmerged(repoPath, keepUnstaged: false);
+      if (note != null) merged.add(note);
+      final next = await _git(repoPath, <String>['-c', 'core.editor=true', 'rebase', '--continue']);
+      if (next.exitCode == 0) continue;
+      if (await _interruptedOperation(repoPath) != 'rebase') break;
+      // Commit yang isinya sudah ada di GitHub menjadi kosong setelah
+      // digabung, dan rebase berhenti menanyakannya. Dilewati.
+      if (await _unmergedPaths(repoPath) case final left when left.isEmpty) {
+        final status = await _capture(repoPath, <String>['status', '--porcelain']);
+        if (status.trim().isEmpty) {
+          await _git(repoPath, <String>['rebase', '--skip']);
+          continue;
+        }
+      }
+    }
+    if (await _interruptedOperation(repoPath) != null) {
+      final failed = await _recoverInterrupted(repoPath);
+      return GitResult(
+        ok: false,
+        exitCode: 1,
+        message:
+            'Perubahan di sini dan di GitHub bentrok dan tidak bisa disatukan otomatis. '
+            'Tidak ada yang hilang: perubahan lokal tetap di commit-nya'
+            '${failed == null ? '' : ' (${failed.message})'}.',
+      );
+    }
+    return GitResult(
+      ok: true,
+      exitCode: 0,
+      message: merged.isEmpty ? 'Perubahan lokal dipasang di atas versi GitHub' : merged.join('. '),
+    );
+  }
+
+  Future<List<String>> _unmergedPaths(String repoPath) async => (await _capture(repoPath, <String>[
+    'diff',
+    '--name-only',
+    '--diff-filter=U',
+  ])).split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
+
+  /// Menyelesaikan setiap berkas yang bentrok di indeks.
+  ///
+  /// Tahap 2 adalah versi yang sudah ada di cabang tujuan (GitHub, saat
+  /// rebase), tahap 3 versi lokal yang sedang dipasang, tahap 1 versi bersama
+  /// terakhir. JSON digabung per kunci ([JsonMerge]). Yang lain:
+  /// - di bawah `zotero/` versi GitHub diambil — berkas non-JSON di sana
+  ///   (catatan Markdown) ditulis ulang plugin dari datanya;
+  /// - di tempat lain versi lokal dipertahankan, dan versi GitHub disimpan di
+  ///   sebelahnya sebagai salinan "(versi GitHub)" supaya tidak ada yang hilang.
+  ///
+  /// [keepUnstaged] untuk bentrok dari --autostash: hasilnya dibiarkan sebagai
+  /// perubahan yang belum di-commit, persis seperti sebelum pull.
+  Future<String?> _resolveUnmerged(String repoPath, {required bool keepUnstaged}) async {
+    final paths = await _unmergedPaths(repoPath);
+    if (paths.isEmpty) return null;
+    final joined = <String>[];
+    final copies = <String>[];
+    for (final path in paths) {
+      final base = await _stage(repoPath, 1, path);
+      final remote = await _stage(repoPath, 2, path);
+      final local = await _stage(repoPath, 3, path);
+      final file = File(p.join(repoPath, path));
+      if (remote == null || local == null) {
+        // Satu sisi menghapus, sisi lain mengubah: yang diubah dipertahankan.
+        final kept = local ?? remote;
+        if (kept == null) {
+          await _git(repoPath, <String>['rm', '-q', '--cached', '--', path]);
+          continue;
+        }
+        await file.parent.create(recursive: true);
+        await file.writeAsBytes(kept);
+      } else {
+        final merged = JsonMerge.mergeText(
+          base: base == null ? null : utf8.decode(base, allowMalformed: true),
+          remote: utf8.decode(remote, allowMalformed: true),
+          local: utf8.decode(local, allowMalformed: true),
+        );
+        if (merged != null) {
+          await file.writeAsString(merged);
+          joined.add(p.basename(path));
+        } else if (p.split(path).first == 'zotero') {
+          await file.writeAsBytes(remote);
+        } else {
+          await file.writeAsBytes(local);
+          final copy = _conflictCopyPath(path);
+          await File(p.join(repoPath, copy)).writeAsBytes(remote);
+          await _git(repoPath, <String>['add', '--sparse', '--', copy]);
+          copies.add(p.basename(copy));
+        }
+      }
+      await _git(repoPath, <String>['add', '--sparse', '--', path]);
+    }
+    if (keepUnstaged) {
+      await _git(repoPath, <String>['reset', '-q']);
+      // Stash otomatis yang bentrok tidak dibuang git sendiri; sekarang isinya
+      // sudah kembali ke berkas kerja.
+      final top = await _capture(repoPath, <String>['stash', 'list', '-1', '--format=%gs']);
+      if (top.contains('autostash')) await _git(repoPath, <String>['stash', 'drop', '-q']);
+    }
+    final summary = <String>[
+      if (joined.isNotEmpty) 'Digabung otomatis: ${joined.join(', ')}',
+      if (copies.isNotEmpty) 'Versi GitHub disimpan sebagai ${copies.join(', ')}',
+    ].join('. ');
+    return summary.isEmpty ? null : summary;
+  }
+
+  static String _conflictCopyPath(String path) {
+    final day = DateTime.now().toIso8601String().substring(0, 10);
+    final dir = p.posix.dirname(path);
+    final name = '${p.basenameWithoutExtension(path)} (versi GitHub $day)${p.extension(path)}';
+    return dir == '.' ? name : p.posix.join(dir, name);
+  }
+
+  Future<List<int>?> _stage(String repoPath, int stage, String path) async {
+    try {
+      final result = await Process.run(
+        gitExecutable,
+        <String>['show', ':$stage:$path'],
+        workingDirectory: repoPath,
+        environment: <String, String>{'GIT_TERMINAL_PROMPT': '0'},
+        stdoutEncoding: null,
+      );
+      return result.exitCode == 0 ? result.stdout as List<int> : null;
+    } on ProcessException {
+      return null;
+    }
+  }
+
+  Future<ProcessResult> _git(String repoPath, List<String> args) async {
+    try {
+      return await Process.run(
+        gitExecutable,
+        args,
+        workingDirectory: repoPath,
+        environment: <String, String>{'GIT_TERMINAL_PROMPT': '0', 'LC_ALL': 'C'},
+        stdoutEncoding: utf8,
+        stderrEncoding: utf8,
+      );
+    } on ProcessException catch (e) {
+      return ProcessResult(0, 127, '', e.message);
+    }
   }
 
   /// True when this working copy is a partial + sparse clone.
@@ -317,6 +557,12 @@ class GitCliBackend implements GitBackend {
     String? authorEmail,
     List<String> paths = const <String>[],
   }) async {
+    // Commit di tengah rebase yang berhenti adalah cara penanda konflik
+    // `<<<<<<<` masuk ke riwayat — terbukti di sebuah laptop: koleksi catatan
+    // jadi JSON yang rusak dan tidak terbaca lagi. Rebase-nya dipulihkan dulu.
+    final recovered = await _recoverInterrupted(repoPath);
+    if (recovered != null && !recovered.ok) return recovered;
+
     // Clone ramping mengecualikan folder lampiran dari sparse checkout, dan
     // git menolak menambahkan berkas baru di sana tanpa `--sparse` ("outside
     // of your sparse-checkout definition", keluar dengan 1). Itu persis yang

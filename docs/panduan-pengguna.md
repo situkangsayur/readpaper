@@ -421,7 +421,35 @@ dan **Log git**. Lihat di sana kalau sesuatu terasa macet.
 
 ---
 
+### Bila perangkat lain mengubah berkas yang sama
+
+Laptop dan tablet sering mengubah berkas yang sama di waktu yang berdekatan,
+misalnya keduanya membuat koleksi catatan. Saat menarik perubahan, ReadPaper
+menyatukannya sendiri:
+
+- **Koleksi, item catatan, dan item Zotero beserta anotasinya** digabung per
+  benda. Koleksi yang dibuat di dua perangkat sama-sama ada, dan anotasi dari
+  keduanya sama-sama tersimpan. Kalau satu kolom diubah di dua tempat sekaligus,
+  yang dari perangkat ini menang. Hasilnya dikirim pada pengiriman berikutnya.
+- **Catatan Markdown dan berkas lain milik Anda** tidak ditimpa. Versi di
+  perangkat ini tetap, dan versi dari GitHub disimpan di sebelahnya sebagai
+  *"(versi GitHub tanggal)"*.
+- **Berkas turunan di folder Zotero**, misalnya catatan yang ditulis plugin,
+  mengikuti versi GitHub, karena plugin menulisnya ulang dari datanya.
+
+Pesan pull menyebut apa yang digabung, misalnya *"Digabung otomatis:
+koleksi.json"*. Kalau dua koleksi bernama sama muncul setelahnya, itu karena
+keduanya memang dibuat terpisah di dua perangkat. Hapus salah satunya.
+
 ## 10. Masalah dan pertanyaan
+
+**Pull di desktop gagal dengan "It seems that there is already a rebase-merge
+directory".** Ini sisa versi 0.23.7 ke bawah: pull yang bentrok berhenti di
+tengah dan tidak pernah diselesaikan. Sejak 0.23.8, pull atau simpan anotasi
+berikutnya memulihkannya sendiri. Keadaan lamanya dicadangkan di
+`refs/readpaper/cadangan/…` di repositori itu, lalu perubahannya digabung.
+Cukup perbarui ReadPaper, lalu tekan **Tarik** sekali.
+
 
 **"Akses ditolak. Token perlu izin "Contents: read and write" untuk repositori
 ini."** Token hanya boleh membaca, atau tidak mencakup repositori ini. Buat

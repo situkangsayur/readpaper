@@ -1416,6 +1416,16 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
 
 ### Sinkronisasi
 
+- [x] **Pull yang bentrok tidak lagi menggantung, dan tidak lagi menimpa**
+      (2026-10-04). Di laptop CachyOS, pull berhenti karena `koleksi.json`
+      diubah di laptop dan tablet. Rebase-nya ditinggal menggantung, setiap
+      pull berikutnya gagal dengan "rebase-merge directory", dan simpan
+      anotasi berikutnya meng-commit penanda konflik sehingga JSON-nya rusak.
+      Sekarang rebase yang tertinggal dicadangkan lalu dipulihkan, bentrok JSON
+      digabung per kunci, dan commit tidak pernah terjadi di tengah rebase. Di
+      Android dan iOS, pull tidak lagi menimpa berkas yang diubah lokal.
+      Diuji pada salinan repo laptop itu: 8 koleksi tergabung, cabangnya lurus
+
 - [x] **Satu berkas yang ditolak GitHub tidak lagi menahan semua yang lain**
       (2026-10-03). Pengiriman berhenti di 20/32 pada sebuah buku PDF, dan
       karena antreannya terus bertambah, setiap percobaan gagal di tempat yang

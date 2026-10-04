@@ -10,6 +10,7 @@ import 'package:readpaper/src/features/sync/data/datasources/github_api_backend.
 import 'package:readpaper/src/features/sync/data/datasources/github_api_client.dart';
 import 'package:readpaper/src/features/sync/data/datasources/github_sync_state.dart';
 import 'package:readpaper/src/features/sync/domain/entities/git_entities.dart';
+import 'package:readpaper/src/features/sync/domain/json_merge.dart';
 
 /// An in-memory stand-in for the GitHub git data API.
 ///
@@ -485,6 +486,71 @@ void main() {
         <String>['zotero/my-library/items/IT/ITEMKEY1.json'],
         reason: 'berkas sementara tidak dihapus, berkas yang tidak berubah tidak diunggah',
       );
+    });
+  });
+
+  group('pull tidak menimpa perubahan lokal', () {
+    String koleksi(List<String> keys) => JsonMerge.encode(<Object?>[
+      for (final k in keys) <String, Object?>{'key': k, 'name': 'nama-$k', 'parentKey': null},
+    ]);
+
+    test('JSON yang diubah di dua sisi digabung, dan tetap terkirim', () async {
+      server.put('catatan/koleksi.json', koleksi(<String>[]));
+      await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
+
+      // Tablet membuat "proposal" di GitHub, laptop ini membuat "phd".
+      File(path('catatan/koleksi.json')).writeAsStringSync(koleksi(<String>['9B4SWSJG']));
+      server
+        ..put('catatan/koleksi.json', koleksi(<String>['CG89AXRD']))
+        ..commitSha = 'commit-dari-tablet';
+
+      final pulled = await backend.pull(repoPath: mirror.path, auth: auth);
+      expect(pulled.ok, isTrue, reason: pulled.message);
+      expect(pulled.message, contains('Digabung otomatis: koleksi.json'));
+      final keys = (jsonDecode(File(path('catatan/koleksi.json')).readAsStringSync()) as List).map(
+        (e) => (e as Map)['key'],
+      );
+      expect(keys, <String>['9B4SWSJG', 'CG89AXRD']);
+
+      final status = await backend.status(mirror.path);
+      expect(
+        status.changes.map((c) => c.path),
+        contains('catatan/koleksi.json'),
+        reason: 'hasil gabungan masih harus dikirim ke GitHub',
+      );
+    });
+
+    test('catatan Markdown yang bentrok: lokal tetap, versi GitHub disalin', () async {
+      server.put('catatan/berkas/AB/KEY1/catatan.md', '# a\n');
+      await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
+      File(path('catatan/berkas/AB/KEY1/catatan.md')).writeAsStringSync('# dari tablet ini\n');
+      server
+        ..put('catatan/berkas/AB/KEY1/catatan.md', '# dari perangkat lain\n')
+        ..commitSha = 'commit-lain';
+
+      final pulled = await backend.pull(repoPath: mirror.path, auth: auth);
+      expect(pulled.ok, isTrue, reason: pulled.message);
+      expect(
+        File(path('catatan/berkas/AB/KEY1/catatan.md')).readAsStringSync(),
+        '# dari tablet ini\n',
+      );
+      final copies = Directory(
+        path('catatan/berkas/AB/KEY1'),
+      ).listSync().where((e) => p.basename(e.path).contains('versi GitHub'));
+      expect(copies, hasLength(1));
+      expect(File(copies.single.path).readAsStringSync(), '# dari perangkat lain\n');
+    });
+
+    test('berkas yang diubah di sini tetapi dihapus di GitHub dipertahankan', () async {
+      await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
+      File(path('zotero/my-library/items/IT/ITEMKEY1.json')).writeAsStringSync('{"a":7}\n');
+      server
+        ..blobs.remove('zotero/my-library/items/IT/ITEMKEY1.json')
+        ..commitSha = 'commit-hapus';
+
+      final pulled = await backend.pull(repoPath: mirror.path, auth: auth);
+      expect(pulled.ok, isTrue, reason: pulled.message);
+      expect(File(path('zotero/my-library/items/IT/ITEMKEY1.json')).existsSync(), isTrue);
     });
   });
 
