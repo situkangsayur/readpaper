@@ -245,8 +245,8 @@ Ada dua jenis hasil, dan keduanya berbeda:
   menulis coretan ke item Zotero dan meng-commit-nya. Kirim lewat **Kirim
   perubahan** seperti anotasi lain. Coretan ini bisa disunting lagi dan terlihat
   di Zotero.
-- **PDF jadi.** Tombol simpan di bilah bawah (**Simpan sebagai PDF** di
-  Android, **Simpan ke berkas ini** di desktop) menghasilkan PDF dengan coretan
+- **PDF jadi.** Tombol simpan di bilah bawah (**Simpan sebagai PDF**; di
+  desktop **Simpan ke berkas ini** untuk PDF lepas) menghasilkan PDF dengan coretan
   yang menyatu ke halaman. Goresan yang belum selesai ikut disimpan lebih dulu.
   Di Android, pilih **Folder kerja** supaya berkasnya muncul di panel berkas.
   Halaman kosong yang ditambahkan **hanya ikut lewat cara ini** — penambahan
@@ -341,6 +341,10 @@ menjelaskan.
 6. Sakelar di ujung bilah: **Jari + stylus** atau **Stylus saja**.
 7. **Simpan dan bagikan** → **Simpan sebagai Markdown**, **Simpan sebagai PDF**,
    atau **Simpan ke koleksi catatan**.
+8. Seluruh PDF bisa dijadikan buku catatan dari pembaca: **Simpan dan bagikan**
+   → **Jadikan buku catatan**. Tiap halaman jadi alas satu lembar, ditambah
+   satu lembar kosong di belakang. Hasilnya mendarat di folder kerja, dan PDF
+   aslinya tidak disentuh.
 
 **Markdown**: tombol **Sunting**, **Pratinjau**, **Keduanya** di bilah atas,
 tombol sisip di bawah. Diagram ditulis sebagai blok kode `mermaid` dengan
@@ -488,8 +492,9 @@ ambil ulang).
 plugin di Zotero menariknya. Formatnya sama persis dengan yang ditulis plugin.
 
 **Apakah PDF asli diubah oleh stabilo dan coretan?** Tidak. Anotasi disimpan di
-berkas item Zotero. PDF hanya berubah kalau memilih **Simpan ke berkas ini** di
-desktop — dan itu pun menyalin yang asli lebih dulu.
+berkas item Zotero. Lampiran paper dari library tidak pernah ditimpa; menyimpan
+PDF-nya selalu menghasilkan berkas baru. Hanya PDF lepas di desktop yang bisa
+ditimpa lewat **Simpan ke berkas ini**, dan itu pun menyalin yang asli lebih dulu.
 
 ---
 
@@ -507,11 +512,11 @@ bisa membuat impor ke Zotero gagal. Karena itu:
 - **Catatan ke akar Catatan, paper ke akar paper.** Aplikasi menolak yang
   salah tempat, tetapi jangan mengakalinya dengan menyalin berkas ke folder
   `zotero/` dengan tangan.
-- **Jangan memakai "Simpan ke berkas ini" untuk paper dari library** (desktop).
-  Pilihan itu menimpa PDF lampiran dengan versi yang anotasinya menyatu ke
-  halaman, dan menaruh salinan `<nama>.asli.pdf` di sebelahnya — di dalam
-  struktur Zotero. Untuk paper library, pakai **Simpan sebagai…** atau simpan
-  ke folder kerja. Pilihan itu aman untuk PDF lepas di luar repositori.
+- **Paper dari library selalu disimpan sebagai PDF baru**, tidak menimpa
+  lampirannya. Sampai versi 0.23.4, di desktop pilihan **Simpan ke berkas ini**
+  masih muncul untuk paper library dan menimpa lampiran beserta salinan
+  `<nama>.asli.pdf` di dalam struktur Zotero. Kalau pernah terjadi, kembalikan
+  berkas itu lewat git sebelum mengirim perubahan.
 - **Jangan mengirim PDF besar lewat Android.** Memang tidak akan terkirim, dan
   tidak perlu dicoba. PDF masuk lewat Zotero atau git di komputer.
 - **Jangan menghapus atau menggabungkan duplikat dari ReadPaper** kecuali

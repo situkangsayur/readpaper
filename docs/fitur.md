@@ -153,6 +153,13 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 
 ## Catatan, papan tulis, buku catatan, dan Markdown
 
+- **Bagikan ke aplikasi lain** dari setiap layar dokumen: PDF, Markdown,
+  papan tulis, dan buku catatan, juga dari panel berkas dan daftar catatan.
+  Papan tulis dan buku catatan dikirim sebagai PDF, karena penerimanya hampir
+  pasti tidak punya ReadPaper. Di Linux belum ada lembar bagikan sistem; yang
+  muncul adalah letak berkasnya.
+- **Jadikan buku catatan** dari pembaca: tiap halaman PDF jadi alas satu
+  lembar yang bisa ditulisi, PDF aslinya tidak disentuh.
 - **Papan tulis**: lembar bebas dengan lima warna latar, pena berwarna,
   bangun 2D (kotak, bulat, belah ketupat, segitiga, garis, panah), penghapus
   per goresan, dan urungkan. Kertas A4, tegak atau mendatar per lembar.

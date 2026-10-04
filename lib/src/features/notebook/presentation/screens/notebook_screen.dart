@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:printing/printing.dart';
 
+import '../../../../core/utils/share_file.dart';
 import '../../../../core/utils/ink_palette.dart';
 import '../../../../core/utils/ink_smoothing.dart';
 import '../../../../core/utils/shape_geometry.dart';
@@ -792,6 +793,22 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     }
   }
 
+  /// Membagikan buku ini sebagai PDF ke aplikasi lain.
+  ///
+  /// PDF, bukan berkas `.catatan.json`-nya: penerimanya hampir pasti tidak
+  /// punya ReadPaper, dan yang ingin dilihatnya adalah lembarnya.
+  Future<void> _sharePdf() async {
+    try {
+      final bytes = await NoteExport.toPdf(_document, baseDir: _baseDir);
+      if (!mounted) return;
+      final stem = NoteDocumentStore.stemOf(widget.path);
+      final failure = await shareBytes(context, bytes, '$stem.pdf', title: stem);
+      if (failure != null && mounted) _say(failure);
+    } on Object catch (e) {
+      if (mounted) _say('Gagal membagikan: $e');
+    }
+  }
+
   Future<void> _exportPdf() async {
     try {
       final bytes = await NoteExport.toPdf(_document, baseDir: _baseDir);
@@ -973,6 +990,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
               onSelected: (choice) => switch (choice) {
                 'markdown' => _exportMarkdown(),
                 'pdf' => _exportPdf(),
+                'bagikan' => _sharePdf(),
                 'koleksi' => _saveToCollection(),
                 'garis' => _cycleRule(),
                 _ => null,
@@ -994,6 +1012,15 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                     contentPadding: EdgeInsets.zero,
                     leading: Icon(Icons.picture_as_pdf_outlined),
                     title: Text('Simpan sebagai PDF'),
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'bagikan',
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.share_outlined),
+                    title: Text('Bagikan sebagai PDF'),
                   ),
                 ),
                 PopupMenuItem<String>(

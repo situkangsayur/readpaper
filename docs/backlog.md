@@ -1378,6 +1378,21 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       diangkat (800 ms), atau yang bidang sentuhnya selebar telapak, dianggap
       telapak: selama ada satu, geser dan cubit dimatikan
 
+- [x] **"Jadikan buku catatan" di pembaca benar-benar menjadikan buku catatan**
+      (2026-10-04). Menunya ada, pengubahnya ada, tetapi keduanya tidak pernah
+      disambungkan: pilihannya jatuh ke cabang bawaan dan malah membagikan PDF
+- [x] **Lampiran paper library tidak lagi bisa ditimpa** dari desktop
+      (2026-10-04). "Simpan ke berkas ini" dulu muncul juga untuk paper
+      library: anotasinya dileburkan ke halaman — di Zotero tampil dua kali —
+      dan salinan `.asli.pdf` ditaruh di dalam struktur Zotero. Sekarang paper
+      library selalu disimpan sebagai PDF baru
+
+- [x] **Bagikan ada di setiap layar dokumen** (2026-10-04): penyunting
+      Markdown (sebagai `.md` atau PDF), buku catatan dan papan tulis (sebagai
+      PDF, tanpa harus menyimpannya dulu), serta panel berkas dan daftar
+      catatan. Sebelumnya hanya pembaca PDF dan penampil gambar. Buku catatan
+      selalu dibagikan sebagai PDF — penerimanya tidak punya ReadPaper
+
 ### Sinkronisasi
 
 - [x] **Satu berkas yang ditolak GitHub tidak lagi menahan semua yang lain**

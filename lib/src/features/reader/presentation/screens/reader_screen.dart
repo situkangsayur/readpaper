@@ -19,6 +19,9 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/formatting.dart';
 import '../../../../core/utils/layout_size.dart';
 import '../../../../core/utils/work_folder.dart';
+import '../../../notebook/data/note_document_store.dart';
+import '../../../notebook/data/pdf_to_notebook.dart';
+import '../../../notebook/presentation/screens/notebook_screen.dart';
 import '../../../../core/utils/zotero_key.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
@@ -826,6 +829,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// the system's save dialog instead.
   bool get _canWriteInPlace {
     if (Platform.isAndroid || Platform.isIOS) return false;
+    // Lampiran paper dari library tidak pernah ditimpa. Menimpanya berarti
+    // anotasinya dileburkan ke halaman — di Zotero muncul dua kali, sekali
+    // sebagai gambar di halaman dan sekali sebagai anotasi — dan salinan
+    // `.asli.pdf` yang ditaruh di sebelahnya adalah berkas asing di dalam
+    // struktur yang dijaga plugin sinkronisasi. Paper library disimpan sebagai
+    // PDF baru, di folder kerja.
+    if (!widget.isStandalone) return false;
     final path = widget.filePath;
     return !path.contains('/cache/') && !path.contains('/file_picker/');
   }
@@ -1065,6 +1075,37 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           ? (ref.read(workspaceControllerProvider).error ?? 'Gagal menambahkan')
           : 'Masuk library sebagai ${created.itemKey}',
     );
+  }
+
+  /// Menjadikan PDF ini buku catatan di folder kerja, lalu membukanya.
+  ///
+  /// Menunya sudah ada sejak buku catatan bisa dibuat dari PDF, tetapi tidak
+  /// pernah disambungkan: pilihannya jatuh ke cabang bawaan dan malah
+  /// membagikan PDF-nya. Berkas aslinya tidak disentuh.
+  Future<void> _convertToNotebook() async {
+    if (_unsaved) {
+      _say('Anotasi yang belum disimpan tidak ikut. Simpan PDF dulu bila perlu.');
+    }
+    _say('Menyiapkan buku catatan dari ${widget.title}…');
+    try {
+      final folder = await WorkFolder.dir();
+      final notePath = await PdfToNotebook.convert(
+        pdfPath: _path,
+        targetDir: folder.path,
+        title: widget.title,
+      );
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<String>(
+          builder: (_) => NotebookScreen(
+            path: notePath,
+            title: NoteDocumentStore.stemOf(notePath),
+          ),
+        ),
+      );
+    } on Object catch (e) {
+      if (mounted) _say('Gagal membuat buku catatan: $e');
+    }
   }
 
   Future<String?> _askCollectionName(String? parentName) => showDialog<String>(
@@ -1570,6 +1611,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         'cetak' => _print(),
         'ke-markdown' => _convertToMarkdown(),
         'ke-koleksi' => _addToCollection(),
+        'ke-catatan' => _convertToNotebook(),
         _ => _shareAnnotated(),
       },
       itemBuilder: (_) => <PopupMenuEntry<String>>[

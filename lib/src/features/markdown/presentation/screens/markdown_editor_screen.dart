@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:printing/printing.dart';
 
+import '../../../../core/utils/share_file.dart';
 import '../../../../core/utils/layout_size.dart';
 import '../../data/markdown_pdf.dart';
 import '../../domain/markdown_doc.dart';
@@ -110,6 +111,30 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
       return false;
+    }
+  }
+
+  /// Membagikan dokumen ini ke aplikasi lain, sebagai Markdown atau PDF.
+  ///
+  /// Yang belum disimpan disimpan dulu: yang dibagikan harus yang terlihat di
+  /// layar, bukan versi terakhir di disk. PDF-nya dibuat di folder sementara,
+  /// tidak menambah berkas di sebelah catatannya.
+  Future<void> _share({required bool asPdf}) async {
+    if (_dirty && !await _save()) return;
+    if (!mounted) return;
+    final stem = p.basenameWithoutExtension(widget.path);
+    final String? failure;
+    if (asPdf) {
+      final bytes = await MarkdownPdf.build(_doc, baseDir: p.dirname(widget.path));
+      if (!mounted) return;
+      failure = await shareBytes(context, bytes, '$stem.pdf', title: stem);
+    } else {
+      failure = await shareFile(context, widget.path, title: stem);
+    }
+    if (failure != null && mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(failure)));
     }
   }
 
@@ -271,6 +296,8 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
               tooltip: 'Lainnya',
               onSelected: (value) => switch (value) {
                 'pdf' => _exportPdf(),
+                'bagikan' => _share(asPdf: false),
+                'bagikan-pdf' => _share(asPdf: true),
                 'salin' => Clipboard.setData(ClipboardData(text: _controller.text)),
                 _ => null,
               },
@@ -281,6 +308,22 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
                     dense: true,
                     leading: Icon(Icons.picture_as_pdf_outlined),
                     title: Text('Simpan sebagai PDF'),
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'bagikan',
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(Icons.share_outlined),
+                    title: Text('Bagikan berkas Markdown'),
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'bagikan-pdf',
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(Icons.ios_share),
+                    title: Text('Bagikan sebagai PDF'),
                   ),
                 ),
                 PopupMenuItem<String>(

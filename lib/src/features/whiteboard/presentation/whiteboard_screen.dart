@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../core/utils/share_file.dart';
 import '../../library/presentation/controllers/library_controllers.dart';
 import '../../notes/domain/note_target.dart';
 import '../../notes/presentation/controllers/notes_controller.dart';
@@ -147,6 +148,28 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
       return null;
+    }
+  }
+
+  /// Membagikan papan ini sebagai PDF, tanpa menyimpannya ke folder kerja.
+  ///
+  /// Sering yang diinginkan hanya mengirim coretan barusan ke grup kelas;
+  /// menyimpannya adalah keputusan lain.
+  Future<void> _share() async {
+    try {
+      final bytes = await BoardExport.toPdf(_pages);
+      if (!mounted) return;
+      final failure = await shareBytes(context, bytes, '$_stem.pdf', title: _stem);
+      if (failure != null && mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(failure)));
+      }
+    } on Object catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text('Gagal membagikan: $e')));
     }
   }
 
@@ -331,6 +354,11 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
               onPressed: _deletePage,
             ),
             const SizedBox(width: 4),
+            IconButton(
+              tooltip: 'Bagikan sebagai PDF',
+              icon: const Icon(Icons.share_outlined),
+              onPressed: _share,
+            ),
             IconButton(
               tooltip: 'Simpan sebagai catatan',
               icon: const Icon(Icons.sticky_note_2_outlined),

@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/utils/layout_size.dart';
 import '../../../core/utils/work_folder.dart';
+import '../../notebook/presentation/share_note.dart';
 import '../../../shared/widgets/tree_drag.dart';
 import '../../markdown/presentation/screens/markdown_editor_screen.dart';
 import '../../notebook/data/note_document_store.dart';
@@ -684,12 +685,14 @@ class _EntryRow extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 onSelected: (choice) => switch (choice) {
                   'buka' => onOpenFile(file),
+                  'bagikan' => shareAnyFile(context, file.path),
                   'ganti-nama' => onRename(file),
                   _ => onDelete(file),
                 },
                 itemBuilder: (_) => <PopupMenuEntry<String>>[
                   if (canOpen)
                     const PopupMenuItem<String>(value: 'buka', child: Text('Buka')),
+                  const PopupMenuItem<String>(value: 'bagikan', child: Text('Bagikan')),
                   const PopupMenuItem<String>(value: 'ganti-nama', child: Text('Ganti nama')),
                   const PopupMenuItem<String>(value: 'hapus', child: Text('Hapus berkas')),
                 ],

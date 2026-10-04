@@ -14,6 +14,7 @@ import '../../../notebook/data/note_document_store.dart';
 import '../../../notebook/domain/note_document.dart';
 import '../../../notebook/presentation/screens/notebook_screen.dart';
 import '../screens/image_viewer_screen.dart';
+import '../../../notebook/presentation/share_note.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/note_entities.dart';
 import '../controllers/notes_controller.dart';
@@ -414,6 +415,12 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
             onTap: () => Navigator.of(sheet).pop('nama'),
           ),
           ListTile(
+            leading: const Icon(Icons.share_outlined),
+            title: const Text('Bagikan'),
+            subtitle: Text(note.isNotebook ? 'sebagai PDF' : 'ke aplikasi lain'),
+            onTap: () => Navigator.of(sheet).pop('bagikan'),
+          ),
+          ListTile(
             leading: const Icon(Icons.drive_file_move_outline),
             title: const Text('Pindahkan ke koleksi'),
             onTap: () => Navigator.of(sheet).pop('pindah'),
@@ -432,6 +439,8 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
   final controller = ref.read(notesControllerProvider.notifier);
 
   switch (action) {
+    case 'bagikan':
+      await shareAnyFile(context, p.join(index.directory, note.file), title: note.title);
     case 'nama':
       final name = await _askText(context, title: 'Ubah judul', initial: note.title);
       if (name == null || name.trim().isEmpty) return;
