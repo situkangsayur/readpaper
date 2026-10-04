@@ -21,7 +21,12 @@ oleh plugin **zotero-github-sync**. Jadi yang harus ada lebih dulu:
    `zotero/<nama-library>/` berisi `collections.json` dan folder `items/`.
 2. ReadPaper terpasang di perangkat: APK untuk Android, `.deb`/`.tar.gz`/
    `PKGBUILD` untuk Linux, atau zip portabel untuk Windows. Semuanya ada di
-   halaman Releases repositori ReadPaper.
+   halaman Releases repositori ReadPaper. Di **CachyOS, Arch, dan turunannya**
+   cukup satu perintah sebagai pengguna biasa:
+   `curl -fsSL https://github.com/situkangsayur/readpaper/releases/latest/download/pasang-arch.sh | bash`
+   — atau `./pasang-arch.sh` dari folder tarball yang sudah dibongkar, tanpa
+   internet. Ia memasang paket pacman `readpaper-bin`; hapus dengan
+   `sudo pacman -R readpaper-bin`.
 3. Di Linux dan Windows: `git` terpasang. Di Linux juga `git-lfs` kalau library
    memakai Git LFS (`sudo apt install git git-lfs`). Android tidak butuh git.
 

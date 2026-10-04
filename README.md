@@ -37,13 +37,16 @@ for the library repository.
 | `readpaper-<version>-linux-x64.tar.gz` | Anything, Arch and CachyOS included: unpack and run `./readpaper` | 16 MB |
 | `readpaper_<version>_amd64.deb` | Debian 12+, Ubuntu 22.04+, Mint, Pop!_OS | 12 MB |
 | `PKGBUILD` | Arch, CachyOS, Manjaro, EndeavourOS | — |
+| `pasang-arch.sh` | Same distros: installs the `readpaper-bin` pacman package in one step | — |
 
 ```sh
 # Debian and derivatives
 sudo apt install ./readpaper_<version>_amd64.deb
 
-# Arch and derivatives (CachyOS included)
-makepkg -si          # in the folder holding PKGBUILD
+# Arch and derivatives (CachyOS included): one step, as a normal user
+curl -fsSL https://github.com/situkangsayur/readpaper/releases/latest/download/pasang-arch.sh | bash
+# ...or from an unpacked tarball, offline: ./pasang-arch.sh   (remove: --hapus)
+# ...or by hand: makepkg -si in the folder holding PKGBUILD
 
 # Anywhere else
 tar xzf readpaper-<version>-linux-x64.tar.gz

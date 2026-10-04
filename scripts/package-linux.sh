@@ -115,8 +115,17 @@ cp -a "$payload/." "$tardir/"
 cp "$out/$appid.desktop" "$tardir/"
 cp "$icons/readpaper-512.png" "$tardir/$appid.png"
 cp LICENSE "$tardir/"
+# Pemasang untuk CachyOS dan Arch ikut di dalam tarball: dibongkar, lalu
+# ./pasang-arch.sh — tanpa internet, karena isinya sudah ada di folder ini.
+# VERSI dibacanya untuk nomor versi paket pacman.
+install -m755 scripts/pasang-arch.sh "$tardir/pasang-arch.sh"
+echo "$version" > "$tardir/VERSI"
 cat > "$tardir/PASANG.md" <<MD
 # ReadPaper $version — Linux x86-64
+
+**CachyOS, Arch, Manjaro:** jalankan \`./pasang-arch.sh\` dari folder ini. Ia
+memasang ReadPaper sebagai paket pacman (\`readpaper-bin\`), jadi muncul di menu
+aplikasi dan bisa dihapus dengan \`./pasang-arch.sh --hapus\`.
 
 Portabel: jalankan \`./readpaper\` dari folder ini, tanpa memasang apa pun.
 
@@ -257,6 +266,8 @@ package() {
 }
 PKGBUILD
 echo "  $out/arch/PKGBUILD"
+install -m755 scripts/pasang-arch.sh "$out/pasang-arch.sh"
+echo "  $out/pasang-arch.sh"
 
 rm -rf "$payload" "$icons" "$out/$appid.desktop"
 echo

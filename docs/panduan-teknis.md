@@ -125,7 +125,13 @@ scripts/test-linux-packages.sh         # pasang dan jalankan di Debian 12, Ubunt
 ```
 
 Hasilnya di `build/linux/dist/`: `readpaper-<versi>-linux-x64.tar.gz`,
-`readpaper_<versi>_amd64.deb`, dan `PKGBUILD`. `scripts/package-linux.sh` bisa
+`readpaper_<versi>_amd64.deb`, `PKGBUILD`, dan `pasang-arch.sh`. Pemasang
+Arch itu (`scripts/pasang-arch.sh`) ikut juga di dalam tarball bersama berkas
+`VERSI`: dijalankan dari folder tarball, ia menulis PKGBUILD yang mengemas
+folder itu sendiri dan memasangnya lewat `makepkg -si` — tanpa unduhan.
+Dijalankan lewat `curl | bash`, ia mengambil PKGBUILD dari halaman unduh
+internal, atau dari rilis GitHub terbaru kalau halaman itu tidak terjangkau.
+Ketiga jalannya, ditambah `--hapus`, diuji di kontainer `archlinux:latest`. `scripts/package-linux.sh` bisa
 dijalankan sendiri (`--skip-build` kalau bundelnya sudah ada), tetapi hasilnya
 hanya sejauh sistem tempat ia dibangun.
 
