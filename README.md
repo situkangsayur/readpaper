@@ -240,6 +240,21 @@ READPAPER_TEST_REPO=~/.local/share/readpaper/repos/<owner>-<repo> \
 flutter test test/_real_github_api_check.dart
 ```
 
+## Dokumentasi
+
+The guides below are in Indonesian, like the rest of `docs/`:
+
+- [docs/fitur.md](docs/fitur.md) — every feature in one or two sentences,
+  grouped by area, with the Android/desktop differences and known limits.
+- [docs/panduan-pengguna.md](docs/panduan-pengguna.md) — user guide: first
+  setup and GitHub token, daily workflows (reading, marking up, presenting with
+  a stylus, adding PDFs to collections, notes, sync), error messages and what
+  they mean, and what not to do so the repository stays usable by Zotero.
+- [docs/panduan-teknis.md](docs/panduan-teknis.md) — developer guide: setup,
+  builds for Android/Linux/Windows, tests, sync and annotation internals, the
+  stylus capture design, releases, conventions, and where to look when
+  something breaks.
+
 ## Contributing
 
 Patches are welcome, and so are bug reports from people who only use the app.
