@@ -47,11 +47,29 @@
                 <data android:scheme="file" android:host="*" android:pathPattern=".*\\.pdf"/>
             </intent-filter>
 
+            <!-- EPUB, dengan pola yang sama: tipe, lalu akhiran untuk pengirim
+                 yang tidak menyebut tipe. -->
+            <intent-filter android:label="ReadPaper">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="content" android:mimeType="application/epub+zip"/>
+                <data android:scheme="file" android:mimeType="application/epub+zip"/>
+            </intent-filter>
+            <intent-filter android:label="ReadPaper">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="content" android:host="*" android:pathPattern=".*\\.epub"/>
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.epub"/>
+            </intent-filter>
+
             <!-- "Bagikan ke ReadPaper" dari aplikasi lain. -->
             <intent-filter android:label="ReadPaper">
                 <action android:name="android.intent.action.SEND"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="application/pdf"/>
+                <data android:mimeType="application/epub+zip"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

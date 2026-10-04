@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/utils/layout_size.dart';
 import '../../../core/utils/work_folder.dart';
+import '../../epub/presentation/epub_reader_screen.dart';
 import '../../notebook/presentation/share_note.dart';
 import '../../../shared/widgets/tree_drag.dart';
 import '../../markdown/presentation/screens/markdown_editor_screen.dart';
@@ -437,6 +438,12 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
       );
       return;
     }
+    if (extension == '.epub') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => EpubReaderScreen(path: file.path)),
+      );
+      return;
+    }
     if (extension != '.pdf') return;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -649,9 +656,10 @@ class _EntryRow extends StatelessWidget {
     final file = entry as File;
     final extension = p.extension(name).toLowerCase();
     final isPdf = extension == '.pdf';
+    final isEpub = extension == '.epub';
     final isMarkdown = extension == '.md';
     final isNotebook = NoteDocumentStore.isNoteDocument(name);
-    final canOpen = isPdf || isMarkdown || isNotebook;
+    final canOpen = isPdf || isEpub || isMarkdown || isNotebook;
     final row = SizedBox(
       height: treeRowHeight,
       child: InkWell(
@@ -663,6 +671,8 @@ class _EntryRow extends StatelessWidget {
               Icon(
                 isPdf
                     ? Icons.picture_as_pdf_outlined
+                    : isEpub
+                    ? Icons.menu_book_outlined
                     : isNotebook
                     ? Icons.auto_stories_outlined
                     : (isMarkdown ? Icons.notes_outlined : Icons.insert_drive_file_outlined),

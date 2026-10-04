@@ -1393,6 +1393,20 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       catatan. Sebelumnya hanya pembaca PDF dan penampil gambar. Buku catatan
       selalu dibagikan sebagai PDF — penerimanya tidak punya ReadPaper
 
+- [x] **Membaca EPUB** (2026-10-04): satu bab per layar, daftar isi (nav EPUB 3
+      atau NCX EPUB 2), ukuran huruf, tiga warna halaman, posisi diingat per
+      buku, dan terdaftar di "Buka dengan" Android. Pengurainya ditulis
+      sendiri — paket EPUB yang ada menuntut `image` dan `xml` versi lama.
+      Dua jebakan EPUB Gutenberg ditangani: `<a id/>` yang menutup sendiri
+      (HTML membacanya sebagai tautan yang tak pernah ditutup, seluruh bab
+      jadi biru) dan sampul dalam `<svg><image>`
+- [ ] Stabilo dan catatan di EPUB, ditulis sebagai anotasi Zotero (CFI)
+- [x] **Persiapan iPhone/iPad** (2026-10-04): platform iOS, "Buka dengan" untuk
+      PDF dan EPUB, berkas masuk lewat kanal yang sama dengan Android, dan
+      alur kerja CI di runner macOS yang menghasilkan `.ipa` tanpa tanda
+      tangan untuk dipasang lewat Sideloadly dengan Apple ID gratis
+- [ ] Build iOS pertama di CI dan uji di iPhone sungguhan
+
 ### Sinkronisasi
 
 - [x] **Satu berkas yang ditolak GitHub tidak lagi menahan semua yang lain**

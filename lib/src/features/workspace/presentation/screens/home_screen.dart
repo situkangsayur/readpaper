@@ -10,6 +10,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../files/data/incoming_file.dart';
 import '../../../files/presentation/file_browser_pane.dart';
+import '../../../epub/presentation/epub_reader_screen.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../../library/presentation/widgets/collection_tree_pane.dart';
 import '../../../library/presentation/widgets/item_detail_pane.dart';
@@ -51,6 +52,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _openIncoming(String path) {
+    if (p.extension(path).toLowerCase() == '.epub') {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => EpubReaderScreen(path: path)),
+      );
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ReaderScreen(

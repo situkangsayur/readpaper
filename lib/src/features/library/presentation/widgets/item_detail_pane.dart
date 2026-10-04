@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/utils/formatting.dart';
 import '../../../../core/utils/layout_size.dart';
 import '../../../../shared/providers/app_providers.dart';
+import '../../../epub/presentation/epub_reader_screen.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/zotero_annotation.dart';
@@ -175,7 +176,7 @@ class _AttachmentCard extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final repository = ref.watch(libraryRepositoryProvider);
     final isPointer = file != null && repository.isLfsPointer(file!);
-    final canRead = file != null && !isPointer && attachment.isPdf;
+    final canRead = file != null && !isPointer && (attachment.isPdf || attachment.isEpub);
 
     // A partial clone (and the Android mirror) keeps metadata only, so a PDF
     // that is not on disk can still be fetched on demand.
@@ -211,7 +212,8 @@ class _AttachmentCard extends ConsumerWidget {
             if (file == null && expected != null) 'ada di GitHub, belum diunduh',
             if (file == null && expected == null) 'berkas belum diunduh',
             if (isPointer) 'pointer Git LFS — jalankan LFS pull',
-            if (file != null && !attachment.isPdf && !isPointer) 'format belum didukung pembaca',
+            if (file != null && !attachment.isPdf && !attachment.isEpub && !isPointer)
+              'format belum didukung pembaca',
           ].join(' · '),
           style: Theme.of(context).textTheme.labelSmall,
         ),
@@ -219,7 +221,11 @@ class _AttachmentCard extends ConsumerWidget {
             ? FilledButton.tonalIcon(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute<void>(
-                    builder: (_) => ReaderScreen(
+                    // EPUB punya pembacanya sendiri; anotasinya belum ditulis
+                    // ke Zotero, jadi ia dibuka hanya untuk dibaca.
+                    builder: (_) => attachment.isEpub
+                        ? EpubReaderScreen(path: file!.path, title: item.title)
+                        : ReaderScreen(
                       itemKey: item.key,
                       itemFilePath: item.filePath,
                       attachmentKey: attachment.key,

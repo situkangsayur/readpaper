@@ -14,6 +14,7 @@ import '../../../notebook/data/note_document_store.dart';
 import '../../../notebook/domain/note_document.dart';
 import '../../../notebook/presentation/screens/notebook_screen.dart';
 import '../screens/image_viewer_screen.dart';
+import '../../../epub/presentation/epub_reader_screen.dart';
 import '../../../notebook/presentation/share_note.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/note_entities.dart';
@@ -374,6 +375,12 @@ Future<void> _open(
     );
     return;
   }
+  if (note.extension == '.epub') {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => EpubReaderScreen(path: path, title: note.title)),
+    );
+    return;
+  }
   if (note.isPdf) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -392,7 +399,7 @@ Future<void> _open(
     SnackBar(
       content: Text(
         'Berkas ${note.extension.isEmpty ? 'ini' : note.extension} belum bisa dibuka '
-        'di dalam aplikasi. Yang sudah bisa: PDF, Markdown, gambar, dan buku '
+        'di dalam aplikasi. Yang sudah bisa: PDF, EPUB, Markdown, gambar, dan buku '
         'catatan.',
       ),
     ),

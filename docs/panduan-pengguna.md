@@ -109,7 +109,13 @@ masalah.
 3. Paper yang pernah dibuka dilanjutkan di halaman terakhir, dan muncul di
    kartu **Terakhir dibaca** di atas daftar.
 
-Di dalam pembaca:
+**Buku EPUB** dibuka di pembacanya sendiri — dari lampiran library, panel
+berkas, daftar catatan, atau **Buka dengan** dari aplikasi lain. Di bilah atas:
+**A−**/**A+** untuk ukuran huruf, tombol kontras untuk warna halaman, **Bagikan**,
+dan **Daftar isi**. Berpindah bab lewat panah di bawah. Membuka buku yang sama
+lagi melanjutkan di tempat terakhir. EPUB belum bisa distabilo.
+
+Di dalam pembaca PDF:
 
 - Ketuk **nomor halaman** di bilah atas untuk lompat ke halaman atau membuka
   **Daftar isi** berkas.

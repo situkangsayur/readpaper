@@ -1,7 +1,7 @@
 name: readpaper
 description: "ReadPaper — Zotero-style paper reader with GitHub sync, highlights and comments. Free software, AGPL-3.0-or-later."
 publish_to: 'none'
-version: 0.23.5+47
+version: 0.23.6+48
 
 environment:
   sdk: ^3.10.0
@@ -50,6 +50,8 @@ dependencies:
   # Menulis PDF dengan teks sungguhan — dipakai ekspor Markdown → PDF,
   # yang hasilnya harus tetap bisa dicari dan disalin.
   pdf: ^3.13.1
+  flutter_html: ^3.0.0
+  archive: ^4.3.0
 # Menjauhkan JVM dari seluruh pohon paket.
 #
 # path_provider_android 2.3.0 mulai memakai paket `jni`, dan `jni` adalah
@@ -63,6 +65,10 @@ dependencies:
 # Android ia bekerja persis sama.
 dependency_overrides:
   path_provider_android: 2.2.23
+  # flutter_html 3.0.0 memanggil `matches` dari query_selector milik paket
+  # html, yang dihapus di html 0.15.7. Kesalahannya tidak terlihat oleh
+  # analyze — ia ada di dalam paket — dan baru muncul saat APK dikompilasi.
+  html: 0.15.6
 
 dev_dependencies:
   flutter_test:

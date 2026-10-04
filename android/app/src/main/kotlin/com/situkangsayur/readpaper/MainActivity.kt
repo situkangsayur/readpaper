@@ -56,7 +56,7 @@ class MainActivity : FlutterActivity() {
         } ?: return null
 
         return try {
-            val name = displayName(uri) ?: "dokumen.pdf"
+            val name = displayName(uri) ?: "dokumen${extensionFor(uri)}"
             val dir = File(cacheDir, "masuk").apply { mkdirs() }
             val target = File(dir, name)
             contentResolver.openInputStream(uri)?.use { input ->
@@ -75,12 +75,20 @@ class MainActivity : FlutterActivity() {
             if (column >= 0 && cursor.moveToFirst()) {
                 val value = cursor.getString(column)
                 if (!value.isNullOrBlank()) {
-                    return if (value.endsWith(".pdf", ignoreCase = true)) value else "$value.pdf"
+                    // Akhirannya yang menentukan pembaca mana yang membuka
+                    // berkasnya di sisi Dart, jadi nama tanpa akhiran diberi
+                    // akhiran dari tipenya — bukan selalu ".pdf".
+                    val known = value.endsWith(".pdf", ignoreCase = true) ||
+                        value.endsWith(".epub", ignoreCase = true)
+                    return if (known) value else "$value${extensionFor(uri)}"
                 }
             }
         }
         return uri.lastPathSegment
     }
+
+    private fun extensionFor(uri: Uri): String =
+        if (contentResolver.getType(uri) == "application/epub+zip") ".epub" else ".pdf"
 
     private companion object {
         const val CHANNEL = "readpaper/berkas-masuk"

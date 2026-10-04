@@ -64,6 +64,10 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 
 ## Membaca
 
+- **Pembaca EPUB**: satu bab per layar, daftar isi bertingkat, ukuran huruf,
+  dan tiga warna halaman (Terang, Sepia, Gelap). Bab, posisi gulir, ukuran
+  huruf, dan warnanya diingat per buku. ReadPaper muncul di pilihan **Buka
+  dengan** untuk EPUB, dan lampiran EPUB di library kini bisa dibaca.
 - **Penampil PDF** dengan pilihan teks, zum, dan bilah gulir. Nomor halaman di
   bilah atas bisa diketuk untuk **lompat ke halaman** dan membuka **daftar
   isi** bawaan berkas (kalau berkasnya punya).
@@ -253,7 +257,13 @@ koleksi, item baru, dan catatan tetap terkirim dari Android. PDF-nya sendiri
 harus masuk lewat git di komputer.
 
 Windows dibangun di runner GitHub Actions dan belum ditandatangani, jadi
-SmartScreen memperingatkan saat dibuka. macOS dan iOS belum ada.
+SmartScreen memperingatkan saat dibuka. macOS belum ada.
+
+iPhone dan iPad sedang disiapkan: runner macOS di GitHub Actions membangun
+`.ipa` yang belum ditandatangani, yang dipasang sendiri dengan Apple ID gratis
+lewat Sideloadly atau AltStore (lihat bagian iOS di
+[panduan-teknis.md](panduan-teknis.md)). Sinkronisasinya sama dengan Android,
+lewat GitHub REST API. Belum pernah dicoba di perangkat sungguhan.
 
 ---
 
@@ -281,7 +291,9 @@ Diringkas dari butir yang belum selesai di [backlog.md](backlog.md):
   halaman harus dihapus lalu dibuat ulang untuk diubah.
 - **Tanda tangan belum bisa disimpan** untuk dipakai ulang.
 - **Tulisan tangan belum bisa diubah jadi teks** (Fase 14–15).
-- **EPUB dan format lain** belum bisa dibaca; hanya PDF.
+- **EPUB belum bisa distabilo.** Bukunya bisa dibaca, tetapi anotasi EPUB
+  Zotero (penanda CFI) belum ditulis. Format ebook lain (MOBI, DjVu) belum
+  bisa dibuka.
 - **Antarmuka hanya bahasa Indonesia** (dwibahasa di Fase 8).
 - **Sitasi ke Word/LibreOffice/OnlyOffice/Google Docs** sedang dikerjakan;
   mesinnya belum selesai (Fase 9–10).

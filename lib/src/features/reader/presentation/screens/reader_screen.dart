@@ -12,12 +12,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdfrx/pdfrx.dart';
 import 'package:printing/printing.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/formatting.dart';
 import '../../../../core/utils/layout_size.dart';
+import '../../../../core/utils/share_file.dart';
 import '../../../../core/utils/work_folder.dart';
 import '../../../notebook/data/note_document_store.dart';
 import '../../../notebook/data/pdf_to_notebook.dart';
@@ -1362,19 +1362,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _say('Menyiapkan berkas…');
     try {
       final bytes = await _annotatedPdf();
-      // Shared from a temporary copy so the original is never handed out by
-      // accident, and so an unsaved document can still be sent.
-      final dir = await getTemporaryDirectory();
-      final file = File(p.join(dir.path, '${_fileStem(widget.title)}.pdf'));
-      await file.writeAsBytes(bytes);
       if (!mounted) return;
-      await SharePlus.instance.share(
-        ShareParams(
-          files: <XFile>[XFile(file.path, mimeType: 'application/pdf')],
-          subject: widget.title,
-          text: widget.title,
-        ),
+      // Shared from a temporary copy so the original is never handed out by
+      // accident, and so an unsaved document can still be sent. Lewat fungsi
+      // bersama supaya lembar bagikannya punya titik asal — wajib di iPad.
+      final failure = await shareBytes(
+        context,
+        bytes,
+        '${_fileStem(widget.title)}.pdf',
+        title: widget.title,
       );
+      if (failure != null) _say(failure);
     } catch (e) {
       _say('Gagal membagikan: $e');
     }
