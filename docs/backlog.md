@@ -1407,6 +1407,13 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       tangan untuk dipasang lewat Sideloadly dengan Apple ID gratis
 - [ ] Build iOS pertama di CI dan uji di iPhone sungguhan
 
+- [x] **"Tambahkan ke koleksi" gagal di desktop** (2026-10-04). Clone desktop
+      ramping — folder lampiran dikecualikan sparse checkout — dan `git add .`
+      menolak PDF baru di sana ("outside of your sparse-checkout definition"),
+      sehingga seluruh commit-nya gagal. Ditemukan saat menulis dokumentasi,
+      dibuktikan dengan git sungguhan, dan kini `git add --sparse` di clone
+      ramping
+
 ### Sinkronisasi
 
 - [x] **Satu berkas yang ditolak GitHub tidak lagi menahan semua yang lain**

@@ -376,12 +376,11 @@ bukan jalur lampiran, jadi ikut terkirim.
 
 Di desktop, clone hemat memakai sparse checkout yang mengecualikan
 `/**/attachments/**` dan `/**/attachments-lfs/**`. Membuka paper menjalankan
-`git sparse-checkout add` untuk foldernya. **Perlu dicek**: berkas *baru* di
-folder lampiran yang belum masuk pola sparse ditolak `git add -- .` (git keluar
-dengan kode 1 dan "paths ... outside of your sparse-checkout definition"), dan
-`commitAll` mengembalikan kegagalan itu apa adanya. Ini terbukti dengan git
-biasa di repositori uji, belum lewat aplikasinya; jalurnya
-`addPdfToLibrary` → `_commitAnnotation` → `GitCliBackend.commitAll`.
+`git sparse-checkout add` untuk foldernya. Berkas *baru* di folder lampiran —
+PDF dari "Tambahkan ke koleksi" — berada di luar pola sparse, dan git menolak
+menambahkannya tanpa `--sparse`. Karena itu `GitCliBackend.commitAll` memakai
+`git add --sparse` setiap kali `core.sparseCheckout` menyala (sejak 0.23.7;
+butuh git 2.34 ke atas). Ujinya ada di `git_cli_backend_test.dart`.
 
 ### 5.5 Jalur dan jam
 

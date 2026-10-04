@@ -488,11 +488,9 @@ dimasukkan dari Android dan belum pernah dikirim dari komputer.
 
 **Desktop: memasukkan PDF ke koleksi gagal dengan pesan git "The following
 paths and/or pathspecs matched paths that exist outside of your sparse-checkout
-definition".** Pada clone hemat, folder lampiran sengaja tidak di-*checkout*,
-dan git menolak menambahkan berkas baru di sana. Jalan keluar sementara: di
-terminal, `git -C <folder clone> add --sparse -A` lalu kirim lagi dari
-ReadPaper; atau pakai clone penuh (matikan **Unduh PDF hanya saat dibuka**, lalu
-ambil ulang).
+definition".** Sudah diperbaiki di 0.23.7. Kalau masih muncul, git di komputer
+itu terlalu tua (butuh 2.34 ke atas); perbarui git-nya, atau di terminal
+jalankan `git -C <folder clone> add --sparse -A` lalu kirim lagi dari ReadPaper.
 
 **Apakah anotasi saya terlihat di Zotero?** Ya, setelah dikirim ke GitHub dan
 plugin di Zotero menariknya. Formatnya sama persis dengan yang ditulis plugin.

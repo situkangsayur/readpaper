@@ -89,6 +89,32 @@ void main() {
     expect(log.first.author, 'Hendri');
   });
 
+  test('commitAll menambahkan lampiran baru di clone ramping', () async {
+    // "Tambahkan ke koleksi" di desktop: PDF baru di folder lampiran, yang
+    // dikecualikan sparse checkout. Tanpa `git add --sparse` commit-nya gagal.
+    await git(<String>[
+      'sparse-checkout',
+      'set',
+      '--no-cone',
+      '/*',
+      '!/**/attachments/**',
+      '!/**/attachments-lfs/**',
+    ]);
+    final pdf = File(p.join(repo.path, 'zotero', 'lib', 'attachments', 'AB', 'K1', 'a.pdf'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('%PDF-1.4');
+    File(p.join(repo.path, 'zotero', 'lib', 'items', 'AB', 'K1.json'))
+      ..createSync(recursive: true)
+      ..writeAsStringSync('{}\n');
+
+    final result = await backend.commitAll(repoPath: repo.path, message: 'Tambah PDF');
+    expect(result.ok, isTrue, reason: result.message);
+
+    final tracked = await Process.run('git', <String>['ls-files'], workingDirectory: repo.path);
+    expect(tracked.stdout as String, contains('zotero/lib/attachments/AB/K1/a.pdf'));
+    expect(pdf.existsSync(), isTrue);
+  });
+
   test('commitAll says so when there is nothing to commit', () async {
     final result = await backend.commitAll(repoPath: repo.path, message: 'kosong');
     expect(result.ok, isTrue);

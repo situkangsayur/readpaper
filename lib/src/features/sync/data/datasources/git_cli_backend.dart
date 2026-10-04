@@ -317,7 +317,21 @@ class GitCliBackend implements GitBackend {
     String? authorEmail,
     List<String> paths = const <String>[],
   }) async {
-    final addArgs = <String>['add', '--', if (paths.isEmpty) '.' else ...paths];
+    // Clone ramping mengecualikan folder lampiran dari sparse checkout, dan
+    // git menolak menambahkan berkas baru di sana tanpa `--sparse` ("outside
+    // of your sparse-checkout definition", keluar dengan 1). Itu persis yang
+    // dilakukan "Tambahkan ke koleksi": PDF baru di attachments/ — jadi di
+    // desktop seluruh commit-nya gagal. `--sparse` ada sejak git 2.34; Debian
+    // 12 membawa 2.39 dan Ubuntu 22.04 membawa 2.34.
+    final sparse =
+        (await _capture(repoPath, <String>['config', '--get', 'core.sparseCheckout'])).trim() ==
+        'true';
+    final addArgs = <String>[
+      'add',
+      if (sparse) '--sparse',
+      '--',
+      if (paths.isEmpty) '.' else ...paths,
+    ];
     final add = await _run(args: addArgs, workingDirectory: repoPath, auth: const GitAuth.ssh());
     if (!add.ok) return add;
 
