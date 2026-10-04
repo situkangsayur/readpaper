@@ -53,7 +53,10 @@ class SettingsLocalDataSource {
     final file = File(AppPaths.instance.credentialsFile);
     await file.parent.create(recursive: true);
     await file.writeAsString('${jsonEncode(credentials)}\n', flush: true);
-    if (!Platform.isWindows) {
+    // iOS tidak mengizinkan aplikasi menjalankan proses lain — Process.run
+    // melempar galat dan tokennya seolah gagal disimpan. Berkasnya toh sudah
+    // di dalam sandbox aplikasi, yang tidak bisa dibaca aplikasi lain.
+    if (!Platform.isWindows && !Platform.isIOS) {
       await Process.run('chmod', <String>['600', file.path]);
     }
   }

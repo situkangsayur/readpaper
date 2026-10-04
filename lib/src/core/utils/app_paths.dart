@@ -9,6 +9,8 @@ import '../constants/app_constants.dart';
 ///
 /// Linux    : `~/.local/share/readpaper/...`
 /// Android  : the app's private support directory.
+/// iOS      : Library/Application Support inside the app sandbox — deliberately
+///            not Documents, which the Files app shows (credentials live here).
 class AppPaths {
   AppPaths._(this.supportDir);
 

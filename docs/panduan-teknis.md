@@ -33,7 +33,8 @@ Empat titik yang paling sering disentuh:
 | `features/reader/presentation/screens/reader_screen.dart` | pembaca, penanda, pena, mode baca, mode menyajikan (berkas terbesar, ~3.100 baris) |
 
 `shared/providers/app_providers.dart` memilih backend sinkronisasi:
-`GitHubApiBackend` di Android (dan iOS, yang belum dibangun), `GitCliBackend`
+`GitHubApiBackend` di Android dan iOS (iOS tidak punya biner git, dan aplikasinya
+tidak boleh menjalankan proses lain), `GitCliBackend`
 di Linux, Windows, dan macOS.
 
 ---
@@ -85,6 +86,14 @@ Tidak bisa dibangun dari Linux: `flutter build windows` menuntut Visual Studio
 dan MSVC. Jalurnya `.github/workflows/windows.yml` di runner `windows-latest`
 (lihat bagian 3). Untuk mencoba di mesin Windows sendiri, pasang Visual Studio
 dengan beban kerja C++ dan Git for Windows, lalu `flutter run -d windows`.
+
+### iOS
+
+Tidak bisa dibangun dari Linux maupun Windows: `flutter build ios` menuntut
+Xcode, yang hanya ada di macOS. Jalurnya `.github/workflows/ios.yml` di runner
+`macos-latest` (lihat bagian 3). Tidak ada Mac di sini, jadi semua yang khas iOS
+— `ios/Runner/AppDelegate.swift`, `Info.plist` — baru terbukti saat dibangun di
+sana dan dipasang di perangkat.
 
 ### Penyematan yang perlu diingat
 
@@ -149,6 +158,60 @@ langkah terakhir — kalau belum, picu ulang dengan `release_tag`.
 Tes dijalankan di runner Windows juga, bukan hanya buildnya. Itu sudah
 membayar dirinya: sembilan tes gagal di sana sementara semuanya hijau di Linux
 — jalur dengan `\`, dan jam berkas yang lebih kasar (lihat 5.5).
+
+### iOS (iPhone/iPad)
+
+`.github/workflows/ios.yml` berjalan pada setiap tag `v*` dan bisa dipicu
+tangan, sama seperti Windows. Urutannya: `flutter analyze`, `flutter test`,
+`flutter build ios --release --no-codesign`, lalu `Runner.app` dimasukkan ke
+folder `Payload/` dan dizip menjadi `ReadPaper-<versi>-ios-unsigned.ipa`.
+Hasilnya selalu diunggah sebagai artefak alur kerja, dan dilampirkan ke rilis
+GitHub hanya kalau rilisnya sudah ada — berbeda dengan Windows, langkah itu
+tidak menggagalkan alur kerja; picu ulang dengan `release_tag` setelah rilisnya
+dibuat.
+
+Target minimumnya **iOS 14.0**, karena `file_picker` menuntutnya; plugin lain
+cukup 12 atau 13. Semua plugin membawa `Package.swift`, jadi Flutter memakai
+Swift Package Manager dan tidak ada Podfile. Kalau suatu hari ada plugin yang
+hanya punya podspec, Flutter membuat Podfile sendiri saat membangun; baris
+`platform :ios, '14.0'` di dalamnya harus diaktifkan.
+
+Berkas yang dibuka dari aplikasi lain ("Buka di…", lembar bagikan, Files)
+masuk lewat kanal yang sama dengan Android, `readpaper/berkas-masuk`
+(`takeInitialPdf`, `openPdf`). Sisi iOS-nya kelas `BerkasMasuk` di
+`AppDelegate.swift`: menyalin berkasnya ke `Caches/masuk` selagi akses
+security-scoped terbuka, lalu menyerahkan jalurnya ke Dart. Folder kerja
+(`Documents/readpaper`) terlihat di aplikasi Files berkat `UIFileSharingEnabled`
+dan `LSSupportsOpeningDocumentsInPlace`; data aplikasi dan token tetap di
+`Library/Application Support`, yang tidak terlihat.
+
+**Memasang .ipa yang belum ditandatangani.** iPhone hanya menjalankan aplikasi
+yang ditandatangani dengan sertifikat dari akun Apple. Jalur yang tidak butuh
+Mac maupun akun berbayar:
+
+1. Buat **Apple ID gratis** (cukup Apple ID biasa; tidak perlu mendaftar
+   program pengembang).
+2. Di PC **Windows**, pasang **Sideloadly** atau **AltServer** (pasangan
+   AltStore). Keduanya butuh iTunes dan iCloud versi unduhan dari situs Apple,
+   bukan dari Microsoft Store. Untuk Linux tidak ada versi resmi dari
+   keduanya; AltServer-Linux adalah proyek komunitas yang belum dicoba di sini.
+3. Sambungkan iPhone/iPad dengan kabel, buka `.ipa` dari rilis di Sideloadly
+   (atau lewat AltStore di perangkat), masukkan Apple ID, lalu pasang.
+4. Di perangkat: **Pengaturan → Umum → VPN & Manajemen Perangkat**, percayai
+   Apple ID tadi. Di iOS 16 ke atas nyalakan juga **Pengaturan → Privasi &
+   Keamanan → Mode Pengembang** dan mulai ulang perangkat.
+
+Batasan akun gratis: tanda tangannya **kedaluwarsa setelah 7 hari** — aplikasi
+lalu menolak terbuka sampai ditandatangani ulang (data di dalamnya tetap ada
+selama aplikasinya tidak dihapus). AltStore bisa memperbaruinya sendiri lewat
+Wi-Fi selama AltServer menyala di jaringan yang sama; Sideloadly cukup
+memasang ulang `.ipa` yang sama. Satu Apple ID gratis juga hanya boleh punya
+**tiga aplikasi** hasil pasang sendiri yang aktif sekaligus — AltStore sendiri
+ikut dihitung.
+
+Nanti, dengan **Apple Developer Program berbayar**, tanda tangannya berlaku
+setahun dan aplikasinya bisa dibagikan lewat TestFlight. Alur kerjanya perlu
+ditambah sertifikat dan profil sebagai rahasia repositori; itu belum ada.
 
 ### CI
 
@@ -434,7 +497,7 @@ Urutannya, setiap kali sebuah perubahan selesai dan terbukti:
    Android, selalu naik).
 2. **Commit dan push** ke `main`.
 3. **Tag beranotasi**: `git tag -a vX.Y.Z -m "..."` lalu `git push origin
-   vX.Y.Z`. Tag ini juga memicu alur kerja Windows.
+   vX.Y.Z`. Tag ini juga memicu alur kerja Windows dan iOS.
 4. **Bangun APK** (bagian 3), dan paket Linux lewat kontainer kalau rilis itu
    menyertakannya — lalu uji paketnya dengan `test-linux-packages.sh`.
 5. **Rilis GitHub** dengan APK terlampir:
@@ -447,7 +510,9 @@ Urutannya, setiap kali sebuah perubahan selesai dan terbukti:
 
    Nama berkas di rilis mengikuti `readpaper-<versi>-arm64.apk`. Tambahkan
    paket Linux dari `build/linux/dist/` ke rilis yang sama. Zip Windows
-   dilampirkan sendiri oleh alur kerjanya.
+   dilampirkan sendiri oleh alur kerjanya. `.ipa` iOS juga, kalau rilisnya
+   sudah ada saat alur kerja itu selesai; kalau belum, picu ulang `ios.yml`
+   dengan `release_tag`.
    `scripts/publish-releases.sh` menyusulkan rilis untuk tag yang belum punya,
    aman diulang.
 6. **Perbarui halaman unduh internal** dengan APK yang sama. Halaman itu

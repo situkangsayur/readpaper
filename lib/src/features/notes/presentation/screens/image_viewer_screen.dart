@@ -2,7 +2,8 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
-import 'package:share_plus/share_plus.dart';
+
+import '../../../../core/utils/share_file.dart';
 
 /// Melihat satu gambar: hasil pindaian, tangkapan layar, foto papan tulis.
 ///
@@ -32,11 +33,24 @@ class ImageViewerScreen extends StatelessWidget {
           ],
         ),
         actions: <Widget>[
-          IconButton(
-            tooltip: 'Bagikan',
-            icon: const Icon(Icons.share_outlined),
-            onPressed: () => SharePlus.instance.share(
-              ShareParams(files: <XFile>[XFile(path)], text: title ?? p.basename(path)),
+          // Lewat shareFile, bukan SharePlus langsung: di iPad lembar bagikan
+          // wajib punya titik asal, dan Builder memberi konteks tombol ini
+          // sendiri — bukan seluruh layar — sebagai titik itu.
+          Builder(
+            builder: (buttonContext) => IconButton(
+              tooltip: 'Bagikan',
+              icon: const Icon(Icons.share_outlined),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(buttonContext);
+                final failure = await shareFile(
+                  buttonContext,
+                  path,
+                  title: title ?? p.basenameWithoutExtension(path),
+                );
+                if (failure != null) {
+                  messenger.showSnackBar(SnackBar(content: Text(failure)));
+                }
+              },
             ),
           ),
           const SizedBox(width: 4),

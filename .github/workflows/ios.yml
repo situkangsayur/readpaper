@@ -1,0 +1,99 @@
+name: iOS
+
+# iOS tidak bisa dibangun dari Linux: `flutter build ios` menuntut Xcode, dan
+# Xcode hanya berjalan di macOS. Jadi yang membangunnya mesin macOS milik
+# GitHub, sama seperti Windows dibangun di mesin Windows.
+#
+# Hasilnya .ipa yang **tidak ditandatangani**. Menandatangani butuh sertifikat
+# dan profil dari akun Apple, dan itu dilakukan pemakainya sendiri saat
+# memasang (Sideloadly atau AltStore dengan Apple ID gratis) — lihat bagian iOS
+# di docs/panduan-teknis.md.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag rilis yang akan dilampiri hasilnya (kosongkan untuk hanya membangun)'
+        required: false
+        default: ''
+
+# Sama dengan windows.yml: tanpa izin menulis, langkah terakhirnya gagal
+# dengan HTTP 403 setelah semua yang mahal selesai.
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.5'
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Diperiksa di sini juga: kode yang sehat di Linux bisa patah di sisi
+      # iOS, dan itu harus ketahuan sebelum .ipa-nya terbit.
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      # Semua plugin yang dipakai sudah membawa Package.swift, jadi Flutter
+      # memakai Swift Package Manager dan tidak butuh Podfile.
+      - name: Build
+        run: flutter build ios --release --no-codesign
+
+      - name: Versi
+        id: versi
+        shell: bash
+        run: echo "v=$(grep -m1 '^version:' pubspec.yaml | sed 's/^version:[[:space:]]*//; s/+.*//')" >> "$GITHUB_OUTPUT"
+
+      # .ipa hanyalah zip berisi folder Payload/ dengan Runner.app di
+      # dalamnya. Xcode biasanya membuatnya saat mengekspor arsip yang sudah
+      # ditandatangani; di sini dibungkus tangan karena memang belum.
+      - name: Bungkus jadi ipa
+        shell: bash
+        run: |
+          ver="${{ steps.versi.outputs.v }}"
+          mkdir -p dist/Payload
+          cp -R build/ios/iphoneos/Runner.app dist/Payload/
+          (cd dist && zip -qry "ReadPaper-$ver-ios-unsigned.ipa" Payload)
+          rm -rf dist/Payload
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: readpaper-ios-unsigned
+          path: dist/*.ipa
+          if-no-files-found: error
+
+      # Dilampirkan hanya kalau rilisnya sudah ada. Rilis sering dibuat
+      # sesudah tag didorong, dan alur kerja ini selesai lebih dulu — di
+      # windows.yml langkah ini lalu gagal dan seluruh pekerjaannya tampak
+      # merah padahal .zip-nya sehat. Di sini cukup dikatakan; artefak di atas
+      # tetap bisa diunduh, dan alur kerja bisa dijalankan ulang dengan
+      # release_tag setelah rilisnya dibuat.
+      - name: Lampirkan ke rilis
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.release_tag != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${{ inputs.release_tag }}"
+          [ -n "$tag" ] || tag="${GITHUB_REF_NAME}"
+          ver="${{ steps.versi.outputs.v }}"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            echo "::notice::Rilis $tag belum ada; .ipa hanya tersedia sebagai artefak alur kerja."
+            exit 0
+          fi
+          gh release upload "$tag" \
+            "dist/ReadPaper-$ver-ios-unsigned.ipa#ReadPaper $ver (iPhone/iPad, belum ditandatangani)" \
+            --clobber
