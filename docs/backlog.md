@@ -1448,6 +1448,16 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       satu, tidak pernah muncul. Dilaporkan dari CachyOS, direproduksi dengan
       rilis Linux di Xvfb, dan dijaga uji widget
 
+- [x] **PDF tersimpan tidak lagi jadi gambar seluruhnya** (2026-10-05).
+      Simpan, Simpan sebagai PDF, dan Bagikan dulu merender setiap halaman jadi
+      JPEG: teks tidak bisa dicari atau disalin, tabel jadi foto. Sekarang
+      halaman aslinya dibiarkan apa adanya lewat pdfium, dan anotasi
+      ditambahkan sebagai objek vektor: stabilo transparan dengan campuran
+      multiply (teks di bawahnya tetap terbaca dan bisa dipilih), coretan
+      sebagai jalur, isian Tt sebagai teks PDF, komentar sebagai catatan tempel
+      PDF. Merender jadi gambar tinggal jalan terakhir untuk PDF yang tidak
+      bisa ditulisi pdfium
+
 ### Banyak repositori — diminta 2026-10-05 untuk versi berikutnya
 
 Yang sudah ada: beberapa profil repositori, satu yang aktif, dan pengalih di

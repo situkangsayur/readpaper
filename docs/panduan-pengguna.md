@@ -257,8 +257,12 @@ Ada dua jenis hasil, dan keduanya berbeda:
   perubahan** seperti anotasi lain. Coretan ini bisa disunting lagi dan terlihat
   di Zotero.
 - **PDF jadi.** Tombol simpan di bilah bawah (**Simpan sebagai PDF**; di
-  desktop **Simpan ke berkas ini** untuk PDF lepas) menghasilkan PDF dengan coretan
-  yang menyatu ke halaman. Goresan yang belum selesai ikut disimpan lebih dulu.
+  desktop **Simpan ke berkas ini** untuk PDF lepas) menghasilkan PDF berisi
+  halaman aslinya dengan anotasi di atasnya. Teks, tabel, dan gambarnya tetap
+  seperti aslinya: bisa dicari dan disalin. Stabilo dan coretan ditambahkan
+  sebagai garis dan bidang vektor, isian Tt sebagai teks, dan komentar sebagai
+  catatan tempel yang bisa dibuka di pembaca PDF mana pun. Goresan yang belum
+  selesai ikut disimpan lebih dulu.
   Di Android, pilih **Folder kerja** supaya berkasnya muncul di panel berkas.
   Halaman kosong yang ditambahkan **hanya ikut lewat cara ini** — penambahan
   halaman tidak mengubah berkas aslinya.

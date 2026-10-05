@@ -1,8 +1,12 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:pdfium_dart/pdfium_dart.dart' as pdfium;
+
+import '../../library/domain/entities/zotero_annotation.dart';
 
 /// Menyusun ulang halaman sebuah PDF tanpa menggambar ulang isinya.
 ///
@@ -149,7 +153,13 @@ class PdfPageEditor {
   /// sekali, karena panggilan baliknya berjalan di tengah pemanggilan pdfium
   /// dan menulis berkas dari sana mengundang kesulitan yang tidak perlu.
   static Future<void> _save(pdfium.PDFium lib, pdfium.FPDF_DOCUMENT doc, String target) async {
-    final chunks = <int>[];
+    final file = File(target);
+    await file.parent.create(recursive: true);
+    await file.writeAsBytes(_bytes(lib, doc), flush: true);
+  }
+
+  static Uint8List _bytes(pdfium.PDFium lib, pdfium.FPDF_DOCUMENT doc) {
+    final chunks = BytesBuilder(copy: false);
 
     late final NativeCallable<
       Int Function(Pointer<pdfium.FPDF_FILEWRITE>, Pointer<Void>, UnsignedLong)
@@ -159,7 +169,7 @@ class PdfPageEditor {
         NativeCallable<
           Int Function(Pointer<pdfium.FPDF_FILEWRITE>, Pointer<Void>, UnsignedLong)
         >.isolateLocal((Pointer<pdfium.FPDF_FILEWRITE> _, Pointer<Void> data, int size) {
-          chunks.addAll(data.cast<Uint8>().asTypedList(size));
+          chunks.add(Uint8List.fromList(data.cast<Uint8>().asTypedList(size)));
           return 1;
         }, exceptionalReturn: 0);
 
@@ -172,13 +182,286 @@ class PdfPageEditor {
       // sisa dokumen lama di dalam berkasnya.
       final ok = lib.FPDF_SaveAsCopy(doc, writer, 0);
       if (ok == 0) throw const FormatException('PDF-nya gagal ditulis');
-
-      final file = File(target);
-      await file.parent.create(recursive: true);
-      await file.writeAsBytes(chunks, flush: true);
+      return chunks.takeBytes();
     } finally {
       calloc.free(writer);
       callback.close();
     }
+  }
+
+  // ------------------------------------------------------- anotasi ke halaman
+
+  /// [source] dengan anotasinya digambar di atas halaman aslinya.
+  ///
+  /// Dulu PDF beranotasi dibuat dengan merender setiap halaman jadi gambar:
+  /// teks tidak bisa dicari atau disalin lagi, tabel jadi foto, dan berkasnya
+  /// membengkak. Sekarang halaman aslinya dibiarkan apa adanya — teks, tabel,
+  /// tautan, dan vektornya utuh — dan hanya anotasinya yang ditambahkan,
+  /// sebagai objek vektor PDF:
+  ///
+  /// - stabilo: kotak transparan dengan campuran *multiply*, jadi teks di
+  ///   bawahnya tetap terbaca dan tetap bisa dipilih;
+  /// - garis bawah: garis tipis;
+  /// - coretan: jalur bergaris bulat, setebal di layar;
+  /// - isian teks (Tt): teks PDF sungguhan, bukan gambar teks;
+  /// - komentar: catatan tempel PDF, yang dibuka dengan mengetuknya di
+  ///   pembaca PDF mana pun.
+  static Uint8List withAnnotations({
+    required String source,
+    required List<ZoteroAnnotation> Function(int pageNumber) annotationsFor,
+  }) {
+    final lib = _library();
+    final path = source.toNativeUtf8();
+    final doc = lib.FPDF_LoadDocument(path.cast(), nullptr);
+    malloc.free(path);
+    if (doc == nullptr) throw FileSystemException('PDF-nya tidak bisa dibuka', source);
+    try {
+      final count = lib.FPDF_GetPageCount(doc);
+      for (var i = 0; i < count; i++) {
+        final annotations = annotationsFor(i + 1);
+        if (annotations.isEmpty) continue;
+        final page = lib.FPDF_LoadPage(doc, i);
+        if (page == nullptr) continue;
+        try {
+          for (final annotation in annotations) {
+            _drawAnnotation(lib, doc, page, annotation);
+          }
+          if (lib.FPDFPage_GenerateContent(page) == 0) {
+            throw const FormatException('Isi halaman gagal ditulis ulang');
+          }
+        } finally {
+          lib.FPDF_ClosePage(page);
+        }
+      }
+      return _bytes(lib, doc);
+    } finally {
+      lib.FPDF_CloseDocument(doc);
+    }
+  }
+
+  static const int _fillNone = 0;
+  static const int _fillAlternate = 1;
+  static const int _capRound = 1;
+  static const int _joinRound = 1;
+  static const int _annotText = 1;
+
+  static void _drawAnnotation(
+    pdfium.PDFium lib,
+    pdfium.FPDF_DOCUMENT doc,
+    pdfium.FPDF_PAGE page,
+    ZoteroAnnotation annotation,
+  ) {
+    final (r, g, b) = _rgb(annotation.color);
+    switch (annotation.type) {
+      case AnnotationType.highlight:
+        for (final rect in annotation.rects) {
+          final box = lib.FPDFPageObj_CreateNewRect(
+            rect.left,
+            rect.bottom,
+            rect.width,
+            rect.height,
+          );
+          lib.FPDFPageObj_SetFillColor(box, r, g, b, 110);
+          lib.FPDFPath_SetDrawMode(box, _fillAlternate, 0);
+          _blend(lib, box, 'Multiply');
+          lib.FPDFPage_InsertObject(page, box);
+        }
+      case AnnotationType.underline:
+        for (final rect in annotation.rects) {
+          final line = lib.FPDFPageObj_CreateNewRect(rect.left, rect.bottom, rect.width, 1.6);
+          lib.FPDFPageObj_SetFillColor(line, r, g, b, 230);
+          lib.FPDFPath_SetDrawMode(line, _fillAlternate, 0);
+          lib.FPDFPage_InsertObject(page, line);
+        }
+      case AnnotationType.ink:
+        for (final stroke in annotation.paths) {
+          if (stroke.length == 0) continue;
+          final path = lib.FPDFPageObj_CreateNewPath(stroke.xAt(0), stroke.yAt(0));
+          if (stroke.length == 1) {
+            // Satu ketukan adalah titik; garis sepanjang nol tidak tergambar
+            // tanpa ujung bulat, jadi diberi panjang sekecil mungkin.
+            lib.FPDFPath_LineTo(path, stroke.xAt(0) + 0.01, stroke.yAt(0));
+          }
+          for (var i = 1; i < stroke.length; i++) {
+            lib.FPDFPath_LineTo(path, stroke.xAt(i), stroke.yAt(i));
+          }
+          lib.FPDFPageObj_SetStrokeColor(path, r, g, b, 235);
+          lib.FPDFPageObj_SetStrokeWidth(path, annotation.inkWidth);
+          lib.FPDFPageObj_SetLineCap(path, _capRound);
+          lib.FPDFPageObj_SetLineJoin(path, _joinRound);
+          lib.FPDFPath_SetDrawMode(path, _fillNone, 1);
+          lib.FPDFPage_InsertObject(page, path);
+        }
+      case AnnotationType.image:
+        for (final rect in annotation.rects) {
+          final box = lib.FPDFPageObj_CreateNewRect(
+            rect.left,
+            rect.bottom,
+            rect.width,
+            rect.height,
+          );
+          lib.FPDFPageObj_SetStrokeColor(box, r, g, b, 255);
+          lib.FPDFPageObj_SetStrokeWidth(box, 1.5);
+          lib.FPDFPath_SetDrawMode(box, _fillNone, 1);
+          lib.FPDFPage_InsertObject(page, box);
+        }
+      case AnnotationType.text:
+        final content = annotation.comment.trim();
+        if (content.isNotEmpty && annotation.rects.isNotEmpty) {
+          _drawText(lib, doc, page, annotation, content, (r, g, b));
+          return; // kata-katanya sudah di halaman; tidak perlu catatan tempel
+        }
+      case AnnotationType.note:
+        break;
+    }
+
+    // Komentar — dari catatan, atau yang menempel pada stabilo dan coretan —
+    // jadi catatan tempel PDF di sudut kiri atas anotasinya.
+    final comment = annotation.comment.trim();
+    final anchor = _topLeft(annotation);
+    if (comment.isEmpty || anchor == null) return;
+    final note = lib.FPDFPage_CreateAnnot(page, _annotText);
+    if (note == nullptr) return;
+    final rect = calloc<pdfium.FS_RECTF>();
+    try {
+      rect.ref
+        ..left = anchor.$1
+        ..top = anchor.$2
+        ..right = anchor.$1 + 18
+        ..bottom = anchor.$2 - 18;
+      lib.FPDFAnnot_SetRect(note, rect);
+      lib.FPDFAnnot_SetColor(
+        note,
+        pdfium.FPDFANNOT_COLORTYPE.FPDFANNOT_COLORTYPE_Color,
+        r,
+        g,
+        b,
+        255,
+      );
+      _setString(lib, note, 'Contents', comment);
+      _setString(
+        lib,
+        note,
+        'T',
+        annotation.authorName.isEmpty ? 'ReadPaper' : annotation.authorName,
+      );
+    } finally {
+      calloc.free(rect);
+      lib.FPDFPage_CloseAnnot(note);
+    }
+  }
+
+  /// Isian teks (alat Tt) sebagai teks PDF sungguhan.
+  ///
+  /// Huruf standar Helvetica, yang dikenal setiap pembaca PDF tanpa harus
+  /// disematkan. Baris dibungkus kira-kira selebar kotaknya, seperti di layar.
+  static void _drawText(
+    pdfium.PDFium lib,
+    pdfium.FPDF_DOCUMENT doc,
+    pdfium.FPDF_PAGE page,
+    ZoteroAnnotation annotation,
+    String content,
+    (int, int, int) color,
+  ) {
+    final size = (annotation.rawPosition?['fontSize'] as num?)?.toDouble() ?? 12;
+    var left = annotation.rects.first.left;
+    var top = annotation.rects.first.top;
+    var width = annotation.rects.first.width;
+    for (final rect in annotation.rects.skip(1)) {
+      left = math.min(left, rect.left);
+      top = math.max(top, rect.top);
+      width = math.max(width, rect.right - left);
+    }
+    final perLine = width <= 1 ? 1 << 20 : math.max(1, (width / (size * 0.5)).floor());
+    final lines = <String>[
+      for (final paragraph in content.split('\n')) ..._wrap(paragraph, perLine),
+    ];
+    final font = 'Helvetica'.toNativeUtf8();
+    try {
+      for (var i = 0; i < lines.length; i++) {
+        final text = lib.FPDFPageObj_NewTextObj(doc, font.cast(), size);
+        if (text == nullptr) continue;
+        final wide = _wide(lines[i]);
+        lib.FPDFText_SetText(text, wide.cast());
+        calloc.free(wide);
+        lib.FPDFPageObj_SetFillColor(text, color.$1, color.$2, color.$3, 255);
+        lib.FPDFPageObj_Transform(text, 1, 0, 0, 1, left, top - size * (1 + i * 1.15));
+        lib.FPDFPage_InsertObject(page, text);
+      }
+    } finally {
+      malloc.free(font);
+    }
+  }
+
+  static List<String> _wrap(String paragraph, int perLine) {
+    if (paragraph.length <= perLine) return <String>[paragraph];
+    final out = <String>[];
+    var line = StringBuffer();
+    for (final word in paragraph.split(' ')) {
+      if (line.isNotEmpty && line.length + 1 + word.length > perLine) {
+        out.add(line.toString());
+        line = StringBuffer();
+      }
+      if (line.isNotEmpty) line.write(' ');
+      line.write(word);
+    }
+    if (line.isNotEmpty) out.add(line.toString());
+    return out;
+  }
+
+  static (double, double)? _topLeft(ZoteroAnnotation annotation) {
+    if (annotation.rects.isNotEmpty) {
+      return (
+        annotation.rects.map((r) => r.left).reduce(math.min),
+        annotation.rects.map((r) => r.top).reduce(math.max),
+      );
+    }
+    final points = annotation.paths.where((p) => p.length > 0).toList();
+    if (points.isEmpty) return null;
+    var x = double.infinity;
+    var y = -double.infinity;
+    for (final stroke in points) {
+      for (var i = 0; i < stroke.length; i++) {
+        x = math.min(x, stroke.xAt(i));
+        y = math.max(y, stroke.yAt(i));
+      }
+    }
+    return (x, y);
+  }
+
+  static void _blend(pdfium.PDFium lib, pdfium.FPDF_PAGEOBJECT object, String mode) {
+    final native = mode.toNativeUtf8();
+    lib.FPDFPageObj_SetBlendMode(object, native.cast());
+    malloc.free(native);
+  }
+
+  static void _setString(
+    pdfium.PDFium lib,
+    pdfium.FPDF_ANNOTATION annot,
+    String key,
+    String value,
+  ) {
+    final k = key.toNativeUtf8();
+    final v = _wide(value);
+    lib.FPDFAnnot_SetStringValue(annot, k.cast(), v.cast());
+    malloc.free(k);
+    calloc.free(v);
+  }
+
+  /// UTF-16LE berakhiran nol, bentuk string yang diminta pdfium.
+  static Pointer<Uint16> _wide(String value) {
+    final units = value.codeUnits;
+    final out = calloc<Uint16>(units.length + 1);
+    for (var i = 0; i < units.length; i++) {
+      out[i] = units[i];
+    }
+    out[units.length] = 0;
+    return out;
+  }
+
+  static (int, int, int) _rgb(String hex) {
+    final clean = hex.replaceFirst('#', '');
+    final value = int.tryParse(clean.length == 6 ? clean : 'ffd400', radix: 16) ?? 0xffd400;
+    return ((value >> 16) & 0xff, (value >> 8) & 0xff, value & 0xff);
   }
 }

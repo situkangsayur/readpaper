@@ -1347,8 +1347,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   /// Renders every page with its annotations into one PDF.
-  Future<Uint8List> _annotatedPdf() =>
-      exportPagesAsPdf(pages: _controller.pages, annotationsFor: _onPage, scale: 2);
+  /// PDF berisi halaman aslinya dengan anotasi di atasnya.
+  ///
+  /// Halaman aslinya tidak dirender jadi gambar: teks tetap bisa dicari dan
+  /// disalin, tabel tetap tabel, dan hanya coretan yang jadi gambar — sebagai
+  /// vektor. Merender jadi gambar hanya jalan terakhir, untuk PDF yang tidak
+  /// bisa dibuka pdfium untuk ditulisi (misalnya yang dienkripsi).
+  Future<Uint8List> _annotatedPdf() async {
+    try {
+      return PdfPageEditor.withAnnotations(source: _path, annotationsFor: _onPage);
+    } on Object {
+      _say('PDF ini tidak bisa ditulisi langsung; halamannya disimpan sebagai gambar.');
+      return exportPagesAsPdf(pages: _controller.pages, annotationsFor: _onPage, scale: 2);
+    }
+  }
 
   Future<void> _shareAnnotated() async {
     _say('Menyiapkan berkas…');
