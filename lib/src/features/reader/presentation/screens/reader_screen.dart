@@ -500,14 +500,63 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _say(_erasing ? 'Penghapus aktif — sapukan di atas coretan' : 'Kembali menulis');
   }
 
-  Widget _eraserButton({double? iconSize}) => IconButton(
-    tooltip: _erasing ? 'Kembali menulis' : 'Penghapus — buang coretan yang salah',
-    iconSize: iconSize,
-    isSelected: _erasing,
-    selectedIcon: const Icon(Icons.auto_fix_off),
-    icon: const Icon(Icons.auto_fix_normal),
-    onPressed: _toggleEraser,
+  /// Berlabel, bukan ikon saja: tidak ada ikon penghapus yang dikenal di
+  /// set ikon aplikasi ini, dan tongkat ajaib yang dulu dipakai tidak terbaca
+  /// sebagai penghapus — di tablet, saat menyajikan, ia dicari dan tidak
+  /// ditemukan padahal ada.
+  Widget _eraserButton() => Tooltip(
+    message: _erasing ? 'Kembali menulis' : 'Penghapus — sapukan di atas coretan yang salah',
+    child: _erasing
+        ? FilledButton.tonalIcon(
+            onPressed: _toggleEraser,
+            icon: const Icon(Icons.auto_fix_off, size: 18),
+            label: const Text('Penghapus'),
+          )
+        : TextButton.icon(
+            onPressed: _toggleEraser,
+            icon: const Icon(Icons.auto_fix_normal, size: 18),
+            label: const Text('Penghapus'),
+          ),
   );
+
+  /// Warna sebelum tinta putih dipilih lewat tombol cepatnya.
+  String? _colorBeforeWhite;
+
+  /// Tombol cepat tinta putih, di luar menu warna.
+  ///
+  /// Tinta putih dipakai untuk menutup kesalahan di tengah menulis — saat itu
+  /// membuka menu empat belas warna dan menggulir ke bawah terlalu lama, dan
+  /// warna yang tersembunyi di dalam menu dianggap tidak ada. Ketuk lagi untuk
+  /// kembali ke warna sebelumnya.
+  Widget _whiteInkButton() {
+    final on = _color == AnnotationPalette.white;
+    return IconButton(
+      tooltip: on ? 'Kembali ke warna sebelumnya' : 'Tinta putih — menutup coretan',
+      isSelected: on,
+      onPressed: () {
+        if (on) {
+          _switchPen(color: _colorBeforeWhite ?? AnnotationPalette.ink);
+        } else {
+          _colorBeforeWhite = _color;
+          _switchPen(color: AnnotationPalette.white);
+        }
+      },
+      icon: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: on
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
+            width: on ? 2.5 : 1.2,
+          ),
+        ),
+      ),
+    );
+  }
 
   /// Membuang setiap goresan di [pageNumber] yang dilewati [eraser]: yang
   /// belum disimpan, dan yang sudah jadi anotasi tinta.
@@ -2084,7 +2133,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 colors: AnnotationPalette.inkColors,
                                 onSelected: (value) => _switchPen(color: value),
                               ),
-                              _eraserButton(iconSize: 20),
+                              _whiteInkButton(),
+                              _eraserButton(),
                               IconButton(
                                 tooltip: 'Urungkan goresan terakhir',
                                 iconSize: 20,
@@ -2414,6 +2464,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         colors: AnnotationPalette.inkColors,
                         onSelected: (value) => _switchPen(color: value),
                       ),
+                      _whiteInkButton(),
                       _eraserButton(),
                       IconButton(
                         tooltip: 'Urungkan goresan terakhir',

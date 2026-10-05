@@ -1499,6 +1499,12 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       ("tip-ex" di halaman putih) dan hitam; stabilo tidak, karena stabilo
       putih tidak menandai apa pun
 
+- [x] **Penghapus dan tinta putih yang terlihat** (2026-10-05). Di tablet, saat
+      menyajikan, keduanya dicari dan tidak ditemukan: penghapus berupa ikon
+      tongkat ajaib yang tidak terbaca sebagai penghapus, dan tinta putih
+      tersembunyi di dalam menu empat belas warna. Sekarang penghapus berlabel
+      "Penghapus", dan tinta putih punya tombol cepat sendiri di samping pemilih
+      warna — ketuk lagi untuk kembali ke warna sebelumnya
 - [x] **Ulangi (redo)** di pembaca (2026-10-05), di sebelah setiap Urungkan:
       bilah atas, bilah pena, dan bilah bawah mode menyajikan, ditambah
       Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y (⌘ di Mac). Setiap langkah kini mencatat

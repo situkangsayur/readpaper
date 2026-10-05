@@ -227,7 +227,7 @@ sudut bingkainya. Stabilo dan garis bawah tidak bisa diputar.
 
 ### Salah menulis
 
-- **Penghapus** (ikon tongkat di bilah pena): sapukan di atas coretan yang
+- **Penghapus** (tombol berlabel "Penghapus" di bilah pena): sapukan di atas coretan yang
   salah. Goresan yang tersentuh dibuang utuh, termasuk coretan yang sudah
   tersimpan. **Urungkan** mengembalikannya. Ujung penghapus stylus langsung
   menghapus tanpa perlu menyalakan sakelar.
@@ -235,7 +235,8 @@ sudut bingkainya. Stabilo dan garis bawah tidak bisa diputar.
   bawah saat menyajikan. Di desktop: **Ctrl+Z** untuk urungkan, **Ctrl+Shift+Z**
   atau **Ctrl+Y** untuk ulangi. Selama pena aktif, keduanya bekerja pada
   goresan yang belum disimpan lebih dulu.
-- **Tinta putih** untuk menutup sesuatu di halaman putih. Penghapus tetap cara
+- **Tinta putih** (lingkaran putih di samping pemilih warna; ketuk lagi untuk
+  kembali ke warna sebelumnya) untuk menutup sesuatu di halaman putih. Penghapus tetap cara
   yang lebih bersih: tinta putih ikut tersimpan dan terlihat di atas halaman
   yang tidak putih.
 
