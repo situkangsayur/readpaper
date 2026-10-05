@@ -145,7 +145,9 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   yang ada).
 
 - **Penghapus pena** yang membuang goresan utuh, termasuk coretan yang sudah
-  tersimpan, dan bisa diurungkan. **Tinta putih dan hitam** di palet pena.
+  tersimpan, dan bisa diurungkan.
+- **Urungkan dan ulangi** untuk semua perubahan anotasi dan goresan, dengan
+  Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y di desktop. **Tinta putih dan hitam** di palet pena.
 
 ## Menyajikan
 

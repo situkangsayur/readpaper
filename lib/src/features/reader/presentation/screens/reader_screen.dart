@@ -462,6 +462,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     setState(() {
       _inkPage = pageNumber;
       _pendingInk.add(stroke);
+      _redoStrokes.clear();
     });
   }
 
@@ -537,27 +538,43 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       if (kept.length == annotation.paths.length) continue;
       removed += annotation.paths.length - kept.length;
       if (kept.isEmpty) {
-        _pushUndo('menghapus coretan', () => _persist(annotation, isNew: true, recordUndo: false));
+        _recordChange('menghapus coretan', before: annotation, after: null);
         await _removeAnnotation(annotation);
       } else {
-        _pushUndo('menghapus goresan', () => _persist(annotation, isNew: false));
-        await _persist(
-          annotation.copyWith(paths: kept, dateModified: DateTime.now()),
-          isNew: false,
-        );
+        final trimmed = annotation.copyWith(paths: kept, dateModified: DateTime.now());
+        _recordChange('menghapus goresan', before: annotation, after: trimmed);
+        await _persist(trimmed, isNew: false, recordUndo: false);
       }
     }
     if (removed == 0) _say('Tidak ada coretan yang tersentuh penghapus');
   }
 
+  /// Goresan tertunda yang baru diurungkan, untuk diulangi.
+  final List<InkPath> _redoStrokes = <InkPath>[];
+
   void _undoStroke() {
     if (_pendingInk.isEmpty) return;
-    setState(_pendingInk.removeLast);
+    setState(() => _redoStrokes.add(_pendingInk.removeLast()));
   }
+
+  void _redoStroke() {
+    if (_redoStrokes.isEmpty) return;
+    setState(() => _pendingInk.add(_redoStrokes.removeLast()));
+  }
+
+  /// Ulangi yang berlaku sekarang: goresan tertunda lebih dulu, karena itu
+  /// yang baru saja diurungkan selagi menulis.
+  VoidCallback? get _redoAction =>
+      _redoStrokes.isNotEmpty ? _redoStroke : (_redoSteps.isEmpty ? null : _redoLast);
+
+  String get _redoTooltip => _redoStrokes.isNotEmpty
+      ? 'Ulangi goresan'
+      : (_redoSteps.isEmpty ? 'Tidak ada yang bisa diulangi' : 'Ulangi: ${_redoSteps.last.label}');
 
   void _discardInk() {
     setState(() {
       _pendingInk.clear();
+      _redoStrokes.clear();
       _inkPage = null;
     });
   }
@@ -884,20 +901,52 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// jalan adalah mencarinya di daftar dan menghapusnya.
   final List<_UndoStep> _undoSteps = <_UndoStep>[];
 
-  void _pushUndo(String label, Future<void> Function() action) {
+  /// Langkah yang baru diurungkan, untuk diulangi lagi.
+  ///
+  /// Setiap langkah mencatat keadaan anotasinya sebelum dan sesudah — bukan
+  /// hanya cara membatalkannya — jadi mengulangi sama mudahnya dengan
+  /// mengurungkan. Perubahan baru mengosongkannya, seperti di aplikasi lain:
+  /// mengulangi sesuatu di atas keadaan yang sudah berbeda hanya membingungkan.
+  final List<_UndoStep> _redoSteps = <_UndoStep>[];
+
+  void _recordChange(
+    String label, {
+    required ZoteroAnnotation? before,
+    required ZoteroAnnotation? after,
+  }) {
     setState(() {
-      _undoSteps.add(_UndoStep(label, action));
+      _undoSteps.add(_UndoStep(label, before: before, after: after));
       // Dua puluh langkah sudah lebih dari yang diingat siapa pun.
       if (_undoSteps.length > 20) _undoSteps.removeAt(0);
+      _redoSteps.clear();
     });
   }
 
   Future<void> _undoLast() async {
     if (_undoSteps.isEmpty) return;
     final step = _undoSteps.removeLast();
-    setState(() {});
-    await step.action();
+    setState(() => _redoSteps.add(step));
+    await _applyState(step.key, step.before);
     if (mounted) _say('Diurungkan: ${step.label}');
+  }
+
+  Future<void> _redoLast() async {
+    if (_redoSteps.isEmpty) return;
+    final step = _redoSteps.removeLast();
+    setState(() => _undoSteps.add(step));
+    await _applyState(step.key, step.after);
+    if (mounted) _say('Diulangi: ${step.label}');
+  }
+
+  /// Membuat anotasi [key] menjadi [target]: dihapus bila null, ditambahkan
+  /// bila belum ada, diganti bila sudah.
+  Future<void> _applyState(String key, ZoteroAnnotation? target) async {
+    final current = _annotations.where((a) => a.key == key).firstOrNull;
+    if (target == null) {
+      if (current != null) await _removeAnnotation(current);
+      return;
+    }
+    await _persist(target, isNew: current == null, recordUndo: false);
   }
 
   /// True when writing back over [widget.filePath] would achieve nothing.
@@ -1669,6 +1718,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         onPressed: _undoSteps.isEmpty ? null : _undoLast,
       ),
       IconButton(
+        tooltip: _redoSteps.isEmpty
+            ? 'Belum ada yang bisa diulangi'
+            : 'Ulangi: ${_redoSteps.last.label}',
+        icon: const Icon(Icons.redo),
+        onPressed: _redoSteps.isEmpty ? null : _redoLast,
+      ),
+      IconButton(
         tooltip: 'Tanda tangan',
         isSelected: _pendingSignature != null,
         selectedIcon: const Icon(Icons.draw),
@@ -1835,264 +1891,303 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       const SizedBox(width: 4),
     ];
 
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: (_readingMode || _presentMode)
-          ? null
-          : AppBar(
-              title: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    widget.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  // Tappable: the page number is exactly where you look when you
-                  // want to be on a different page.
-                  InkWell(
-                    onTap: _loading ? null : _navigate,
-                    borderRadius: BorderRadius.circular(4),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Text(
-                            '${_unsaved ? '• ' : ''}'
-                            '${_annotations.length} anotasi · halaman $_currentPage'
-                            '${_controller.isReady ? ' dari ${_controller.pages.length}' : ''}',
-                            style: Theme.of(context).textTheme.labelSmall,
-                          ),
-                          const SizedBox(width: 3),
-                          Icon(
-                            Icons.unfold_more,
-                            size: 12,
-                            color: Theme.of(context).textTheme.labelSmall?.color,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              // Di layar sempit tombolnya pindah ke baris sendiri di bawah judul.
-              // Sebelumnya semuanya berdesakan di kanan judul, dan AppBar
-              // memberi judul kotak tetap: keterangan dokumen — jumlah anotasi
-              // dan nomor halaman — tertutup tombol-tombol di atasnya.
-              actions: isWide ? tools : const <Widget>[],
-              bottom: isWide
-                  ? null
-                  : PreferredSize(
-                      preferredSize: const Size.fromHeight(50),
-                      child: SizedBox(
-                        height: 50,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Row(children: tools),
-                        ),
-                      ),
-                    ),
-            ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: <Widget>[
-                if (_error != null)
-                  Material(
-                    color: scheme.errorContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Text(
-                        _error!,
-                        style: TextStyle(color: scheme.onErrorContainer, fontSize: 12),
-                      ),
-                    ),
-                  ),
-                if (_showCoach && !_markerMode && !_noteMode && !_readingMode && !_presentMode)
-                  Material(
-                    color: scheme.surfaceContainerHighest,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
-                      child: Row(
-                        children: <Widget>[
-                          Icon(Icons.touch_app_outlined, size: 18, color: scheme.onSurfaceVariant),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Untuk menandai: tekan "Tandai", pilih warna, lalu sapukan jari '
-                              'di atas teks — begitu jari diangkat teks langsung berwarna. '
-                              'Untuk menyalin: biarkan "Tandai" mati, tekan lama di teks, '
-                              'lalu pilih Salin. Untuk catatan: tekan ikon catatan, lalu '
-                              'ketuk halaman.',
-                              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5),
-                            ),
-                          ),
-                          IconButton(
-                            iconSize: 18,
-                            tooltip: 'Mengerti',
-                            icon: const Icon(Icons.close),
-                            onPressed: () => setState(() => _showCoach = false),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                if (_markerMode)
-                  Material(
-                    color: scheme.tertiaryContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                      child: Row(
-                        children: <Widget>[
-                          Icon(Icons.border_color, size: 18, color: scheme.onTertiaryContainer),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Sapukan jari di atas teks — lepas jari, langsung ditandai '
-                              '${AnnotationPalette.names[_color] ?? _color.toLowerCase()}. '
-                              'Geser halaman dan salin teks nonaktif; tekan Selesai untuk '
-                              'kembali.',
-                              style: TextStyle(color: scheme.onTertiaryContainer, fontSize: 13),
-                            ),
-                          ),
-                          _ColorButton(
-                            color: _color,
-                            onSelected: (value) => _switchPen(color: value),
-                          ),
-                          TextButton(
-                            onPressed: () => setState(() => _markerMode = false),
-                            child: const Text('Selesai'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                // Saat menyajikan, alat pena pindah ke bilah bawah. Di atas
-                // sini, tanpa AppBar dan dengan mode imersif, bilah ini duduk
-                // di bawah bilah status dan lubang kamera: Selesai dan Buang di
-                // ujung kanannya terlihat, tetapi sentuhannya diambil sistem.
-                if (_penMode && !_presentMode)
-                  Material(
-                    color: scheme.primaryContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
-                      child: Row(
-                        children: <Widget>[
-                          Icon(Icons.draw, size: 18, color: scheme.onPrimaryContainer),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              _erasing
-                                  ? 'Penghapus: sapukan di atas coretan yang salah — '
-                                        'goresan yang tersentuh dibuang utuh.'
-                                  : _pendingInk.isEmpty
-                                  ? 'Gambar bebas di halaman dengan jari atau stylus.'
-                                  : '${_pendingInk.length} goresan di halaman $_inkPage — '
-                                        'disimpan saat menekan Selesai.',
-                              style: TextStyle(color: scheme.onPrimaryContainer, fontSize: 13),
-                            ),
-                          ),
-                          _WidthButton(
-                            width: _inkWidth,
-                            onSelected: (value) => _switchPen(width: value),
-                          ),
-                          // Lewat _switchPen, sama seperti tombol warna di
-                          // bilah atas: inilah tombol yang benar-benar dipakai
-                          // orang **sambil** menggambar, dan mengganti warna di
-                          // sini tanpa menutup goresan yang sedang terkumpul
-                          // akan mewarnai ulang semuanya.
-                          _ColorButton(
-                            color: _color,
-                            colors: AnnotationPalette.inkColors,
-                            onSelected: (value) => _switchPen(color: value),
-                          ),
-                          _eraserButton(iconSize: 20),
-                          IconButton(
-                            tooltip: 'Urungkan goresan terakhir',
-                            iconSize: 20,
-                            icon: const Icon(Icons.undo),
-                            onPressed: _pendingInk.isEmpty ? null : _undoStroke,
-                          ),
-                          IconButton(
-                            tooltip: 'Buang semua goresan yang belum disimpan',
-                            iconSize: 20,
-                            icon: const Icon(Icons.delete_outline),
-                            onPressed: _pendingInk.isEmpty ? null : _discardInk,
-                          ),
-                          TextButton(onPressed: _togglePen, child: const Text('Selesai')),
-                        ],
-                      ),
-                    ),
-                  ),
-                if (_noteMode)
-                  Material(
-                    color: scheme.secondaryContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                      child: Row(
-                        children: <Widget>[
-                          Icon(
-                            Icons.touch_app_outlined,
-                            size: 18,
-                            color: scheme.onSecondaryContainer,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Ketuk tempat di halaman untuk menaruh catatan.',
-                              style: TextStyle(color: scheme.onSecondaryContainer, fontSize: 13),
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => setState(() => _noteMode = false),
-                            child: const Text('Batal'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                Expanded(
-                  child: Row(
+    // Ctrl+Z dan Ctrl+Shift+Z / Ctrl+Y di desktop — ⌘ di Mac. Di layar sentuh
+    // tombolnya yang dipakai, tetapi di papan ketik tangan sudah mencari
+    // pintasan ini sebelum mencari ikonnya.
+    return CallbackShortcuts(
+      bindings: <ShortcutActivator, VoidCallback>{
+        const SingleActivator(LogicalKeyboardKey.keyZ, control: true): _undoAny,
+        const SingleActivator(LogicalKeyboardKey.keyZ, meta: true): _undoAny,
+        const SingleActivator(LogicalKeyboardKey.keyZ, control: true, shift: true): () =>
+            _redoAction?.call(),
+        const SingleActivator(LogicalKeyboardKey.keyZ, meta: true, shift: true): () =>
+            _redoAction?.call(),
+        const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => _redoAction?.call(),
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          key: _scaffoldKey,
+          appBar: (_readingMode || _presentMode)
+              ? null
+              : AppBar(
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Expanded(child: _buildViewer(scheme)),
-                      if (_showSidebar && isWide && !_readingMode && !_presentMode) ...<Widget>[
-                        const VerticalDivider(width: 1),
-                        SizedBox(
-                          width: 320,
-                          child: AnnotationSidebar(
-                            annotations: _annotations,
-                            selectedKey: _selectedAnnotationKey,
-                            onTap: _goToAnnotation,
-                            onEdit: _editAnnotation,
-                            onDelete: _deleteAnnotation,
+                      Text(
+                        widget.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      // Tappable: the page number is exactly where you look when you
+                      // want to be on a different page.
+                      InkWell(
+                        onTap: _loading ? null : _navigate,
+                        borderRadius: BorderRadius.circular(4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 2),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Text(
+                                '${_unsaved ? '• ' : ''}'
+                                '${_annotations.length} anotasi · halaman $_currentPage'
+                                '${_controller.isReady ? ' dari ${_controller.pages.length}' : ''}',
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
+                              const SizedBox(width: 3),
+                              Icon(
+                                Icons.unfold_more,
+                                size: 12,
+                                color: Theme.of(context).textTheme.labelSmall?.color,
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ],
                   ),
+                  // Di layar sempit tombolnya pindah ke baris sendiri di bawah judul.
+                  // Sebelumnya semuanya berdesakan di kanan judul, dan AppBar
+                  // memberi judul kotak tetap: keterangan dokumen — jumlah anotasi
+                  // dan nomor halaman — tertutup tombol-tombol di atasnya.
+                  actions: isWide ? tools : const <Widget>[],
+                  bottom: isWide
+                      ? null
+                      : PreferredSize(
+                          preferredSize: const Size.fromHeight(50),
+                          child: SizedBox(
+                            height: 50,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: Row(children: tools),
+                            ),
+                          ),
+                        ),
                 ),
-              ],
-            ),
-      endDrawer: isWide
-          ? null
-          : Drawer(
-              child: SafeArea(
-                child: AnnotationSidebar(
-                  annotations: _annotations,
-                  selectedKey: _selectedAnnotationKey,
-                  onTap: (annotation) {
-                    Navigator.of(context).pop();
-                    _goToAnnotation(annotation);
-                  },
-                  onEdit: _editAnnotation,
-                  onDelete: _deleteAnnotation,
+          body: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: <Widget>[
+                    if (_error != null)
+                      Material(
+                        color: scheme.errorContainer,
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Text(
+                            _error!,
+                            style: TextStyle(color: scheme.onErrorContainer, fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    if (_showCoach && !_markerMode && !_noteMode && !_readingMode && !_presentMode)
+                      Material(
+                        color: scheme.surfaceContainerHighest,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 8, 6, 8),
+                          child: Row(
+                            children: <Widget>[
+                              Icon(
+                                Icons.touch_app_outlined,
+                                size: 18,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Untuk menandai: tekan "Tandai", pilih warna, lalu sapukan jari '
+                                  'di atas teks — begitu jari diangkat teks langsung berwarna. '
+                                  'Untuk menyalin: biarkan "Tandai" mati, tekan lama di teks, '
+                                  'lalu pilih Salin. Untuk catatan: tekan ikon catatan, lalu '
+                                  'ketuk halaman.',
+                                  style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12.5),
+                                ),
+                              ),
+                              IconButton(
+                                iconSize: 18,
+                                tooltip: 'Mengerti',
+                                icon: const Icon(Icons.close),
+                                onPressed: () => setState(() => _showCoach = false),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (_markerMode)
+                      Material(
+                        color: scheme.tertiaryContainer,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                          child: Row(
+                            children: <Widget>[
+                              Icon(Icons.border_color, size: 18, color: scheme.onTertiaryContainer),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Sapukan jari di atas teks — lepas jari, langsung ditandai '
+                                  '${AnnotationPalette.names[_color] ?? _color.toLowerCase()}. '
+                                  'Geser halaman dan salin teks nonaktif; tekan Selesai untuk '
+                                  'kembali.',
+                                  style: TextStyle(color: scheme.onTertiaryContainer, fontSize: 13),
+                                ),
+                              ),
+                              _ColorButton(
+                                color: _color,
+                                onSelected: (value) => _switchPen(color: value),
+                              ),
+                              TextButton(
+                                onPressed: () => setState(() => _markerMode = false),
+                                child: const Text('Selesai'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    // Saat menyajikan, alat pena pindah ke bilah bawah. Di atas
+                    // sini, tanpa AppBar dan dengan mode imersif, bilah ini duduk
+                    // di bawah bilah status dan lubang kamera: Selesai dan Buang di
+                    // ujung kanannya terlihat, tetapi sentuhannya diambil sistem.
+                    if (_penMode && !_presentMode)
+                      Material(
+                        color: scheme.primaryContainer,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
+                          child: Row(
+                            children: <Widget>[
+                              Icon(Icons.draw, size: 18, color: scheme.onPrimaryContainer),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  _erasing
+                                      ? 'Penghapus: sapukan di atas coretan yang salah — '
+                                            'goresan yang tersentuh dibuang utuh.'
+                                      : _pendingInk.isEmpty
+                                      ? 'Gambar bebas di halaman dengan jari atau stylus.'
+                                      : '${_pendingInk.length} goresan di halaman $_inkPage — '
+                                            'disimpan saat menekan Selesai.',
+                                  style: TextStyle(color: scheme.onPrimaryContainer, fontSize: 13),
+                                ),
+                              ),
+                              _WidthButton(
+                                width: _inkWidth,
+                                onSelected: (value) => _switchPen(width: value),
+                              ),
+                              // Lewat _switchPen, sama seperti tombol warna di
+                              // bilah atas: inilah tombol yang benar-benar dipakai
+                              // orang **sambil** menggambar, dan mengganti warna di
+                              // sini tanpa menutup goresan yang sedang terkumpul
+                              // akan mewarnai ulang semuanya.
+                              _ColorButton(
+                                color: _color,
+                                colors: AnnotationPalette.inkColors,
+                                onSelected: (value) => _switchPen(color: value),
+                              ),
+                              _eraserButton(iconSize: 20),
+                              IconButton(
+                                tooltip: 'Urungkan goresan terakhir',
+                                iconSize: 20,
+                                icon: const Icon(Icons.undo),
+                                onPressed: _pendingInk.isEmpty ? null : _undoStroke,
+                              ),
+                              IconButton(
+                                tooltip: _redoTooltip,
+                                iconSize: 20,
+                                icon: const Icon(Icons.redo),
+                                onPressed: _redoAction,
+                              ),
+                              IconButton(
+                                tooltip: 'Buang semua goresan yang belum disimpan',
+                                iconSize: 20,
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: _pendingInk.isEmpty ? null : _discardInk,
+                              ),
+                              TextButton(onPressed: _togglePen, child: const Text('Selesai')),
+                            ],
+                          ),
+                        ),
+                      ),
+                    if (_noteMode)
+                      Material(
+                        color: scheme.secondaryContainer,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                          child: Row(
+                            children: <Widget>[
+                              Icon(
+                                Icons.touch_app_outlined,
+                                size: 18,
+                                color: scheme.onSecondaryContainer,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Ketuk tempat di halaman untuk menaruh catatan.',
+                                  style: TextStyle(
+                                    color: scheme.onSecondaryContainer,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => setState(() => _noteMode = false),
+                                child: const Text('Batal'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    Expanded(
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(child: _buildViewer(scheme)),
+                          if (_showSidebar && isWide && !_readingMode && !_presentMode) ...<Widget>[
+                            const VerticalDivider(width: 1),
+                            SizedBox(
+                              width: 320,
+                              child: AnnotationSidebar(
+                                annotations: _annotations,
+                                selectedKey: _selectedAnnotationKey,
+                                onTap: _goToAnnotation,
+                                onEdit: _editAnnotation,
+                                onDelete: _deleteAnnotation,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
+          endDrawer: isWide
+              ? null
+              : Drawer(
+                  child: SafeArea(
+                    child: AnnotationSidebar(
+                      annotations: _annotations,
+                      selectedKey: _selectedAnnotationKey,
+                      onTap: (annotation) {
+                        Navigator.of(context).pop();
+                        _goToAnnotation(annotation);
+                      },
+                      onEdit: _editAnnotation,
+                      onDelete: _deleteAnnotation,
+                    ),
+                  ),
+                ),
+        ),
+      ),
     );
+  }
+
+  /// Urungkan yang berlaku sekarang: goresan tertunda lebih dulu.
+  void _undoAny() {
+    if (_pendingInk.isNotEmpty) {
+      _undoStroke();
+    } else if (_undoSteps.isNotEmpty) {
+      _undoLast();
+    }
   }
 
   /// Peristiwa ini milik pena stylus, bukan tangan.
@@ -2328,6 +2423,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                             : (_undoSteps.isEmpty ? null : _undoLast),
                       ),
                       IconButton(
+                        tooltip: _redoTooltip,
+                        icon: const Icon(Icons.redo),
+                        onPressed: _redoAction,
+                      ),
+                      IconButton(
                         tooltip: 'Buang semua goresan yang belum disimpan',
                         icon: const Icon(Icons.delete_outline),
                         onPressed: _pendingInk.isEmpty ? null : _discardInk,
@@ -2382,6 +2482,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         onPressed: _pendingInk.isNotEmpty
                             ? _undoStroke
                             : (_undoSteps.isEmpty ? null : _undoLast),
+                      ),
+                      IconButton(
+                        tooltip: _redoTooltip,
+                        icon: const Icon(Icons.redo),
+                        onPressed: _redoAction,
                       ),
                       IconButton(
                         tooltip: _stylusOnly
@@ -2664,9 +2769,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
     if (identical(changed, annotation)) return;
 
-    _pushUndo('mengubah bentuk anotasi', () async {
-      await _persist(annotation, isNew: false, recordUndo: false);
-    });
+    _recordChange('mengubah bentuk anotasi', before: annotation, after: changed);
     await _persist(changed, isNew: false, recordUndo: false);
   }
 
@@ -2687,9 +2790,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
     if (identical(moved, annotation)) return;
 
-    _pushUndo('memindahkan anotasi', () async {
-      await _persist(annotation, isNew: false, recordUndo: false);
-    });
+    _recordChange('memindahkan anotasi', before: annotation, after: moved);
     await _persist(moved, isNew: false, recordUndo: false);
   }
 
@@ -2935,16 +3036,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
     // Menyunting komentar atau warna juga bisa diurungkan: yang sudah
     // ditulis sebelumnya tidak boleh hilang hanya karena salah tekan.
-    _pushUndo('mengubah anotasi', () => _persist(annotation, isNew: false, recordUndo: false));
-    await _persist(
-      annotation.copyWith(
-        comment: result.comment,
-        color: result.color,
-        dateModified: DateTime.now(),
-      ),
-      isNew: false,
-      recordUndo: false,
+    final edited = annotation.copyWith(
+      comment: result.comment,
+      color: result.color,
+      dateModified: DateTime.now(),
     );
+    _recordChange('mengubah anotasi', before: annotation, after: edited);
+    await _persist(edited, isNew: false, recordUndo: false);
   }
 
   Future<void> _deleteAnnotation(ZoteroAnnotation annotation) async {
@@ -2977,7 +3075,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     // `recordUndo: false`: mengembalikannya bukan langkah baru yang perlu
     // diurungkan lagi.
-    _pushUndo('menghapus anotasi', () => _persist(annotation, isNew: true, recordUndo: false));
+    _recordChange('menghapus anotasi', before: annotation, after: null);
     await _removeAnnotation(annotation);
   }
 
@@ -3021,7 +3119,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     bool recordUndo = true,
   }) async {
     if (isNew && recordUndo) {
-      _pushUndo('menambah ${annotation.type.wire}', () => _removeAnnotation(annotation));
+      _recordChange('menambah ${annotation.type.wire}', before: null, after: annotation);
     }
     if (widget.isStandalone) {
       setState(() {
@@ -3227,13 +3325,21 @@ class _ReadingChip extends StatelessWidget {
   }
 }
 
-/// Satu langkah yang bisa diurungkan.
+/// Satu langkah yang bisa diurungkan dan diulangi.
 class _UndoStep {
-  const _UndoStep(this.label, this.action);
+  _UndoStep(this.label, {required this.before, required this.after})
+    : assert(before != null || after != null);
 
   /// Disebut apa saat diurungkan, supaya yang menekan tahu apa yang kembali.
   final String label;
-  final Future<void> Function() action;
+
+  /// Keadaan anotasinya sebelum langkah ini; null berarti belum ada.
+  final ZoteroAnnotation? before;
+
+  /// Keadaan anotasinya sesudah langkah ini; null berarti sudah dihapus.
+  final ZoteroAnnotation? after;
+
+  String get key => (after ?? before)!.key;
 }
 
 /// Koleksi yang dipilih saat memasukkan berkas ke library; null berarti

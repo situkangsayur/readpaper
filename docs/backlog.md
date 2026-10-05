@@ -1499,6 +1499,14 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       ("tip-ex" di halaman putih) dan hitam; stabilo tidak, karena stabilo
       putih tidak menandai apa pun
 
+- [x] **Ulangi (redo)** di pembaca (2026-10-05), di sebelah setiap Urungkan:
+      bilah atas, bilah pena, dan bilah bawah mode menyajikan, ditambah
+      Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y (⌘ di Mac). Setiap langkah kini mencatat
+      keadaan anotasinya sebelum dan sesudah — bukan hanya cara membatalkannya —
+      jadi tambah, ubah, pindah, ubah bentuk, hapus, dan penghapus semuanya bisa
+      diulangi. Goresan yang belum disimpan punya tumpukan ulanginya sendiri.
+      Perubahan baru mengosongkan tumpukan ulangi
+
 ### Sinkronisasi
 
 - [x] **Pull yang bentrok tidak lagi menggantung, dan tidak lagi menimpa**
