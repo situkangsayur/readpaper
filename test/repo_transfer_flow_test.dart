@@ -7,6 +7,8 @@ import 'package:path/path.dart' as p;
 import 'package:readpaper/src/core/utils/app_paths.dart';
 import 'package:readpaper/src/features/library/data/datasources/zotero_json.dart';
 import 'package:readpaper/src/features/library/data/repositories/library_repository_impl.dart';
+import 'package:readpaper/src/features/notes/data/notes_store.dart';
+import 'package:readpaper/src/features/notes/presentation/controllers/notes_controller.dart';
 import 'package:readpaper/src/features/settings/domain/entities/repo_profile.dart';
 import 'package:readpaper/src/features/workspace/domain/entities/workspace_state.dart';
 import 'package:readpaper/src/features/workspace/presentation/controllers/workspace_controller.dart';
@@ -242,5 +244,31 @@ void main() {
       File(p.join(asal.localPath, 'zotero', 'lib', 'items', 'AA', 'AAAAAAAA.json')).existsSync(),
       isTrue,
     );
+  });
+
+  test('memindah catatan: commit di kedua repositori', () async {
+    final notes = NotesStore(NotesStore.directoryFor(asal.localPath));
+    final source = File(p.join(root.path, 'Rapat.md'))..writeAsStringSync('# Rapat lab\n');
+    final note = await notes.addFile(sourcePath: source.path, title: 'Rapat lab');
+    await git(asal.localPath, <String>['add', '-A']);
+    await git(asal.localPath, <String>['commit', '-q', '-m', 'catatan']);
+
+    final container = await openOn(asal);
+    final failure = await container
+        .read(notesControllerProvider.notifier)
+        .transferItem(itemKey: note.key, target: tujuan, move: true);
+    expect(failure, isNull);
+
+    expect(
+      await git(tujuan.localPath, <String>['log', '-1', '--format=%s']),
+      contains('Dipindahkan dari pribadi: catatan Rapat lab'),
+    );
+    expect(
+      await git(asal.localPath, <String>['log', '-1', '--format=%s']),
+      contains('Dipindahkan ke lab: catatan Rapat lab'),
+    );
+    final moved = await NotesStore(NotesStore.directoryFor(tujuan.localPath)).read();
+    expect(moved.items.single.title, 'Rapat lab');
+    expect((await notes.read()).items, isEmpty);
   });
 }

@@ -317,6 +317,10 @@ Untuk memindah atau menyalin ke repositori lain:
   lain…**.
 - **Satu koleksi beserta isinya:** ⋮ pada koleksi → **Pindahkan atau salin ke
   repositori lain…**.
+- **Satu catatan:** tekan lama atau menu catatannya di daftar catatan →
+  **Pindahkan atau salin ke repositori lain…**. Koleksi catatan lewat ⋮-nya.
+  Catatan mendarat di akar Catatan repositori tujuan, atau di koleksi catatan
+  yang dipilih di sana.
 
 Pilih repositori tujuan, koleksi di sana, lalu **Pindahkan** atau **Salin**.
 Anotasi, catatan, dan PDF ikut. Kedua repositori mendapat commit sendiri;

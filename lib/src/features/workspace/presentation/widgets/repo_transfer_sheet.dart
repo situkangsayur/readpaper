@@ -1,7 +1,12 @@
+import 'dart:io';
+
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../library/domain/entities/library_index.dart';
+import '../../../notes/data/notes_store.dart';
+import '../../../notes/domain/note_entities.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../domain/entities/repo_stats.dart';
 import '../controllers/workspace_controller.dart';
@@ -16,7 +21,9 @@ class RepoTransferChoice {
   });
 
   final RepoProfile target;
-  final LibraryIndex library;
+
+  /// Library paper tujuan; null saat yang dipindah adalah catatan.
+  final LibraryIndex? library;
 
   /// Koleksi tujuan; null berarti tanpa koleksi (paper) atau akar (koleksi).
   final String? collectionKey;
@@ -35,18 +42,22 @@ Future<RepoTransferChoice?> showRepoTransferSheet(
   BuildContext context, {
   required String what,
   required bool forCollection,
+  bool notes = false,
 }) => showModalBottomSheet<RepoTransferChoice>(
   context: context,
   isScrollControlled: true,
   showDragHandle: true,
-  builder: (_) => _TransferSheet(what: what, forCollection: forCollection),
+  builder: (_) => _TransferSheet(what: what, forCollection: forCollection, notes: notes),
 );
 
 class _TransferSheet extends ConsumerStatefulWidget {
-  const _TransferSheet({required this.what, required this.forCollection});
+  const _TransferSheet({required this.what, required this.forCollection, required this.notes});
 
   final String what;
   final bool forCollection;
+
+  /// Tujuannya akar Catatan di repositori lain, bukan library paper-nya.
+  final bool notes;
 
   @override
   ConsumerState<_TransferSheet> createState() => _TransferSheetState();
@@ -55,6 +66,7 @@ class _TransferSheet extends ConsumerStatefulWidget {
 class _TransferSheetState extends ConsumerState<_TransferSheet> {
   RepoProfile? _target;
   LibraryIndex? _library;
+  NotesIndex? _notes;
   bool _loading = false;
   String? _error;
   String? _collection;
@@ -64,10 +76,30 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
     setState(() {
       _target = profile;
       _library = null;
+      _notes = null;
       _collection = null;
       _loading = true;
       _error = null;
     });
+    if (widget.notes) {
+      // Folder catatan yang belum ada di tujuan bukan halangan: ia dibuat
+      // saat catatan pertama tiba. Yang harus ada hanya clone-nya.
+      final cloned = Directory(profile.localPath).existsSync();
+      final notes = cloned
+          ? await NotesStore(NotesStore.directoryFor(profile.localPath)).read()
+          : null;
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _notes = notes;
+        if (notes == null) {
+          _error =
+              'Repositori "${profile.name}" belum diambil ke perangkat ini. Buka sekali '
+              'dan ambil library-nya, lalu ulangi.';
+        }
+      });
+      return;
+    }
     final library = await ref.read(workspaceControllerProvider.notifier).otherLibrary(profile);
     if (!mounted) return;
     setState(() {
@@ -141,7 +173,9 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
                 else if (_error != null)
                   Padding(padding: const EdgeInsets.all(16), child: Text(_error!))
                 else if (_library != null)
-                  Flexible(child: _collectionList(_library!)),
+                  Flexible(child: _collectionList(_library!))
+                else if (_notes != null)
+                  Flexible(child: _noteCollectionList(_notes!)),
                 const SizedBox(height: 8),
                 SegmentedButton<bool>(
                   segments: const <ButtonSegment<bool>>[
@@ -168,12 +202,12 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
                 ),
                 const SizedBox(height: 12),
                 FilledButton(
-                  onPressed: _library == null
+                  onPressed: _library == null && _notes == null
                       ? null
                       : () => Navigator.of(context).pop(
                           RepoTransferChoice(
                             target: _target!,
-                            library: _library!,
+                            library: _library,
                             collectionKey: _collection,
                             move: _move,
                           ),
@@ -184,6 +218,37 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _noteCollectionList(NotesIndex notes) {
+    String pathOf(NoteCollection c) {
+      final parent = notes.collections.where((x) => x.key == c.parentKey).firstOrNull;
+      return parent == null ? c.name : '${pathOf(parent)}/${c.name}';
+    }
+
+    final rows = <(NoteCollection, String)>[for (final c in notes.collections) (c, pathOf(c))]
+      ..sort((a, b) => a.$2.toLowerCase().compareTo(b.$2.toLowerCase()));
+    return RadioGroup<String?>(
+      groupValue: _collection,
+      onChanged: (value) => setState(() => _collection = value),
+      child: ListView(
+        shrinkWrap: true,
+        children: <Widget>[
+          RadioListTile<String?>(
+            dense: true,
+            value: null,
+            title: Text(widget.forCollection ? 'Akar Catatan' : 'Catatan, tanpa koleksi'),
+          ),
+          for (final (c, path) in rows)
+            RadioListTile<String?>(
+              dense: true,
+              value: c.key,
+              title: Text(c.name),
+              subtitle: path == c.name ? null : Text(path),
+            ),
+        ],
       ),
     );
   }

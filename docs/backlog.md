@@ -1480,7 +1480,11 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       ada lampiran yang belum diunduh atau masih penunjuk Git LFS
 - [x] Diuji dengan dua repositori git sungguhan lewat controller yang sama
       dengan layar, dan dicoba lewat antarmuka build Linux
-- [ ] Memindah catatan (akar Catatan) ke repositori lain
+- [x] **Memindah catatan dan koleksi catatan ke repositori lain** (0.24.1),
+      dari menu catatan dan menu ⋮ koleksi catatan. Seluruh folder berkas
+      catatan ikut — buku catatan menyimpan gambar halamannya di sana, dan
+      tanpa itu tiba sebagai lembar kosong. Kunci yang terpakai di tujuan
+      diganti; nama koleksi kembar ditolak sebelum apa pun ditulis
 - [ ] Mengunduh lampiran yang belum ada secara otomatis sebelum memindah,
       daripada meminta membuka papernya dulu
 - [ ] Seret dan lepas antar repositori

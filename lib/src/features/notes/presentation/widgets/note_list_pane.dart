@@ -16,6 +16,7 @@ import '../../../notebook/presentation/screens/notebook_screen.dart';
 import '../screens/image_viewer_screen.dart';
 import '../../../epub/presentation/epub_reader_screen.dart';
 import '../../../notebook/presentation/share_note.dart';
+import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/note_entities.dart';
 import '../controllers/notes_controller.dart';
@@ -422,6 +423,11 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
             onTap: () => Navigator.of(sheet).pop('pindah'),
           ),
           ListTile(
+            leading: const Icon(Icons.storage_outlined),
+            title: const Text('Pindahkan atau salin ke repositori lain…'),
+            onTap: () => Navigator.of(sheet).pop('repo'),
+          ),
+          ListTile(
             leading: const Icon(Icons.delete_outline),
             title: const Text('Hapus catatan'),
             subtitle: const Text('Berkasnya ikut terhapus'),
@@ -435,6 +441,32 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
   final controller = ref.read(notesControllerProvider.notifier);
 
   switch (action) {
+    case 'repo':
+      final choice = await showRepoTransferSheet(
+        context,
+        what: 'Catatan "${note.title}"',
+        forCollection: false,
+        notes: true,
+      );
+      if (choice == null || !context.mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      final failure = await controller.transferItem(
+        itemKey: note.key,
+        target: choice.target,
+        collectionKey: choice.collectionKey,
+        move: choice.move,
+      );
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: Duration(seconds: failure == null ? 4 : 8),
+            content: Text(
+              failure ??
+                  'Catatan ${choice.move ? 'dipindahkan' : 'disalin'} ke ${choice.target.name}',
+            ),
+          ),
+        );
     case 'bagikan':
       await shareAnyFile(context, p.join(index.directory, note.file), title: note.title);
     case 'nama':

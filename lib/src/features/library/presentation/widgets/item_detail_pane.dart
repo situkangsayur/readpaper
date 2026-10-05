@@ -438,13 +438,13 @@ Future<void> _transferToRepo(BuildContext context, WidgetRef ref, ZoteroItem ite
       .transferItem(
         item: item,
         target: choice.target,
-        targetLibrary: choice.library,
+        targetLibrary: choice.library!,
         collectionKey: choice.collectionKey,
         move: choice.move,
       );
   final where = choice.collectionKey == null
       ? choice.target.name
-      : '${choice.target.name} / ${choice.library.collections[choice.collectionKey]?.path ?? ''}';
+      : '${choice.target.name} / ${choice.library!.collections[choice.collectionKey]?.path ?? ''}';
   messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(

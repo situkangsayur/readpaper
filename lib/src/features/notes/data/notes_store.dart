@@ -275,6 +275,130 @@ class NotesStore {
     }
   }
 
+  // --------------------------------------------------- ke repositori lain
+
+  /// Menyalin catatan [itemKey] ke folder catatan [target] — biasanya di
+  /// repositori lain — sebagai anggota [collectionKeys] di sana.
+  ///
+  /// Yang disalin adalah seluruh folder berkasnya, bukan hanya berkas
+  /// utamanya: buku catatan menyimpan gambar halamannya di sebelahnya, dan
+  /// buku yang tiba tanpa gambar itu adalah lembar-lembar kosong. Kunci yang
+  /// sudah dipakai di tujuan diganti kunci baru.
+  Future<NoteItem> copyItemTo({
+    required String itemKey,
+    required NotesStore target,
+    List<String> collectionKeys = const <String>[],
+  }) async {
+    final index = await read();
+    final item = index.items.where((i) => i.key == itemKey).firstOrNull;
+    if (item == null) throw LibraryFailure('Catatan tidak ada', details: itemKey);
+    final targetIndex = await target.read();
+    for (final key in collectionKeys) {
+      if (!targetIndex.collections.any((c) => c.key == key)) {
+        throw LibraryFailure('Koleksi catatan tujuan tidak ada', details: key);
+      }
+    }
+
+    final source = File(p.normalize(p.join(directory, item.file)));
+    final holder = source.parent;
+    if (!p.isWithin(p.normalize(_filesRoot), p.normalize(holder.path))) {
+      throw LibraryFailure('Berkas catatan ada di luar folder catatan', details: item.file);
+    }
+    if (!source.existsSync()) {
+      throw LibraryFailure('Berkas catatan tidak ada di perangkat ini', details: item.file);
+    }
+    final key = File(target._itemPath(item.key)).existsSync() ? target._freshKey() : item.key;
+    final destHolder = Directory(p.join(target._filesRoot, ZoteroKey.bucket(key), key));
+    for (final entity in holder.listSync(recursive: true)) {
+      if (entity is! File) continue;
+      final dest = File(p.join(destHolder.path, p.relative(entity.path, from: holder.path)));
+      await dest.parent.create(recursive: true);
+      await entity.copy(dest.path);
+    }
+    final copied = NoteItem(
+      key: key,
+      title: item.title,
+      file: <String>['berkas', ZoteroKey.bucket(key), key, p.basename(item.file)].join('/'),
+      collectionKeys: collectionKeys,
+      dateAdded: item.dateAdded,
+      dateModified: DateTime.now(),
+    );
+    await target._writeItem(copied);
+    return copied;
+  }
+
+  /// Menyalin koleksi catatan [collectionKey] beserta sub-koleksi dan
+  /// catatannya ke [target], di bawah [targetParentKey] (null = akar).
+  ///
+  /// Mengembalikan kunci catatan asal yang disalin, dan mana di antaranya
+  /// yang juga anggota koleksi lain di asal — saat memindah, yang itu hanya
+  /// dilepas dari koleksinya.
+  Future<({List<String> items, Set<String> elsewhere})> copyCollectionTo({
+    required String collectionKey,
+    required NotesStore target,
+    String? targetParentKey,
+  }) async {
+    final index = await read();
+    final root = index.collections.where((c) => c.key == collectionKey).firstOrNull;
+    if (root == null) throw LibraryFailure('Koleksi catatan tidak ada', details: collectionKey);
+    final targetIndex = await target.read();
+    if (targetParentKey != null && !targetIndex.collections.any((c) => c.key == targetParentKey)) {
+      throw LibraryFailure('Koleksi catatan tujuan tidak ada', details: targetParentKey);
+    }
+    if (targetIndex.collections.any(
+      (c) => c.parentKey == targetParentKey && c.name.toLowerCase() == root.name.toLowerCase(),
+    )) {
+      throw LibraryFailure(
+        'Di tempat tujuan sudah ada koleksi catatan bernama "${root.name}". Ganti namanya dulu.',
+      );
+    }
+
+    final subtree = <NoteCollection>[root];
+    for (var i = 0; i < subtree.length; i++) {
+      subtree.addAll(index.collections.where((c) => c.parentKey == subtree[i].key));
+    }
+    final taken = <String>{for (final c in targetIndex.collections) c.key};
+    final keyMap = <String, String>{};
+    for (final c in subtree) {
+      var key = c.key;
+      while (taken.contains(key)) {
+        key = target._freshKey();
+      }
+      taken.add(key);
+      keyMap[c.key] = key;
+    }
+
+    // Isi diperiksa dulu, sebelum apa pun ditulis di tujuan.
+    final moving = keyMap.keys.toSet();
+    final members = index.items.where((i) => i.collectionKeys.any(moving.contains)).toList();
+    for (final item in members) {
+      if (!File(p.join(directory, item.file)).existsSync()) {
+        throw LibraryFailure('Berkas catatan "${item.title}" tidak ada di perangkat ini');
+      }
+    }
+
+    await target._writeCollections(<NoteCollection>[
+      ...targetIndex.collections,
+      for (final c in subtree)
+        NoteCollection(
+          key: keyMap[c.key]!,
+          name: c.name,
+          parentKey: c.key == collectionKey ? targetParentKey : keyMap[c.parentKey],
+        ),
+    ]);
+    final elsewhere = <String>{};
+    for (final item in members) {
+      final inside = item.collectionKeys.where(moving.contains).toList();
+      if (inside.length != item.collectionKeys.length) elsewhere.add(item.key);
+      await copyItemTo(
+        itemKey: item.key,
+        target: target,
+        collectionKeys: <String>[for (final k in inside) keyMap[k]!],
+      );
+    }
+    return (items: <String>[for (final i in members) i.key], elsewhere: elsewhere);
+  }
+
   // ---------------------------------------------------------------- internals
 
   String _itemPath(String key) => p.join(_itemsRoot, ZoteroKey.bucket(key), '$key.json');

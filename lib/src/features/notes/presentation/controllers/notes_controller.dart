@@ -1,6 +1,8 @@
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../library/domain/entities/library_index.dart';
+import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../data/notes_store.dart';
 import '../../domain/note_entities.dart';
@@ -93,6 +95,86 @@ class NotesController extends AsyncNotifier<NotesIndex> {
 
   /// Menjalankan satu perubahan, membaca ulang, lalu menyimpannya ke git.
   ///
+  /// Memindah atau menyalin satu catatan ke repositori lain.
+  ///
+  /// Disalin dulu dan di-commit di tujuan; baru setelah itu, bila memindah,
+  /// dihapus dari sini dan di-commit di sini.
+  Future<String?> transferItem({
+    required String itemKey,
+    required RepoProfile target,
+    String? collectionKey,
+    required bool move,
+  }) async {
+    final store = _store;
+    final source = ref.read(workspaceControllerProvider).profile;
+    if (store == null || source == null) return 'Belum ada repositori aktif.';
+    final item = (await store.read()).items.where((i) => i.key == itemKey).firstOrNull;
+    if (item == null) return 'Catatannya tidak ada lagi.';
+    final workspace = ref.read(workspaceControllerProvider.notifier);
+    try {
+      await store.copyItemTo(
+        itemKey: itemKey,
+        target: NotesStore(NotesStore.directoryFor(target.localPath)),
+        collectionKeys: <String>[?collectionKey],
+      );
+      await workspace.commitIn(
+        target,
+        '${move ? 'Dipindahkan' : 'Disalin'} dari ${source.name}: catatan ${item.title}',
+      );
+      if (move) {
+        await store.deleteItem(itemKey);
+        await workspace.commitIn(source, 'Dipindahkan ke ${target.name}: catatan ${item.title}');
+      }
+      state = AsyncValue<NotesIndex>.data(await store.read());
+      return null;
+    } on Object catch (e) {
+      return '$e';
+    }
+  }
+
+  /// Memindah atau menyalin koleksi catatan beserta isinya ke repositori lain.
+  Future<String?> transferCollection({
+    required String collectionKey,
+    required RepoProfile target,
+    String? parentKey,
+    required bool move,
+  }) async {
+    final store = _store;
+    final source = ref.read(workspaceControllerProvider).profile;
+    if (store == null || source == null) return 'Belum ada repositori aktif.';
+    final collection = (await store.read()).collections
+        .where((c) => c.key == collectionKey)
+        .firstOrNull;
+    if (collection == null) return 'Koleksinya tidak ada lagi.';
+    final workspace = ref.read(workspaceControllerProvider.notifier);
+    try {
+      final result = await store.copyCollectionTo(
+        collectionKey: collectionKey,
+        target: NotesStore(NotesStore.directoryFor(target.localPath)),
+        targetParentKey: parentKey,
+      );
+      await workspace.commitIn(
+        target,
+        '${move ? 'Dipindahkan' : 'Disalin'} dari ${source.name}: koleksi catatan '
+        '${collection.name} (${result.items.length} catatan)',
+      );
+      if (move) {
+        for (final key in result.items) {
+          if (!result.elsewhere.contains(key)) await store.deleteItem(key);
+        }
+        await store.deleteCollection(collectionKey);
+        await workspace.commitIn(
+          source,
+          'Dipindahkan ke ${target.name}: koleksi catatan ${collection.name}',
+        );
+      }
+      state = AsyncValue<NotesIndex>.data(await store.read());
+      return null;
+    } on Object catch (e) {
+      return '$e';
+    }
+  }
+
   /// Catatan hidup di dalam repositori yang sama dengan papernya, jadi
   /// perubahannya ikut di-commit — kalau tidak, catatan hanya ada di satu
   /// perangkat dan janji "tersinkron" jadi bohong.

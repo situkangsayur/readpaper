@@ -712,7 +712,7 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
       final failure = await controller.transferCollection(
         collectionKey: key,
         target: choice.target,
-        targetLibrary: choice.library,
+        targetLibrary: choice.library!,
         parentKey: choice.collectionKey,
         move: choice.move,
       );
@@ -852,6 +852,12 @@ Future<void> _noteCollectionMenu(
             onTap: () => Navigator.of(sheet).pop('nama'),
           ),
           ListTile(
+            leading: const Icon(Icons.storage_outlined),
+            title: const Text('Pindahkan atau salin ke repositori lain…'),
+            subtitle: const Text('beserta sub-koleksi dan catatannya'),
+            onTap: () => Navigator.of(sheet).pop('repo'),
+          ),
+          ListTile(
             leading: const Icon(Icons.folder_delete_outlined),
             title: const Text('Hapus koleksi'),
             subtitle: const Text('Catatannya tidak ikut terhapus'),
@@ -865,6 +871,36 @@ Future<void> _noteCollectionMenu(
 
   final controller = ref.read(notesControllerProvider.notifier);
   switch (action) {
+    case 'repo':
+      final choice = await showRepoTransferSheet(
+        context,
+        what: 'Koleksi catatan "${collection.name}", beserta sub-koleksi dan catatannya',
+        forCollection: true,
+        notes: true,
+      );
+      if (choice == null || !context.mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      final failure = await controller.transferCollection(
+        collectionKey: collection.key,
+        target: choice.target,
+        parentKey: choice.collectionKey,
+        move: choice.move,
+      );
+      if (failure == null && choice.move) {
+        ref.read(selectionProvider.notifier).select(const LibrarySelection.notes());
+      }
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: Duration(seconds: failure == null ? 4 : 8),
+            content: Text(
+              failure ??
+                  'Koleksi catatan "${collection.name}" ${choice.move ? 'dipindahkan' : 'disalin'} '
+                      'ke ${choice.target.name}',
+            ),
+          ),
+        );
     case 'baru':
       await _newNoteCollection(context, ref, parentKey: collection.key);
     case 'nama':

@@ -22,7 +22,8 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   ukuran tiap repositori: item, koleksi, ruang di disk, lampiran yang sudah
   diunduh, dan yang belum terkirim. Paper dan koleksi, beserta sub-koleksi,
   anotasi, dan PDF-nya, bisa **dipindahkan atau disalin** ke koleksi di
-  repositori lain, dengan satu commit di tiap repositori.
+  repositori lain, dengan satu commit di tiap repositori. Begitu juga catatan
+  dan koleksi catatan, termasuk buku catatan beserta gambar halamannya.
 - **Pohon koleksi ala Zotero.** Koleksi bertingkat yang bisa dibuka dan
   ditutup, jumlah item per koleksi, "Semua item", "Tanpa koleksi", dan pilihan
   menyertakan item sub-koleksi. Bentuknya sama dengan yang dilihat di Zotero,

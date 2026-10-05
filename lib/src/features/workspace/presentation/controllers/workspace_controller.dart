@@ -653,6 +653,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  /// Meng-commit perubahan di repositori [profile], aktif atau tidak — untuk
+  /// sisi tujuan saat memindah sesuatu antar repositori.
+  Future<void> commitIn(RepoProfile profile, String message) =>
+      _commitAnnotation(profile: profile, message: message);
+
   static String _missingMessage(int count) =>
       '$count lampiran belum ada di perangkat ini — belum diunduh, atau masih penunjuk '
       'Git LFS. Buka papernya sekali supaya PDF-nya diunduh (di desktop: LFS pull), '
