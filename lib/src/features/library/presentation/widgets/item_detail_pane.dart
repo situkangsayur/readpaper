@@ -9,6 +9,7 @@ import '../../../../core/utils/layout_size.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../epub/presentation/epub_reader_screen.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
+import '../../../citation/presentation/bibtex_actions.dart';
 import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/zotero_annotation.dart';
@@ -81,6 +82,14 @@ class ItemDetailPane extends ConsumerWidget {
             // harus bisa dicabut lagi, termasuk yang masuk karena salah
             // pencet. Diletakkan paling bawah, di luar jangkauan jari yang
             // sedang menggulir.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.functions, size: 18),
+                label: const Text('Salin BibTeX'),
+                onPressed: () => copyBibTex(context, item),
+              ),
+            ),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(

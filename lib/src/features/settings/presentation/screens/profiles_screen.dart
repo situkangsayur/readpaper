@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../../citation/presentation/controllers/citation_server_controller.dart';
+import '../../../citation/presentation/widgets/citation_server_card.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/repo_profile.dart';
 import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
@@ -40,24 +42,34 @@ class ProfilesScreen extends ConsumerWidget {
         label: const Text('Tambah repositori'),
       ),
       bottomNavigationBar: const SafeArea(child: _VersionFooter()),
-      body: profiles.isEmpty
-          ? const Center(child: Text('Belum ada repositori.'))
-          : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-              itemCount: profiles.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (context, i) {
-                final profile = profiles[i];
-                final isActive = state.profile?.id == profile.id;
-                return _ProfileCard(
-                  profile: profile,
-                  isActive: isActive,
-                  onActivate: () => controller.selectProfile(profile.id),
-                  onEdit: () => showProfileEditor(context, ref, existing: profile),
-                  onDelete: () => _confirmDelete(context, controller, profile),
-                );
-              },
+      // Satu daftar bergulir untuk profil dan kartu sitasi: dengan banyak
+      // repositori, kartu yang dipaku di bawah akan menutupi profil terakhir.
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+        children: <Widget>[
+          if (profiles.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: Text('Belum ada repositori.')),
             ),
+          for (final profile in profiles) ...<Widget>[
+            _ProfileCard(
+              profile: profile,
+              isActive: state.profile?.id == profile.id,
+              onActivate: () => controller.selectProfile(profile.id),
+              onEdit: () => showProfileEditor(context, ref, existing: profile),
+              onDelete: () => _confirmDelete(context, controller, profile),
+            ),
+            const SizedBox(height: 8),
+          ],
+          // Hanya desktop: Android dan iOS tidak punya Word atau OnlyOffice
+          // desktop yang bisa memakai servernya.
+          if (CitationServerController.isDesktop) ...<Widget>[
+            const SizedBox(height: 8),
+            const CitationServerCard(),
+          ],
+        ],
+      ),
     );
   }
 

@@ -360,6 +360,19 @@ Di **panel berkas**, tombol ⋮ di baris folder membuka **Ganti nama** dan
 **Hapus folder**. Hapus menyebut berapa berkas yang ikut terhapus. Folder kerja
 itu sendiri tidak bisa dihapus dari sana.
 
+### Ekspor ke BibTeX untuk LaTeX
+
+Tombol **⋮** di koleksi paper → **Ekspor ke BibTeX (.bib)**. Berkas
+`<nama koleksi>.bib` ditulis ke folder kerja dan bisa langsung dibagikan, mis.
+ke WritePaperTeX atau Overleaf. Untuk satu paper saja, buka panel detailnya
+lalu **Salin BibTeX**; kuncinya ikut disebut di pesan.
+
+Kunci sitasi tidak berubah ketika diekspor ulang, jadi `\cite{…}` di naskah
+tetap benar. Kalau di Zotero sudah memakai Better BibTeX, kuncinya sama dengan
+di sana (diambil dari baris `Citation Key:` di kolom Extra). Kalau tidak,
+kuncinya dibentuk dari pengarang pertama, tahun, dan kata judul pertama, mis.
+`mcclean2018barren`. Yang kembar diberi akhiran `a`, `b`, dan seterusnya.
+
 ### Penting untuk Android
 
 Di Android, item Zotero dan koleksinya terkirim ke GitHub, tetapi **PDF-nya

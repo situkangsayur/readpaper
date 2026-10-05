@@ -8,6 +8,7 @@ import '../../../notes/domain/note_entities.dart';
 import '../../../notes/domain/note_target.dart';
 import '../../../notes/presentation/controllers/notes_controller.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
+import '../../../citation/presentation/bibtex_actions.dart';
 import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
 import '../../domain/entities/library_index.dart';
 import '../../domain/entities/zotero_collection.dart';
@@ -646,6 +647,12 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
             onTap: () => Navigator.of(sheet).pop('repo'),
           ),
           ListTile(
+            leading: const Icon(Icons.functions),
+            title: const Text('Ekspor ke BibTeX (.bib)'),
+            subtitle: const Text('untuk naskah LaTeX; sub-koleksi ikut'),
+            onTap: () => Navigator.of(sheet).pop('bib'),
+          ),
+          ListTile(
             leading: const Icon(Icons.folder_delete_outlined),
             title: const Text('Hapus koleksi'),
             subtitle: const Text('Paper di dalamnya tidak ikut terhapus'),
@@ -701,6 +708,9 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
             repo.moveCollection(libraryDir: dir, key: key, newParentKey: parentKey),
       );
       report(ok, 'Koleksi dipindah ke $parentName');
+    case 'bib':
+      if (!context.mounted) return;
+      await exportBibTex(context, items: index.itemsIn(key), name: collection.name);
     case 'repo':
       if (!context.mounted) return;
       final choice = await showRepoTransferSheet(

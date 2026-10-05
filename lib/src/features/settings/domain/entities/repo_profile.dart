@@ -161,6 +161,7 @@ class AppSettings {
     this.recents = const <RecentPaper>[],
     this.keepScreenOn = false,
     this.stylusOnly = false,
+    this.citationServer = true,
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -177,6 +178,7 @@ class AppSettings {
     ],
     keepScreenOn: json['keepScreenOn'] as bool? ?? false,
     stylusOnly: json['stylusOnly'] as bool? ?? false,
+    citationServer: json['citationServer'] as bool? ?? true,
   );
 
   final List<RepoProfile> profiles;
@@ -201,6 +203,14 @@ class AppSettings {
   /// begitu besok.
   final bool stylusOnly;
 
+  /// Server sitasi lokal untuk Word dan OnlyOffice menyala.
+  ///
+  /// Menyala secara bawaan: yang memasang add-in berharap ia langsung
+  /// tersambung, dan servernya hanya mendengarkan di 127.0.0.1 serta menolak
+  /// setiap permintaan tanpa token. Hanya berarti di desktop; di Android dan
+  /// iOS nilainya diabaikan.
+  final bool citationServer;
+
   RepoProfile? get activeProfile {
     if (profiles.isEmpty) return null;
     for (final profile in profiles) {
@@ -217,6 +227,7 @@ class AppSettings {
     'recents': recents.map((r) => r.toJson()).toList(),
     'keepScreenOn': keepScreenOn,
     'stylusOnly': stylusOnly,
+    'citationServer': citationServer,
   };
 
   AppSettings copyWith({
@@ -227,6 +238,7 @@ class AppSettings {
     List<RecentPaper>? recents,
     bool? keepScreenOn,
     bool? stylusOnly,
+    bool? citationServer,
     bool clearActive = false,
   }) => AppSettings(
     profiles: profiles ?? this.profiles,
@@ -236,6 +248,7 @@ class AppSettings {
     recents: recents ?? this.recents,
     keepScreenOn: keepScreenOn ?? this.keepScreenOn,
     stylusOnly: stylusOnly ?? this.stylusOnly,
+    citationServer: citationServer ?? this.citationServer,
   );
 
   /// Puts [entry] at the front, replacing any earlier visit to the same file.

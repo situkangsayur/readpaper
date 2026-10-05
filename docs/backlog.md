@@ -423,7 +423,10 @@ merusak berkas aslinya.
         dekat dan mengujinya, bukan menulis gaya baru.
 - [ ] Mesin sitasi: pakai `citeproc` (port Dart) atau jalankan `citeproc-js`
       di dalam sandbox JS yang sama dengan sistem plugin (Fase 11).
-- [ ] **Ekspor**: BibTeX (`.bib`), BibLaTeX, RIS, CSL-JSON, EndNote XML.
+- [x] **Ekspor BibTeX** (`.bib`) per koleksi dan **Salin BibTeX** per paper.
+      Kunci sitasi stabil: `Citation Key:` dari Extra (Better BibTeX) bila ada,
+      selain itu pengarang + tahun + kata judul pertama.
+- [ ] Ekspor lain: BibLaTeX, RIS, CSL-JSON, EndNote XML.
 - [ ] Salin sitasi / daftar pustaka ke papan klip dalam bentuk teks biasa,
       HTML, dan RTF (RTF diperlukan agar tempel ke Word mempertahankan format).
 - [ ] Bibliografi per koleksi, per pilihan item, atau per hasil pencarian.

@@ -15,6 +15,7 @@ abstract class SettingsRepository {
     String? lastAnnotationColor,
     bool? keepScreenOn,
     bool? stylusOnly,
+    bool? citationServer,
   });
 
   /// Records a paper as opened, or moves it back to the front of the history.

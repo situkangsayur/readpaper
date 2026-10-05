@@ -43,6 +43,9 @@ class SettingsRepositoryImpl implements SettingsRepository {
       activeProfileId: active,
       themeMode: settings.themeMode,
       lastAnnotationColor: settings.lastAnnotationColor,
+      // Menghapus repositori tidak ada hubungannya dengan Word; tanpa ini
+      // server sitasi diam-diam menyala lagi setelah sengaja dimatikan.
+      citationServer: settings.citationServer,
     );
     await _local.save(updated);
     await _local.saveToken(profileId: profileId, token: null);
@@ -63,6 +66,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     String? lastAnnotationColor,
     bool? keepScreenOn,
     bool? stylusOnly,
+    bool? citationServer,
   }) async {
     final settings = await _local.load();
     final updated = settings.copyWith(
@@ -70,6 +74,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       lastAnnotationColor: lastAnnotationColor,
       keepScreenOn: keepScreenOn,
       stylusOnly: stylusOnly,
+      citationServer: citationServer,
     );
     await _local.save(updated);
     return updated;

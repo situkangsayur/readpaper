@@ -67,6 +67,13 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Statistik library**: per tahun, per jenis, pengarang dan tag tersering, dan
   berapa persen item yang berkasnya benar-benar ada. Item tanpa judul atau
   tanpa tahun dihitung terpisah, supaya sisa impor yang gagal kelihatan.
+- **Ekspor ke BibTeX** untuk naskah LaTeX: tombol ⋮ di koleksi paper menulis
+  `<nama koleksi>.bib` ke folder kerja, dan **Salin BibTeX** di panel detail
+  menyalin satu entri. Kunci sitasinya stabil, jadi mengekspor ulang tidak
+  mematahkan `\cite{…}` yang sudah ada: `Citation Key:` di kolom Extra (dari
+  Better BibTeX) dipakai apa adanya, selain itu `pengarang` + `tahun` + kata
+  judul pertama, mis. `mcclean2018barren`. Data diambil dari CSL-JSON yang sama
+  dengan sitasi di Word dan OnlyOffice.
 - **Menghapus dokumen dari library**, dari bagian paling bawah panel detail,
   dengan konfirmasi. Pasangan dari "tambahkan ke koleksi": yang masuk karena
   salah pencet bisa dicabut lagi.
