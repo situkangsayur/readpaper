@@ -208,4 +208,69 @@ void main() {
       expect(box.bottom, greaterThanOrEqualTo(-0.01));
     });
   });
+
+  group('pindah halaman dan salin', () {
+    test('tinta pindah ke halaman lain, dengan label dan urutan halaman itu', () {
+      final moved = AnnotationMove.toPage(
+        ink(),
+        pageIndex: 4,
+        dx: 10,
+        dy: -20,
+        pageWidth: 600,
+        pageHeight: 800,
+      );
+      expect(moved.key, 'ABCD1234');
+      expect(moved.pageIndex, 4);
+      expect(moved.pageLabel, '5');
+      expect(moved.paths.single.xAt(0), 110);
+      expect(moved.paths.single.yAt(0), 180);
+      expect(moved.sortIndex.startsWith('00004|'), isTrue);
+    });
+
+    test('tanpa pergeseran pun tetap ditahan di halaman tujuan yang lebih kecil', () {
+      final big = ink(x: 500, y: 700);
+      final moved = AnnotationMove.toPage(
+        big,
+        pageIndex: 1,
+        dx: 0,
+        dy: 0,
+        pageWidth: 300,
+        pageHeight: 400,
+      );
+      final bounds = AnnotationMove.rectsOf(moved).single;
+      expect(bounds.right, lessThanOrEqualTo(300));
+      expect(bounds.top, lessThanOrEqualTo(400));
+      expect(moved.sortIndex.startsWith('00001|'), isTrue);
+    });
+
+    test('stabilo ikut pindah dengan kotaknya', () {
+      final moved = AnnotationMove.toPage(
+        highlight(),
+        pageIndex: 2,
+        dx: 0,
+        dy: 100,
+        pageWidth: 600,
+        pageHeight: 800,
+      );
+      expect(moved.pageIndex, 2);
+      expect(moved.rects.single.bottom, 200);
+      expect(moved.rects.single.top, 220);
+    });
+
+    test('salinan mendapat kunci dan tanggal baru, isinya sama', () {
+      final now = DateTime(2026, 10, 5);
+      final copy = AnnotationMove.duplicate(
+        ink(),
+        key: 'NEWKEY99',
+        parentItemKey: 'OTHER001',
+        now: now,
+      );
+      expect(copy.key, 'NEWKEY99');
+      expect(copy.parentItemKey, 'OTHER001');
+      expect(copy.dateAdded, now);
+      expect(copy.dateModified, now);
+      expect(copy.paths.single.points, ink().paths.single.points);
+      expect(copy.pageIndex, 0);
+    });
+  });
 }

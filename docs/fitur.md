@@ -100,7 +100,8 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   Mati secara bawaan karena memakan baterai.
 - **Membuka PDF apa pun** dari perangkat, bukan hanya dari library: lewat
   tombol "Buka PDF dari perangkat ini" di daftar paper, dari panel berkas, atau
-  (di Android) lewat "Buka dengan" dari aplikasi lain. PDF seperti ini disebut
+  lewat "Buka dengan" dari aplikasi lain (Android, dan pengelola berkas di
+  Linux dan Windows). PDF seperti ini disebut
   *PDF lepas*; anotasinya ditahan di memori sampai disimpan.
 - **Tampilan menyesuaikan perangkat**: satu panel di ponsel, daftar di samping
   paper di tablet tegak, dan koleksi + daftar + paper di tablet mendatar atau
@@ -130,6 +131,15 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Memindah, mengubah ukuran, dan memutar** tinta, tanda tangan, dan catatan
   yang sudah ditaruh. Stabilo dan garis bawah tidak bisa diputar, karena Zotero
   menyimpannya sebagai kotak lurus.
+- **Pindah halaman, salin, potong, dan tempel anotasi.** Anotasi terpilih bisa
+  diseret ke halaman lain: bayangannya mengikuti jari dengan nomor halaman
+  tujuan, dan penampil menggulir sendiri ketika jari ditahan di tepi atas atau
+  bawah. Untuk halaman yang jauh ada **Ke halaman…**. **Salin**, **Potong**, dan
+  **Tempel** (juga Ctrl+C, Ctrl+X, Ctrl+V di desktop) bekerja di bilah bawah;
+  tempelan jatuh di halaman yang sedang dibuka, di posisi yang sama dengan
+  aslinya, dan bergeser sedikit bila di sana sudah ada yang persis sama. Papan
+  klipnya bertahan setelah pembaca ditutup, jadi bisa ditempel di paper lain.
+  Semuanya bisa diurungkan.
 - **Urungkan** untuk langkah terakhir, dan selama pena aktif untuk goresan
   terakhir saja.
 - **Isi teks di halaman** (ikon Tt) untuk mengisi formulir PDF yang tidak punya

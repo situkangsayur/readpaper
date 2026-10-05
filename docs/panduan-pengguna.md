@@ -216,6 +216,20 @@ Tinta, tanda tangan, dan catatan yang sudah ditaruh bisa diketuk lalu digeser
 (**Seret untuk memindahkan**), diubah ukurannya, atau diputar lewat pegangan di
 sudut bingkainya. Stabilo dan garis bawah tidak bisa diputar.
 
+**Ke halaman lain.** Seret anotasi yang terpilih ke halaman lain. Selama
+diseret, label di sebelah jari menyebut halaman tempat ia akan jatuh. Tahan jari
+di dekat tepi atas atau bawah layar dan halaman akan bergulir sendiri. Untuk
+halaman yang jauh, pakai **Ke halaman…** di bilah bawah lalu ketik nomornya.
+
+**Salin, potong, tempel.** Selama sebuah anotasi terpilih, bilah di bawah
+menampilkan **Salin**, **Potong**, dan **Ke halaman…**. Buka halaman tujuan,
+lalu tekan **Tempel di halaman N**. Tempelan muncul di posisi yang sama dengan
+aslinya, dan langsung bisa diseret ke tempat yang tepat. Di desktop pakai
+Ctrl+C, Ctrl+X, Ctrl+V, dan Delete untuk menghapus. Yang disalin tetap ada
+sampai diganti, jadi bisa ditempel juga di paper lain. Tombol **×** di bilah
+itu mengosongkannya. Salah pindah atau salah tempel bisa diurungkan seperti
+biasa.
+
 ### Mengisi formulir dan menandatangani
 
 - **Isi teks di halaman — untuk mengisi formulir** (ikon Tt), lalu ketuk tempat

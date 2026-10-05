@@ -89,4 +89,67 @@ void main() {
     expect(frame.width, closeTo(60, 0.5));
     expect(frame.height, closeTo(30, 0.5));
   });
+
+  testWidgets('seretan diserahkan ke pembaca bila onDragStart diisi', (tester) async {
+    // Lapisan ini terkurung di halamannya; memindah ke halaman lain hanya
+    // bisa diurus dari atas penampil, jadi ia cukup melapor tempat mulainya.
+    final starts = <Offset>[];
+    final moves = <Offset>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 300,
+            height: 400,
+            child: Stack(
+              children: <Widget>[
+                AnnotationMoveLayer(
+                  bounds: const Rect.fromLTWH(100, 150, 80, 40),
+                  limit: const Size(300, 400),
+                  onMoved: moves.add,
+                  onDelete: () {},
+                  onDragStart: starts.add,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    final from = tester.getTopLeft(find.byType(Stack).first) + const Offset(140, 170);
+    await tester.dragFrom(from, const Offset(0, 120));
+    await tester.pumpAndSettle();
+    expect(starts, hasLength(1));
+    expect((starts.single - from).distance, lessThan(1));
+    expect(moves, isEmpty);
+  });
+
+  testWidgets('tanpa onDragStart, seretan tetap dilaporkan lewat onMoved', (tester) async {
+    final moves = <Offset>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 300,
+            height: 400,
+            child: Stack(
+              children: <Widget>[
+                AnnotationMoveLayer(
+                  bounds: const Rect.fromLTWH(100, 150, 80, 40),
+                  limit: const Size(300, 400),
+                  onMoved: moves.add,
+                  onDelete: () {},
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    final from = tester.getTopLeft(find.byType(Stack).first) + const Offset(140, 170);
+    await tester.dragFrom(from, const Offset(0, 60));
+    await tester.pumpAndSettle();
+    expect(moves, hasLength(1));
+    expect(moves.single.dy, greaterThan(30));
+  });
 }

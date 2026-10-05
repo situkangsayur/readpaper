@@ -103,6 +103,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   ItemDetail? _detail;
   List<ZoteroAnnotation> _annotations = const <ZoteroAnnotation>[];
   String? _selectedAnnotationKey;
+
+  /// Anotasi yang terakhir disalin atau dipotong. Statis, jadi tetap ada
+  /// setelah pembaca ditutup: yang disalin dari satu paper bisa ditempel di
+  /// paper lain.
+  static ZoteroAnnotation? _clipboard;
+
+  /// Seretan anotasi yang sedang berlangsung. Diurus di sini, di atas
+  /// penampil, karena lapisan geser terkurung di halamannya sendiri.
+  _AnnotationDrag? _annotationDrag;
+  Timer? _dragScroll;
+  double _dragScrollSpeed = 0;
+  final GlobalKey _viewerKey = GlobalKey();
   String _color = AnnotationPalette.yellow;
   bool _showSidebar = true;
   bool _hasSelection = false;
@@ -308,6 +320,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   void dispose() {
     _stylusNearTimer?.cancel();
+    _dragScroll?.cancel();
     // Leaving within the debounce window would otherwise throw away the very
     // page the reader stopped on, which is the one worth keeping. The
     // notifier is held from initState because it outlives this widget, so a
@@ -1952,6 +1965,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         const SingleActivator(LogicalKeyboardKey.keyZ, meta: true, shift: true): () =>
             _redoAction?.call(),
         const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => _redoAction?.call(),
+        // Salin, potong, tempel anotasi. Tanpa anotasi terpilih, Ctrl+C tetap
+        // menyalin teks yang diblok, seperti biasa.
+        const SingleActivator(LogicalKeyboardKey.keyC, control: true): _copyShortcut,
+        const SingleActivator(LogicalKeyboardKey.keyC, meta: true): _copyShortcut,
+        const SingleActivator(LogicalKeyboardKey.keyX, control: true): _cutAnnotation,
+        const SingleActivator(LogicalKeyboardKey.keyX, meta: true): _cutAnnotation,
+        const SingleActivator(LogicalKeyboardKey.keyV, control: true): _pasteAnnotation,
+        const SingleActivator(LogicalKeyboardKey.keyV, meta: true): _pasteAnnotation,
+        const SingleActivator(LogicalKeyboardKey.delete): () {
+          final selected = _selectedAnnotation;
+          if (selected != null) _deleteAnnotation(selected);
+        },
       },
       child: Focus(
         autofocus: true,
@@ -2349,6 +2374,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // own drag-to-select still runs underneath.
       Positioned.fill(
         child: Listener(
+          key: _viewerKey,
           // Goresan stylus ditangkap di sini, **di atas** penampil dan bukan di
           // dalam lapisan tinta. Alasannya terbukti di tablet: apa pun yang
           // menerima pointer di depan penampil membuat jari berhenti sampai ke
@@ -2359,7 +2385,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             _handDown(event);
             _stylusDown(event);
           },
-          onPointerMove: _stylusMove,
+          onPointerMove: (event) {
+            _stylusMove(event);
+            _annotationDragMove(event);
+          },
           onPointerHover: (event) {
             if (_penMode && _stylusOnly && _isStylus(event)) _noteStylusNear();
           },
@@ -2367,11 +2396,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             _onMarkerPointerUp();
             _stylusFinish(event);
             _handUp(event);
+            _annotationDragEnd(event);
           },
           onPointerCancel: (event) {
             _onMarkerPointerUp();
             _stylusFinish(event);
             _handUp(event);
+            _annotationDragEnd(event);
           },
           child: _tint.filter == null
               ? _buildPdf(scheme)
@@ -2608,6 +2639,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             ),
           ),
         ),
+      if (_annotationDrag case final drag?) _dragGhost(drag),
+      if (_annotationDrag == null &&
+          !_hasSelection &&
+          !_penMode &&
+          !_markerMode &&
+          (_selectedAnnotation != null || _clipboard != null))
+        Positioned(
+          left: 0,
+          right: 0,
+          // Di atas bilah halaman saat menyajikan, bukan menimpanya.
+          bottom: _presentMode ? 72 + MediaQuery.viewPaddingOf(context).bottom : 16,
+          child: Center(child: _annotationActionBar()),
+        ),
       if (_hasSelection && !_markerMode)
         Positioned(
           left: 0,
@@ -2644,6 +2688,24 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     key: ValueKey<String>(_path),
     controller: _controller,
     params: PdfViewerParams(
+      // Penampil sendiri menelan Ctrl+C (untuk teks) setiap kali ia memegang
+      // fokus, jadi menyalin dan menghapus anotasi terpilih dicegat di sini
+      // lebih dulu. Ctrl+X dan Ctrl+V tidak dipakai penampil dan naik ke
+      // pintasan di atas Scaffold.
+      onKey: (params, key, isRealKeyPress) {
+        if (_selectedAnnotation == null) return null;
+        final keyboard = HardwareKeyboard.instance;
+        final command = keyboard.isControlPressed || keyboard.isMetaPressed;
+        if (key == LogicalKeyboardKey.keyC && command) {
+          if (isRealKeyPress) _copyAnnotation();
+          return true;
+        }
+        if (key == LogicalKeyboardKey.delete && !command) {
+          if (isRealKeyPress) _deleteAnnotation(_selectedAnnotation!);
+          return true;
+        }
+        return null;
+      },
       backgroundColor: _tint.background ?? AppTheme.readerBackground(scheme),
       margin: 10,
       textSelectionParams: _markerMode ? _selectByDrag : _selectByHandles,
@@ -2794,8 +2856,370 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   _transformAnnotation(annotation, page: page, scale: scale, rotation: rotation),
         onMoved: (delta) =>
             _moveAnnotation(annotation, page: page, dx: delta.dx / scaleX, dy: -delta.dy / scaleY),
+        onDragStart: (global) => _startAnnotationDrag(
+          annotation,
+          page: page,
+          pageRect: pageRect,
+          bounds: bounds,
+          global: global,
+        ),
       ),
     ];
+  }
+
+  /// Anotasi yang sedang dipilih, bila masih ada.
+  ZoteroAnnotation? get _selectedAnnotation {
+    final key = _selectedAnnotationKey;
+    if (key == null) return null;
+    return _annotations.where((a) => a.key == key).firstOrNull;
+  }
+
+  // ----------------------------------------------------- salin, potong, tempel
+
+  void _copyShortcut() {
+    if (_selectedAnnotation != null) {
+      _copyAnnotation();
+    } else if (_hasSelection) {
+      _copySelection();
+    }
+  }
+
+  void _copyAnnotation() {
+    final annotation = _selectedAnnotation;
+    if (annotation == null) return;
+    setState(() => _clipboard = annotation);
+    _say('Anotasi disalin — buka halaman tujuan, lalu Tempel');
+  }
+
+  /// Memotong = menyalin lalu menghapus, sebagai satu langkah yang bisa
+  /// diurungkan. Tanpa konfirmasi: isinya masih di papan klip, dan Urungkan
+  /// mengembalikannya di tempat semula.
+  Future<void> _cutAnnotation() async {
+    final annotation = _selectedAnnotation;
+    if (annotation == null) return;
+    setState(() => _clipboard = annotation);
+    _recordChange('memotong anotasi', before: annotation, after: null);
+    await _removeAnnotation(annotation);
+    _say('Anotasi dipotong — buka halaman tujuan, lalu Tempel');
+  }
+
+  /// Menempel isi papan klip di halaman yang sedang dibuka, di posisi yang
+  /// sama dengan aslinya. Kalau di sana sudah ada yang persis sama — yang
+  /// disalin, atau tempelan sebelumnya — tempelan bergeser sedikit ke kanan
+  /// bawah, supaya tidak tertumpuk dan terlihat seperti tidak terjadi apa-apa.
+  Future<void> _pasteAnnotation() async {
+    final clip = _clipboard;
+    if (clip == null || !_controller.isReady) return;
+    final pageNumber = _currentPage.clamp(1, _controller.pageCount);
+    final page = _controller.pages[pageNumber - 1];
+    final copy = AnnotationMove.duplicate(
+      clip,
+      key: ZoteroKey.generate(),
+      parentItemKey: widget.attachmentKey,
+    );
+    final onPage = _onPage(pageNumber);
+
+    ZoteroAnnotation placed;
+    var step = 0;
+    do {
+      placed = AnnotationMove.toPage(
+        copy,
+        pageIndex: pageNumber - 1,
+        dx: 12.0 * step,
+        dy: -12.0 * step,
+        pageWidth: page.width,
+        pageHeight: page.height,
+      );
+      step++;
+    } while (step < 20 && onPage.any((a) => _sameSpot(a, placed)));
+
+    _recordChange('menempel anotasi', before: null, after: placed);
+    await _persist(placed, isNew: true, recordUndo: false);
+    _say('Ditempel di halaman $pageNumber — seret untuk memindahkannya');
+  }
+
+  static bool _sameSpot(ZoteroAnnotation a, ZoteroAnnotation b) {
+    final ra = AnnotationMove.rectsOf(a);
+    final rb = AnnotationMove.rectsOf(b);
+    if (ra.isEmpty || rb.isEmpty) return false;
+    return (ra.first.left - rb.first.left).abs() < 1 && (ra.first.top - rb.first.top).abs() < 1;
+  }
+
+  /// Memindahkan ke halaman lain lewat nomornya — untuk halaman yang terlalu
+  /// jauh untuk diseret. Posisinya di halaman tetap.
+  Future<void> _askMoveToPage(ZoteroAnnotation annotation) async {
+    if (!_controller.isReady) return;
+    final count = _controller.pageCount;
+    final field = TextEditingController(text: '${annotation.pageNumber}');
+    final number = await showDialog<int>(
+      context: context,
+      builder: (context) {
+        void submit() => Navigator.of(context).pop(int.tryParse(field.text.trim()));
+        return AlertDialog(
+          title: const Text('Pindahkan ke halaman'),
+          content: TextField(
+            controller: field,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
+            decoration: InputDecoration(helperText: 'Halaman 1 sampai $count'),
+            onSubmitted: (_) => submit(),
+          ),
+          actions: <Widget>[
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+            FilledButton(onPressed: submit, child: const Text('Pindahkan')),
+          ],
+        );
+      },
+    );
+    field.dispose();
+    if (number == null || number == annotation.pageNumber) return;
+    if (number < 1 || number > count) {
+      _say('Tidak ada halaman $number — dokumen ini $count halaman');
+      return;
+    }
+    final moved = await _moveAnnotationToPage(annotation, page: _controller.pages[number - 1]);
+    if (!mounted) return;
+    await _goToAnnotation(moved);
+  }
+
+  Future<ZoteroAnnotation> _moveAnnotationToPage(
+    ZoteroAnnotation annotation, {
+    required PdfPage page,
+    double dx = 0,
+    double dy = 0,
+  }) async {
+    final moved = AnnotationMove.toPage(
+      annotation,
+      pageIndex: page.pageNumber - 1,
+      dx: dx,
+      dy: dy,
+      pageWidth: page.width,
+      pageHeight: page.height,
+    );
+    _recordChange(
+      'memindahkan anotasi ke halaman ${page.pageNumber}',
+      before: annotation,
+      after: moved,
+    );
+    await _persist(moved, isNew: false, recordUndo: false);
+    _say('Dipindah ke halaman ${page.pageNumber}');
+    return moved;
+  }
+
+  Widget _annotationActionBar() {
+    final scheme = Theme.of(context).colorScheme;
+    final selected = _selectedAnnotation;
+    final clip = _clipboard;
+    final compact = MediaQuery.sizeOf(context).width < 600;
+
+    Widget action(IconData icon, String label, VoidCallback onPressed) => compact
+        ? IconButton(tooltip: label, icon: Icon(icon), onPressed: onPressed)
+        : TextButton.icon(onPressed: onPressed, icon: Icon(icon, size: 20), label: Text(label));
+
+    return Material(
+      elevation: 6,
+      borderRadius: BorderRadius.circular(28),
+      color: scheme.surfaceContainerHighest,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            if (selected != null) ...<Widget>[
+              action(Icons.content_copy, 'Salin', _copyAnnotation),
+              action(Icons.content_cut, 'Potong', _cutAnnotation),
+              action(Icons.move_down, 'Ke halaman…', () => _askMoveToPage(selected)),
+            ],
+            if (clip != null) ...<Widget>[
+              const SizedBox(width: 4),
+              FilledButton.tonalIcon(
+                onPressed: _pasteAnnotation,
+                icon: const Icon(Icons.content_paste, size: 20),
+                label: Text(compact ? 'Tempel' : 'Tempel di halaman $_currentPage'),
+              ),
+            ],
+            IconButton(
+              tooltip: selected != null ? 'Batal pilih' : 'Kosongkan papan klip',
+              icon: const Icon(Icons.close),
+              onPressed: () => setState(() {
+                if (selected != null) {
+                  _selectedAnnotationKey = null;
+                } else {
+                  _clipboard = null;
+                }
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------- seret ke halaman lain
+
+  void _startAnnotationDrag(
+    ZoteroAnnotation annotation, {
+    required PdfPage page,
+    required Rect pageRect,
+    required Rect bounds,
+    required Offset global,
+  }) {
+    final box = _viewerKey.currentContext?.findRenderObject();
+    final document = _controller.globalToDocument(global);
+    if (box is! RenderBox || document == null) return;
+    final hit = _controller.getPdfPageHitTestResult(document, useDocumentLayoutCoordinates: true);
+    if (hit == null) return;
+    final local = box.globalToLocal(global);
+    setState(() {
+      _annotationDrag = _AnnotationDrag(
+        annotation: annotation,
+        sourcePage: page,
+        grab: Offset(hit.offset.x, hit.offset.y),
+        // Titik pegang terhadap pojok halaman di layar, supaya bayangannya
+        // mengikuti jari di titik yang sama dengan yang dipegang.
+        grabOnPage: local - pageRect.topLeft,
+        pageSize: pageRect.size,
+        pointer: local,
+        global: global,
+        targetPage: page.pageNumber,
+      );
+    });
+  }
+
+  int? _pageAt(Offset global) {
+    final document = _controller.globalToDocument(global);
+    if (document == null) return null;
+    return _controller
+        .getPdfPageHitTestResult(document, useDocumentLayoutCoordinates: true)
+        ?.page
+        .pageNumber;
+  }
+
+  void _annotationDragMove(PointerEvent event) {
+    final drag = _annotationDrag;
+    if (drag == null) return;
+    setState(() {
+      drag
+        ..pointer = event.localPosition
+        ..global = event.position
+        ..targetPage = _pageAt(event.position);
+    });
+    _autoScrollNear(event.localPosition);
+  }
+
+  /// Menggulir sendiri selama jari menahan anotasi di dekat tepi atas atau
+  /// bawah, supaya halaman yang belum terlihat bisa dicapai. Saat menyajikan
+  /// tidak, karena di sana gulir bebas memang dimatikan: pakai Potong/Tempel
+  /// atau "Ke halaman…".
+  void _autoScrollNear(Offset local) {
+    final box = _viewerKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || _presentMode) return;
+    const edge = 64.0;
+    final height = box.size.height;
+    var speed = 0.0;
+    if (local.dy < edge) {
+      speed = -(edge - local.dy) / edge;
+    } else if (local.dy > height - edge) {
+      speed = (local.dy - (height - edge)) / edge;
+    }
+    _dragScrollSpeed = speed.clamp(-1.0, 1.0);
+    if (_dragScrollSpeed == 0) {
+      _dragScroll?.cancel();
+      _dragScroll = null;
+      return;
+    }
+    _dragScroll ??= Timer.periodic(const Duration(milliseconds: 16), (_) {
+      final drag = _annotationDrag;
+      if (drag == null || !mounted || !_controller.isReady || _dragScrollSpeed == 0) {
+        _dragScroll?.cancel();
+        _dragScroll = null;
+        return;
+      }
+      final next = Matrix4.translationValues(0, -_dragScrollSpeed * 20, 0)
+        ..multiply(_controller.value);
+      _controller.value = _controller.makeMatrixInSafeRange(next);
+      setState(() => drag.targetPage = _pageAt(drag.global));
+    });
+  }
+
+  Future<void> _annotationDragEnd(PointerEvent event) async {
+    final drag = _annotationDrag;
+    if (drag == null) return;
+    _dragScroll?.cancel();
+    _dragScroll = null;
+    _dragScrollSpeed = 0;
+    setState(() => _annotationDrag = null);
+    if (event is PointerCancelEvent) return;
+
+    final document = _controller.globalToDocument(event.position);
+    final hit = document == null
+        ? null
+        : _controller.getPdfPageHitTestResult(document, useDocumentLayoutCoordinates: true);
+    if (hit == null) {
+      _say('Lepaskan di atas halaman untuk memindahkannya');
+      return;
+    }
+    // Perpindahan titik pegang, dalam koordinat PDF halaman masing-masing.
+    final dx = hit.offset.x - drag.grab.dx;
+    final dy = hit.offset.y - drag.grab.dy;
+    if (hit.page.pageNumber == drag.sourcePage.pageNumber) {
+      await _moveAnnotation(drag.annotation, page: hit.page, dx: dx, dy: dy);
+    } else {
+      await _moveAnnotationToPage(drag.annotation, page: hit.page, dx: dx, dy: dy);
+    }
+  }
+
+  /// Bayangan anotasi yang sedang diseret, digambar di atas penampil supaya
+  /// bisa melewati batas halaman, dengan nomor halaman tempat ia akan jatuh.
+  Widget _dragGhost(_AnnotationDrag drag) {
+    final scheme = Theme.of(context).colorScheme;
+    final origin = drag.pointer - drag.grabOnPage;
+    final target = drag.targetPage;
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            Positioned(
+              left: origin.dx,
+              top: origin.dy,
+              width: drag.pageSize.width,
+              height: drag.pageSize.height,
+              child: Opacity(
+                opacity: 0.75,
+                child: CustomPaint(
+                  painter: AnnotationOverlayPainter(
+                    annotations: <ZoteroAnnotation>[drag.annotation],
+                    pageWidth: drag.sourcePage.width,
+                    pageHeight: drag.sourcePage.height,
+                    selectedKey: drag.annotation.key,
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: drag.pointer.dx + 18,
+              top: drag.pointer.dy - 40,
+              child: Material(
+                color: target == null ? scheme.error : scheme.primary,
+                borderRadius: BorderRadius.circular(14),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  child: Text(
+                    target == null ? 'Di luar halaman' : 'Halaman $target',
+                    style: TextStyle(
+                      color: target == null ? scheme.onError : scheme.onPrimary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Mengubah ukuran dan memutar anotasi tinta.
@@ -3221,7 +3645,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   Future<void> _goToAnnotation(ZoteroAnnotation annotation) async {
     setState(() => _selectedAnnotationKey = annotation.key);
-    final bounds = AnnotationGeometry.boundsOf(annotation.rects);
+    // Lewat AnnotationMove: tinta tidak menyimpan kotak, batasnya dihitung
+    // dari goresannya — tanpa itu yang terbuka hanya puncak halamannya.
+    final bounds = AnnotationGeometry.boundsOf(AnnotationMove.rectsOf(annotation));
     if (bounds == null) {
       await _controller.goToPage(pageNumber: annotation.pageNumber);
       return;
@@ -3374,6 +3800,39 @@ class _ReadingChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Anotasi yang sedang diseret dari atas penampil.
+class _AnnotationDrag {
+  _AnnotationDrag({
+    required this.annotation,
+    required this.sourcePage,
+    required this.grab,
+    required this.grabOnPage,
+    required this.pageSize,
+    required this.pointer,
+    required this.global,
+    required this.targetPage,
+  });
+
+  final ZoteroAnnotation annotation;
+  final PdfPage sourcePage;
+
+  /// Titik yang dipegang, dalam koordinat PDF halaman asal.
+  final Offset grab;
+
+  /// Titik yang dipegang terhadap pojok kiri atas halaman asal di layar.
+  final Offset grabOnPage;
+
+  /// Ukuran halaman asal di layar, untuk menggambar bayangannya seukuran.
+  final Size pageSize;
+
+  /// Posisi jari terhadap penampil, dan secara global.
+  Offset pointer;
+  Offset global;
+
+  /// Halaman di bawah jari; null bila di celah antarhalaman.
+  int? targetPage;
 }
 
 /// Satu langkah yang bisa diurungkan dan diulangi.

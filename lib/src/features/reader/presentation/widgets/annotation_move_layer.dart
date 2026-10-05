@@ -13,6 +13,7 @@ class AnnotationMoveLayer extends StatefulWidget {
     required this.onDelete,
     this.limit,
     this.onTransformed,
+    this.onDragStart,
     super.key,
   });
 
@@ -32,6 +33,13 @@ class AnnotationMoveLayer extends StatefulWidget {
   final ValueChanged<Offset> onMoved;
 
   final VoidCallback onDelete;
+
+  /// Bila diisi, seretannya diserahkan ke pemanggil sejak awal, dengan posisi
+  /// global tempat jari menekan. Lapisan ini terkurung di halamannya sendiri
+  /// — tidak bisa menggambar, apalagi menjatuhkan, sesuatu di halaman lain —
+  /// jadi memindah ke halaman lain hanya bisa diurus dari atas penampil.
+  /// [onMoved] tidak dipanggil dalam hal ini.
+  final ValueChanged<Offset>? onDragStart;
 
   /// Dipanggil sekali saat gerakan mengubah ukuran atau memutar selesai.
   ///
@@ -103,16 +111,26 @@ class _AnnotationMoveLayerState extends State<AnnotationMoveLayer> {
       height: box.height,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onPanStart: (_) => setState(() => _dragging = true),
-        onPanUpdate: (d) => setState(() => _drag += d.delta),
+        onPanStart: (d) {
+          setState(() => _dragging = true);
+          widget.onDragStart?.call(d.globalPosition);
+        },
+        onPanUpdate: (d) {
+          if (widget.onDragStart != null) return;
+          setState(() => _drag += d.delta);
+        },
         onPanEnd: (_) {
           final moved = _drag;
           setState(() {
             _dragging = false;
             _drag = Offset.zero;
           });
-          if (moved != Offset.zero) widget.onMoved(moved);
+          if (widget.onDragStart == null && moved != Offset.zero) widget.onMoved(moved);
         },
+        onPanCancel: () => setState(() {
+          _dragging = false;
+          _drag = Offset.zero;
+        }),
         child: Stack(
           clipBehavior: Clip.none,
           children: <Widget>[

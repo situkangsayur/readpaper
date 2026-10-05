@@ -196,6 +196,11 @@ class ZoteroAnnotation {
   bool get hasComment => comment.trim().isNotEmpty;
 
   ZoteroAnnotation copyWith({
+    String? key,
+    String? parentItemKey,
+    int? pageIndex,
+    String? pageLabel,
+    DateTime? dateAdded,
     String? color,
     String? comment,
     String? text,
@@ -207,21 +212,21 @@ class ZoteroAnnotation {
     double? inkWidth,
     String? sortIndex,
   }) => ZoteroAnnotation(
-    key: key,
-    parentItemKey: parentItemKey,
+    key: key ?? this.key,
+    parentItemKey: parentItemKey ?? this.parentItemKey,
     type: type ?? this.type,
     color: color ?? this.color,
-    pageIndex: pageIndex,
+    pageIndex: pageIndex ?? this.pageIndex,
     rects: rects ?? this.rects,
     paths: paths ?? this.paths,
     inkWidth: inkWidth ?? this.inkWidth,
     text: text ?? this.text,
     comment: comment ?? this.comment,
-    pageLabel: pageLabel,
+    pageLabel: pageLabel ?? this.pageLabel,
     sortIndex: sortIndex ?? this.sortIndex,
     authorName: authorName,
     tags: tags ?? this.tags,
-    dateAdded: dateAdded,
+    dateAdded: dateAdded ?? this.dateAdded,
     dateModified: dateModified ?? DateTime.now(),
     rawPosition: rawPosition,
   );

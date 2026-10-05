@@ -53,7 +53,16 @@ class AnnotationMove {
     required double pageHeight,
   }) {
     if (dx == 0 && dy == 0) return annotation;
+    return _place(annotation, dx: dx, dy: dy, pageWidth: pageWidth, pageHeight: pageHeight);
+  }
 
+  static ZoteroAnnotation _place(
+    ZoteroAnnotation annotation, {
+    required double dx,
+    required double dy,
+    required double pageWidth,
+    required double pageHeight,
+  }) {
     // Kept on the page. A signature dragged past the edge is not "somewhere
     // else", it is gone — and getting it back means finding it in a list.
     final bounds = rectsOf(annotation).isEmpty ? null : _boundsOf(rectsOf(annotation));
@@ -97,6 +106,48 @@ class AnnotationMove {
         textOffset: 0,
         topFromPageTop: pageHeight - top,
       ),
+    );
+  }
+
+  /// Anotasi yang sama, dipindah ke halaman lain dan digeser [dx], [dy].
+  ///
+  /// Halamannya bisa berbeda ukuran, jadi batas halaman tujuan yang menahan
+  /// anotasinya — bukan batas halaman asal. Indeks urutnya juga ditulis
+  /// ulang dari halaman tujuan, supaya panel samping mengurutkannya di sana.
+  static ZoteroAnnotation toPage(
+    ZoteroAnnotation annotation, {
+    required int pageIndex,
+    required double dx,
+    required double dy,
+    required double pageWidth,
+    required double pageHeight,
+  }) {
+    final relabelled = annotation.copyWith(
+      pageIndex: pageIndex,
+      // Label halaman yang dibuat ReadPaper adalah nomornya; label lain
+      // (mis. "iv" dari PDF) tidak bisa ditebak untuk halaman tujuan, jadi
+      // nomornya yang dipakai.
+      pageLabel: '${pageIndex + 1}',
+    );
+    // Selalu lewat penempatan, bahkan tanpa pergeseran: anotasinya tetap
+    // harus ditahan di dalam halaman tujuan dan indeks urutnya ditulis ulang.
+    return _place(relabelled, dx: dx, dy: dy, pageWidth: pageWidth, pageHeight: pageHeight);
+  }
+
+  /// Salinan baru dari [annotation]: kunci baru, tanggal baru, dan — bila
+  /// [parentItemKey] diberikan — menempel ke lampiran lain.
+  static ZoteroAnnotation duplicate(
+    ZoteroAnnotation annotation, {
+    required String key,
+    String? parentItemKey,
+    DateTime? now,
+  }) {
+    final at = now ?? DateTime.now();
+    return annotation.copyWith(
+      key: key,
+      parentItemKey: parentItemKey,
+      dateAdded: at,
+      dateModified: at,
     );
   }
 
