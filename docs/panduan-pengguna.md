@@ -304,6 +304,26 @@ koleksi. Akar paper hanya menerima PDF.
 Ikon **Koleksi paper baru** di samping nama library membuat koleksi di akar;
 ikon **Sub-koleksi baru di sini** pada sebuah baris membuat sub-koleksi.
 
+### Banyak repositori
+
+Ketuk nama repositori di kiri atas untuk berpindah. Setiap repositori menyebut
+isinya: jumlah item dan koleksi, ukuran di disk, lampiran yang sudah diunduh,
+dan berapa perubahan yang belum terkirim. **Kelola repositori…** di menu yang
+sama membuka daftar lengkapnya, dan dari sana repositori baru ditambahkan.
+
+Untuk memindah atau menyalin ke repositori lain:
+
+- **Satu paper:** di panel detailnya, **Pindahkan atau salin ke repositori
+  lain…**.
+- **Satu koleksi beserta isinya:** ⋮ pada koleksi → **Pindahkan atau salin ke
+  repositori lain…**.
+
+Pilih repositori tujuan, koleksi di sana, lalu **Pindahkan** atau **Salin**.
+Anotasi, catatan, dan PDF ikut. Kedua repositori mendapat commit sendiri;
+kirim perubahannya di masing-masing repositori. Kalau PDF sebuah paper belum
+diunduh ke perangkat ini, tidak ada yang dipindah: buka papernya sekali
+supaya PDF-nya terunduh (di desktop: LFS pull), lalu ulangi.
+
 ### Ganti nama, pindahkan, dan hapus
 
 Tombol **⋮** di setiap koleksi, paper maupun catatan, membuka **Ubah nama**,

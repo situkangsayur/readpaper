@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../library/domain/entities/library_index.dart';
 import '../../../sync/domain/entities/git_entities.dart';
 import '../controllers/workspace_controller.dart';
+import '../../../settings/presentation/screens/profiles_screen.dart';
+import 'repo_transfer_sheet.dart';
 import 'sync_detail_sheet.dart';
 
 /// Full-width bar under the app bar: which repository and library are open,
@@ -67,10 +69,13 @@ class _RepoPicker extends ConsumerWidget {
       icon: Icons.folder_copy_outlined,
       label: active.name,
       // Switching repositories mid-sync would leave the running one orphaned.
-      enabled: !state.isBusy && profiles.length > 1,
+      // Selalu bisa dibuka, juga dengan satu repositori: dari sini repositori
+      // kedua ditambahkan. Dulu menunya mati selama hanya ada satu, dan cara
+      // menambah yang kedua tersembunyi di pengaturan.
+      enabled: !state.isBusy,
       tooltip: profiles.length > 1
           ? 'Ganti repositori (${profiles.length} tersedia)'
-          : active.shortRemote,
+          : '${active.shortRemote} — tambah repositori lain',
       maxWidth: narrow ? 200 : 280,
       onSelected: () async {
         final chosen = await showMenu<String>(
@@ -89,12 +94,42 @@ class _RepoPicker extends ConsumerWidget {
                       size: 16,
                     ),
                     const SizedBox(width: 8),
-                    Flexible(child: Text(profile.name, overflow: TextOverflow.ellipsis)),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(profile.name, overflow: TextOverflow.ellipsis),
+                          RepoStatsLine(
+                            profile: profile,
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
+            const PopupMenuDivider(),
+            const PopupMenuItem<String>(
+              value: '__kelola__',
+              child: Row(
+                children: <Widget>[
+                  Icon(Icons.settings_outlined, size: 16),
+                  SizedBox(width: 8),
+                  Text('Kelola repositori…'),
+                ],
+              ),
+            ),
           ],
         );
+        if (!context.mounted) return;
+        if (chosen == '__kelola__') {
+          await Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => const ProfilesScreen()));
+          return;
+        }
         if (chosen != null && chosen != active.id) {
           await ref.read(workspaceControllerProvider.notifier).selectProfile(chosen);
         }

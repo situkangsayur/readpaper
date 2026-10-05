@@ -1458,29 +1458,32 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       PDF. Merender jadi gambar tinggal jalan terakhir untuk PDF yang tidak
       bisa ditulisi pdfium
 
-### Banyak repositori — diminta 2026-10-05 untuk versi berikutnya
+### Banyak repositori — diminta 2026-10-05, dikerjakan di 0.24.0
 
-Yang sudah ada: beberapa profil repositori, satu yang aktif, dan pengalih di
-bilah atas (aktif bila ada lebih dari satu).
-
-- [ ] **Ukuran tiap repositori** di layar Repositori dan di pengalihnya:
-      ukuran clone di disk, jumlah item dan koleksi, dan berapa yang belum
-      terkirim. Di Android ukuran lampiran yang sudah diunduh disebut terpisah,
-      karena itu yang bisa dibuang untuk menghemat ruang
-- [ ] **Pindah repositori lebih cepat**: indeks library tiap repo disimpan
-      supaya berpindah tidak memuat ulang dari nol
-- [ ] **Memindahkan dokumen (item) ke koleksi di repositori lain**: item
-      Zotero beserta anotasi, catatan, dan lampirannya disalin ke repo tujuan
-      dengan kunci baru bila bentrok, lalu dihapus dari repo asal — dua
-      commit, satu per repo. Untuk catatan lepas sama, di akar Catatan
-- [ ] **Memindahkan koleksi beserta isinya ke repositori lain**: sub-koleksi
-      ikut, struktur `collections.json` di repo tujuan ditulis dengan penulis
-      yang sama
-- [ ] Pilihan **salin** di samping **pindah** — yang kedua menghapus dari asal
-- [ ] Lampiran LFS dan lampiran yang belum diunduh: harus diunduh dulu sebelum
-      bisa dipindah; dikatakan, bukan diam-diam dipindah tanpa PDF-nya
-- [ ] Seret dan lepas antar repositori bila keduanya terbuka berdampingan
-      (desktop), selain lewat menu "Pindahkan ke repositori…"
+- [x] **Ukuran tiap repositori** di layar Repositori, di pengalih repositori, dan
+      di lembar pindah: jumlah item dan koleksi (dihitung dari berkasnya, bukan
+      dari angka plugin yang basi), ukuran di disk, lampiran yang sudah
+      diunduh, berapa yang belum terkirim, dan berapa yang baru di GitHub.
+      Dihitung di isolate tersendiri
+- [x] **Pengalih repositori selalu terbuka**, juga dengan satu repo, dan punya
+      "Kelola repositori…" — dari situ repo kedua ditambahkan
+- [x] **Pindahkan atau salin paper ke koleksi di repositori lain**, dari panel
+      detail. Item, anotasi, lampiran (`attachments/` dan `attachments-lfs/`),
+      dan catatan plugin ikut; `libraryID`, `libraryName`, dan `zoteroURI`
+      diganti mengikuti library tujuan. Satu commit di tiap repo
+- [x] **Pindahkan atau salin koleksi beserta sub-koleksi dan paper-nya**, dari
+      menu ⋮. Kunci koleksi yang sudah dipakai di tujuan diberi kunci baru dan
+      keanggotaannya dipetakan. Saat memindah, paper yang juga ada di koleksi
+      lain di asal tetap di sana, hanya dilepas
+- [x] **Tidak pernah setengah jadi, tidak pernah kehilangan PDF**: semua item
+      diperiksa lebih dulu, dan pemindahan ditolak — dengan alasannya — bila
+      ada lampiran yang belum diunduh atau masih penunjuk Git LFS
+- [x] Diuji dengan dua repositori git sungguhan lewat controller yang sama
+      dengan layar, dan dicoba lewat antarmuka build Linux
+- [ ] Memindah catatan (akar Catatan) ke repositori lain
+- [ ] Mengunduh lampiran yang belum ada secara otomatis sebelum memindah,
+      daripada meminta membuka papernya dulu
+- [ ] Seret dan lepas antar repositori
 
 ### Sinkronisasi
 

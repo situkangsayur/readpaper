@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/repo_profile.dart';
+import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
 import '../widgets/profile_editor_dialog.dart';
 
 /// Manage the repositories ReadPaper knows about and pick the active one.
@@ -159,6 +160,17 @@ class _ProfileCard extends StatelessWidget {
             Text(
               profile.localPath,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.outline),
+            ),
+            const SizedBox(height: 6),
+            // Ukuran dan isinya: dengan beberapa repositori, memilih yang mana
+            // tanpa tahu isinya adalah menebak — dan di tablet, ruang disk
+            // adalah alasan nyata untuk membuang lampiran yang sudah diunduh.
+            Row(
+              children: <Widget>[
+                Icon(Icons.data_usage, size: 14, color: scheme.primary),
+                const SizedBox(width: 6),
+                Expanded(child: RepoStatsLine(profile: profile)),
+              ],
             ),
             if (!profile.remoteMatchesTransport)
               Padding(

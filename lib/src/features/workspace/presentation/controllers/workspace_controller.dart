@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../../core/errors/failure.dart';
 import '../../../library/domain/repositories/library_repository.dart';
+import '../../domain/entities/repo_stats.dart';
+import '../../../library/data/datasources/library_transfer.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../library/data/datasources/zotero_writer.dart';
 import '../../../library/domain/entities/library_index.dart';
@@ -461,6 +465,198 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return null;
     }
   }
+
+  // ------------------------------------------------------ banyak repositori
+
+  /// Ukuran dan isi sebuah repositori, aktif atau tidak.
+  Future<RepoStats> repoStats(RepoProfile profile) async {
+    if (profile.localPath.isEmpty || !Directory(profile.localPath).existsSync()) {
+      return const RepoStats(cloned: false);
+    }
+    final layout = await ref.read(libraryRepositoryProvider).detectLayout(profile.localPath);
+    final libraries = layout?.libraries ?? const <LibraryRef>[];
+    final sizes = await RepoStats.measure(profile.localPath);
+    var unsent = 0;
+    var behind = 0;
+    try {
+      final status = await ref.read(gitBackendProvider).status(profile.localPath);
+      unsent = status.changes.length + status.ahead;
+      behind = status.behind;
+    } on Object {
+      // Status git yang gagal dibaca tidak membuat ukurannya salah.
+    }
+    var items = 0;
+    var collections = 0;
+    for (final library in libraries) {
+      items += _countItems(library.directoryPath);
+      collections += _countCollections(library.directoryPath);
+    }
+    return RepoStats(
+      cloned: true,
+      diskBytes: sizes.disk,
+      attachmentBytes: sizes.attachments,
+      items: items,
+      collections: collections,
+      unsent: unsent,
+      behind: behind,
+    );
+  }
+
+  /// Jumlah berkas item sungguhan. `library.json` menyimpan jumlah juga,
+  /// tetapi itu ditulis plugin saat terakhir mengekspor: item yang dibuat
+  /// ReadPaper sesudahnya tidak terhitung di sana.
+  static int _countItems(String libraryDir) {
+    final dir = Directory(p.join(libraryDir, 'items'));
+    if (!dir.existsSync()) return 0;
+    return dir.listSync(recursive: true).where((e) => e.path.endsWith('.json')).length;
+  }
+
+  /// Jumlah koleksi dari `collections.json` sendiri. Jumlah di manifest
+  /// plugin hanya ada bila manifest-nya ada, dan basi begitu koleksi dibuat
+  /// dari ReadPaper.
+  static int _countCollections(String libraryDir) {
+    final file = File(p.join(libraryDir, 'collections.json'));
+    if (!file.existsSync()) return 0;
+    try {
+      final decoded = jsonDecode(file.readAsStringSync());
+      return decoded is List ? decoded.length : 0;
+    } on FormatException {
+      return 0;
+    }
+  }
+
+  /// Library Zotero di repositori lain, untuk memilih koleksi tujuan.
+  ///
+  /// Repositori aktif tidak berpindah: yang dibaca hanya foldernya.
+  Future<LibraryIndex?> otherLibrary(RepoProfile profile) async {
+    if (!Directory(profile.localPath).existsSync()) return null;
+    final repo = ref.read(libraryRepositoryProvider);
+    final layout = await repo.detectLayout(profile.localPath);
+    if (layout == null || layout.libraries.isEmpty) return null;
+    final library = layout.libraries.firstWhere(
+      (l) => l.directoryName == profile.preferredLibraryDir,
+      orElse: () => layout.libraries.first,
+    );
+    return repo.loadLibrary(library);
+  }
+
+  /// Memindah atau menyalin satu paper ke koleksi di repositori lain.
+  ///
+  /// Dua commit, satu di tiap repositori, dengan pesan yang menyebut asal dan
+  /// tujuannya. Memindah berarti menyalin dulu dan baru menghapus dari asal
+  /// setelah salinannya utuh — urutan sebaliknya bisa kehilangan paper-nya.
+  Future<String?> transferItem({
+    required ZoteroItem item,
+    required RepoProfile target,
+    required LibraryIndex targetLibrary,
+    required String? collectionKey,
+    required bool move,
+  }) async {
+    final source = state.library;
+    final profile = state.profile;
+    if (source == null || profile == null) return 'Tidak ada library aktif.';
+    if (target.id == profile.id) return 'Repositori tujuannya sama dengan asal.';
+    const transfer = LibraryTransfer();
+    final missing = await transfer.missingAttachments(source.directoryPath, item.filePath);
+    if (missing.isNotEmpty) return _missingMessage(missing.length);
+
+    final collection = collectionKey == null ? null : targetLibrary.collections[collectionKey];
+    try {
+      await transfer.copyItem(
+        sourceDir: source.directoryPath,
+        targetDir: targetLibrary.library.directoryPath,
+        itemFilePath: item.filePath,
+        collectionKeys: <String>[?collection?.key],
+        collectionPaths: <String>[?collection?.path],
+      );
+      await _commitAnnotation(
+        profile: target,
+        message: '${move ? 'Dipindahkan' : 'Disalin'} dari ${profile.name}: ${item.title}',
+      );
+      if (move) {
+        await ref
+            .read(libraryRepositoryProvider)
+            .removeItem(libraryDir: source.directoryPath, itemFilePath: item.filePath);
+        await _commitAnnotation(
+          profile: profile,
+          message: 'Dipindahkan ke ${target.name}: ${item.title}',
+        );
+        await reloadLibrary();
+      }
+      return null;
+    } on MissingAttachments catch (e) {
+      return _missingMessage(e.files.length);
+    } on Failure catch (e) {
+      return e.message;
+    } on Object catch (e) {
+      return 'Gagal ${move ? 'memindah' : 'menyalin'}: $e';
+    }
+  }
+
+  /// Memindah atau menyalin koleksi paper beserta isinya ke repositori lain.
+  ///
+  /// Saat memindah, paper yang juga anggota koleksi lain di asal tetap di
+  /// sana — hanya dilepas dari koleksi yang dipindah. Yang hanya ada di
+  /// koleksi itu dihapus dari asal, setelah salinannya utuh.
+  Future<String?> transferCollection({
+    required String collectionKey,
+    required RepoProfile target,
+    required LibraryIndex targetLibrary,
+    required String? parentKey,
+    required bool move,
+  }) async {
+    final source = state.library;
+    final profile = state.profile;
+    final collection = state.index?.collections[collectionKey];
+    if (source == null || profile == null || collection == null) {
+      return 'Koleksinya tidak ada lagi.';
+    }
+    if (target.id == profile.id) return 'Repositori tujuannya sama dengan asal.';
+    const transfer = LibraryTransfer();
+    try {
+      final result = await transfer.copyCollection(
+        sourceDir: source.directoryPath,
+        targetDir: targetLibrary.library.directoryPath,
+        collectionKey: collectionKey,
+        targetParentKey: parentKey,
+      );
+      await _commitAnnotation(
+        profile: target,
+        message:
+            '${move ? 'Dipindahkan' : 'Disalin'} dari ${profile.name}: koleksi ${collection.path} '
+            '(${result.itemFiles.length} paper)',
+      );
+      if (move) {
+        final repo = ref.read(libraryRepositoryProvider);
+        for (final itemFile in result.itemFiles) {
+          if (result.alsoElsewhere.contains(itemFile)) continue;
+          await repo.removeItem(libraryDir: source.directoryPath, itemFilePath: itemFile);
+        }
+        await repo.deleteCollection(
+          libraryDir: source.directoryPath,
+          key: collectionKey,
+          withChildren: true,
+        );
+        await _commitAnnotation(
+          profile: profile,
+          message: 'Dipindahkan ke ${target.name}: koleksi ${collection.path}',
+        );
+        await reloadLibrary();
+      }
+      return null;
+    } on MissingAttachments catch (e) {
+      return _missingMessage(e.files.length);
+    } on Failure catch (e) {
+      return e.message;
+    } on Object catch (e) {
+      return 'Gagal ${move ? 'memindah' : 'menyalin'}: $e';
+    }
+  }
+
+  static String _missingMessage(int count) =>
+      '$count lampiran belum ada di perangkat ini — belum diunduh, atau masih penunjuk '
+      'Git LFS. Buka papernya sekali supaya PDF-nya diunduh (di desktop: LFS pull), '
+      'lalu ulangi. Tidak ada yang dipindah: tanpa PDF-nya, paper itu akan tiba kosong.';
 
   /// Mengganti nama, memindah, atau menghapus koleksi paper, lalu meng-commit.
   ///

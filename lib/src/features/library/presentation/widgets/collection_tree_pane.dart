@@ -8,6 +8,7 @@ import '../../../notes/domain/note_entities.dart';
 import '../../../notes/domain/note_target.dart';
 import '../../../notes/presentation/controllers/notes_controller.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
+import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
 import '../../domain/entities/library_index.dart';
 import '../../domain/entities/zotero_collection.dart';
 import '../controllers/library_controllers.dart';
@@ -639,6 +640,12 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
             onTap: () => Navigator.of(sheet).pop('pindah'),
           ),
           ListTile(
+            leading: const Icon(Icons.storage_outlined),
+            title: const Text('Pindahkan atau salin ke repositori lain…'),
+            subtitle: const Text('beserta sub-koleksi dan paper-nya'),
+            onTap: () => Navigator.of(sheet).pop('repo'),
+          ),
+          ListTile(
             leading: const Icon(Icons.folder_delete_outlined),
             title: const Text('Hapus koleksi'),
             subtitle: const Text('Paper di dalamnya tidak ikut terhapus'),
@@ -694,6 +701,37 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
             repo.moveCollection(libraryDir: dir, key: key, newParentKey: parentKey),
       );
       report(ok, 'Koleksi dipindah ke $parentName');
+    case 'repo':
+      if (!context.mounted) return;
+      final choice = await showRepoTransferSheet(
+        context,
+        what: 'Koleksi ${collection.path}, beserta sub-koleksi dan paper-nya',
+        forCollection: true,
+      );
+      if (choice == null || !context.mounted) return;
+      final failure = await controller.transferCollection(
+        collectionKey: key,
+        target: choice.target,
+        targetLibrary: choice.library,
+        parentKey: choice.collectionKey,
+        move: choice.move,
+      );
+      if (failure == null && choice.move) {
+        ref.read(selectionProvider.notifier).select(const LibrarySelection.all());
+      }
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            duration: Duration(seconds: failure == null ? 4 : 8),
+            content: Text(
+              failure ??
+                  'Koleksi "${collection.name}" ${choice.move ? 'dipindahkan' : 'disalin'} '
+                      'ke ${choice.target.name}',
+            ),
+          ),
+        );
     case 'hapus':
       final reach = await controller.paperCollectionReach(key);
       if (reach == null || !context.mounted) return;

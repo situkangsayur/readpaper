@@ -93,14 +93,19 @@ class ZoteroWriter {
       if (child['itemType'] != 'attachment') continue;
       final key = child['key'] as String?;
       if (key == null || key.isEmpty) continue;
-      final attachmentsRoot = p.normalize(p.join(libraryDir, 'attachments'));
-      final dir = Directory(p.join(attachmentsRoot, ZoteroKey.bucket(key), key));
-      // Kunci yang aneh — berisi `..` atau garis miring — tidak boleh
-      // mengarahkan penghapusan ke luar folder lampiran.
-      if (!p.isWithin(attachmentsRoot, p.normalize(dir.path))) continue;
-      if (dir.existsSync()) {
-        touched.add(dir.path);
-        await dir.delete(recursive: true);
+      // Kedua tempat lampiran: `attachments-lfs/` untuk yang disimpan lewat
+      // Git LFS. Dulu hanya yang pertama yang dibuang, dan lampiran LFS
+      // tertinggal sebagai folder tanpa item.
+      for (final rootName in const <String>['attachments', 'attachments-lfs']) {
+        final attachmentsRoot = p.normalize(p.join(libraryDir, rootName));
+        final dir = Directory(p.join(attachmentsRoot, ZoteroKey.bucket(key), key));
+        // Kunci yang aneh — berisi `..` atau garis miring — tidak boleh
+        // mengarahkan penghapusan ke luar folder lampiran.
+        if (!p.isWithin(attachmentsRoot, p.normalize(dir.path))) continue;
+        if (dir.existsSync()) {
+          touched.add(dir.path);
+          await dir.delete(recursive: true);
+        }
       }
     }
 

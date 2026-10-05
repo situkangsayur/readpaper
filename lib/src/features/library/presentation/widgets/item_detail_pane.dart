@@ -9,6 +9,7 @@ import '../../../../core/utils/layout_size.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../epub/presentation/epub_reader_screen.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
+import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/zotero_annotation.dart';
 import '../../domain/entities/zotero_item.dart';
@@ -80,6 +81,14 @@ class ItemDetailPane extends ConsumerWidget {
             // harus bisa dicabut lagi, termasuk yang masuk karena salah
             // pencet. Diletakkan paling bawah, di luar jangkauan jari yang
             // sedang menggulir.
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.drive_file_move_outline, size: 18),
+                label: const Text('Pindahkan atau salin ke repositori lain…'),
+                onPressed: () => _transferToRepo(context, ref, item),
+              ),
+            ),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
@@ -416,6 +425,36 @@ class _SectionTitle extends StatelessWidget {
 
 /// Bertanya dulu, lalu menghapus. Menghapus dokumen membuang berkas dari
 /// repositori orang, jadi tidak pantas terjadi karena satu ketukan.
+/// Memindah atau menyalin paper ini ke koleksi di repositori lain.
+Future<void> _transferToRepo(BuildContext context, WidgetRef ref, ZoteroItem item) async {
+  final choice = await showRepoTransferSheet(context, what: item.title, forCollection: false);
+  if (choice == null || !context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.showSnackBar(
+    SnackBar(content: Text('${choice.move ? 'Memindah' : 'Menyalin'} ke ${choice.target.name}…')),
+  );
+  final failure = await ref
+      .read(workspaceControllerProvider.notifier)
+      .transferItem(
+        item: item,
+        target: choice.target,
+        targetLibrary: choice.library,
+        collectionKey: choice.collectionKey,
+        move: choice.move,
+      );
+  final where = choice.collectionKey == null
+      ? choice.target.name
+      : '${choice.target.name} / ${choice.library.collections[choice.collectionKey]?.path ?? ''}';
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        duration: Duration(seconds: failure == null ? 4 : 8),
+        content: Text(failure ?? '${choice.move ? 'Dipindahkan' : 'Disalin'} ke $where'),
+      ),
+    );
+}
+
 Future<void> _confirmDelete(BuildContext context, WidgetRef ref, ZoteroItem item) async {
   final yakin = await showDialog<bool>(
     context: context,
