@@ -1,0 +1,107 @@
+/* Panel ReadPaper untuk Word dan OnlyOffice. SPDX-License-Identifier: AGPL-3.0-or-later */
+:root {
+  --rp-bg: #ffffff;
+  --rp-fg: #1f2328;
+  --rp-muted: #636c76;
+  --rp-line: #d0d7de;
+  --rp-soft: #f3f5f7;
+  --rp-accent: #2f6f4f;
+  --rp-accent-fg: #ffffff;
+  --rp-danger: #b42318;
+  --rp-ok: #1a7f37;
+  --rp-warn: #9a6700;
+}
+.rp-dark {
+  --rp-bg: #1e1f22;
+  --rp-fg: #e6e6e6;
+  --rp-muted: #a0a4aa;
+  --rp-line: #3a3d42;
+  --rp-soft: #2a2c30;
+  --rp-accent: #5fb38a;
+  --rp-accent-fg: #0f1a14;
+  --rp-danger: #ff7b72;
+  --rp-ok: #56d364;
+  --rp-warn: #e3b341;
+}
+html, body { margin: 0; padding: 0; height: 100%; }
+body { background: var(--rp-bg); }
+.rp {
+  box-sizing: border-box; display: flex; flex-direction: column; min-height: 100%;
+  background: var(--rp-bg); color: var(--rp-fg);
+  font: 13px/1.4 "Segoe UI", system-ui, -apple-system, "Noto Sans", Arial, sans-serif;
+}
+.rp *, .rp *::before, .rp *::after { box-sizing: border-box; }
+.rp-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 8px 12px; border-bottom: 1px solid var(--rp-line);
+}
+.rp-brand { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 14px; }
+.rp-back { border: 0; background: none; color: var(--rp-fg); font-size: 20px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.rp-pill { font-size: 11px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--rp-line); color: var(--rp-muted); background: none; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-pill.rp-ok { color: var(--rp-ok); border-color: var(--rp-ok); }
+.rp-pill.rp-bad { color: var(--rp-danger); border-color: var(--rp-danger); cursor: pointer; }
+.rp-main { flex: 1; padding: 12px; overflow-y: auto; }
+.rp-h { font-size: 14px; margin: 0 0 10px; }
+.rp-docinfo { color: var(--rp-muted); margin: 0 0 12px; }
+.rp-warn { color: var(--rp-warn); }
+.rp-actions { display: grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 14px; }
+.rp-secondary { grid-template-columns: 1fr 1fr; }
+.rp-btn {
+  font: inherit; padding: 6px 10px; border-radius: 4px; cursor: pointer; text-align: center;
+  border: 1px solid var(--rp-line); background: var(--rp-soft); color: var(--rp-fg);
+}
+.rp-btn:hover { border-color: var(--rp-accent); }
+.rp-btn:disabled { opacity: .5; cursor: default; }
+.rp-primary { background: var(--rp-accent); color: var(--rp-accent-fg); border-color: var(--rp-accent); }
+.rp-danger { background: var(--rp-danger); color: #fff; border-color: var(--rp-danger); }
+.rp-link { font: inherit; border: 0; background: none; color: var(--rp-accent); cursor: pointer; padding: 0; text-decoration: underline; }
+.rp-x { border: 0; background: none; color: var(--rp-muted); font-size: 18px; line-height: 1; cursor: pointer; }
+.rp-input {
+  font: inherit; width: 100%; padding: 6px 8px; border-radius: 4px;
+  border: 1px solid var(--rp-line); background: var(--rp-bg); color: var(--rp-fg);
+}
+.rp-input:focus { outline: 2px solid var(--rp-accent); outline-offset: -1px; }
+.rp-small { padding: 4px 6px; }
+.rp-results { list-style: none; margin: 4px 0 10px; padding: 0; max-height: 40vh; overflow-y: auto; border: 1px solid var(--rp-line); border-radius: 4px; }
+.rp-results:empty { display: none; }
+.rp-result { padding: 6px 8px; cursor: pointer; border-bottom: 1px solid var(--rp-line); }
+.rp-result:last-child { border-bottom: 0; }
+.rp-result:hover, .rp-result.rp-active { background: var(--rp-soft); }
+.rp-title { font-weight: 500; overflow-wrap: anywhere; }
+.rp-meta { color: var(--rp-muted); font-size: 12px; }
+.rp-badge { margin-left: 6px; font-size: 11px; padding: 0 6px; border-radius: 8px; background: var(--rp-soft); border: 1px solid var(--rp-line); }
+.rp-empty { padding: 6px 8px; color: var(--rp-muted); list-style: none; }
+.rp-cluster { margin-bottom: 8px; }
+.rp-item { border: 1px solid var(--rp-line); border-radius: 4px; padding: 8px; margin-bottom: 6px; }
+.rp-item-head { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+.rp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.rp-field { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--rp-muted); margin-bottom: 6px; }
+.rp-check { display: flex; align-items: center; gap: 6px; margin: 6px 0; }
+.rp-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0; }
+.rp-between { justify-content: space-between; }
+.rp-annotations { display: flex; flex-direction: column; gap: 4px; }
+.rp-ann {
+  font: inherit; display: flex; gap: 6px; align-items: flex-start; text-align: left; cursor: pointer;
+  border: 1px solid var(--rp-line); border-radius: 4px; padding: 4px 6px; background: var(--rp-bg); color: var(--rp-fg);
+}
+.rp-ann.rp-active { border-color: var(--rp-accent); }
+.rp-swatch { flex: none; width: 10px; height: 10px; margin-top: 4px; border-radius: 2px; }
+.rp-ann-page { flex: none; color: var(--rp-muted); font-size: 12px; min-width: 48px; }
+.rp-ann-text { font-size: 12px; }
+.rp-preview { min-height: 1.4em; padding: 6px 8px; background: var(--rp-soft); border-radius: 4px; margin: 8px 0; }
+.rp-preview:empty { display: none; }
+.rp-preview-label { color: var(--rp-muted); }
+.rp-hint { color: var(--rp-muted); font-size: 12px; margin: 6px 0; }
+.rp-steps { padding-left: 18px; margin: 0 0 10px; }
+.rp-styles { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.rp-style { display: flex; gap: 6px; align-items: flex-start; padding: 4px; border-radius: 4px; cursor: pointer; }
+.rp-style:hover { background: var(--rp-soft); }
+.rp-uncited { list-style: none; padding: 0; margin: 0 0 8px; }
+.rp-status { padding: 8px 12px; border-top: 1px solid var(--rp-line); font-size: 12px; min-height: 0; }
+.rp-status:empty { display: none; }
+.rp-status .rp-link { margin-left: 6px; }
+.rp-status.rp-error { color: var(--rp-danger); }
+.rp-status.rp-ok { color: var(--rp-ok); }
+.rp-status.rp-warn { color: var(--rp-warn); }
+.rp-status.rp-info { color: var(--rp-muted); }
+.rp-busy .rp-main { opacity: .6; pointer-events: none; }

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!-- Plugin OnlyOffice ReadPaper. SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ReadPaper</title>
+  <!-- Pustaka plugin OnlyOffice. Bila tidak terjangkau (luring), pakai salinan
+       yang dibawa editor di sdkjs-plugins/v1/. -->
+  <script src="https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js"></script>
+  <script src="https://onlyoffice.github.io/sdkjs-plugins/v1/plugins-ui.js"></script>
+  <script>
+    if (!window.Asc || !window.Asc.plugin) {
+      document.write('<script src="../v1/plugins.js"><\/script><script src="../v1/plugins-ui.js"><\/script>');
+    }
+  </script>
+  <link rel="stylesheet" href="../core/ui.css" />
+  <script src="../core/vendor/citeproc.js"></script>
+  <script src="../core/citations.js"></script>
+  <script src="../core/readpaper-api.js"></script>
+  <script src="../core/controller.js"></script>
+  <script src="../core/ui.js"></script>
+  <script src="scripts/adapter.js"></script>
+  <script src="scripts/plugin.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+</body>
+</html>

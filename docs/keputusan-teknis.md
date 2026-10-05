@@ -152,3 +152,28 @@ menjalankan humanizer lalu langsung memeriksanya dengan pendeteksi sendiri.
 Konsekuensinya untuk antarmuka: keduanya panel terpisah dengan sesi terpisah,
 dan menjalankan salah satunya menutup hasil yang lain supaya tidak terbaca
 sebagai "sudah lolos pemeriksaan".
+
+---
+
+## KT-5 — Sitasi dirender citeproc-js di dalam add-in, bukan di ReadPaper
+
+**Status:** dijalankan 2026-10-05 (0.25.0). Kontraknya di
+[api-sitasi.md](api-sitasi.md), kodenya di `integrations/`.
+
+ReadPaper desktop hanya menjadi **sumber data**: mencari item, memberi
+CSL-JSON, anotasi, serta gaya dan locale CSL yang dibundel. Merender sitasi dan
+daftar pustaka dikerjakan **citeproc-js** di dalam add-in Word dan plugin
+OnlyOffice. Ada tiga alasannya:
+
+- **Hasilnya sama dengan Zotero.** citeproc-js adalah mesin Zotero sendiri.
+  Port Dart yang ada belum lengkap untuk gaya bernomor dan disambiguasi.
+- **Dokumen hidup tanpa ReadPaper.** Data item, gaya terakhir, dan locale-nya
+  disimpan di dalam dokumen (custom XML part). Dokumen yang dikirim ke
+  pembimbing tetap bisa diperbarui walaupun ReadPaper tidak berjalan.
+- **Satu inti untuk dua editor.** `integrations/core/` dipakai apa adanya oleh
+  keduanya. Yang berbeda hanya lapisan tipis yang menulis ke content control
+  masing-masing.
+
+Server lokal hanya mendengarkan di `127.0.0.1` dan wajib bertoken. Tanpa
+token, halaman web mana pun yang terbuka di peramban yang sama bisa membaca
+library lewat alamat lokal, dan CORS tidak mencegah itu.

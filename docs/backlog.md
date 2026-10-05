@@ -471,46 +471,53 @@ membaca dokumentasinya (dicatat 2026-09-30):
    perintah tersendiri, bukan ekor dari setiap penyisipan.
 
 ### 10.1 Fondasi: ReadPaper sebagai server lokal
-- [ ] API lokal di `127.0.0.1` (HTTP + WebSocket) yang hanya hidup selama
-      ReadPaper berjalan, dilindungi token yang dibuat per pemasangan.
-- [ ] Endpoint: cari (judul / pengarang / abstrak), ambil metadata CSL-JSON,
-      ambil anotasi & bookmark sebuah item, render sitasi & daftar pustaka
-      untuk gaya tertentu.
-- [ ] Protokol dokumen: sisipkan sitasi, perbarui semua sitasi, bangun ulang
+- [x] API lokal di `127.0.0.1:23121` yang hanya hidup selama ReadPaper
+      desktop berjalan, dilindungi token yang dibuat per pemasangan (0.25.0).
+      Cukup HTTP; WebSocket tidak diperlukan karena add-in yang bertanya.
+- [x] Endpoint: cari (judul / pengarang / abstrak), ambil metadata CSL-JSON,
+      ambil anotasi & bookmark sebuah item, gaya dan locale CSL. Merender
+      sitasi **tidak** di server: citeproc-js berjalan di add-in (KT-5), jadi
+      dokumen tetap bisa diperbarui tanpa ReadPaper.
+- [x] Protokol dokumen (content control + custom XML part, `docs/api-sitasi.md`): sisipkan sitasi, perbarui semua sitasi, bangun ulang
       daftar pustaka, konversi ke teks biasa. (Bentuknya mengikuti pola yang
       sudah terbukti di Zotero: field/bookmark tersembunyi di dokumen yang
       menyimpan identitas sitasi, bukan sekadar teks.)
 
 ### 10.2 Alur memilih apa yang disitasi
-- [ ] Pencarian di dalam dialog sitasi: **nama pengarang, judul, abstrak**.
-- [ ] **Pilih beberapa referensi sekaligus** untuk satu sitasi
+- [x] Pencarian di dalam dialog sitasi: **nama pengarang, judul, abstrak**.
+- [x] **Pilih beberapa referensi sekaligus** untuk satu sitasi
       (mis. `[1], [3]–[5]`).
-- [ ] **Tandai bagian mana yang disitasi**: nomor halaman, rentang halaman,
+- [x] **Tandai bagian mana yang disitasi**: nomor halaman, rentang halaman,
       atau **pilih dari anotasi yang sudah ada** — stabilo berwarna, garis
       bawah, dan catatan yang sudah dibuat di pembaca berlaku sebagai bookmark
       yang bisa dipilih, lengkap dengan kutipan teksnya.
-- [ ] Prefiks/sufiks sitasi ("lihat", "bdk.", "hlm. 12–14") dan opsi
+- [x] Prefiks/sufiks sitasi ("lihat", "bdk.", "hlm. 12–14") dan opsi
       menyembunyikan pengarang untuk sitasi naratif.
-- [ ] **Atur mana yang masuk daftar pustaka**: sitasi bisa ditandai "jangan
+- [x] **Atur mana yang masuk daftar pustaka**: sitasi bisa ditandai "jangan
       masukkan ke daftar pustaka", dan referensi bisa ditambahkan ke daftar
       pustaka tanpa pernah disitasi di badan teks.
-- [ ] Bangun **daftar isi / daftar referensi** di posisi yang ditentukan
+- [x] Bangun **daftar isi / daftar referensi** di posisi yang ditentukan
       penulis, dan perbarui otomatis saat sitasi berubah.
 
 ### 10.3 Penyambung per editor
 - [ ] **LibreOffice / OpenOffice**: ekstensi UNO (`.oxt`) dengan menu dan
       toolbar sendiri, berbicara ke API lokal ReadPaper.
-- [ ] **Microsoft Word**: add-in Office.js — satu basis kode untuk **Word 365
-      web dan Word desktop** (Windows & macOS). Perlu manifest add-in dan,
-      untuk distribusi di luar toko, sideload lewat berbagi folder/registry.
-- [ ] **OnlyOffice**: plugin JavaScript sesuai API plugin OnlyOffice.
+- [x] **Microsoft Word**: add-in Office.js — satu basis kode untuk **Word 365
+      web dan Word desktop** (Windows & macOS). Manifest di
+      `integrations/word/`, task pane dari GitHub Pages, sideload lewat
+      folder bersama. Belum diuji di Word sungguhan; macOS (WKWebView) dan izin
+      jaringan lokal Word web perlu dicoba tersendiri.
+- [x] **OnlyOffice**: plugin JavaScript (`integrations/onlyoffice/`, berkas
+      `.plugin` di setiap rilis), OnlyOffice 9.0+. Kode editornya diuji di
+      DocumentBuilder 9.0 dan 9.4; 8.x tidak punya API yang dibutuhkan.
 - [ ] **Google Docs**: lewat Google Docs API resmi dengan OAuth PKCE dan scope
       `drive.file`, bukan ekstensi peramban. Alasan dan langkah lengkapnya —
       termasuk cara mendapatkan kredensialnya — ada di
       [google-docs-api.md](google-docs-api.md); keputusannya KT-3 di
       [keputusan-teknis.md](keputusan-teknis.md).
 - [ ] Uji lintas editor: satu dokumen yang sama disitasi dari dua editor
-      berbeda harus tetap bisa diperbarui.
+      berbeda harus tetap bisa diperbarui. (Kedua add-in sudah membaca kedua
+      bentuk tag; tinggal dicoba di Word dan OnlyOffice sungguhan.)
 
 ### 10.4 Aplikasi desktop
 

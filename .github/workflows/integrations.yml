@@ -1,0 +1,134 @@
+name: Integrasi Word dan OnlyOffice
+
+# Sitasi ReadPaper di Word dan OnlyOffice (integrations/, kontrak di
+# docs/api-sitasi.md).
+#
+# - Setiap push ke main dan PR yang menyentuh integrations/: uji Node.
+# - Push ke main: task pane Word (integrations/word + integrations/core)
+#   disajikan lewat GitHub Pages di https://situkangsayur.github.io/readpaper/word/
+#   (manifest Word menunjuk ke sana). Pages harus sudah diatur ke sumber
+#   "GitHub Actions" di Settings → Pages; workflow ini tidak mengubahnya.
+# - Tag v*: plugin OnlyOffice dipaket menjadi .plugin dan dilampirkan ke rilis
+#   bertag sama, bila rilisnya ada.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths:
+      - 'integrations/**'
+      - 'scripts/package-onlyoffice-plugin.sh'
+      - '.github/workflows/integrations.yml'
+  pull_request:
+    paths:
+      - 'integrations/**'
+      - '.github/workflows/integrations.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integrations
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: integrations/package-lock.json
+
+      - run: npm ci
+
+      # Inti sitasi dengan gaya dan locale CSL asli dari assets/csl/, alur
+      # perintah dengan editor tiruan, dan panel di jsdom.
+      - name: Uji
+        run: npm test
+
+      # Validasi manifest memanggil layanan Microsoft; bila layanan itu
+      # sedang bermasalah, jangan sampai uji yang lain ikut merah.
+      - name: Validasi manifest Word
+        continue-on-error: true
+        run: npx --yes office-addin-manifest validate word/manifest.xml
+
+  pages:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}word/taskpane.html
+    steps:
+      - uses: actions/checkout@v4
+
+      # Situs: /word/ (task pane, manifest, ikon) dan /core/ (dimuat task pane
+      # lewat ../core/). Uji tidak ikut disajikan.
+      - name: Susun situs
+        run: |
+          mkdir -p _site
+          cp -R integrations/word _site/word
+          cp -R integrations/core _site/core
+          rm -rf _site/core/test
+          cat > _site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="id"><head><meta charset="UTF-8"><title>ReadPaper untuk Word</title></head>
+          <body style="font-family:system-ui,sans-serif;max-width:40em;margin:2em auto;padding:0 1em">
+          <h1>ReadPaper untuk Word</h1>
+          <p>Halaman ini menyajikan task pane add-in Word ReadPaper. Cara memasangnya ada di
+          <a href="https://github.com/situkangsayur/readpaper/tree/main/integrations">integrations/README.md</a>.</p>
+          <p><a href="word/manifest.xml">manifest.xml</a></p>
+          </body></html>
+          EOF
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+  onlyoffice-plugin:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Paket plugin
+        run: scripts/package-onlyoffice-plugin.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: readpaper-onlyoffice-plugin
+          path: build/integrations/*.plugin
+
+      # Rilisnya dibuat di tempat lain dan bisa menyusul beberapa menit; tunggu
+      # sebentar, lalu menyerah tanpa menggagalkan workflow.
+      - name: Lampirkan ke rilis
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              gh release upload "$TAG" build/integrations/*.plugin --clobber
+              echo "Plugin dilampirkan ke rilis $TAG."
+              exit 0
+            fi
+            echo "Rilis $TAG belum ada (percobaan $attempt), menunggu 30 detik…"
+            sleep 30
+          done
+          echo "::notice::Rilis $TAG tidak ditemukan; plugin hanya tersedia sebagai artefak workflow."

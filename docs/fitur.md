@@ -246,6 +246,17 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   bukan-PDF di akar paper.
 - **Panel bisa dilipat** ketika tidak sedang memasukkan berkas.
 
+## Sitasi
+
+- **Sitasi di Word dan OnlyOffice.** ReadPaper desktop menjalankan server
+  lokal bertoken (`127.0.0.1:23121`). Add-in Word dan plugin OnlyOffice 9.0+
+  mencari paper di library, termasuk anotasinya sebagai penanda halaman. Sitasi
+  dan daftar pustaka dirender citeproc-js, mesin yang sama dengan Zotero, dengan
+  gaya yang dibundel (APA, Vancouver, IEEE, Harvard, dan lainnya). Daftar pustaka
+  selalu dibangun ulang dari sitasi yang ada di dokumen, dan data sitasinya
+  ikut tersimpan di dokumen. Rinciannya di `docs/api-sitasi.md` dan
+  `integrations/README.md`.
+
 ## Sinkronisasi
 
 - **Profil repositori**: beberapa repositori bisa didaftarkan dan dipindah kapan

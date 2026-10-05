@@ -387,6 +387,31 @@ di sana (diambil dari baris `Citation Key:` di kolom Extra). Kalau tidak,
 kuncinya dibentuk dari pengarang pertama, tahun, dan kata judul pertama, mis.
 `mcclean2018barren`. Yang kembar diberi akhiran `a`, `b`, dan seterusnya.
 
+### Sitasi di Word dan OnlyOffice
+
+ReadPaper **desktop** bisa menjadi sumber sitasi untuk Microsoft Word dan
+OnlyOffice. Sitasinya dibuat oleh mesin yang sama dengan Zotero.
+
+1. Di ReadPaper desktop buka **Pengaturan**. Pada kartu **Sitasi di Word &
+   OnlyOffice**, pastikan server menyala, lalu salin **token**-nya.
+2. Pasang pluginnya:
+   - **OnlyOffice 9.0+**: unduh `readpaper-onlyoffice-….plugin` dari halaman
+     rilis, lalu buka **Plugin → Pengelola Plugin → Pasang plugin secara
+     manual**.
+   - **Word**: sideload `manifest.xml`. Langkahnya ada di
+     `integrations/README.md`.
+3. Buka panel ReadPaper di editor, tempel token, lalu **Simpan dan periksa**.
+4. Cari judul, pengarang, atau abstrak, pilih satu atau beberapa paper. Bila
+   perlu, isi halaman atau pilih salah satu stabilo sebagai bagian yang
+   disitasi, lalu **Sisipkan**.
+5. **Daftar pustaka** menaruhnya di posisi kursor. **Perbarui semua** menomori
+   ulang sitasi dan membangun daftar pustaka dari sitasi yang benar-benar ada
+   di dokumen. Sitasi yang dihapus tidak akan tertinggal di daftar.
+
+Sitasi dan datanya tersimpan di dalam dokumen. Karena itu dokumen tetap bisa
+dibuka dan diperbarui di komputer lain, walaupun ReadPaper tidak berjalan di
+sana.
+
 ### Penting untuk Android
 
 Di Android, item Zotero dan koleksinya terkirim ke GitHub, tetapi **PDF-nya

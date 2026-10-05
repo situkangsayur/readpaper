@@ -143,7 +143,9 @@ class CslJson {
     'codeNumber',
     'publicLawNumber',
     'applicationNumber',
-    'issue',
+    // Bukan `issue`: nomor terbitan sudah jadi `issue`, dan APA serta IEEE
+    // mendahulukan `number` di atas halaman — artikel jurnal lalu tertulis
+    // "Article 4" alih-alih "174–189". Zotero tidak memetakannya begitu.
   ];
 
   /// Medan Zotero yang jadi `genre` — "jenis karya" yang ditulis apa adanya.

@@ -1,0 +1,16 @@
+{
+  "name": "readpaper-integrations",
+  "private": true,
+  "description": "Sitasi ReadPaper untuk Microsoft Word dan OnlyOffice",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "test": "node --test core/test/*.test.js",
+    "validate:word": "npx --yes office-addin-manifest validate word/manifest.xml"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}

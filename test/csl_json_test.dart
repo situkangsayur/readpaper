@@ -45,6 +45,9 @@ void main() {
       expect(csl['volume'], '620');
       expect(csl['issue'], '7973');
       expect(csl['page'], '301-310');
+      // Nomor terbitan bukan `number`: APA lalu menulis "Article 7973"
+      // menggantikan halamannya.
+      expect(csl.containsKey('number'), isFalse);
       expect(csl['id'], 'ABCD1234');
     });
 
