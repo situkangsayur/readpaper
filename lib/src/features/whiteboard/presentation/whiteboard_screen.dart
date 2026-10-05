@@ -67,8 +67,37 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
 
   BoardPage get _page => _pages[_current];
 
+  /// Keadaan lembar sebelum tiap perubahan, untuk diurungkan; dan yang
+  /// diurungkan, untuk diulangi. Disimpan per lembar beserta nomornya.
+  final List<(int, BoardPage)> _undoPages = <(int, BoardPage)>[];
+  final List<(int, BoardPage)> _redoPages = <(int, BoardPage)>[];
+  DateTime _lastRecord = DateTime(0);
+
   void _replace(BoardPage page) {
-    setState(() => _pages = <BoardPage>[..._pages]..[_current] = page);
+    final now = DateTime.now();
+    // Satu sapuan penghapus mengirim perubahan di setiap gerakan; semuanya
+    // dihitung satu langkah, supaya urungkan tidak perlu ditekan puluhan kali.
+    final sameSweep = _erasing && now.difference(_lastRecord).inMilliseconds < 600;
+    _lastRecord = now;
+    setState(() {
+      if (!sameSweep) {
+        _undoPages.add((_current, _page));
+        if (_undoPages.length > 50) _undoPages.removeAt(0);
+      }
+      _redoPages.clear();
+      _pages = <BoardPage>[..._pages]..[_current] = page;
+    });
+  }
+
+  void _restore(List<(int, BoardPage)> from, List<(int, BoardPage)> to) {
+    if (from.isEmpty) return;
+    final (index, page) = from.removeLast();
+    if (index >= _pages.length) return;
+    setState(() {
+      to.add((index, _pages[index]));
+      _pages = <BoardPage>[..._pages]..[index] = page;
+      _current = index;
+    });
   }
 
   void _addPage() {
@@ -83,10 +112,11 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
     });
   }
 
-  void _undo() {
-    if (_page.strokes.isEmpty) return;
-    _replace(_page.copyWith(strokes: _page.strokes.sublist(0, _page.strokes.length - 1)));
-  }
+  /// Urungkan langkah terakhir — goresan, penghapusan, putaran kertas, atau
+  /// mengosongkan lembar — dan Ulangi untuk mengembalikannya.
+  void _undo() => _restore(_undoPages, _redoPages);
+
+  void _redo() => _restore(_redoPages, _undoPages);
 
   /// Memutar kertas lembar ini seperempat putaran.
   ///
@@ -325,12 +355,20 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
               icon: const Icon(Icons.touch_app_outlined),
               onPressed: () => setState(() => _finger = !_finger),
             ),
-            IconButton(
-              tooltip: _erasing ? 'Penghapus aktif' : 'Penghapus — sentuh goresan',
-              isSelected: _erasing,
-              selectedIcon: const Icon(Icons.auto_fix_normal),
-              icon: const Icon(Icons.auto_fix_off),
-              onPressed: () => setState(() => _erasing = !_erasing),
+            // Berlabel: ikon tongkat ajaib saja tidak terbaca sebagai penghapus.
+            Tooltip(
+              message: _erasing ? 'Kembali menulis' : 'Penghapus — sapukan di atas goresan',
+              child: _erasing
+                  ? FilledButton.tonalIcon(
+                      onPressed: () => setState(() => _erasing = false),
+                      icon: const Icon(Icons.auto_fix_off, size: 18),
+                      label: const Text('Penghapus'),
+                    )
+                  : TextButton.icon(
+                      onPressed: () => setState(() => _erasing = true),
+                      icon: const Icon(Icons.auto_fix_normal, size: 18),
+                      label: const Text('Penghapus'),
+                    ),
             ),
             IconButton(
               tooltip: _page.orientation == BoardOrientation.tegak
@@ -344,9 +382,14 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
               onPressed: _turnPage,
             ),
             IconButton(
-              tooltip: 'Urungkan goresan terakhir',
+              tooltip: 'Urungkan',
               icon: const Icon(Icons.undo),
-              onPressed: _page.strokes.isEmpty ? null : _undo,
+              onPressed: _undoPages.isEmpty ? null : _undo,
+            ),
+            IconButton(
+              tooltip: 'Ulangi',
+              icon: const Icon(Icons.redo),
+              onPressed: _redoPages.isEmpty ? null : _redo,
             ),
             IconButton(
               tooltip: 'Kosongkan lembar ini',

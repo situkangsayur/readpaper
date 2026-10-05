@@ -1499,6 +1499,10 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       ("tip-ex" di halaman putih) dan hitam; stabilo tidak, karena stabilo
       putih tidak menandai apa pun
 
+- [x] **Papan tulis menyusul** (2026-10-05): Ulangi, Urungkan yang mencakup
+      penghapusan, putaran kertas, dan mengosongkan lembar (dulu hanya goresan
+      terakhir), satu sapuan penghapus sebagai satu langkah, dan penghapus
+      berlabel. Tinta putih sudah ada di paletnya
 - [x] **Penghapus dan tinta putih yang terlihat** (2026-10-05). Di tablet, saat
       menyajikan, keduanya dicari dan tidak ditemukan: penghapus berupa ikon
       tongkat ajaib yang tidak terbaca sebagai penghapus, dan tinta putih
