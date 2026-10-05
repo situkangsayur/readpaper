@@ -33,6 +33,7 @@ import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/annotation_geometry.dart';
 import '../../data/pdf_page_editor.dart';
 import '../../domain/annotation_move.dart';
+import '../../domain/ink_eraser.dart';
 import '../widgets/annotation_editor.dart';
 import '../widgets/annotation_move_layer.dart';
 import '../widgets/annotation_overlay_painter.dart';
@@ -448,7 +449,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   // ---------------------------------------------------------------- ink
 
-  Future<void> _addStroke(int pageNumber, InkPath stroke) async {
+  Future<void> _addStroke(int pageNumber, InkPath stroke, {bool erase = false}) async {
+    if (_erasing || erase) {
+      await _eraseAlong(pageNumber, stroke);
+      return;
+    }
     // A drawing belongs to one page. Wandering onto the next one saves what
     // is there before starting a new drawing.
     if (_inkPage != null && _inkPage != pageNumber && _pendingInk.isNotEmpty) {
@@ -463,7 +468,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// Turning the pen off is also what saves the drawing.
   Future<void> _togglePen() async {
     if (_penMode) {
-      setState(() => _penMode = false);
+      // Penghapus ikut mati: membuka pena lagi lalu mendapati coretan pertama
+      // malah menghapus adalah kejutan yang buruk.
+      setState(() {
+        _penMode = false;
+        _erasing = false;
+      });
       await _saveInk();
       return;
     }
@@ -472,6 +482,72 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _markerMode = false;
       _noteMode = false;
     });
+  }
+
+  /// Penghapus pena: goresan yang disapu dibuang, bukan ditimpa.
+  ///
+  /// Tinta putih bisa menutupi kesalahan, tetapi tetap ada di berkas — di
+  /// Zotero, di PDF yang dibagikan, dan di atas halaman yang tidak putih.
+  /// Penghapus membuang goresannya sendiri.
+  bool _erasing = false;
+
+  /// Goresan yang sedang ditarik berasal dari ujung penghapus stylus.
+  bool _stylusErase = false;
+
+  void _toggleEraser() {
+    setState(() => _erasing = !_erasing);
+    _say(_erasing ? 'Penghapus aktif — sapukan di atas coretan' : 'Kembali menulis');
+  }
+
+  Widget _eraserButton({double? iconSize}) => IconButton(
+    tooltip: _erasing ? 'Kembali menulis' : 'Penghapus — buang coretan yang salah',
+    iconSize: iconSize,
+    isSelected: _erasing,
+    selectedIcon: const Icon(Icons.auto_fix_off),
+    icon: const Icon(Icons.auto_fix_normal),
+    onPressed: _toggleEraser,
+  );
+
+  /// Membuang setiap goresan di [pageNumber] yang dilewati [eraser]: yang
+  /// belum disimpan, dan yang sudah jadi anotasi tinta.
+  ///
+  /// Satu goresan dibuang utuh, seperti penghapus goresan di papan tulis:
+  /// memotong goresan di tengah menghasilkan potongan-potongan yang tidak
+  /// dimaksud siapa pun. Coretan yang semua goresannya terhapus ikut dihapus
+  /// sebagai anotasi. Semuanya bisa diurungkan.
+  Future<void> _eraseAlong(int pageNumber, InkPath eraser) async {
+    final reach = math.max(6.0, _inkWidth * 1.5);
+    var removed = 0;
+
+    if (_inkPage == pageNumber && _pendingInk.isNotEmpty) {
+      final kept = InkEraser.keep(_pendingInk, eraser, reach);
+      removed += _pendingInk.length - kept.length;
+      if (kept.length != _pendingInk.length) {
+        setState(
+          () => _pendingInk
+            ..clear()
+            ..addAll(kept),
+        );
+      }
+    }
+
+    for (final annotation in _onPage(pageNumber)) {
+      if (annotation.type != AnnotationType.ink) continue;
+      final kept = InkEraser.keep(annotation.paths, eraser, reach);
+      if (kept.length == annotation.paths.length) continue;
+      removed += annotation.paths.length - kept.length;
+      if (kept.isEmpty) {
+        _pushUndo('menghapus coretan', () => _persist(annotation, isNew: true, recordUndo: false));
+        await _removeAnnotation(annotation);
+      } else {
+        _pushUndo('menghapus goresan', () => _persist(annotation, isNew: false));
+        await _persist(
+          annotation.copyWith(paths: kept, dateModified: DateTime.now()),
+          isNew: false,
+        );
+      }
+    }
+    if (removed == 0) _say('Tidak ada coretan yang tersentuh penghapus');
   }
 
   void _undoStroke() {
@@ -1909,7 +1985,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              _pendingInk.isEmpty
+                              _erasing
+                                  ? 'Penghapus: sapukan di atas coretan yang salah — '
+                                        'goresan yang tersentuh dibuang utuh.'
+                                  : _pendingInk.isEmpty
                                   ? 'Gambar bebas di halaman dengan jari atau stylus.'
                                   : '${_pendingInk.length} goresan di halaman $_inkPage — '
                                         'disimpan saat menekan Selesai.',
@@ -1927,8 +2006,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                           // akan mewarnai ulang semuanya.
                           _ColorButton(
                             color: _color,
+                            colors: AnnotationPalette.inkColors,
                             onSelected: (value) => _switchPen(color: value),
                           ),
+                          _eraserButton(iconSize: 20),
                           IconButton(
                             tooltip: 'Urungkan goresan terakhir',
                             iconSize: 20,
@@ -2062,6 +2143,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       setState(() {
         _stylusPage = pageNumber;
         _stylusPointer = event.pointer;
+        // Ujung penghapus stylus menghapus, tanpa perlu menyalakan sakelar.
+        _stylusErase = event.kind == PointerDeviceKind.invertedStylus;
         _stylusDrawing = true;
       });
       return;
@@ -2112,7 +2195,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         ..add(point.dx / scaleX)
         ..add(size.height - point.dy / scaleY);
     }
-    _addStroke(pageNumber!, InkPath(raw));
+    _addStroke(pageNumber!, InkPath(raw), erase: _stylusErase);
   }
 
   Widget _buildViewer(ColorScheme scheme) => Stack(
@@ -2233,8 +2316,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       ),
                       _ColorButton(
                         color: _color,
+                        colors: AnnotationPalette.inkColors,
                         onSelected: (value) => _switchPen(color: value),
                       ),
+                      _eraserButton(),
                       IconButton(
                         tooltip: 'Urungkan goresan terakhir',
                         icon: const Icon(Icons.undo),
@@ -2473,11 +2558,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               child: InkCaptureLayer(
                 // Rebuilt from scratch when the colour or width changes, so the
                 // live stroke never keeps the previous pen's look.
-                key: ValueKey<String>('ink-${page.pageNumber}-$_color-$_inkWidth'),
+                key: ValueKey<String>('ink-${page.pageNumber}-$_color-$_inkWidth-$_erasing'),
                 pageWidth: page.width,
                 pageHeight: page.height,
                 color: colorFromHex(_color),
                 strokeWidth: _inkWidth,
+                liveColor: _erasing || _stylusErase ? const Color(0x66808080) : null,
+                liveWidth: _erasing || _stylusErase ? math.max(12, _inkWidth * 3) : null,
                 stylusOnly: _stylusOnly,
                 liveStroke: _stylusOnly && _stylusPage == page.pageNumber ? _stylusLive : null,
                 liveRepaint: _stylusTick,
@@ -2998,17 +3085,24 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 }
 
 class _ColorButton extends StatelessWidget {
-  const _ColorButton({required this.color, required this.onSelected});
+  const _ColorButton({
+    required this.color,
+    required this.onSelected,
+    this.colors = AnnotationPalette.all,
+  });
 
   final String color;
   final ValueChanged<String> onSelected;
+
+  /// Pilihan warnanya; pena memakai [AnnotationPalette.inkColors].
+  final List<String> colors;
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<String>(
     tooltip: 'Warna stabilo: ${AnnotationPalette.names[color] ?? color}',
     onSelected: onSelected,
     itemBuilder: (_) => <PopupMenuEntry<String>>[
-      for (final hex in AnnotationPalette.all)
+      for (final hex in colors)
         PopupMenuItem<String>(
           value: hex,
           child: Row(
@@ -3016,7 +3110,12 @@ class _ColorButton extends StatelessWidget {
               Container(
                 width: 16,
                 height: 16,
-                decoration: BoxDecoration(color: colorFromHex(hex), shape: BoxShape.circle),
+                // Bergaris tepi: tinta putih di menu yang putih tidak terlihat.
+                decoration: BoxDecoration(
+                  color: colorFromHex(hex),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Theme.of(context).colorScheme.outline),
+                ),
               ),
               const SizedBox(width: 10),
               Text(AnnotationPalette.names[hex] ?? hex),

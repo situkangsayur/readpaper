@@ -19,6 +19,8 @@ class InkCaptureLayer extends StatefulWidget {
     required this.strokeWidth,
     required this.strokes,
     required this.onStrokeFinished,
+    this.liveColor,
+    this.liveWidth,
     this.stylusOnly = false,
     this.liveStroke,
     this.liveRepaint,
@@ -56,6 +58,12 @@ class InkCaptureLayer extends StatefulWidget {
 
   /// Width in PDF points, the same unit Zotero stores.
   final double strokeWidth;
+
+  /// Rupa goresan yang sedang ditarik, bila berbeda dari [color] — penghapus
+  /// digambar abu-abu tebal transparan, supaya terlihat apa yang disapu
+  /// tanpa ikut mewarnai goresan yang ada.
+  final Color? liveColor;
+  final double? liveWidth;
 
   /// Strokes already committed on this page, in PDF coordinates.
   final List<InkPath> strokes;
@@ -109,6 +117,8 @@ class _InkCaptureLayerState extends State<InkCaptureLayer> {
           strokes: widget.strokes,
           color: widget.color,
           strokeWidth: widget.strokeWidth,
+          liveColor: widget.liveColor,
+          liveWidth: widget.liveWidth,
           pageWidth: widget.pageWidth,
           pageHeight: widget.pageHeight,
         ),
@@ -141,6 +151,8 @@ class _InkPainter extends CustomPainter {
     required this.strokes,
     required this.color,
     required this.strokeWidth,
+    this.liveColor,
+    this.liveWidth,
     required this.pageWidth,
     required this.pageHeight,
   });
@@ -149,6 +161,8 @@ class _InkPainter extends CustomPainter {
   final List<InkPath> strokes;
   final Color color;
   final double strokeWidth;
+  final Color? liveColor;
+  final double? liveWidth;
   final double pageWidth;
   final double pageHeight;
 
@@ -182,7 +196,17 @@ class _InkPainter extends CustomPainter {
       for (final p in live.skip(1)) {
         path.lineTo(p.dx, p.dy);
       }
-      canvas.drawPath(path, paint);
+      canvas.drawPath(
+        path,
+        liveColor == null && liveWidth == null
+            ? paint
+            : (Paint()
+                ..color = liveColor ?? color
+                ..strokeWidth = (liveWidth ?? strokeWidth) * scaleX
+                ..style = PaintingStyle.stroke
+                ..strokeCap = StrokeCap.round
+                ..strokeJoin = StrokeJoin.round),
+      );
     }
   }
 
@@ -191,5 +215,6 @@ class _InkPainter extends CustomPainter {
       old.live.length != live.length ||
       old.strokes.length != strokes.length ||
       old.color != color ||
+      old.liveColor != liveColor ||
       old.strokeWidth != strokeWidth;
 }

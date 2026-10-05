@@ -225,6 +225,16 @@ sudut bingkainya. Stabilo dan garis bawah tidak bisa diputar.
 
 ---
 
+### Salah menulis
+
+- **Penghapus** (ikon tongkat di bilah pena): sapukan di atas coretan yang
+  salah. Goresan yang tersentuh dibuang utuh, termasuk coretan yang sudah
+  tersimpan. **Urungkan** mengembalikannya. Ujung penghapus stylus langsung
+  menghapus tanpa perlu menyalakan sakelar.
+- **Tinta putih** untuk menutup sesuatu di halaman putih. Penghapus tetap cara
+  yang lebih bersih: tinta putih ikut tersimpan dan terlihat di atas halaman
+  yang tidak putih.
+
 ## 6. Menyajikan kuliah atau presentasi
 
 Alur yang dipakai untuk mengajar dari sebuah PDF, sambil mencoret dengan

@@ -1489,6 +1489,16 @@ melainkan hal-hal yang membuat alatnya benar-benar dipakai.
       daripada meminta membuka papernya dulu
 - [ ] Seret dan lepas antar repositori
 
+- [x] **Penghapus dan tinta putih untuk pena** (2026-10-05). Sakelar penghapus
+      di bilah pena, juga di bilah bawah mode menyajikan: goresan yang disapu
+      dibuang utuh, baik yang belum disimpan maupun yang sudah jadi anotasi
+      tinta — coretan yang habis goresannya ikut dihapus — dan semuanya bisa
+      diurungkan. Sapuannya terlihat sebagai jejak abu-abu, dan titik sapuan
+      dirapatkan supaya stylus yang bergerak cepat tidak melompati garis tipis.
+      Ujung penghapus stylus langsung menghapus. Warna pena bertambah putih
+      ("tip-ex" di halaman putih) dan hitam; stabilo tidak, karena stabilo
+      putih tidak menandai apa pun
+
 ### Sinkronisasi
 
 - [x] **Pull yang bentrok tidak lagi menggantung, dan tidak lagi menimpa**

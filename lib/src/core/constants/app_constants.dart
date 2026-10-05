@@ -71,6 +71,16 @@ class AnnotationPalette {
 
   static const List<String> all = <String>[...zotero, ...extras];
 
+  // --- Hanya untuk pena -----------------------------------------------------
+  static const String white = '#ffffff';
+  static const String black = '#000000';
+
+  /// Warna pena: semua yang di atas, ditambah putih dan hitam. Putih adalah
+  /// "tip-ex" — menutup coretan atau tulisan yang salah di halaman putih —
+  /// dan hitam untuk tulisan tangan yang harus terbaca seperti tinta. Tidak
+  /// ditawarkan untuk stabilo: stabilo putih tidak menandai apa pun.
+  static const List<String> inkColors = <String>[...all, white, black];
+
   /// True for a colour Zotero will show as one of its own presets.
   static bool isZoteroPreset(String hex) => zotero.contains(hex);
 
@@ -87,5 +97,7 @@ class AnnotationPalette {
     pink: 'Merah muda',
     brown: 'Cokelat',
     ink: 'Tinta',
+    white: 'Putih',
+    black: 'Hitam',
   };
 }

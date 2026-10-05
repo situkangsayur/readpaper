@@ -144,6 +144,9 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   dari lembar yang sama ("Koleksi baru…", atau sub-koleksi di dalam koleksi
   yang ada).
 
+- **Penghapus pena** yang membuang goresan utuh, termasuk coretan yang sudah
+  tersimpan, dan bisa diurungkan. **Tinta putih dan hitam** di palet pena.
+
 ## Menyajikan
 
 - **Mode menyajikan**: satu halaman penuh layar, tanpa halaman tetangga yang
