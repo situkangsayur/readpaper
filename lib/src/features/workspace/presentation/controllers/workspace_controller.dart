@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,7 @@ import '../../../library/data/datasources/zotero_writer.dart';
 import '../../../library/domain/entities/library_index.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
 import '../../../library/domain/entities/zotero_item.dart';
+import '../../../reader/data/page_picture.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../sync/domain/entities/git_entities.dart';
 import '../../../sync/domain/entities/sync_progress.dart';
@@ -389,6 +391,64 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         itemTitle: item.title,
         annotation: annotation,
       ),
+    );
+    return true;
+  }
+
+  /// Tempat gambar tempelan sebuah lampiran, atau null tanpa repositori aktif.
+  PagePictureStore? pagePictures(String attachmentKey) {
+    final profile = state.profile;
+    if (profile == null || profile.localPath.isEmpty || attachmentKey.isEmpty) return null;
+    return PagePictureStore(
+      PagePictureStore.directoryFor(repoRoot: profile.localPath, attachmentKey: attachmentKey),
+    );
+  }
+
+  /// Menyimpan gambar tempelan paper library — di `catatan/`, bukan di
+  /// ekspor Zotero — lalu meng-commit-nya seperti anotasi.
+  Future<bool> savePagePicture({
+    required String attachmentKey,
+    required String itemTitle,
+    required ZoteroAnnotation annotation,
+    required bool isNew,
+    Uint8List? bytes,
+  }) async {
+    final store = pagePictures(attachmentKey);
+    final profile = state.profile;
+    if (store == null || profile == null) {
+      state = state.copyWith(error: 'Gambar tidak tersimpan: tidak ada repositori aktif.');
+      return false;
+    }
+    try {
+      await store.put(annotation, bytes: bytes);
+    } catch (e) {
+      state = state.copyWith(error: 'Gambar tidak tersimpan: $e');
+      return false;
+    }
+    await _commitAnnotation(
+      profile: profile,
+      message: '${isNew ? 'Tambah' : 'Ubah'} gambar di halaman ${annotation.pageLabel}: $itemTitle',
+    );
+    return true;
+  }
+
+  Future<bool> deletePagePicture({
+    required String attachmentKey,
+    required String itemTitle,
+    required ZoteroAnnotation annotation,
+  }) async {
+    final store = pagePictures(attachmentKey);
+    final profile = state.profile;
+    if (store == null || profile == null) return false;
+    try {
+      await store.remove(annotation.key);
+    } catch (e) {
+      state = state.copyWith(error: 'Gambar tidak dihapus: $e');
+      return false;
+    }
+    await _commitAnnotation(
+      profile: profile,
+      message: 'Hapus gambar di halaman ${annotation.pageLabel}: $itemTitle',
     );
     return true;
   }

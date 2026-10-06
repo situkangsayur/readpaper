@@ -239,6 +239,34 @@ biasa.
 
 ---
 
+### Menempel gambar
+
+Tombol gambar (ikon foto dengan tanda tambah) ada di bilah atas dan di bilah
+pena. Isinya dua pilihan:
+
+- **Tempel gambar dari papan klip.** Di peramban, klik kanan atau tekan lama
+  gambarnya → **Salin gambar**, lalu tekan tombol ini. Di desktop cukup Ctrl+V.
+- **Pilih berkas gambar…** dari galeri atau folder.
+
+Gambar muncul di tengah bagian halaman yang sedang terlihat dan langsung
+terpilih. Seret untuk memindahkannya, seret pegangan di sudut kanan bawah untuk
+mengubah ukurannya (rasionya tetap), atau pakai **Salin**, **Potong**, dan **Ke
+halaman…** seperti anotasi lain. Kalau pena sedang aktif, goresannya disimpan
+dulu dan pena dimatikan supaya gambarnya bisa langsung dirapikan. Tekan pena
+lagi untuk melanjutkan menulis.
+
+### Menyimpan dan keluar
+
+- Simpan yang **pertama** selalu menanyakan nama dan folder (**Simpan
+  sebagai**), jadi berkas yang dibuka tetap aman.
+- Simpan **berikutnya** langsung menimpa berkas hasil tadi, tanpa bertanya lagi.
+  Untuk nama atau tempat lain, pakai **Simpan sebagai…** (Ctrl+Shift+S).
+- Bila nama yang dipilih sudah ada, muncul **Nama berkas sudah dipakai — Timpa?**
+  dengan pilihan **Tidak** (kembali untuk mengganti nama) atau **Ya, timpa**.
+- Keluar dari PDF yang coretannya belum disimpan memunculkan **Simpan
+  perubahan dulu?**, dengan pilihan **Simpan…**, **Keluar tanpa menyimpan**, atau
+  **Batal**.
+
 ### Salah menulis
 
 - **Penghapus** (tombol berlabel "Penghapus" di bilah pena): sapukan di atas coretan yang
@@ -285,8 +313,7 @@ Ada dua jenis hasil, dan keduanya berbeda:
   menulis coretan ke item Zotero dan meng-commit-nya. Kirim lewat **Kirim
   perubahan** seperti anotasi lain. Coretan ini bisa disunting lagi dan terlihat
   di Zotero.
-- **PDF jadi.** Tombol simpan di bilah bawah (**Simpan sebagai PDF**; di
-  desktop **Simpan ke berkas ini** untuk PDF lepas) menghasilkan PDF berisi
+- **PDF jadi.** Tombol simpan (juga Ctrl+S) menghasilkan PDF berisi
   halaman aslinya dengan anotasi di atasnya. Teks, tabel, dan gambarnya tetap
   seperti aslinya: bisa dicari dan disalin. Stabilo dan coretan ditambahkan
   sebagai garis dan bidang vektor, isian Tt sebagai teks, dan komentar sebagai
@@ -641,9 +668,12 @@ jalankan `git -C <folder clone> add --sparse -A` lalu kirim lagi dari ReadPaper.
 plugin di Zotero menariknya. Formatnya sama persis dengan yang ditulis plugin.
 
 **Apakah PDF asli diubah oleh stabilo dan coretan?** Tidak. Anotasi disimpan di
-berkas item Zotero. Lampiran paper dari library tidak pernah ditimpa; menyimpan
-PDF-nya selalu menghasilkan berkas baru. Hanya PDF lepas di desktop yang bisa
-ditimpa lewat **Simpan ke berkas ini**, dan itu pun menyalin yang asli lebih dulu.
+berkas item Zotero. Menyimpan PDF selalu dimulai dengan **Simpan sebagai**:
+pilih nama dan folder untuk berkas baru. Sesudah itu, **Simpan** menimpa berkas
+baru itu, bukan yang asli. Kalau nama yang dipilih sudah ada, ReadPaper bertanya
+**Ya** atau **Tidak** dulu. Berkas aslinya hanya tertimpa bila Anda sendiri
+memilih namanya dan menjawab "Ya, timpa" pada peringatan merah. Lampiran paper
+dari library tidak pernah bisa ditimpa.
 
 ---
 

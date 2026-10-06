@@ -14,8 +14,12 @@ class AnnotationMoveLayer extends StatefulWidget {
     this.limit,
     this.onTransformed,
     this.onDragStart,
+    this.canRotate = true,
     super.key,
   });
+
+  /// False untuk gambar tempelan: hanya ukurannya yang bisa diubah.
+  final bool canRotate;
 
   /// Batas anotasinya pada kanvas halaman, bukan koordinat PDF.
   final Rect bounds;
@@ -200,22 +204,23 @@ class _AnnotationMoveLayerState extends State<AnnotationMoveLayer> {
                   onEnd: _applyTransform,
                 ),
               ),
-              Positioned(
-                left: 0,
-                bottom: 0,
-                child: _Handle(
-                  icon: Icons.rotate_right,
-                  color: scheme.primary,
-                  tooltip: 'Seret untuk memutar',
-                  onStart: () => setState(() => _transforming = true),
-                  onUpdate: (delta) => setState(() {
-                    // Satu layar penuh ke samping memutar setengah lingkaran:
-                    // cukup halus untuk meluruskan tanda tangan yang miring.
-                    _rotation += delta.dx * 0.01;
-                  }),
-                  onEnd: _applyTransform,
+              if (widget.canRotate)
+                Positioned(
+                  left: 0,
+                  bottom: 0,
+                  child: _Handle(
+                    icon: Icons.rotate_right,
+                    color: scheme.primary,
+                    tooltip: 'Seret untuk memutar',
+                    onStart: () => setState(() => _transforming = true),
+                    onUpdate: (delta) => setState(() {
+                      // Satu layar penuh ke samping memutar setengah lingkaran:
+                      // cukup halus untuk meluruskan tanda tangan yang miring.
+                      _rotation += delta.dx * 0.01;
+                    }),
+                    onEnd: _applyTransform,
+                  ),
                 ),
-              ),
             ],
             Positioned(
               right: 0,

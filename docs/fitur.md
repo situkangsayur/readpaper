@@ -131,6 +131,10 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Memindah, mengubah ukuran, dan memutar** tinta, tanda tangan, dan catatan
   yang sudah ditaruh. Stabilo dan garis bawah tidak bisa diputar, karena Zotero
   menyimpannya sebagai kotak lurus.
+- **Pena tidak tertukar dengan seleksi.** Selama pena aktif, seleksi teks dan
+  ketukan dimatikan. Stylus yang berhenti sebentar di atas kata tidak lagi
+  memblok teks, memunculkan bilah stabilo, atau membuat catatan di tengah
+  menulis, termasuk saat menyajikan.
 - **Pindah halaman, salin, potong, dan tempel anotasi.** Anotasi terpilih bisa
   diseret ke halaman lain: bayangannya mengikuti jari dengan nomor halaman
   tujuan, dan penampil menggulir sendiri ketika jari ditahan di tepi atas atau
@@ -151,11 +155,27 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   akhir dokumen, untuk dicoreti. Halaman aslinya disalin sebagai objek PDF,
   jadi teksnya tetap bisa dicari. Yang berubah adalah salinan kerja; berkas
   aslinya tidak disentuh sampai disimpan.
-- **Simpan dan bagikan**: simpan PDF beranotasi (ke folder kerja, atau tempat
-  lain lewat dialog sistem), simpan halaman sebagai PNG/JPG pada 72/144/288
-  dpi, cetak, bagikan ke aplikasi lain, atau ubah teks PDF menjadi Markdown.
-  PDF hasil simpan berisi halaman sebagai gambar, jadi teksnya tidak lagi bisa
-  dicari — berkas asli tetap ada.
+- **Simpan, Simpan sebagai, dan bagikan.** Simpan yang pertama selalu
+  **Simpan sebagai**: pilih nama dan folder, dan berkas yang dibuka tidak
+  disentuh. Simpan berikutnya langsung menimpa berkas hasil itu (Ctrl+S;
+  Ctrl+Shift+S untuk nama lain). Bila nama tujuan sudah ada, ReadPaper
+  bertanya **Ya** atau **Tidak** dulu, dengan peringatan lebih keras bila yang
+  akan ditimpa adalah berkas aslinya. PDF hasilnya tetap berisi teks asli;
+  coretan, stabilo, dan gambar tempelan ditambahkan di atasnya. Tersedia juga
+  ekspor halaman sebagai PNG/JPG pada 72/144/288 dpi, cetak, bagikan ke aplikasi
+  lain, dan ubah teks PDF menjadi Markdown.
+- **Peringatan sebelum keluar.** Keluar dari PDF lepas yang coretannya belum
+  disimpan, atau dengan goresan pena yang belum selesai, memunculkan pilihan
+  **Simpan…**, **Keluar tanpa menyimpan**, atau **Batal**. Peringatan ini
+  berlaku untuk tombol kembali maupun saat menutup jendela di desktop.
+- **Gambar di halaman.** Gambar bisa ditempel dari papan klip, mis. "Salin
+  gambar" di peramban (Ctrl+V; di Android lewat tombol gambar), atau dipilih
+  dari berkas. Gambar ditaruh di tengah bagian halaman yang terlihat, lalu bisa
+  digeser, diubah ukurannya dengan rasio tetap, disalin, dan dipindah halaman.
+  Saat disimpan ke PDF, ia menjadi objek gambar sungguhan. Pada paper library,
+  gambar disimpan di `catatan/gambar-halaman/<kunci lampiran>/` dan tidak
+  pernah ditulis ke ekspor Zotero, karena anotasi gambar Zotero adalah
+  tangkapan wilayah halaman, bukan tempelan.
 - **Tambahkan ke koleksi** untuk PDF lepas: berkasnya disalin ke library,
   dibuatkan item Zotero, dan di-commit. Koleksi tujuan bisa dibuat langsung
   dari lembar yang sama ("Koleksi baru…", atau sub-koleksi di dalam koleksi
@@ -289,7 +309,8 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 | Akses | HTTPS + token saja | SSH atau HTTPS + token | SSH atau HTTPS + token |
 | PDF lampiran ke GitHub | **tidak dikirim** | dikirim lewat git | dikirim lewat git |
 | Git LFS | belum | ya, kalau `git-lfs` terpasang | ya, kalau `git-lfs` terpasang |
-| Simpan ke berkas yang sama | tidak (selalu lewat folder kerja/dialog) | ya, aslinya disalin dulu | ya, aslinya disalin dulu |
+| Simpan PDF | Simpan sebagai ke folder kerja/dialog, lalu Simpan menimpa hasilnya | Simpan sebagai ke folder mana pun, lalu Simpan menimpa hasilnya | sama dengan Linux |
+| Tempel gambar dari papan klip | ya | ya (`wl-paste` atau `xclip`) | ya |
 
 Yang paling penting dari tabel itu: **di Android, lampiran PDF tidak pernah
 dikirim ke GitHub.** Berkas di `attachments-lfs/` disimpan di repositori sebagai

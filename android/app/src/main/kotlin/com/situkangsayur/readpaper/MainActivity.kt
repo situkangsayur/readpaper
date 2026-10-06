@@ -1,5 +1,6 @@
 package com.situkangsayur.readpaper
 
+import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -32,6 +33,13 @@ class MainActivity : FlutterActivity() {
                         pending = null
                         result.success(path)
                     }
+                    // Gambar di papan klip ("Salin gambar" di peramban), untuk
+                    // ditempel di halaman. Dibaca di utas lain: isinya bisa
+                    // beberapa megabita dari penyedia konten aplikasi lain.
+                    "clipboardImage" -> Thread {
+                        val bytes = readClipboardImage()
+                        runOnUiThread { result.success(bytes) }
+                    }.start()
                     else -> result.notImplemented()
                 }
             }
@@ -85,6 +93,22 @@ class MainActivity : FlutterActivity() {
             }
         }
         return uri.lastPathSegment
+    }
+
+    private fun readClipboardImage(): ByteArray? {
+        val manager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = manager.primaryClip ?: return null
+        for (i in 0 until clip.itemCount) {
+            val uri = clip.getItemAt(i).uri ?: continue
+            val type = contentResolver.getType(uri) ?: continue
+            if (!type.startsWith("image/")) continue
+            return try {
+                contentResolver.openInputStream(uri)?.use { it.readBytes() }
+            } catch (e: Exception) {
+                null
+            }
+        }
+        return null
     }
 
     private fun extensionFor(uri: Uri): String =

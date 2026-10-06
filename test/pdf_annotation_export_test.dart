@@ -1,12 +1,15 @@
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:ffi/ffi.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:pdfium_dart/pdfium_dart.dart' as pdfium;
 import 'package:readpaper/src/features/library/domain/entities/zotero_annotation.dart';
+import 'package:readpaper/src/features/reader/data/page_picture.dart';
 import 'package:readpaper/src/features/reader/data/pdf_page_editor.dart';
 
 /// PDF beranotasi harus tetap PDF yang sama: teksnya tetap teks.
@@ -128,6 +131,30 @@ void main() {
     expect(result.images, 0, reason: 'tidak ada halaman yang jadi gambar');
     expect(result.paths, greaterThanOrEqualTo(2), reason: 'stabilo dan coretan jadi vektor');
     expect(result.annots, 1, reason: 'komentar stabilo jadi catatan tempel PDF');
+  });
+
+  test('gambar tempelan jadi objek gambar PDF, teks tetap teks', () {
+    final source = textPdf();
+    final image = img.Image(width: 40, height: 20, numChannels: 4);
+    img.fill(image, color: img.ColorRgba8(0, 120, 200, 255));
+    final picture = PagePicture.create(
+      key: 'PIC00001',
+      parentItemKey: 'P',
+      pageIndex: 0,
+      rect: const AnnotationRect(100, 400, 300, 500),
+      file: 'gambar.png',
+      pageHeight: 842,
+    );
+    final bytes = PdfPageEditor.withAnnotations(
+      source: source,
+      annotationsFor: (page) =>
+          page == 1 ? <ZoteroAnnotation>[picture] : const <ZoteroAnnotation>[],
+      pictures: <String, Uint8List>{'gambar.png': Uint8List.fromList(img.encodePng(image))},
+    );
+    final result = inspect(bytes);
+    expect(result.images, 1, reason: 'gambar tempelan masuk sebagai satu objek gambar');
+    expect(result.text, contains('Quantum anomaly detection'));
+    expect(result.annots, 0, reason: 'bukan anotasi PDF, bagian halaman');
   });
 }
 

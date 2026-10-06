@@ -1,7 +1,10 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/utils/formatting.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
+import '../../data/page_picture.dart';
 
 /// Paints the markers of one page over the rendered PDF page.
 ///
@@ -13,7 +16,12 @@ class AnnotationOverlayPainter extends CustomPainter {
     required this.pageWidth,
     required this.pageHeight,
     this.selectedKey,
+    this.pictures = const <String, ui.Image>{},
   });
+
+  /// Gambar tempelan yang sudah dibaca, per nama berkas. Yang belum ada
+  /// digambar sebagai kotak abu-abu sampai selesai dimuat.
+  final Map<String, ui.Image> pictures;
 
   final List<ZoteroAnnotation> annotations;
   final double pageWidth;
@@ -100,6 +108,21 @@ class AnnotationOverlayPainter extends CustomPainter {
             }
           }
 
+        case AnnotationType.image when PagePicture.isPicture(annotation):
+          final picture = pictures[PagePicture.fileOf(annotation)];
+          for (final rect in annotation.rects) {
+            final target = _toLocal(rect, scaleX, scaleY);
+            if (picture == null) {
+              canvas.drawRect(target, Paint()..color = const Color(0x22808080));
+              continue;
+            }
+            canvas.drawImageRect(
+              picture,
+              Rect.fromLTWH(0, 0, picture.width.toDouble(), picture.height.toDouble()),
+              target,
+              Paint()..filterQuality = FilterQuality.medium,
+            );
+          }
         case AnnotationType.image:
           for (final rect in annotation.rects) {
             canvas.drawRect(
@@ -188,5 +211,6 @@ class AnnotationOverlayPainter extends CustomPainter {
       old.annotations != annotations ||
       old.selectedKey != selectedKey ||
       old.pageWidth != pageWidth ||
-      old.pageHeight != pageHeight;
+      old.pageHeight != pageHeight ||
+      old.pictures.length != pictures.length;
 }

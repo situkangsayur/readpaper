@@ -47,6 +47,7 @@ Future<Uint8List> exportPageImage({
   required PageImageFormat format,
   double scale = 2,
   int jpegQuality = 92,
+  Map<String, ui.Image> pictures = const <String, ui.Image>{},
 }) async {
   final width = (page.width * scale).round();
   final height = (page.height * scale).round();
@@ -73,6 +74,7 @@ Future<Uint8List> exportPageImage({
       pageHeight: page.height,
       width: width,
       height: height,
+      pictures: pictures,
     );
   } finally {
     base.dispose();
@@ -99,6 +101,7 @@ Future<Uint8List> exportPagesAsPdf({
   double scale = 2,
   int jpegQuality = 88,
   void Function(int done, int total)? onProgress,
+  Map<String, ui.Image> pictures = const <String, ui.Image>{},
 }) async {
   final out = <PdfImagePage>[];
   for (var i = 0; i < pages.length; i++) {
@@ -109,6 +112,7 @@ Future<Uint8List> exportPagesAsPdf({
       format: PageImageFormat.jpg,
       scale: scale,
       jpegQuality: jpegQuality,
+      pictures: pictures,
     );
     out.add(
       PdfImagePage(
@@ -137,6 +141,7 @@ Future<ui.Image> _drawAnnotations({
   required double pageHeight,
   required int width,
   required int height,
+  Map<String, ui.Image> pictures = const <String, ui.Image>{},
 }) {
   final recorder = ui.PictureRecorder();
   final canvas = Canvas(recorder);
@@ -155,6 +160,7 @@ Future<ui.Image> _drawAnnotations({
     annotations: annotations,
     pageWidth: pageWidth,
     pageHeight: pageHeight,
+    pictures: pictures,
   ).paint(canvas, size);
 
   return recorder.endRecording().toImage(width, height);

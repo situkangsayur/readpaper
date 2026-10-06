@@ -170,7 +170,11 @@ class AnnotationMove {
     required double pageWidth,
     required double pageHeight,
   }) {
-    if (annotation.paths.isEmpty) return annotation;
+    if (annotation.paths.isEmpty) {
+      return annotation.type == AnnotationType.image && annotation.rects.length == 1
+          ? _scaleBox(annotation, scale: scale, pageWidth: pageWidth, pageHeight: pageHeight)
+          : annotation;
+    }
     if (scale == 1 && rotation == 0) return annotation;
 
     final bounds = _boundsOf(rectsOf(annotation));
@@ -215,6 +219,38 @@ class AnnotationMove {
     if (after.top + dy > pageHeight) dy = pageHeight - after.top;
 
     return shift(moved, dx: dx, dy: dy, pageWidth: pageWidth, pageHeight: pageHeight);
+  }
+
+  /// Gambar tempelan diperbesar atau diperkecil dari titik tengahnya, rasio
+  /// tetap. Tidak diputar: kotaknya sejajar sumbu, sama seperti di PDF.
+  static ZoteroAnnotation _scaleBox(
+    ZoteroAnnotation annotation, {
+    required double scale,
+    required double pageWidth,
+    required double pageHeight,
+  }) {
+    if (scale == 1) return annotation;
+    final box = annotation.rects.single;
+    final cx = (box.left + box.right) / 2;
+    final cy = (box.bottom + box.top) / 2;
+    // Tidak lebih kecil dari 12 pt (masih bisa dipegang) dan tidak lebih
+    // besar dari halamannya.
+    final fit = math.min(pageWidth / box.width, pageHeight / box.height);
+    final minimum = 12 / math.min(box.width, box.height);
+    final s = scale.clamp(math.min(minimum, 1.0), math.max(fit, 1.0)).toDouble();
+    final halfW = box.width * s / 2;
+    final halfH = box.height * s / 2;
+    final scaled = annotation.copyWith(
+      rects: <AnnotationRect>[AnnotationRect(cx - halfW, cy - halfH, cx + halfW, cy + halfH)],
+    );
+    final after = scaled.rects.single;
+    var dx = 0.0;
+    var dy = 0.0;
+    if (after.left < 0) dx = -after.left;
+    if (after.right + dx > pageWidth) dx = pageWidth - after.right;
+    if (after.bottom < 0) dy = -after.bottom;
+    if (after.top + dy > pageHeight) dy = pageHeight - after.top;
+    return _place(scaled, dx: dx, dy: dy, pageWidth: pageWidth, pageHeight: pageHeight);
   }
 
   static AnnotationRect? _boundsOf(List<AnnotationRect> rects) {

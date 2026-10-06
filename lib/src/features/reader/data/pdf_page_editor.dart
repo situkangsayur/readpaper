@@ -4,9 +4,11 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
+import 'package:image/image.dart' as img;
 import 'package:pdfium_dart/pdfium_dart.dart' as pdfium;
 
 import '../../library/domain/entities/zotero_annotation.dart';
+import 'page_picture.dart';
 
 /// Menyusun ulang halaman sebuah PDF tanpa menggambar ulang isinya.
 ///
@@ -209,6 +211,7 @@ class PdfPageEditor {
   static Uint8List withAnnotations({
     required String source,
     required List<ZoteroAnnotation> Function(int pageNumber) annotationsFor,
+    Map<String, Uint8List> pictures = const <String, Uint8List>{},
   }) {
     final lib = _library();
     final path = source.toNativeUtf8();
@@ -224,6 +227,12 @@ class PdfPageEditor {
         if (page == nullptr) continue;
         try {
           for (final annotation in annotations) {
+            final file = PagePicture.fileOf(annotation);
+            if (PagePicture.isPicture(annotation)) {
+              final bytes = pictures[file];
+              if (bytes != null) _drawPicture(lib, doc, page, annotation, bytes);
+              continue;
+            }
             _drawAnnotation(lib, doc, page, annotation);
           }
           if (lib.FPDFPage_GenerateContent(page) == 0) {
@@ -244,6 +253,59 @@ class PdfPageEditor {
   static const int _capRound = 1;
   static const int _joinRound = 1;
   static const int _annotText = 1;
+
+  /// Gambar tempelan sebagai objek gambar PDF di kotaknya. Bagian yang
+  /// transparan tetap transparan: pdfium membuat topeng alfanya sendiri dari
+  /// bitmap BGRA.
+  static void _drawPicture(
+    pdfium.PDFium lib,
+    pdfium.FPDF_DOCUMENT doc,
+    pdfium.FPDF_PAGE page,
+    ZoteroAnnotation annotation,
+    Uint8List encoded,
+  ) {
+    if (annotation.rects.isEmpty) return;
+    img.Image? decoded;
+    try {
+      decoded = img.decodeImage(encoded);
+    } on Object {
+      return;
+    }
+    if (decoded == null) return;
+    final w = decoded.width;
+    final h = decoded.height;
+    final pixels = decoded.convert(numChannels: 4).getBytes(order: img.ChannelOrder.bgra);
+    // BGRA hanya bila memang ada transparansi: pdfium selalu menambahkan
+    // topeng alfa untuk BGRA, dan foto JPEG tidak perlu membawanya.
+    var transparent = false;
+    for (var i = 3; i < pixels.length; i += 4) {
+      if (pixels[i] != 255) {
+        transparent = true;
+        break;
+      }
+    }
+    const bgrx = 3;
+    const bgra = 4;
+    final bitmap = lib.FPDFBitmap_CreateEx(w, h, transparent ? bgra : bgrx, nullptr, 0);
+    if (bitmap == nullptr) return;
+    try {
+      final stride = lib.FPDFBitmap_GetStride(bitmap);
+      final buffer = lib.FPDFBitmap_GetBuffer(bitmap).cast<Uint8>().asTypedList(stride * h);
+      for (var y = 0; y < h; y++) {
+        buffer.setRange(y * stride, y * stride + w * 4, pixels, y * w * 4);
+      }
+      final object = lib.FPDFPageObj_NewImageObj(doc);
+      if (lib.FPDFImageObj_SetBitmap(nullptr, 0, object, bitmap) == 0) {
+        lib.FPDFPageObj_Destroy(object);
+        return;
+      }
+      final box = annotation.rects.first;
+      lib.FPDFImageObj_SetMatrix(object, box.width, 0, 0, box.height, box.left, box.bottom);
+      lib.FPDFPage_InsertObject(page, object);
+    } finally {
+      lib.FPDFBitmap_Destroy(bitmap);
+    }
+  }
 
   static void _drawAnnotation(
     pdfium.PDFium lib,
