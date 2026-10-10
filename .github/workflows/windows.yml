@@ -65,7 +65,14 @@ jobs:
           gh release download --repo git-lfs/git-lfs --pattern 'git-lfs-windows-amd64-v*.zip' --dir lfs
           Expand-Archive -Path (Get-ChildItem lfs -Filter '*.zip' | Select-Object -First 1).FullName -DestinationPath lfs/x
           $lfs = Get-ChildItem lfs/x -Recurse -Filter 'git-lfs.exe' | Select-Object -First 1
-          Copy-Item $lfs.FullName "$dest/mingw64/bin/git-lfs.exe"
+          # Folder biner MinGit berganti nama antar versi (mingw64, ucrt64), jadi
+          # dicari: folder `bin` yang berisi git.exe, selain `cmd`.
+          $bin = Get-ChildItem $dest -Recurse -Filter 'git.exe' |
+            Where-Object { $_.Directory.Name -eq 'bin' -and $_.Directory.Parent.Name -ne 'usr' } |
+            Select-Object -First 1
+          if (-not $bin) { throw "folder bin MinGit tidak ditemukan" }
+          Copy-Item $lfs.FullName (Join-Path $bin.Directory.FullName 'git-lfs.exe')
+          "git-lfs → $($bin.Directory.FullName)"
           "MinGit: $($zip.Name)"
 
       # Bukti, sebelum zip-nya terbit: git bawaan berjalan tanpa Git for
