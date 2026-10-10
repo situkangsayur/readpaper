@@ -69,7 +69,7 @@ jobs:
           rm -rf dist/Payload
           ls -l dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: readpaper-ios-unsigned
           path: dist/*.ipa

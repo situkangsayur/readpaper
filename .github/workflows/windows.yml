@@ -161,7 +161,7 @@ jobs:
           Compress-Archive -Path $out -DestinationPath "dist/readpaper-$ver-windows-x64.zip"
           Get-ChildItem dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: readpaper-windows-x64
           path: |
