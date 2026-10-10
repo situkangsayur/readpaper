@@ -35,7 +35,7 @@ jobs:
       run:
         working-directory: integrations
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
@@ -70,7 +70,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}word/taskpane.html
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Situs: /word/ (task pane, manifest, ikon) dan /core/ (dimuat task pane
       # lewat ../core/). Uji tidak ikut disajikan.
@@ -105,7 +105,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Paket plugin
         run: scripts/package-onlyoffice-plugin.sh
