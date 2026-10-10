@@ -221,6 +221,14 @@ class _Banner extends ConsumerWidget {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: foreground),
               ),
             ),
+            // Galat membuka repo sering selesai di luar aplikasi — git baru
+            // dipasang, folder clone dikembalikan — jadi membuka ulang tidak
+            // boleh menuntut aplikasinya ditutup dulu.
+            if (isError)
+              TextButton(
+                onPressed: () => ref.read(workspaceControllerProvider.notifier).retryOpen(),
+                child: Text('Coba lagi', style: TextStyle(color: foreground)),
+              ),
             IconButton(
               icon: Icon(Icons.close, size: 16, color: foreground),
               tooltip: 'Tutup',

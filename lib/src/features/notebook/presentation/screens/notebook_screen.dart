@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../../../../core/utils/file_pick.dart';
 import 'dart:math' as math;
 
 import 'package:file_picker/file_picker.dart';
@@ -604,19 +605,14 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   }
 
   Future<void> _addImage(Offset at) async {
-    final picked = await FilePicker.pickFiles(
+    final picked = await pickFilesOrTell(
+      context,
       type: FileType.image,
-      dialogTitle: 'Pilih gambar untuk catatan',
+      title: 'Pilih gambar untuk catatan',
+      multiple: false,
     );
     if (picked.isEmpty) return;
-    final source = picked.first.path;
-    if (source == null) {
-      // Beberapa penyedia berkas Android hanya menyerahkan URI tanpa jalur
-      // berkas. Dikatakan, bukan didiamkan — yang memilih gambar berhak tahu
-      // kenapa gambarnya tidak muncul.
-      _say('Gambar itu tidak bisa dibaca dari tempatnya. Salin dulu ke folder kerja.');
-      return;
-    }
+    final source = picked.first;
 
     // Gambarnya disalin ke sebelah dokumennya dan dirujuk secara relatif,
     // supaya catatan yang ikut tersinkron tetap menemukan gambarnya.
@@ -703,14 +699,14 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   /// lembar yang sedang dibuka, bukan di ujung buku — yang menyisipkan biasanya
   /// sedang berada di tempat yang dimaksud.
   Future<void> _insertPdfPages() async {
-    final picked = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: <String>['pdf'],
-      dialogTitle: 'Pilih PDF untuk disisipkan sebagai lembar',
+    final picked = await pickFilesOrTell(
+      context,
+      extensions: const <String>['pdf'],
+      title: 'Pilih PDF untuk disisipkan sebagai lembar',
+      multiple: false,
     );
     if (picked.isEmpty) return;
-    final source = picked.first.path;
-    if (source == null) return;
+    final source = picked.first;
 
     _say('Menyiapkan lembar dari ${p.basename(source)}…');
     try {

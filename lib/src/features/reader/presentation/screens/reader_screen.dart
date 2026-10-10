@@ -37,6 +37,7 @@ import '../../domain/annotation_geometry.dart';
 import '../../data/page_picture.dart';
 import '../../data/pdf_page_editor.dart';
 import '../../../../core/utils/clipboard_image.dart';
+import '../../../../core/utils/file_pick.dart';
 import '../../domain/annotation_move.dart';
 import '../../domain/ink_eraser.dart';
 import '../widgets/annotation_editor.dart';
@@ -3078,8 +3079,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   Future<void> _pickPictureFile() async {
-    final picked = await FilePicker.pickFiles(type: FileType.image, dialogTitle: 'Pilih gambar');
-    final path = picked.firstOrNull?.path;
+    final picked = await pickFilesOrTell(
+      context,
+      type: FileType.image,
+      title: 'Pilih gambar',
+      multiple: false,
+    );
+    final path = picked.firstOrNull;
     if (path == null || !mounted) return;
     final bytes = await File(path).readAsBytes();
     if (!mounted) return;

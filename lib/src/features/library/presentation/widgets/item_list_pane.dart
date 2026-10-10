@@ -1,5 +1,5 @@
 import 'package:collection/collection.dart';
-import 'package:file_picker/file_picker.dart';
+import '../../../../core/utils/file_pick.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -196,12 +196,13 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
               // Any PDF, not only the library's: signing a form or marking up
               // a file someone sent is the same job, and there is no reason
               // to make it a different app.
-              final picked = await FilePicker.pickFiles(
-                type: FileType.custom,
-                allowedExtensions: <String>['pdf'],
-                dialogTitle: 'Pilih PDF',
+              final picked = await pickFilesOrTell(
+                context,
+                extensions: const <String>['pdf'],
+                title: 'Pilih PDF',
+                multiple: false,
               );
-              final path = picked.singleOrNull?.path;
+              final path = picked.firstOrNull;
               if (path == null || !context.mounted) return;
               await Navigator.of(context).push(
                 MaterialPageRoute<void>(

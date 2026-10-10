@@ -8,6 +8,7 @@ import '../../domain/entities/git_entities.dart';
 import '../../domain/json_merge.dart';
 import '../../domain/entities/sync_progress.dart';
 import '../../domain/repositories/git_backend.dart';
+import 'git_locator.dart';
 
 /// Git implementation backed by the system `git` executable.
 ///
@@ -15,9 +16,11 @@ import '../../domain/repositories/git_backend.dart';
 /// per-profile key can be selected; HTTPS uses a throwaway `GIT_ASKPASS`
 /// helper so the token never lands in the remote URL or in `.git/config`.
 class GitCliBackend implements GitBackend {
-  GitCliBackend({this.gitExecutable = 'git'});
+  GitCliBackend({String? gitExecutable}) : gitExecutable = gitExecutable ?? GitLocator.locate();
 
-  final String gitExecutable;
+  /// Biner git yang dipakai. Dicari ulang bila belum ketemu, supaya git yang
+  /// baru dipasang langsung terpakai tanpa membuka ulang aplikasi.
+  String gitExecutable;
 
   /// Field separator for `git log --format`; a byte that cannot appear in a
   /// commit subject.
@@ -28,12 +31,24 @@ class GitCliBackend implements GitBackend {
 
   @override
   Future<bool> isAvailable() async {
-    if (_available != null) return _available!;
+    // Hanya "ada" yang diingat. "Tidak ada" diperiksa ulang setiap kali,
+    // karena jawabannya berubah begitu git dipasang.
+    if (_available == true) return true;
+    if (await _runs(gitExecutable)) return _available = true;
+    final found = GitLocator.locate();
+    if (found != gitExecutable && await _runs(found)) {
+      gitExecutable = found;
+      return _available = true;
+    }
+    return false;
+  }
+
+  static Future<bool> _runs(String executable) async {
     try {
-      final result = await Process.run(gitExecutable, <String>['--version']);
-      return _available = result.exitCode == 0;
+      final result = await Process.run(executable, <String>['--version']);
+      return result.exitCode == 0;
     } on ProcessException {
-      return _available = false;
+      return false;
     }
   }
 

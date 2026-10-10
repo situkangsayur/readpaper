@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../../core/utils/file_pick.dart';
 import '../../../../core/utils/layout_size.dart';
+import '../../../../shared/widgets/file_drop_zone.dart';
 import '../../../../shared/widgets/tree_drag.dart';
 import '../../../notes/domain/note_entities.dart';
 import '../../../notes/domain/note_target.dart';
@@ -53,14 +55,28 @@ class CollectionTreePane extends ConsumerWidget {
         onTap: () => selectionController.select(const LibrarySelection.all()),
         // Melepas di sini berarti "masuk library, tanpa koleksi".
         onDrop: (drag) => _dropIntoPapers(context, ref, drag, null, index.library.name),
-        trailing: IconButton(
-          tooltip: 'Koleksi paper baru',
-          iconSize: 16,
-          visualDensity: VisualDensity.compact,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-          padding: EdgeInsets.zero,
-          icon: const Icon(Icons.create_new_folder_outlined),
-          onPressed: () => _newPaperCollection(context, ref, parentKey: null),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            IconButton(
+              tooltip: 'Tambahkan PDF ke library',
+              iconSize: 16,
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.note_add_outlined),
+              onPressed: () => _pickPdfsInto(context, ref, null, index.library.name),
+            ),
+            IconButton(
+              tooltip: 'Koleksi paper baru',
+              iconSize: 16,
+              visualDensity: VisualDensity.compact,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.create_new_folder_outlined),
+              onPressed: () => _newPaperCollection(context, ref, parentKey: null),
+            ),
+          ],
         ),
       ),
     ];
@@ -308,8 +324,9 @@ class _TreeRow extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onToggle;
 
-  /// Dipanggil saat sesuatu dilepas di atas baris ini.
-  final void Function(TreeDrag drag)? onDrop;
+  /// Dipanggil saat sesuatu dilepas di atas baris ini — dari dalam aplikasi,
+  /// atau berkas yang diseret dari pengelola berkas sistem.
+  final Future<void> Function(TreeDrag drag)? onDrop;
 
   final Widget? trailing;
 
@@ -326,6 +343,22 @@ class _TreeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final drop = onDrop;
+    // Berkas dari pengelola berkas sistem diperlakukan sama dengan berkas dari
+    // panel berkas — satu per satu, karena tiap berkas berakhir dengan commit
+    // sendiri dan dua commit yang berjalan bersamaan saling bertabrakan.
+    if (drop == null || !FileDropZone.supported) return _buildTarget(context, scheme, false);
+    return FileDropZone(
+      onFiles: (paths) async {
+        for (final path in paths) {
+          await drop(FileDrag(path: path, label: p.basename(path)));
+        }
+      },
+      builder: (context, hovering) => _buildTarget(context, scheme, hovering),
+    );
+  }
+
+  Widget _buildTarget(BuildContext context, ColorScheme scheme, bool external) {
     // Sasaran lepas untuk berkas yang diseret dari panel berkas di bawah.
     return DragTarget<TreeDrag>(
       onWillAcceptWithDetails: (_) => onDrop != null,
@@ -338,7 +371,7 @@ class _TreeRow extends StatelessWidget {
           padding: EdgeInsets.only(left: 4 + depth * 14.0, right: 8),
           // Berubah warna saat berkas melayang di atasnya: tanpa itu yang
           // menyeret tidak tahu apakah lepasannya akan mendarat.
-          color: candidate.isNotEmpty
+          color: candidate.isNotEmpty || external
               ? scheme.primary.withValues(alpha: 0.22)
               : (selected ? scheme.primaryContainer.withValues(alpha: 0.5) : null),
           child: Row(
@@ -411,12 +444,53 @@ class _TreeRow extends StatelessWidget {
   }
 }
 
+/// Memilih satu atau beberapa PDF lalu memasukkannya ke koleksi [key]
+/// (null: library tanpa koleksi), satu per satu lewat jalur yang sama dengan
+/// menyeret berkas ke pohon.
+Future<void> _pickPdfsInto(BuildContext context, WidgetRef ref, String? key, String name) async {
+  final paths = await pickFilesOrTell(
+    context,
+    extensions: const <String>['pdf'],
+    title: 'Pilih PDF untuk $name',
+  );
+  final failed = <String>[];
+  for (final path in paths) {
+    if (!context.mounted) return;
+    final ok = await _dropIntoPapers(
+      context,
+      ref,
+      FileDrag(path: path, label: p.basename(path)),
+      key,
+      name,
+    );
+    if (!ok) failed.add(p.basename(path));
+  }
+  // Satu berkas sudah dilaporkan oleh pesannya sendiri; beberapa berkas
+  // dirangkum, dan yang gagal disebut namanya.
+  if (paths.length > 1 && context.mounted) {
+    final added = paths.length - failed.length;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          duration: Duration(seconds: failed.isEmpty ? 4 : 10),
+          content: Text(
+            failed.isEmpty
+                ? '$added PDF masuk ke $name'
+                : '$added dari ${paths.length} PDF masuk ke $name. Gagal: ${failed.join(', ')}. '
+                      '${ref.read(workspaceControllerProvider).error ?? ''}',
+          ),
+        ),
+      );
+  }
+}
+
 /// Menerima lepasan di akar paper: berkas baru, atau item yang dipindahkan.
 ///
 /// Catatan ditolak di sini. Akar paper berisi item Zotero, dan catatan tidak
 /// punya rujukan maupun bibliografi untuk jadi salah satunya — penolakannya
 /// menyebutkan itu, bukan sekadar berkata tidak bisa.
-Future<void> _dropIntoPapers(
+Future<bool> _dropIntoPapers(
   BuildContext context,
   WidgetRef ref,
   TreeDrag drag,
@@ -437,20 +511,22 @@ Future<void> _dropIntoPapers(
   switch (drag) {
     case NoteDrag():
       say(NoteTarget.refusalMessage, panjang: true);
+      return false;
 
     case ItemDrag():
       final item = ref.read(workspaceControllerProvider).index?.items[drag.itemKey];
-      if (item == null) return;
+      if (item == null) return false;
       say('Memindahkan ke $collectionName…');
       final ok = await ref
           .read(workspaceControllerProvider.notifier)
           .moveItemToCollection(item: item, collectionKey: collectionKey);
-      if (!context.mounted) return;
+      if (!context.mounted) return ok;
       say(
         ok
             ? 'Pindah ke $collectionName'
             : (ref.read(workspaceControllerProvider).error ?? 'Gagal memindahkan'),
       );
+      return ok;
 
     case FileDrag():
       // Akar paper hanya menerima PDF. Item Zotero adalah paper dengan
@@ -462,7 +538,7 @@ Future<void> _dropIntoPapers(
           'lampiran PDF. Lepas ${p.basename(drag.path)} di akar "Catatan".',
           panjang: true,
         );
-        return;
+        return false;
       }
       say('Memasukkan ke $collectionName…');
       final created = await ref
@@ -472,12 +548,13 @@ Future<void> _dropIntoPapers(
             title: p.basenameWithoutExtension(drag.path),
             collectionKey: collectionKey,
           );
-      if (!context.mounted) return;
+      if (!context.mounted) return created != null;
       say(
         created == null
             ? (ref.read(workspaceControllerProvider).error ?? 'Gagal memasukkan berkas')
             : 'Masuk ke $collectionName',
       );
+      return created != null;
   }
 }
 
@@ -626,6 +703,16 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
           ),
           const Divider(height: 1),
           ListTile(
+            leading: const Icon(Icons.note_add_outlined),
+            title: const Text('Tambahkan PDF ke sini…'),
+            subtitle: Text(
+              FileDropZone.supported
+                  ? 'bisa beberapa sekaligus; atau seret dari pengelola berkas'
+                  : 'bisa beberapa sekaligus',
+            ),
+            onTap: () => Navigator.of(sheet).pop('pdf'),
+          ),
+          ListTile(
             leading: const Icon(Icons.create_new_folder_outlined),
             title: const Text('Sub-koleksi baru'),
             onTap: () => Navigator.of(sheet).pop('baru'),
@@ -680,6 +767,8 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
   }
 
   switch (action) {
+    case 'pdf':
+      await _pickPdfsInto(context, ref, key, collection.name);
     case 'baru':
       await _newPaperCollection(context, ref, parentKey: key);
     case 'nama':

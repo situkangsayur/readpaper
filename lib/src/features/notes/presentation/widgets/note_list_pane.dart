@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import '../../../../core/utils/file_pick.dart';
 import 'package:collection/collection.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -228,8 +228,8 @@ class _NoteBanner extends StatelessWidget {
 }
 
 Future<void> _addFile(BuildContext context, WidgetRef ref, LibrarySelection selection) async {
-  final picked = await FilePicker.pickFiles(dialogTitle: 'Pilih berkas catatan');
-  final path = picked.isEmpty ? null : picked.first.path;
+  final picked = await pickFilesOrTell(context, title: 'Pilih berkas catatan', multiple: false);
+  final path = picked.firstOrNull;
   if (path == null || !context.mounted) return;
   final key = await ref
       .read(notesControllerProvider.notifier)

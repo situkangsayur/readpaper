@@ -1,7 +1,7 @@
 name: readpaper
 description: "ReadPaper — Zotero-style paper reader with GitHub sync, highlights and comments. Free software, AGPL-3.0-or-later."
 publish_to: 'none'
-version: 0.25.1+61
+version: 0.25.2+62
 
 environment:
   sdk: ^3.10.0
@@ -52,6 +52,7 @@ dependencies:
   pdf: ^3.13.1
   flutter_html: ^3.0.0
   archive: ^4.3.0
+  desktop_drop: ^0.8.0
 # Menjauhkan JVM dari seluruh pohon paket.
 #
 # path_provider_android 2.3.0 mulai memakai paket `jni`, dan `jni` adalah

@@ -19,6 +19,7 @@ import '../../../reader/data/page_picture.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../sync/domain/entities/git_entities.dart';
 import '../../../sync/domain/entities/sync_progress.dart';
+import '../../../sync/data/datasources/git_locator.dart';
 import '../../../sync/domain/repositories/git_backend.dart';
 import '../../domain/entities/workspace_state.dart';
 
@@ -63,18 +64,24 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await openProfile(profile);
   }
 
+  /// Membuka ulang profil aktif — dari tombol "Coba lagi" di banner galat.
+  Future<void> retryOpen() async {
+    final profile = state.profile;
+    state = state.copyWith(clearError: true);
+    if (profile == null) {
+      await bootstrap();
+    } else {
+      await openProfile(profile);
+    }
+  }
+
   /// Reads the git state of [profile] and parses its library when present.
   Future<void> openProfile(RepoProfile profile) async {
     state = state.copyWith(profile: profile, clearError: true);
     final git = ref.read(gitBackendProvider);
 
     if (!await git.isAvailable()) {
-      state = state.copyWith(
-        error: Platform.isLinux || Platform.isMacOS
-            ? 'Perintah git tidak ditemukan di sistem. Pasang git terlebih dahulu '
-                  '(sudo apt install git git-lfs).'
-            : 'Backend sinkronisasi tidak tersedia di perangkat ini.',
-      );
+      state = state.copyWith(error: GitLocator.installHint());
       return;
     }
 

@@ -355,6 +355,21 @@ Di panel berkas, seret sebuah PDF ke koleksi di pohon. Barisnya menyala saat
 berkas melayang di atasnya; melepas di "Semua item" berarti masuk tanpa
 koleksi. Akar paper hanya menerima PDF.
 
+Di desktop (Linux dan Windows), PDF juga bisa diseret langsung dari pengelola
+berkas (Files/Nautilus, Dolphin, Explorer), satu atau beberapa sekaligus:
+
+- ke **sebuah koleksi** di pohon: masuk ke koleksi itu;
+- ke **"Semua item"**: masuk library tanpa koleksi;
+- ke **koleksi catatan**: jadi catatan;
+- ke **panel berkas**: disalin ke folder kerja.
+
+### Lewat menu koleksi
+
+Tombol **⋮** di koleksi paper → **Tambahkan PDF ke sini…**. Beberapa PDF bisa
+dipilih sekaligus. Ikon berkas bertanda tambah di baris akar library melakukan
+hal yang sama, tanpa koleksi. Setiap PDF menjadi item Zotero dan di-commit. Bila
+ada yang gagal, ringkasannya menyebut nama berkasnya.
+
 ### Koleksi baru dari pohon
 
 Ikon **Koleksi paper baru** di samping nama library membuat koleksi di akar;
@@ -615,9 +630,24 @@ dilanjutkan dari tempatnya berhenti."** Jaringan putus berulang. Tekan
 Folder clone sudah dipakai sesuatu. Di desktop, pilih **Folder clone lokal**
 lain di profil.
 
-**"Perintah git tidak ditemukan di sistem…"** (Linux) Pasang
-`sudo apt install git git-lfs`. Di Windows pesannya *Backend sinkronisasi tidak
-tersedia di perangkat ini.* — pasang Git for Windows.
+**"Git for Windows tidak ditemukan…"** / **"git tidak ditemukan…"** Semua
+fitur repositori di desktop memakai `git` sistem. Pasang dulu:
+
+- Windows: dari `git-scm.com`, atau di PowerShell `winget install --id Git.Git -e`.
+- CachyOS/Arch: `sudo pacman -S git git-lfs`.
+- Debian/Ubuntu: `sudo apt install git git-lfs`.
+
+Lalu tekan **Coba lagi** di banner merah, tanpa perlu menutup ReadPaper. Git
+yang tidak masuk PATH tetap ditemukan, asal ada di tempat yang lazim: `Program
+Files\Git`, pemasangan per pengguna, Scoop, atau git bawaan GitHub Desktop.
+Versi sebelum 0.25.2 menampilkan *Backend sinkronisasi tidak tersedia di
+perangkat ini*; itu galat yang sama.
+
+**Dialog pilih berkas tidak muncul (Linux).** ReadPaper memakai XDG Desktop
+Portal. Bila portalnya tidak ada, ReadPaper mencoba zenity, lalu kdialog. Kalau
+semuanya tidak ada, pesannya menyebut apa yang perlu dipasang, mis.
+`sudo pacman -S xdg-desktop-portal-gtk zenity`. Pilihan lain: seret berkasnya
+langsung dari pengelola berkas.
 
 **"SSH ditolak: kunci tidak diterima GitHub…"** / **"Autentikasi HTTPS gagal:
 token kosong atau tidak berlaku."** Periksa kunci atau token di profil.

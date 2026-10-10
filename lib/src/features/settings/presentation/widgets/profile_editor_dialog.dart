@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
+import '../../../../core/utils/file_pick.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -314,13 +314,13 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
   }
 
   Future<void> _pickSshKey() async {
-    final files = await FilePicker.pickFiles(dialogTitle: 'Pilih kunci privat SSH');
-    final path = files.isEmpty ? null : files.first.path;
+    final files = await pickFilesOrTell(context, title: 'Pilih kunci privat SSH', multiple: false);
+    final path = files.firstOrNull;
     if (path != null && mounted) setState(() => _sshKey.text = path);
   }
 
   Future<void> _pickDirectory() async {
-    final path = await FilePicker.getDirectoryPath(dialogTitle: 'Pilih folder clone');
+    final path = await pickDirectoryOrTell(context, title: 'Pilih folder clone');
     if (path != null && mounted) {
       setState(() {
         _localPath.text = path;

@@ -40,6 +40,10 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Ganti nama, pindahkan, dan hapus koleksi paper** lewat tombol ⋮. Kuncinya
   tetap, jadi keanggotaan paper tidak hilang. Menghapus koleksi melepas paper
   dari koleksi itu, tanpa menghapusnya, sama seperti di Zotero.
+- **Menambah PDF ke koleksi** langsung dari pohon: **⋮ → Tambahkan PDF ke
+  sini…** (beberapa sekaligus), tombol di akar library, atau di desktop dengan
+  **menyeret PDF dari pengelola berkas** (Nautilus, Dolphin, Explorer) ke
+  koleksinya. Berkas yang diseret ke panel berkas disalin ke folder kerja.
 - **Memindahkan paper antar koleksi** dengan menyeretnya di pohon. Keanggotaan
   koleksi Zotero tersimpan di berkas itemnya, dan itu yang diperbarui.
 - **Koleksi catatan** bisa dibuat, diganti nama, dan dihapus. Menghapus

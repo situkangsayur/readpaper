@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
+import '../../../../core/utils/file_pick.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
@@ -112,7 +112,7 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
   }
 
   Future<void> _pickFolder() async {
-    final picked = await FilePicker.getDirectoryPath(dialogTitle: 'Simpan di folder');
+    final picked = await pickDirectoryOrTell(context, title: 'Simpan di folder');
     if (picked == null || !mounted) return;
     setState(() {
       if (!_folders.any((f) => SaveAsNames.samePath(f.path, picked))) {
