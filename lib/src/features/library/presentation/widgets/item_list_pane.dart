@@ -12,6 +12,10 @@ import '../screens/duplicate_screen.dart';
 import '../screens/library_stats_screen.dart';
 import 'creator_facet_sheet.dart';
 import 'recent_papers_card.dart';
+import '../import_actions.dart';
+import '../../../files/presentation/open_any_file.dart';
+import '../../../workspace/presentation/controllers/workspace_controller.dart';
+import '../../domain/entities/library_index.dart';
 
 /// The middle pane: every item of the selected collection, with search + sort.
 class ItemListPane extends ConsumerWidget {
@@ -189,34 +193,42 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
               },
             ),
           ),
+          Builder(
+            builder: (context) {
+              // Tambahkan ke koleksi yang sedang dibuka; di "Semua item" dan
+              // "Tanpa koleksi" berarti masuk library tanpa koleksi.
+              final selection = ref.watch(selectionProvider);
+              final index = ref.watch(workspaceControllerProvider).index;
+              final key = selection.kind == SelectionKind.collection
+                  ? selection.collectionKey
+                  : null;
+              final name =
+                  (key == null ? null : index?.collections[key]?.name) ??
+                  index?.library.name ??
+                  'library';
+              return AddFilesButton(
+                notes: false,
+                collectionKey: key,
+                collectionName: name,
+                iconSize: 18,
+              );
+            },
+          ),
           IconButton(
-            tooltip: 'Buka PDF dari perangkat ini',
+            tooltip: 'Buka berkas dari perangkat ini (tanpa memasukkannya ke library)',
             icon: const Icon(Icons.file_open_outlined, size: 18),
             onPressed: () async {
-              // Any PDF, not only the library's: signing a form or marking up
-              // a file someone sent is the same job, and there is no reason
-              // to make it a different app.
+              // Berkas apa pun, bukan hanya milik library: menandatangani
+              // formulir atau membaca tabel kiriman orang adalah pekerjaan
+              // yang sama. PDF dibuka di pembaca, CSV/Excel sebagai tabel.
               final picked = await pickFilesOrTell(
                 context,
-                extensions: const <String>['pdf'],
-                title: 'Pilih PDF',
+                title: 'Pilih berkas untuk dibuka',
                 multiple: false,
               );
               final path = picked.firstOrNull;
               if (path == null || !context.mounted) return;
-              await Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => ReaderScreen(
-                    itemKey: '',
-                    // Empty means standalone: nothing is written back to a
-                    // Zotero item, and saving produces a PDF instead.
-                    itemFilePath: '',
-                    attachmentKey: '',
-                    filePath: path,
-                    title: p.basenameWithoutExtension(path),
-                  ),
-                ),
-              );
+              await openAnyFile(context, path, title: p.basenameWithoutExtension(path));
             },
           ),
           // Jumlahnya ikut di tombolnya: "ada 147 kelompok" adalah alasan

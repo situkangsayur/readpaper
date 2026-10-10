@@ -1762,28 +1762,30 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     final tools = <Widget>[
       // Labelled on purpose: a bare icon left people swiping at the page
-      // and wondering why nothing was marked.
-      if (isTouchPlatform)
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: FilledButton.tonalIcon(
-            style: FilledButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              backgroundColor: _markerMode ? colorFromHex(_color) : null,
-              foregroundColor: _markerMode ? Colors.black87 : null,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-            ),
-            onPressed: () => setState(() {
-              _markerMode = !_markerMode;
-              if (_markerMode) {
-                _noteMode = false;
-                _penMode = false;
-              }
-            }),
-            icon: Icon(_markerMode ? Icons.border_color : Icons.border_color_outlined, size: 18),
-            label: Text(_markerMode ? 'Menandai' : 'Tandai'),
+      // and wondering why nothing was marked. Di desktop juga: memblok teks
+      // lalu mencari bilah stabilo tidak pernah ditemukan di Windows, jadi
+      // "Tandai" — seret mouse di atas teks, langsung berwarna — ada di semua
+      // platform.
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: FilledButton.tonalIcon(
+          style: FilledButton.styleFrom(
+            visualDensity: VisualDensity.compact,
+            backgroundColor: _markerMode ? colorFromHex(_color) : null,
+            foregroundColor: _markerMode ? Colors.black87 : null,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
           ),
+          onPressed: () => setState(() {
+            _markerMode = !_markerMode;
+            if (_markerMode) {
+              _noteMode = false;
+              _penMode = false;
+            }
+          }),
+          icon: Icon(_markerMode ? Icons.border_color : Icons.border_color_outlined, size: 18),
+          label: Text(_markerMode ? 'Menandai' : 'Tandai'),
         ),
+      ),
       IconButton(
         tooltip: _noteMode
             ? 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)'
@@ -2217,7 +2219,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    'Sapukan jari di atas teks — lepas jari, langsung ditandai '
+                                    '${isTouchPlatform ? 'Sapukan jari' : 'Seret mouse'} di atas teks — '
+                                    '${isTouchPlatform ? 'lepas jari' : 'lepas tombolnya'}, langsung ditandai '
                                     '${AnnotationPalette.names[_color] ?? _color.toLowerCase()}. '
                                     'Geser halaman dan salin teks nonaktif; tekan Selesai untuk '
                                     'kembali.',

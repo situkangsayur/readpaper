@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import '../../../../core/utils/file_pick.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,6 +20,7 @@ import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/note_entities.dart';
 import '../controllers/notes_controller.dart';
 import '../../../files/presentation/open_any_file.dart';
+import '../../../library/presentation/import_actions.dart';
 
 /// Panel tengah saat yang dipilih ada di bawah akar catatan.
 ///
@@ -75,10 +75,11 @@ class NoteListPane extends ConsumerWidget {
                 icon: const Icon(Icons.post_add_outlined, size: 20),
                 onPressed: () => _newMarkdown(context, ref, selection),
               ),
-              IconButton(
-                tooltip: 'Tambah catatan dari berkas',
-                icon: const Icon(Icons.note_add_outlined, size: 20),
-                onPressed: () => _addFile(context, ref, selection),
+              // Berkas apa pun (beberapa sekaligus) atau satu folder utuh.
+              AddFilesButton(
+                notes: true,
+                collectionKey: selection.noteCollectionKey,
+                collectionName: title,
               ),
             ],
           ),
@@ -226,23 +227,6 @@ class _NoteBanner extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<void> _addFile(BuildContext context, WidgetRef ref, LibrarySelection selection) async {
-  final picked = await pickFilesOrTell(context, title: 'Pilih berkas catatan', multiple: false);
-  final path = picked.firstOrNull;
-  if (path == null || !context.mounted) return;
-  final key = await ref
-      .read(notesControllerProvider.notifier)
-      .addFile(
-        sourcePath: path,
-        title: p.basenameWithoutExtension(path),
-        collectionKey: selection.noteCollectionKey,
-      );
-  if (!context.mounted || key != null) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(ref.read(notesErrorProvider) ?? 'Gagal menambahkan catatan')),
-  );
 }
 
 /// Membuat buku catatan baru di koleksi yang sedang dipilih.

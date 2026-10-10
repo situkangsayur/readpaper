@@ -95,6 +95,41 @@ jobs:
         shell: bash
         run: echo "v=$(grep -m1 '^version:' pubspec.yaml | sed 's/^version:[[:space:]]*//; s/+.*//')" >> "$GITHUB_OUTPUT"
 
+      # Pemasang (setup.exe) ke Program Files. Pengguna yang dulu menyalin zip
+      # cukup menjalankan ini; versi berikutnya memperbarui di tempat yang sama.
+      - name: Pemasang
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.versi.outputs.v }}"
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$ver" installer\windows\readpaper.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC gagal" }
+          Get-ChildItem dist
+
+      # Bukti, sebelum terbit: pasang, pasang lagi di atasnya (pembaruan), lalu
+      # uninstall — dan pengaturan pengguna tetap utuh sepanjang jalan.
+      - name: Uji pemasang
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.versi.outputs.v }}"
+          $setup = (Resolve-Path "dist/readpaper-$ver-windows-x64-setup.exe").Path
+          $data = Join-Path $env:USERPROFILE ".local\share\readpaper"
+          New-Item -ItemType Directory -Force -Path $data | Out-Null
+          '{"profiles":[],"uji":"jangan-hilang"}' | Out-File -Encoding utf8 "$data\config.json"
+          $app = Join-Path $env:ProgramFiles "ReadPaper"
+          foreach ($round in 1, 2) {
+            Start-Process $setup -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+            if (-not (Test-Path "$app\readpaper.exe")) { throw "readpaper.exe tidak terpasang (putaran $round)" }
+            if (-not (Test-Path "$app\git\cmd\git.exe")) { throw "git bawaan tidak terpasang (putaran $round)" }
+            & "$app\git\cmd\git.exe" --version
+            if (-not (Select-String -Path "$data\config.json" -Pattern 'jangan-hilang' -Quiet)) { throw "pengaturan hilang (putaran $round)" }
+          }
+          $uninstaller = Get-ChildItem $app -Filter 'unins*.exe' | Select-Object -First 1
+          Start-Process $uninstaller.FullName -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+          Start-Sleep -Seconds 3
+          if (Test-Path "$app\readpaper.exe") { throw "uninstall tidak membuang program" }
+          if (-not (Select-String -Path "$data\config.json" -Pattern 'jangan-hilang' -Quiet)) { throw "uninstall menghapus pengaturan" }
+          "Pasang, perbarui, dan uninstall: pengaturan tetap utuh."
+
       # Yang dibungkus adalah seluruh isi folder Release: readpaper.exe tidak
       # berjalan tanpa `data/` dan DLL di sebelahnya — termasuk pdfium.dll,
       # mesin yang membaca PDF-nya.
@@ -129,7 +164,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: readpaper-windows-x64
-          path: dist/*.zip
+          path: |
+            dist/*.zip
+            dist/*-setup.exe
           if-no-files-found: error
 
       # Dilampirkan ke rilis hanya kalau memang ada tag-nya. Membangun tanpa
@@ -144,5 +181,6 @@ jobs:
           [ -n "$tag" ] || tag="${GITHUB_REF_NAME}"
           ver="${{ steps.versi.outputs.v }}"
           gh release upload "$tag" \
+            "dist/readpaper-$ver-windows-x64-setup.exe#ReadPaper $ver (Windows x64, pemasang)" \
             "dist/readpaper-$ver-windows-x64.zip#ReadPaper $ver (Windows x64, portabel)" \
             --clobber

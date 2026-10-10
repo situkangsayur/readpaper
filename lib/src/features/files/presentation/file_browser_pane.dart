@@ -106,11 +106,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
       _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
       return;
     }
-    final picked = await pickFilesOrTell(
-      context,
-      extensions: const <String>['pdf'],
-      title: 'Pilih PDF untuk disalin ke sini',
-    );
+    final picked = await pickFilesOrTell(context, title: 'Pilih berkas untuk disalin ke sini');
     if (picked.isEmpty) return;
     await _copyPaths(picked);
   }
@@ -646,12 +642,29 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                           ),
                         ],
                       ),
-                      IconButton(
-                        tooltip: 'Salin berkas ke sini — dari mana pun di perangkat',
+                      PopupMenuButton<String>(
+                        tooltip: 'Salin berkas atau folder ke sini — dari mana pun di perangkat',
                         iconSize: 18,
-                        visualDensity: VisualDensity.compact,
+                        enabled: dir != null,
                         icon: const Icon(Icons.file_download_outlined),
-                        onPressed: dir == null ? null : _copyIn,
+                        onSelected: (choice) async {
+                          if (choice == 'berkas') {
+                            await _copyIn();
+                            return;
+                          }
+                          final folder = await pickDirectoryOrTell(
+                            context,
+                            title: 'Pilih folder untuk disalin ke sini',
+                          );
+                          if (folder != null) await _copyPaths(<String>[folder]);
+                        },
+                        itemBuilder: (_) => const <PopupMenuEntry<String>>[
+                          PopupMenuItem<String>(value: 'berkas', child: Text('Salin berkas…')),
+                          PopupMenuItem<String>(
+                            value: 'folder',
+                            child: Text('Salin folder (beserta isinya)…'),
+                          ),
+                        ],
                       ),
                       IconButton(
                         tooltip: 'Buka folder lain',
