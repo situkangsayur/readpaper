@@ -40,6 +40,19 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Ganti nama, pindahkan, dan hapus koleksi paper** lewat tombol ⋮. Kuncinya
   tetap, jadi keanggotaan paper tidak hilang. Menghapus koleksi melepas paper
   dari koleksi itu, tanpa menghapusnya, sama seperti di Zotero.
+- **Pemasang Windows** (`readpaper-<versi>-windows-x64-setup.exe`) ke
+  Program Files, dengan git bawaan, pintasan Start menu, dan "Buka dengan" untuk
+  PDF/EPUB. Versi berikutnya memperbarui di tempat yang sama, termasuk folder
+  yang dulu diisi dari zip. Pengaturan dan clone di
+  `%USERPROFILE%\.local\share\readpaper` tidak pernah disentuh. Zip portabel
+  tetap tersedia.
+- **Tandai di semua platform**: tombol "Tandai" ada juga di desktop. Seret
+  mouse di atas teks, dan teksnya langsung distabilo.
+- **Android: repo baru langsung diambil, Tarik selalu terlihat.** Menyimpan
+  repositori baru langsung mengambil library-nya, dan bilah atas menampilkan
+  "Ambil library" selama belum diambil. Tombol Tarik berdiri sendiri, juga di
+  layar sempit. Mematikan "Unduh PDF hanya saat dibuka" kini berlaku di
+  Android: semua PDF diunduh sesudah ambil dan pull.
 - **Impor folder menjadi koleksi.** Seret atau pilih satu folder: folder itu
   menjadi koleksi, subfoldernya menjadi sub-koleksi, dan semua jenis berkas
   masuk, ke Zotero sebagai item berlampiran atau ke Catatan sebagai catatan,

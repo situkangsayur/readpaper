@@ -21,6 +21,7 @@ import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../sync/domain/entities/git_entities.dart';
 import '../../../sync/domain/entities/sync_progress.dart';
 import '../../../sync/data/datasources/git_locator.dart';
+import '../../../sync/data/datasources/github_api_backend.dart';
 import '../../../sync/domain/repositories/git_backend.dart';
 import '../../domain/entities/workspace_state.dart';
 
@@ -178,8 +179,24 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (result.ok) {
       await openProfile(profile);
       await _touchSyncTime(profile);
+      await _fetchAllIfWanted(profile);
     }
     return result.ok;
+  }
+
+  /// Di Android, mirror hanya memuat metadata. Bila profil mematikan "Unduh
+  /// PDF hanya saat dibuka", semua PDF diunduh sesudah ambil dan pull.
+  Future<void> _fetchAllIfWanted(RepoProfile profile) async {
+    final backend = ref.read(gitBackendProvider);
+    if (profile.lazyAttachments || backend is! GitHubApiBackend) return;
+    _beginPhase(SyncPhase.pulling);
+    final auth = await _authFor(profile);
+    final result = await backend.fetchAllAttachments(
+      repoPath: profile.localPath,
+      auth: auth,
+      onProgress: _appendProgress,
+    );
+    await _endPhase(result);
   }
 
   /// Throws away the working copy and takes it again, so an old full clone can
@@ -225,7 +242,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (ok) {
       await reloadLibrary();
       final profile = state.profile;
-      if (profile != null) await _touchSyncTime(profile);
+      if (profile != null) {
+        await _touchSyncTime(profile);
+        await _fetchAllIfWanted(profile);
+      }
     }
     return ok;
   }
@@ -957,12 +977,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   // ------------------------------------------------------------------ profiles
 
   Future<void> saveProfile(RepoProfile profile, {String? httpsToken}) async {
+    final isNew = !state.settings.profiles.any((p) => p.id == profile.id);
     final settings = await ref
         .read(settingsRepositoryProvider)
         .saveProfile(profile, httpsToken: httpsToken);
     state = state.copyWith(settings: settings);
     if (settings.activeProfile?.id == profile.id) {
       await openProfile(profile);
+      // Repositori yang baru ditambahkan langsung diambil. Menambah detail
+      // repo lalu mendapati tidak terjadi apa-apa — dan tidak ada tombol pull
+      // yang terlihat — adalah keluhan yang memang terjadi di APK.
+      if (isNew && !state.isCloned && profile.remoteUrl.trim().isNotEmpty) {
+        await clone();
+      }
     }
   }
 

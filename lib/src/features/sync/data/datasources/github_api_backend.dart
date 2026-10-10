@@ -646,6 +646,51 @@ class GitHubApiBackend implements GitBackend {
     });
   }
 
+  /// Mengunduh semua lampiran yang belum ada di perangkat — untuk profil
+  /// yang mematikan "Unduh PDF hanya saat dibuka", supaya semua paper bisa
+  /// dibaca offline. Lampiran di `attachments-lfs/` dilewati: lewat API yang
+  /// tersimpan di sana hanya penunjuk LFS, bukan PDF-nya.
+  Future<GitResult> fetchAllAttachments({
+    required String repoPath,
+    required GitAuth auth,
+    void Function(SyncProgress progress)? onProgress,
+  }) async {
+    final state = GitHubSyncState.load(repoPath);
+    if (state == null) return _notMirrored;
+    // Kuncinya jalur relatif repo, mis. zotero/<library>/attachments/AB/KEY/x.pdf.
+    bool isLfs(String path) => p.posix.split(path).contains('attachments-lfs');
+    final missing = <MapEntry<String, MirroredFile>>[
+      for (final entry in state.attachments.entries)
+        if (!isLfs(entry.key) && !File(p.join(repoPath, entry.key)).existsSync()) entry,
+    ];
+    final lfs = state.attachments.keys.where(isLfs).length;
+    if (missing.isEmpty) {
+      return GitResult(
+        ok: true,
+        exitCode: 0,
+        message: lfs == 0
+            ? 'Semua PDF sudah ada di perangkat'
+            : 'Semua PDF sudah ada; $lfs lampiran LFS diambil dari komputer',
+      );
+    }
+    return _withClient(repoPath, auth, (client, ref) async {
+      var done = 0;
+      for (final entry in missing) {
+        onProgress?.call(
+          SyncProgress.message(
+            'Mengunduh PDF ${done + 1} dari ${missing.length}: ${p.basename(entry.key)}',
+          ),
+        );
+        final bytes = await client.blob(entry.value.sha);
+        final file = File(p.join(repoPath, entry.key));
+        await file.parent.create(recursive: true);
+        await file.writeAsBytes(bytes, flush: true);
+        done++;
+      }
+      return GitResult(ok: true, exitCode: 0, message: '$done PDF diunduh untuk dibaca offline');
+    });
+  }
+
   // ------------------------------------------------------------------- misc
 
   @override

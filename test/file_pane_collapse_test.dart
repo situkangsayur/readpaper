@@ -32,7 +32,10 @@ void main() {
 
     expect(find.byTooltip('Buat baru di folder ini'), findsOneWidget);
     expect(find.byTooltip('Naik satu tingkat'), findsOneWidget);
-    expect(find.byTooltip('Salin berkas atau folder ke sini — dari mana pun di perangkat'), findsOneWidget);
+    expect(
+      find.byTooltip('Salin berkas atau folder ke sini — dari mana pun di perangkat'),
+      findsOneWidget,
+    );
     expect(find.byTooltip('Buka folder lain'), findsOneWidget);
     // Yang dulu berdiri sendiri sekarang di dalam satu menu.
     expect(find.byTooltip('Papan tulis baru'), findsNothing);

@@ -7,6 +7,7 @@ import '../controllers/workspace_controller.dart';
 import '../../../settings/presentation/screens/profiles_screen.dart';
 import 'repo_transfer_sheet.dart';
 import 'sync_detail_sheet.dart';
+import '../../domain/entities/workspace_state.dart';
 
 /// Full-width bar under the app bar: which repository and library are open,
 /// what the sync is doing, and the sync actions.
@@ -184,9 +185,23 @@ class _SyncActions extends ConsumerWidget {
     final state = ref.watch(workspaceControllerProvider);
     final controller = ref.read(workspaceControllerProvider.notifier);
     final status = state.gitStatus;
-    if (status == null || !status.exists) return const SizedBox.shrink();
-
     final busy = state.isBusy;
+    // Belum diambil: tombol ambil yang terlihat, bukan bilah kosong.
+    if (status == null || !status.exists) {
+      if (state.profile == null || status == null) return const SizedBox.shrink();
+      return TextButton.icon(
+        onPressed: busy ? null : controller.clone,
+        icon: busy
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.download_outlined, size: 20),
+        label: Text(busy ? 'Mengambil…' : 'Ambil library'),
+      );
+    }
+
     final narrow = MediaQuery.sizeOf(context).width < 900;
 
     void guard(VoidCallback action) {
@@ -202,6 +217,25 @@ class _SyncActions extends ConsumerWidget {
       children: <Widget>[
         _StatusChip(status: status),
         const SizedBox(width: 4),
+        // Tarik selalu terlihat sebagai tombol sendiri, juga di layar sempit:
+        // di dalam menu ia tidak pernah ditemukan.
+        if (narrow)
+          IconButton(
+            iconSize: 20,
+            tooltip: status.behind > 0 ? 'Tarik ${status.behind} commit baru' : 'Tarik perubahan',
+            icon: Badge(
+              isLabelVisible: status.behind > 0,
+              label: Text('${status.behind}'),
+              child: busy && state.phase == SyncPhase.pulling
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.download_outlined),
+            ),
+            onPressed: () => guard(controller.pull),
+          ),
         if (narrow)
           PopupMenuButton<String>(
             tooltip: 'Sinkronisasi',

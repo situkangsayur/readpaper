@@ -555,6 +555,23 @@ void main() {
   });
 
   group('attachments', () {
+    test('semua diunduh sekaligus bila "unduh saat dibuka" dimatikan', () async {
+      await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
+      final target = path('zotero/my-library/attachments/AT/ATTACH01/paper.pdf');
+      expect(File(target).existsSync(), isFalse);
+      final progress = <String>[];
+      final result = await backend.fetchAllAttachments(
+        repoPath: mirror.path,
+        auth: auth,
+        onProgress: (p) => progress.add(p.label),
+      );
+      expect(result.ok, isTrue, reason: result.message);
+      expect(File(target).readAsStringSync(), '%PDF-1.4 dummy');
+      expect(progress, isNotEmpty);
+      final again = await backend.fetchAllAttachments(repoPath: mirror.path, auth: auth);
+      expect(again.message, contains('sudah ada'));
+    });
+
     test('are downloaded on demand', () async {
       await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
       final target = path('zotero/my-library/attachments/AT/ATTACH01/paper.pdf');

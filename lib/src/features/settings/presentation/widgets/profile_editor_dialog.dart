@@ -288,11 +288,12 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
                   title: const Text('Unduh PDF hanya saat dibuka'),
                   subtitle: const Text(
                     'Ambil metadata library dulu (puluhan MB); berkas PDF menyusul '
-                    'satu per satu. Matikan kalau ingin semua berkas tersedia offline.',
+                    'satu per satu. Matikan kalau ingin semua PDF diunduh sekaligus '
+                    'sesudah ambil dan pull, supaya bisa dibaca offline.',
                   ),
-                  onChanged: canChooseFolder
-                      ? (value) => setState(() => _lazyAttachments = value)
-                      : null,
+                  // Di Android juga: mirror-nya mengunduh semua PDF sesudah
+                  // ambil dan pull bila pilihan ini dimatikan.
+                  onChanged: (value) => setState(() => _lazyAttachments = value),
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,

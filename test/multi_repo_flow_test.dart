@@ -91,12 +91,11 @@ void main() {
     await ctl.bootstrap();
     WorkspaceStateView state() => WorkspaceStateView(container.read(workspaceControllerProvider));
 
-    // Profil pertama: belum ada clone → clone → library terbaca.
+    // Profil pertama: menyimpannya langsung mengambil repo-nya — menambah
+    // detail repo lalu mendapati tidak terjadi apa-apa adalah keluhan APK.
     await ctl.saveProfile(a);
-    await ctl.selectProfile(a.id);
     expect(state().profileId, a.id);
-    expect(await ctl.clone(), isTrue, reason: state().error);
-    expect(state().titles, <String>['Paper pribadi']);
+    expect(state().titles, <String>['Paper pribadi'], reason: state().error);
 
     // Profil kedua, lalu pindah ke sana.
     await ctl.saveProfile(b);
