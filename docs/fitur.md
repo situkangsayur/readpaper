@@ -52,7 +52,8 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   repositori baru langsung mengambil library-nya, dan bilah atas menampilkan
   "Ambil library" selama belum diambil. Tombol Tarik berdiri sendiri, juga di
   layar sempit. Mematikan "Unduh PDF hanya saat dibuka" kini berlaku di
-  Android: semua PDF diunduh sesudah ambil dan pull.
+  Android: semua PDF diunduh sesudah ambil dan pull. **Tarik ke bawah** di
+  daftar paper atau catatan untuk mengambil perubahan dari GitHub.
 - **Impor folder menjadi koleksi.** Seret atau pilih satu folder: folder itu
   menjadi koleksi, subfoldernya menjadi sub-koleksi, dan semua jenis berkas
   masuk, ke Zotero sebagai item berlampiran atau ke Catatan sebagai catatan,

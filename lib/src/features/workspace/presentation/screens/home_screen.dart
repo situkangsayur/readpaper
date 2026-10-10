@@ -20,6 +20,7 @@ import '../../../settings/presentation/screens/profiles_screen.dart';
 import '../controllers/workspace_controller.dart';
 import '../widgets/workspace_bar.dart';
 import '../widgets/workspace_placeholders.dart';
+import '../../../settings/presentation/widgets/profile_editor_dialog.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -224,7 +225,17 @@ class _Banner extends ConsumerWidget {
             // Galat membuka repo sering selesai di luar aplikasi — git baru
             // dipasang, folder clone dikembalikan — jadi membuka ulang tidak
             // boleh menuntut aplikasinya ditutup dulu.
-            if (isError)
+            // Galat token tidak selesai dengan mencoba lagi: profilnya yang
+            // perlu diisi, jadi tombolnya langsung ke sana.
+            if (isError && message.toLowerCase().contains('token'))
+              TextButton(
+                onPressed: () {
+                  final profile = ref.read(workspaceControllerProvider).profile;
+                  if (profile != null) showProfileEditor(context, ref, existing: profile);
+                },
+                child: Text('Isi token', style: TextStyle(color: foreground)),
+              )
+            else if (isError)
               TextButton(
                 onPressed: () => ref.read(workspaceControllerProvider.notifier).retryOpen(),
                 child: Text('Coba lagi', style: TextStyle(color: foreground)),

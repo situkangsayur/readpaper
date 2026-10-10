@@ -398,3 +398,17 @@ class AddFilesButton extends ConsumerWidget {
     ],
   );
 }
+
+/// Tarik-ke-bawah di daftar paper dan catatan: tarik perubahan dari GitHub
+/// (atau ambil library bila belum pernah diambil), lalu baca ulang catatan.
+Future<void> pullToRefresh(WidgetRef ref) async {
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  final state = ref.read(workspaceControllerProvider);
+  if (state.isBusy || state.profile == null) return;
+  if (!state.isCloned) {
+    await controller.clone();
+  } else {
+    await controller.pull();
+  }
+  await ref.read(notesControllerProvider.notifier).reload();
+}

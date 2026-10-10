@@ -91,28 +91,38 @@ class NoteListPane extends ConsumerWidget {
           const Expanded(child: Center(child: CircularProgressIndicator(strokeWidth: 3)))
         else
           Expanded(
-            child: notes.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(
-                      child: Text(
-                        'Belum ada catatan di sini. Seret berkas dari panel berkas, '
-                        'atau pakai tombol tambah di atas.',
-                        textAlign: TextAlign.center,
+            child: RefreshIndicator(
+              onRefresh: () => pullToRefresh(ref),
+              child: notes.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const <Widget>[
+                        Padding(
+                          padding: EdgeInsets.all(32),
+                          child: Center(
+                            child: Text(
+                              'Belum ada catatan di sini. Seret berkas dari panel berkas, '
+                              'atau pakai tombol tambah di atas. Tarik ke bawah untuk '
+                              'mengambil perubahan dari GitHub.',
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      itemCount: notes.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, i) => _NoteTile(
+                        note: notes[i],
+                        directory: index.directory,
+                        onOpen: () => _open(context, ref, notes[i], index),
+                        onMenu: () => _menu(context, ref, notes[i]),
                       ),
                     ),
-                  )
-                : ListView.separated(
-                    padding: EdgeInsets.zero,
-                    itemCount: notes.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
-                    itemBuilder: (context, i) => _NoteTile(
-                      note: notes[i],
-                      directory: index.directory,
-                      onOpen: () => _open(context, ref, notes[i], index),
-                      onMenu: () => _menu(context, ref, notes[i]),
-                    ),
-                  ),
+            ),
           ),
       ],
     );

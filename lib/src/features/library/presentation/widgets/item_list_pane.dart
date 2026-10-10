@@ -35,39 +35,44 @@ class ItemListPane extends ConsumerWidget {
         const _ListHeader(),
         const Divider(height: 1),
         Expanded(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: <Widget>[
-              if (!searching)
-                RecentPapersCard(
-                  onOpen: (entry) => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => ReaderScreen(
-                        itemKey: entry.itemKey,
-                        itemFilePath: entry.itemFilePath,
-                        attachmentKey: entry.attachmentKey,
-                        filePath: entry.filePath,
-                        title: entry.title,
-                        subtitle: entry.subtitle,
+          // Tarik ke bawah = tarik perubahan dari GitHub, seperti aplikasi lain.
+          child: RefreshIndicator(
+            onRefresh: () => pullToRefresh(ref),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              children: <Widget>[
+                if (!searching)
+                  RecentPapersCard(
+                    onOpen: (entry) => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ReaderScreen(
+                          itemKey: entry.itemKey,
+                          itemFilePath: entry.itemFilePath,
+                          attachmentKey: entry.attachmentKey,
+                          filePath: entry.filePath,
+                          title: entry.title,
+                          subtitle: entry.subtitle,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              if (items.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(32),
-                  child: Center(child: Text('Tidak ada item.')),
-                )
-              else
-                for (var i = 0; i < items.length; i++) ...<Widget>[
-                  if (i > 0) const Divider(height: 1),
-                  _ItemTile(
-                    item: items[i],
-                    selected: items[i].key == selectedKey,
-                    onTap: () => ref.read(selectedItemKeyProvider.notifier).select(items[i].key),
-                  ),
-                ],
-            ],
+                if (items.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Center(child: Text('Tidak ada item.')),
+                  )
+                else
+                  for (var i = 0; i < items.length; i++) ...<Widget>[
+                    if (i > 0) const Divider(height: 1),
+                    _ItemTile(
+                      item: items[i],
+                      selected: items[i].key == selectedKey,
+                      onTap: () => ref.read(selectedItemKeyProvider.notifier).select(items[i].key),
+                    ),
+                  ],
+              ],
+            ),
           ),
         ),
         _ListFooter(count: items.length),
