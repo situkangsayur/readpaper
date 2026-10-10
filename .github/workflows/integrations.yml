@@ -110,7 +110,7 @@ jobs:
       - name: Paket plugin
         run: scripts/package-onlyoffice-plugin.sh
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: readpaper-onlyoffice-plugin
           path: build/integrations/*.plugin
