@@ -18,7 +18,7 @@ dependencies:
   pdfrx: ^2.4.8
   # Same PDFium module pdfrx loads; used to write ink annotations into an
   # exported copy of a paper.
-  pdfium_dart: ^0.2.5
+  pdfium_dart: ^0.3.1
   # Dipakai langsung untuk menyunting halaman PDF lewat pdfium.
   ffi: ^2.1.3
 
