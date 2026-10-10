@@ -35,7 +35,11 @@ class _FileDropZoneState extends State<FileDropZone> {
         setState(() => _hovering = false);
         final paths = <String>[
           for (final file in details.files)
-            if (file.path.isNotEmpty && File(file.path).existsSync()) file.path,
+            // Folder juga: yang menerima memutuskan apa artinya — koleksi
+            // baru di pohon, atau salinan folder di panel berkas.
+            if (file.path.isNotEmpty &&
+                (File(file.path).existsSync() || Directory(file.path).existsSync()))
+              file.path,
         ];
         if (paths.isNotEmpty) widget.onFiles(paths);
       },

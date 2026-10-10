@@ -1,7 +1,7 @@
 name: readpaper
 description: "ReadPaper — Zotero-style paper reader with GitHub sync, highlights and comments. Free software, AGPL-3.0-or-later."
 publish_to: 'none'
-version: 0.25.2+62
+version: 0.25.3+63
 
 environment:
   sdk: ^3.10.0

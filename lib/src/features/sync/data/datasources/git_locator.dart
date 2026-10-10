@@ -21,6 +21,7 @@ class GitLocator {
     bool Function(String path)? exists,
     List<String> Function(String dir)? listDirs,
     String? operatingSystem,
+    String? appDir,
   }) {
     final env = environment ?? Platform.environment;
     final has = exists ?? (path) => File(path).existsSync();
@@ -32,7 +33,8 @@ class GitLocator {
           return d.listSync().whereType<Directory>().map((e) => e.path).toList();
         };
     final os = operatingSystem ?? Platform.operatingSystem;
-    for (final candidate in candidates(env, os, dirs)) {
+    final here = appDir ?? p.dirname(Platform.resolvedExecutable);
+    for (final candidate in candidates(env, os, dirs, appDir: here)) {
       if (has(candidate)) return candidate;
     }
     return 'git';
@@ -41,8 +43,9 @@ class GitLocator {
   static List<String> candidates(
     Map<String, String> env,
     String os,
-    List<String> Function(String dir) listDirs,
-  ) {
+    List<String> Function(String dir) listDirs, {
+    String? appDir,
+  }) {
     if (os == 'windows') {
       final w = p.windows;
       String? at(String key) {
@@ -53,6 +56,9 @@ class GitLocator {
       final out = <String>[
         for (final dir in (env['PATH'] ?? env['Path'] ?? '').split(';'))
           if (dir.trim().isNotEmpty) w.join(dir.trim(), 'git.exe'),
+        // MinGit yang ikut di zip Windows, di samping readpaper.exe: ReadPaper
+        // tetap bisa sinkron walau Git for Windows tidak pernah dipasang.
+        if (appDir != null) w.join(appDir, 'git', 'cmd', 'git.exe'),
         for (final key in <String>['ProgramFiles', 'ProgramW6432', 'ProgramFiles(x86)'])
           if (at(key) != null) w.join(at(key)!, 'Git', 'cmd', 'git.exe'),
         if (at('LOCALAPPDATA') != null)

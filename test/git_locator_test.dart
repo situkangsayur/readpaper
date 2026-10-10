@@ -16,6 +16,7 @@ void main() {
           exists: present.contains,
           listDirs: (dir) => dir.endsWith('GitHubDesktop') ? desktop : const <String>[],
           operatingSystem: 'windows',
+          appDir: r'D:\Apps\ReadPaper',
         );
 
     test('Git for Windows di Program Files, walau tidak ada di PATH', () {
@@ -47,6 +48,19 @@ void main() {
           desktop: <String>['$base\\app-3.4.1', '$base\\app-3.5.0', '$base\\packages'],
         ),
         '$base\\app-3.5.0\\resources\\app\\git\\cmd\\git.exe',
+      );
+    });
+
+    test('MinGit bawaan zip dipakai bila Git for Windows tidak terpasang', () {
+      expect(
+        GitLocator.locate(
+          environment: env,
+          exists: (path) => path == r'D:\Apps\ReadPaper\git\cmd\git.exe',
+          listDirs: (_) => const <String>[],
+          operatingSystem: 'windows',
+          appDir: r'D:\Apps\ReadPaper',
+        ),
+        r'D:\Apps\ReadPaper\git\cmd\git.exe',
       );
     });
 

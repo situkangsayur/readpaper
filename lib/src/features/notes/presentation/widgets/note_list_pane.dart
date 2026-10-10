@@ -20,6 +20,7 @@ import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../domain/note_entities.dart';
 import '../controllers/notes_controller.dart';
+import '../../../files/presentation/open_any_file.dart';
 
 /// Panel tengah saat yang dipilih ada di bawah akar catatan.
 ///
@@ -385,15 +386,9 @@ Future<void> _open(BuildContext context, WidgetRef ref, NoteItem note, NotesInde
     );
     return;
   }
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        'Berkas ${note.extension.isEmpty ? 'ini' : note.extension} belum bisa dibuka '
-        'di dalam aplikasi. Yang sudah bisa: PDF, EPUB, Markdown, gambar, dan buku '
-        'catatan.',
-      ),
-    ),
-  );
+  // CSV dan Excel dibuka sebagai tabel; jenis lain diserahkan ke aplikasi
+  // bawaan sistem di desktop.
+  await openAnyFile(context, path, title: note.title);
 }
 
 Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {

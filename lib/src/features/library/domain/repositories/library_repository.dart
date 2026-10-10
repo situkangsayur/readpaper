@@ -29,6 +29,18 @@ abstract class LibraryRepository {
   bool isLfsPointer(File file);
 
   /// Writes (or replaces) an annotation. Returns the files that changed.
+  /// Memasukkan berkas apa pun ke library sebagai dokumen dengan satu
+  /// lampiran — gambar, CSV, Excel, Word, dan seterusnya.
+  Future<CreatedItem> addFileAsItem({
+    required String libraryDir,
+    required String libraryName,
+    required int libraryId,
+    required String filePath,
+    required String title,
+    String? collectionKey,
+    String? collectionPath,
+  });
+
   /// Memasukkan sebuah PDF lepas ke dalam library sebagai item baru.
   Future<CreatedItem> addPdfAsItem({
     required String libraryDir,

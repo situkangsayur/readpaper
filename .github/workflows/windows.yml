@@ -48,6 +48,41 @@ jobs:
       - name: Build
         run: flutter build windows --release
 
+      # Git ikut di zip. Sinkronisasi di desktop memakai `git`, dan tanpa ini
+      # ReadPaper di Windows yang belum dipasangi Git for Windows hanya bisa
+      # berkata "git tidak ditemukan". MinGit adalah git portabel resmi dari
+      # Git for Windows (termasuk ssh), git-lfs ditaruh di sampingnya supaya
+      # lampiran LFS ikut bisa diambil.
+      - name: Ikutkan MinGit dan git-lfs
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $dest = "build/windows/x64/runner/Release/git"
+          gh release download --repo git-for-windows/git --pattern 'MinGit-*-64-bit.zip' --dir mingit
+          $zip = Get-ChildItem mingit -Filter 'MinGit-*-64-bit.zip' | Where-Object { $_.Name -notmatch 'busybox' } | Select-Object -First 1
+          Expand-Archive -Path $zip.FullName -DestinationPath $dest
+          gh release download --repo git-lfs/git-lfs --pattern 'git-lfs-windows-amd64-v*.zip' --dir lfs
+          Expand-Archive -Path (Get-ChildItem lfs -Filter '*.zip' | Select-Object -First 1).FullName -DestinationPath lfs/x
+          $lfs = Get-ChildItem lfs/x -Recurse -Filter 'git-lfs.exe' | Select-Object -First 1
+          Copy-Item $lfs.FullName "$dest/mingw64/bin/git-lfs.exe"
+          "MinGit: $($zip.Name)"
+
+      # Bukti, sebelum zip-nya terbit: git bawaan berjalan tanpa Git for
+      # Windows di PATH, LFS-nya terbaca, dan ia benar-benar bisa meng-clone.
+      - name: Uji git bawaan
+        shell: pwsh
+        run: |
+          $git = (Resolve-Path "build/windows/x64/runner/Release/git/cmd/git.exe").Path
+          $env:PATH = "C:\Windows\System32;C:\Windows"
+          & $git --version
+          if ($LASTEXITCODE -ne 0) { throw "git bawaan tidak berjalan" }
+          & $git lfs version
+          if ($LASTEXITCODE -ne 0) { throw "git lfs bawaan tidak berjalan" }
+          & $git clone --depth 1 https://github.com/situkangsayur/latex-doc-test.git uji-clone
+          if ($LASTEXITCODE -ne 0) { throw "git bawaan gagal meng-clone" }
+          Get-ChildItem uji-clone | Select-Object -First 5
+
       - name: Versi
         id: versi
         shell: bash
@@ -77,6 +112,9 @@ jobs:
 
           Isi folder ini harus tetap bersama: ``readpaper.exe`` tidak berjalan
           tanpa folder ``data`` dan DLL di sebelahnya.
+
+          Folder ``git`` berisi git portabel (MinGit dan git-lfs) untuk sinkronisasi.
+          Bila Git for Windows sudah terpasang, yang terpasang itulah yang dipakai.
           "@ | Out-File -FilePath "$out/PASANG.md" -Encoding utf8
           Compress-Archive -Path $out -DestinationPath "dist/readpaper-$ver-windows-x64.zip"
           Get-ChildItem dist

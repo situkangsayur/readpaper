@@ -17,6 +17,8 @@ import '../../notebook/presentation/screens/notebook_screen.dart';
 import '../../reader/presentation/screens/reader_screen.dart';
 import '../../whiteboard/domain/board.dart';
 import '../../whiteboard/presentation/whiteboard_screen.dart';
+import 'open_any_file.dart';
+import '../domain/folder_scan.dart';
 
 /// Penjelajah berkas di bawah pohon koleksi.
 ///
@@ -120,6 +122,16 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     if (dir == null) return;
     var copied = 0;
     for (final source in paths) {
+      if (Directory(source).existsSync()) {
+        // Folder disalin utuh dengan strukturnya; nama yang sudah ada diberi
+        // akhiran, seperti berkas.
+        var targetDir = Directory(p.join(dir.path, p.basename(source)));
+        for (var n = 2; targetDir.existsSync() && n < 100; n++) {
+          targetDir = Directory(p.join(dir.path, '${p.basename(source)}-$n'));
+        }
+        copied += await _copyFolder(Directory(source), targetDir);
+        continue;
+      }
       var target = File(p.join(dir.path, p.basename(source)));
       // Nama yang sudah ada tidak ditimpa: yang menyalin tidak sedang
       // meminta berkas lamanya hilang.
@@ -136,6 +148,22 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text('$copied berkas disalin ke sini')));
     }
+  }
+
+  static Future<int> _copyFolder(Directory from, Directory to) async {
+    await to.create(recursive: true);
+    var count = 0;
+    await for (final entry in from.list(followLinks: false)) {
+      final name = p.basename(entry.path);
+      if (FolderScan.skipped(name)) continue;
+      if (entry is Directory) {
+        count += await _copyFolder(entry, Directory(p.join(to.path, name)));
+      } else if (entry is File) {
+        await entry.copy(p.join(to.path, name));
+        count++;
+      }
+    }
+    return count;
   }
 
   /// Papan tulis baru: pilih warna latarnya, gambar, lalu hasilnya tersimpan
@@ -498,7 +526,10 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
       ).push(MaterialPageRoute<void>(builder: (_) => EpubReaderScreen(path: file.path)));
       return;
     }
-    if (extension != '.pdf') return;
+    if (extension != '.pdf') {
+      openAnyFile(context, file.path);
+      return;
+    }
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ReaderScreen(
@@ -743,7 +774,9 @@ class _EntryRow extends StatelessWidget {
     final isEpub = extension == '.epub';
     final isMarkdown = extension == '.md';
     final isNotebook = NoteDocumentStore.isNoteDocument(name);
-    final canOpen = isPdf || isEpub || isMarkdown || isNotebook;
+    final kind = fileKindOf(name);
+    final canOpen =
+        isPdf || isEpub || isMarkdown || isNotebook || canOpenInApp(name) || canOpenWithSystem;
     final row = SizedBox(
       height: treeRowHeight,
       child: InkWell(
@@ -759,7 +792,13 @@ class _EntryRow extends StatelessWidget {
                     ? Icons.menu_book_outlined
                     : isNotebook
                     ? Icons.auto_stories_outlined
-                    : (isMarkdown ? Icons.notes_outlined : Icons.insert_drive_file_outlined),
+                    : isMarkdown
+                    ? Icons.notes_outlined
+                    : kind == FileKind.image
+                    ? Icons.image_outlined
+                    : kind == FileKind.table
+                    ? Icons.table_chart_outlined
+                    : Icons.insert_drive_file_outlined,
                 size: 15,
                 color: canOpen ? scheme.primary : scheme.outline,
               ),

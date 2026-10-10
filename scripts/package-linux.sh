@@ -197,8 +197,8 @@ Section: science
 Priority: optional
 Architecture: amd64
 Maintainer: Hendri Karisma <situkangsayur@gmail.com>
-Depends: $computed, libegl1, libgles2
-Recommends: libgl1-mesa-dri, fonts-dejavu-core
+Depends: $computed, libegl1, libgles2, git
+Recommends: libgl1-mesa-dri, fonts-dejavu-core, git-lfs, xdg-desktop-portal-gtk, zenity
 Homepage: https://github.com/situkangsayur/readpaper
 Description: Pembaca dan penganotasi paper dari library Zotero
  ReadPaper membaca library Zotero yang disinkronkan ke git: menelusuri koleksi,
@@ -241,7 +241,8 @@ pkgdesc="Pembaca dan penganotasi paper dari library Zotero yang disinkronkan ke 
 arch=('x86_64')
 url="https://github.com/situkangsayur/readpaper"
 license=('AGPL-3.0-or-later')
-depends=('gtk3' 'glib2' 'gcc-libs')
+depends=('gtk3' 'glib2' 'gcc-libs' 'git' 'git-lfs')
+optdepends=('xdg-desktop-portal-gtk: dialog pilih berkas' 'zenity: dialog pilih berkas cadangan')
 provides=('readpaper')
 conflicts=('readpaper')
 options=('!strip')

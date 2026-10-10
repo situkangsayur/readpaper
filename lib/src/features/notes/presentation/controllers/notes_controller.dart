@@ -6,6 +6,8 @@ import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../data/notes_store.dart';
 import '../../domain/note_entities.dart';
+import 'package:path/path.dart' as p;
+import '../../../files/domain/folder_scan.dart';
 
 /// Folder catatan repositori yang sedang aktif, kalau ada.
 final notesStoreProvider = Provider<NotesStore?>((ref) {
@@ -53,6 +55,57 @@ class NotesController extends AsyncNotifier<NotesIndex> {
     await store.deleteCollection(key);
     return key;
   });
+
+  /// Mengimpor satu folder ke catatan: folder itu sendiri jadi koleksi
+  /// catatan di bawah [parentKey], subfoldernya jadi sub-koleksi, dan setiap
+  /// berkas jadi catatan. Koleksi bernama sama di tempat yang sama dipakai
+  /// ulang. Satu commit untuk semuanya.
+  Future<FolderImportResult?> importFolder({
+    required FolderNode folder,
+    String? parentKey,
+    void Function(int done, int total)? onProgress,
+  }) async {
+    var added = 0;
+    var collections = 0;
+    final failed = <String>[];
+    final total = folder.fileCount;
+    final key = await _guard('Impor folder ${folder.name} ke catatan', (store) async {
+      final index = await store.read();
+      final known = <(String?, String), String>{
+        for (final c in index.collections) (c.parentKey, c.name.toLowerCase()): c.key,
+      };
+      Future<void> walk(FolderNode node, String? parent) async {
+        final id = (parent, node.name.toLowerCase());
+        var collectionKey = known[id];
+        if (collectionKey == null) {
+          collectionKey = (await store.createCollection(name: node.name, parentKey: parent)).key;
+          known[id] = collectionKey;
+          collections++;
+        }
+        for (final file in node.files) {
+          try {
+            await store.addFile(
+              sourcePath: file,
+              title: p.basenameWithoutExtension(file),
+              collectionKey: collectionKey,
+            );
+            added++;
+          } on Object catch (e) {
+            failed.add('${p.basename(file)} ($e)');
+          }
+          onProgress?.call(added + failed.length, total);
+        }
+        for (final child in node.children) {
+          await walk(child, collectionKey);
+        }
+      }
+
+      await walk(folder, parentKey);
+      return folder.name;
+    });
+    if (key == null) return null;
+    return FolderImportResult(added: added, collections: collections, failed: failed);
+  }
 
   /// Menyalin sebuah berkas ke folder catatan.
   Future<String?> addFile({

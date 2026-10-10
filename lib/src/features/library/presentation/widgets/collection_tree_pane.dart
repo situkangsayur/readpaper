@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:isolate';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -5,6 +9,7 @@ import 'package:path/path.dart' as p;
 import '../../../../core/utils/file_pick.dart';
 import '../../../../core/utils/layout_size.dart';
 import '../../../../shared/widgets/file_drop_zone.dart';
+import '../../../files/domain/folder_scan.dart';
 import '../../../../shared/widgets/tree_drag.dart';
 import '../../../notes/domain/note_entities.dart';
 import '../../../notes/domain/note_target.dart';
@@ -58,14 +63,35 @@ class CollectionTreePane extends ConsumerWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            IconButton(
-              tooltip: 'Tambahkan PDF ke library',
+            PopupMenuButton<String>(
+              tooltip: 'Tambahkan berkas atau folder ke library',
               iconSize: 16,
-              visualDensity: VisualDensity.compact,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.note_add_outlined),
-              onPressed: () => _pickPdfsInto(context, ref, null, index.library.name),
+              onSelected: (choice) async {
+                if (choice == 'berkas') {
+                  await _pickPdfsInto(context, ref, null, index.library.name);
+                  return;
+                }
+                final path = await pickDirectoryOrTell(context, title: 'Pilih folder');
+                if (path == null || !context.mounted) return;
+                await _importFolder(
+                  context,
+                  ref,
+                  path,
+                  notes: false,
+                  key: null,
+                  name: index.library.name,
+                );
+              },
+              itemBuilder: (_) => <PopupMenuEntry<String>>[
+                const PopupMenuItem<String>(value: 'berkas', child: Text('Tambahkan berkas…')),
+                if (FileDropZone.supported)
+                  const PopupMenuItem<String>(
+                    value: 'folder',
+                    child: Text('Tambahkan folder (jadi koleksi)…'),
+                  ),
+              ],
             ),
             IconButton(
               tooltip: 'Koleksi paper baru',
@@ -448,11 +474,7 @@ class _TreeRow extends StatelessWidget {
 /// (null: library tanpa koleksi), satu per satu lewat jalur yang sama dengan
 /// menyeret berkas ke pohon.
 Future<void> _pickPdfsInto(BuildContext context, WidgetRef ref, String? key, String name) async {
-  final paths = await pickFilesOrTell(
-    context,
-    extensions: const <String>['pdf'],
-    title: 'Pilih PDF untuk $name',
-  );
+  final paths = await pickFilesOrTell(context, title: 'Pilih berkas untuk $name');
   final failed = <String>[];
   for (final path in paths) {
     if (!context.mounted) return;
@@ -476,8 +498,8 @@ Future<void> _pickPdfsInto(BuildContext context, WidgetRef ref, String? key, Str
           duration: Duration(seconds: failed.isEmpty ? 4 : 10),
           content: Text(
             failed.isEmpty
-                ? '$added PDF masuk ke $name'
-                : '$added dari ${paths.length} PDF masuk ke $name. Gagal: ${failed.join(', ')}. '
+                ? '$added berkas masuk ke $name'
+                : '$added dari ${paths.length} berkas masuk ke $name. Gagal: ${failed.join(', ')}. '
                       '${ref.read(workspaceControllerProvider).error ?? ''}',
           ),
         ),
@@ -529,22 +551,24 @@ Future<bool> _dropIntoPapers(
       return ok;
 
     case FileDrag():
-      // Akar paper hanya menerima PDF. Item Zotero adalah paper dengan
-      // lampiran PDF; berkas lain yang dipaksa masuk akan jadi item yang tidak
-      // bisa dibuka Zotero.
-      if (p.extension(drag.path).toLowerCase() != '.pdf') {
-        say(
-          'Akar paper hanya menerima PDF, karena isinya item Zotero dengan '
-          'lampiran PDF. Lepas ${p.basename(drag.path)} di akar "Catatan".',
-          panjang: true,
+      // Folder: strukturnya jadi koleksi dan sub-koleksi.
+      if (Directory(drag.path).existsSync()) {
+        return _importFolder(
+          context,
+          ref,
+          drag.path,
+          notes: false,
+          key: collectionKey,
+          name: collectionName,
         );
-        return false;
       }
+      // Berkas apa pun boleh: Zotero menyimpan lampiran jenis apa saja dan
+      // membuka yang bukan PDF dengan aplikasi bawaan sistemnya.
       say('Memasukkan ke $collectionName…');
       final created = await ref
           .read(workspaceControllerProvider.notifier)
-          .addPdfToLibrary(
-            pdfPath: drag.path,
+          .addFileToLibrary(
+            filePath: drag.path,
             title: p.basenameWithoutExtension(drag.path),
             collectionKey: collectionKey,
           );
@@ -602,6 +626,17 @@ Future<void> _dropIntoNotes(
       );
 
     case FileDrag():
+      if (Directory(drag.path).existsSync()) {
+        await _importFolder(
+          context,
+          ref,
+          drag.path,
+          notes: true,
+          key: collectionKey,
+          name: collectionName,
+        );
+        return;
+      }
       say('Memasukkan ke $collectionName…');
       final key = await ref
           .read(notesControllerProvider.notifier)
@@ -704,14 +739,21 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.note_add_outlined),
-            title: const Text('Tambahkan PDF ke sini…'),
+            title: const Text('Tambahkan berkas ke sini…'),
             subtitle: Text(
               FileDropZone.supported
-                  ? 'bisa beberapa sekaligus; atau seret dari pengelola berkas'
-                  : 'bisa beberapa sekaligus',
+                  ? 'jenis apa pun, beberapa sekaligus; atau seret dari pengelola berkas'
+                  : 'jenis apa pun, beberapa sekaligus',
             ),
             onTap: () => Navigator.of(sheet).pop('pdf'),
           ),
+          if (FileDropZone.supported)
+            ListTile(
+              leading: const Icon(Icons.drive_folder_upload_outlined),
+              title: const Text('Tambahkan folder ke sini…'),
+              subtitle: const Text('subfolder jadi sub-koleksi'),
+              onTap: () => Navigator.of(sheet).pop('folder'),
+            ),
           ListTile(
             leading: const Icon(Icons.create_new_folder_outlined),
             title: const Text('Sub-koleksi baru'),
@@ -769,6 +811,13 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
   switch (action) {
     case 'pdf':
       await _pickPdfsInto(context, ref, key, collection.name);
+    case 'folder':
+      final path = await pickDirectoryOrTell(
+        context,
+        title: 'Pilih folder untuk ${collection.name}',
+      );
+      if (path == null || !context.mounted) return;
+      await _importFolder(context, ref, path, notes: false, key: key, name: collection.name);
     case 'baru':
       await _newPaperCollection(context, ref, parentKey: key);
     case 'nama':
@@ -837,7 +886,10 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
       final choice = await showDialog<String>(
         context: context,
         builder: (dialog) => AlertDialog(
-          title: Text('Hapus koleksi "${collection.name}"?'),
+          icon: reach.items > 0 || reach.children > 0
+              ? Icon(Icons.warning_amber_rounded, color: Theme.of(dialog).colorScheme.error)
+              : null,
+          title: Text('Yakin hapus koleksi "${collection.name}"?'),
           content: Text(
             <String>[
               if (reach.items > 0)
@@ -857,8 +909,15 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
                 child: const Text('Sub-koleksi naik'),
               ),
             FilledButton(
+              // Merah bila ada isinya: yang hilang lebih dari sekadar nama.
+              style: reach.items > 0 || reach.children > 0
+                  ? FilledButton.styleFrom(
+                      backgroundColor: Theme.of(dialog).colorScheme.error,
+                      foregroundColor: Theme.of(dialog).colorScheme.onError,
+                    )
+                  : null,
               onPressed: () => Navigator.of(dialog).pop('semua'),
-              child: Text(reach.children > 0 ? 'Hapus semuanya' : 'Hapus'),
+              child: Text(reach.children > 0 ? 'Ya, hapus semuanya' : 'Ya, hapus'),
             ),
           ],
         ),
@@ -951,6 +1010,18 @@ Future<void> _noteCollectionMenu(
             onTap: () => Navigator.of(sheet).pop('nama'),
           ),
           ListTile(
+            leading: const Icon(Icons.note_add_outlined),
+            title: const Text('Tambahkan berkas ke sini…'),
+            onTap: () => Navigator.of(sheet).pop('berkas'),
+          ),
+          if (FileDropZone.supported)
+            ListTile(
+              leading: const Icon(Icons.drive_folder_upload_outlined),
+              title: const Text('Tambahkan folder ke sini…'),
+              subtitle: const Text('subfolder jadi sub-koleksi'),
+              onTap: () => Navigator.of(sheet).pop('folder'),
+            ),
+          ListTile(
             leading: const Icon(Icons.storage_outlined),
             title: const Text('Pindahkan atau salin ke repositori lain…'),
             subtitle: const Text('beserta sub-koleksi dan catatannya'),
@@ -1006,12 +1077,201 @@ Future<void> _noteCollectionMenu(
       final name = await _askName(context, title: 'Ubah nama', initial: collection.name);
       if (name == null || name.trim().isEmpty) return;
       await controller.renameCollection(key: collection.key, name: name);
+    case 'berkas':
+      final paths = await pickFilesOrTell(context, title: 'Pilih berkas untuk ${collection.name}');
+      for (final path in paths) {
+        if (!context.mounted) return;
+        await _dropIntoNotes(
+          context,
+          ref,
+          FileDrag(path: path, label: p.basename(path)),
+          collection.key,
+          collection.name,
+        );
+      }
+    case 'folder':
+      final path = await pickDirectoryOrTell(
+        context,
+        title: 'Pilih folder untuk ${collection.name}',
+      );
+      if (path == null || !context.mounted) return;
+      await _importFolder(
+        context,
+        ref,
+        path,
+        notes: true,
+        key: collection.key,
+        name: collection.name,
+      );
     case 'hapus':
+      final notes = ref.read(notesControllerProvider).value;
+      final count = notes?.countIn(collection.key) ?? 0;
+      final subs = notes == null ? 0 : _noteDescendants(notes, collection.key);
+      final sure = await _confirmDelete(
+        context,
+        title: 'Hapus koleksi catatan "${collection.name}"?',
+        lines: <String>[
+          if (count > 0)
+            'Berisi $count catatan. Catatannya tidak ikut terhapus — pindah ke '
+                '"Tanpa koleksi" bila tidak ada di koleksi lain.',
+          if (subs > 0) '$subs sub-koleksi di dalamnya ikut terhapus.',
+          if (count == 0 && subs == 0) 'Koleksinya kosong.',
+        ],
+        hasContent: count > 0 || subs > 0,
+      );
+      if (!sure) return;
       await controller.deleteCollection(collection.key);
       if (ref.read(selectionProvider).collectionKey == collection.key) {
         ref.read(selectionProvider.notifier).select(const LibrarySelection.notes());
       }
   }
+}
+
+int _noteDescendants(NotesIndex notes, String key) {
+  var count = 0;
+  for (final child in notes.childrenOf(key)) {
+    count += 1 + _noteDescendants(notes, child.key);
+  }
+  return count;
+}
+
+/// Pertanyaan "yakin?" sebelum menghapus koleksi. Bila koleksinya berisi,
+/// tombolnya merah dan isinya disebut — menghapus koleksi kosong dan koleksi
+/// berisi dua ratus berkas tidak boleh terasa sama.
+Future<bool> _confirmDelete(
+  BuildContext context, {
+  required String title,
+  required List<String> lines,
+  required bool hasContent,
+}) async {
+  final scheme = Theme.of(context).colorScheme;
+  final answer = await showDialog<bool>(
+    context: context,
+    builder: (dialog) => AlertDialog(
+      icon: hasContent ? Icon(Icons.warning_amber_rounded, color: scheme.error) : null,
+      title: Text(title),
+      content: Text(lines.join('\n\n')),
+      actions: <Widget>[
+        TextButton(onPressed: () => Navigator.of(dialog).pop(false), child: const Text('Batal')),
+        FilledButton(
+          style: hasContent
+              ? FilledButton.styleFrom(
+                  backgroundColor: scheme.error,
+                  foregroundColor: scheme.onError,
+                )
+              : null,
+          onPressed: () => Navigator.of(dialog).pop(true),
+          child: const Text('Ya, hapus'),
+        ),
+      ],
+    ),
+  );
+  return answer == true;
+}
+
+/// Mengimpor satu folder ke koleksi paper ([notes] false) atau koleksi
+/// catatan: ditanya dulu dengan jumlah dan ukurannya, lalu dikerjakan dengan
+/// kemajuan yang terlihat. True bila ada yang masuk.
+Future<bool> _importFolder(
+  BuildContext context,
+  WidgetRef ref,
+  String path, {
+  required bool notes,
+  required String? key,
+  required String name,
+}) async {
+  final folder = await Isolate.run(() => FolderScan.scan(path));
+  final bytes = await Isolate.run(() => folder.totalBytes);
+  if (!context.mounted) return false;
+  if (folder.fileCount == 0) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Folder ${folder.name} tidak berisi berkas.')));
+    return false;
+  }
+  final mb = bytes / (1024 * 1024);
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (dialog) => AlertDialog(
+      title: Text('Impor folder "${folder.name}" ke $name?'),
+      content: Text(
+        <String>[
+          '${folder.fileCount} berkas dalam ${folder.folderCount} folder '
+              '(${mb < 1 ? '${(bytes / 1024).ceil()} kB' : '${mb.toStringAsFixed(1)} MB'}).',
+          notes
+              ? 'Folder ini jadi koleksi catatan, subfoldernya jadi sub-koleksi, dan '
+                    'setiap berkas jadi catatan.'
+              : 'Folder ini jadi koleksi, subfoldernya jadi sub-koleksi, dan setiap berkas '
+                    'jadi item Zotero dengan lampirannya — terlihat juga di Zotero.',
+          'Koleksi yang namanya sudah ada di tempat yang sama dipakai, bukan digandakan.',
+          if (mb > 100)
+            'Ukurannya besar. Semua berkas ini masuk repositori git dan ikut terkirim ke '
+                'GitHub.',
+        ].join('\n\n'),
+      ),
+      actions: <Widget>[
+        TextButton(onPressed: () => Navigator.of(dialog).pop(false), child: const Text('Batal')),
+        FilledButton(onPressed: () => Navigator.of(dialog).pop(true), child: const Text('Impor')),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return false;
+
+  final progress = ValueNotifier<(int, int)>((0, folder.fileCount));
+  final navigator = Navigator.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  unawaited(
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: Text('Mengimpor ${folder.name}…'),
+          content: ValueListenableBuilder<(int, int)>(
+            valueListenable: progress,
+            builder: (_, value, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                LinearProgressIndicator(value: value.$2 == 0 ? null : value.$1 / value.$2),
+                const SizedBox(height: 8),
+                Text('${value.$1} dari ${value.$2} berkas'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  void onProgress(int done, int total) => progress.value = (done, total);
+  final result = notes
+      ? await ref
+            .read(notesControllerProvider.notifier)
+            .importFolder(folder: folder, parentKey: key, onProgress: onProgress)
+      : await ref
+            .read(workspaceControllerProvider.notifier)
+            .importFolderToLibrary(folder: folder, parentKey: key, onProgress: onProgress);
+  navigator.pop();
+  progress.dispose();
+  final error = notes ? ref.read(notesErrorProvider) : ref.read(workspaceControllerProvider).error;
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        duration: Duration(seconds: result == null || result.failed.isNotEmpty ? 10 : 5),
+        content: Text(
+          result == null
+              ? (error ?? 'Impor folder gagal')
+              : <String>[
+                  '${result.added} berkas masuk, ${result.collections} koleksi baru.',
+                  if (result.failed.isNotEmpty)
+                    'Gagal (${result.failed.length}): ${result.failed.take(3).join('; ')}'
+                        '${result.failed.length > 3 ? '…' : ''}',
+                ].join(' '),
+        ),
+      ),
+    );
+  return result != null && result.added > 0;
 }
 
 Future<String?> _askName(

@@ -15,6 +15,7 @@ import '../../../library/data/datasources/zotero_writer.dart';
 import '../../../library/domain/entities/library_index.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
 import '../../../library/domain/entities/zotero_item.dart';
+import '../../../files/domain/folder_scan.dart';
 import '../../../reader/data/page_picture.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../sync/domain/entities/git_entities.dart';
@@ -470,7 +471,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required String pdfPath,
     required String title,
     String? collectionKey,
+  }) => addFileToLibrary(filePath: pdfPath, title: title, collectionKey: collectionKey);
+
+  /// Memasukkan berkas apa pun ke library sebagai dokumen dengan satu
+  /// lampiran. Zotero membuka lampiran non-PDF dengan aplikasi bawaannya.
+  Future<CreatedItem?> addFileToLibrary({
+    required String filePath,
+    required String title,
+    String? collectionKey,
   }) async {
+    final pdfPath = filePath;
     final library = state.library;
     final profile = state.profile;
     final index = state.index;
@@ -486,11 +496,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
       final created = await ref
           .read(libraryRepositoryProvider)
-          .addPdfAsItem(
+          .addFileAsItem(
             libraryDir: library.directoryPath,
             libraryName: library.name,
             libraryId: 1,
-            pdfPath: pdfPath,
+            filePath: pdfPath,
             title: title,
             collectionKey: collectionKey,
             collectionPath: collection?.path,
@@ -503,6 +513,87 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       state = state.copyWith(error: 'Gagal menambahkan ke library: $e');
       return null;
     }
+  }
+
+  /// Mengimpor satu folder ke library: folder itu sendiri jadi koleksi di
+  /// bawah [parentKey] (null: di akar), subfoldernya jadi sub-koleksi, dan
+  /// setiap berkas — apa pun jenisnya — jadi item dengan satu lampiran.
+  ///
+  /// Koleksi yang namanya sudah ada di tempat yang sama dipakai ulang, bukan
+  /// digandakan: mengimpor folder yang sama dua kali menambah berkas ke
+  /// koleksi yang sama. Semuanya berakhir dengan **satu** commit.
+  Future<FolderImportResult?> importFolderToLibrary({
+    required FolderNode folder,
+    String? parentKey,
+    void Function(int done, int total)? onProgress,
+  }) async {
+    final library = state.library;
+    final profile = state.profile;
+    final index = state.index;
+    if (library == null || profile == null || index == null) {
+      state = state.copyWith(error: 'Tidak ada library aktif untuk menampung folder ini.');
+      return null;
+    }
+    final repo = ref.read(libraryRepositoryProvider);
+    // (induk, nama huruf kecil) → (kunci, jalur), dari koleksi yang sudah ada
+    // ditambah yang dibuat selama impor ini.
+    final known = <(String?, String), (String, String)>{
+      for (final c in index.collections.values)
+        (c.parentKey, c.name.toLowerCase()): (c.key, c.path),
+    };
+    var createdCollections = 0;
+    var added = 0;
+    final failed = <String>[];
+    final total = folder.fileCount;
+
+    Future<void> walk(FolderNode node, String? parent) async {
+      final id = (parent, node.name.toLowerCase());
+      var entry = known[id];
+      if (entry == null) {
+        final created = await repo.createCollection(
+          libraryDir: library.directoryPath,
+          name: node.name,
+          parentKey: parent,
+        );
+        entry = (created.key, created.path);
+        known[id] = entry;
+        createdCollections++;
+      }
+      for (final file in node.files) {
+        try {
+          await repo.addFileAsItem(
+            libraryDir: library.directoryPath,
+            libraryName: library.name,
+            libraryId: 1,
+            filePath: file,
+            title: p.basenameWithoutExtension(file),
+            collectionKey: entry.$1,
+            collectionPath: entry.$2,
+          );
+          added++;
+        } on Object catch (e) {
+          failed.add('${p.basename(file)} ($e)');
+        }
+        onProgress?.call(added + failed.length, total);
+      }
+      for (final child in node.children) {
+        await walk(child, entry.$1);
+      }
+    }
+
+    try {
+      await walk(folder, parentKey);
+    } on Object catch (e) {
+      state = state.copyWith(error: 'Impor folder berhenti: $e');
+    }
+    if (added > 0 || createdCollections > 0) {
+      await _commitAnnotation(
+        profile: profile,
+        message: 'Impor folder ${folder.name}: $added berkas, $createdCollections koleksi baru',
+      );
+      await reloadLibrary();
+    }
+    return FolderImportResult(added: added, collections: createdCollections, failed: failed);
   }
 
   /// Membuat koleksi paper baru di dalam library yang aktif.
@@ -1019,3 +1110,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 final workspaceControllerProvider = NotifierProvider<WorkspaceController, WorkspaceState>(
   WorkspaceController.new,
 );
+
+/// Hasil mengimpor satu folder.
+class FolderImportResult {
+  const FolderImportResult({required this.added, required this.collections, required this.failed});
+
+  final int added;
+  final int collections;
+  final List<String> failed;
+}

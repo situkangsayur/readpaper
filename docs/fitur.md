@@ -40,6 +40,16 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Ganti nama, pindahkan, dan hapus koleksi paper** lewat tombol ⋮. Kuncinya
   tetap, jadi keanggotaan paper tidak hilang. Menghapus koleksi melepas paper
   dari koleksi itu, tanpa menghapusnya, sama seperti di Zotero.
+- **Impor folder menjadi koleksi.** Seret atau pilih satu folder: folder itu
+  menjadi koleksi, subfoldernya menjadi sub-koleksi, dan semua jenis berkas
+  masuk, ke Zotero sebagai item berlampiran atau ke Catatan sebagai catatan,
+  sesuai tempat lepasnya. Koleksi bernama sama dipakai ulang, dan seluruh impor
+  menjadi satu commit.
+- **Penampil gambar dan tabel.** CSV, TSV, dan Excel (.xlsx) tampil sebagai
+  tabel berlembar. Jenis berkas lain dibuka dengan aplikasi bawaan sistem di
+  desktop.
+- **Hapus koleksi selalu dikonfirmasi**, dengan peringatan merah dan rincian
+  isi bila koleksinya tidak kosong. Berlaku untuk koleksi paper maupun catatan.
 - **Menambah PDF ke koleksi** langsung dari pohon: **⋮ → Tambahkan PDF ke
   sini…** (beberapa sekaligus), tombol di akar library, atau di desktop dengan
   **menyeret PDF dari pengelola berkas** (Nautilus, Dolphin, Explorer) ke

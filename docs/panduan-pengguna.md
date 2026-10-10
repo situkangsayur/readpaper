@@ -363,12 +363,45 @@ berkas (Files/Nautilus, Dolphin, Explorer), satu atau beberapa sekaligus:
 - ke **koleksi catatan**: jadi catatan;
 - ke **panel berkas**: disalin ke folder kerja.
 
+Folder juga bisa diseret: di pohon, folder itu menjadi koleksi beserta
+sub-koleksinya; di panel berkas, folder disalin utuh.
+
 ### Lewat menu koleksi
 
-Tombol **⋮** di koleksi paper → **Tambahkan PDF ke sini…**. Beberapa PDF bisa
-dipilih sekaligus. Ikon berkas bertanda tambah di baris akar library melakukan
-hal yang sama, tanpa koleksi. Setiap PDF menjadi item Zotero dan di-commit. Bila
-ada yang gagal, ringkasannya menyebut nama berkasnya.
+Tombol **⋮** di koleksi, baik paper maupun catatan, membuka:
+
+- **Tambahkan berkas ke sini…**: jenis apa pun, beberapa sekaligus.
+- **Tambahkan folder ke sini…** (desktop): folder itu menjadi koleksi baru di
+  dalam koleksi ini, subfoldernya menjadi sub-koleksi, dan setiap berkas masuk ke
+  koleksi folder asalnya. Sebelum mulai, ReadPaper menyebut jumlah berkas,
+  jumlah folder, dan ukurannya. Kemajuannya terlihat, dan semuanya berakhir
+  dengan satu commit.
+
+Ikon berkas bertanda tambah di baris akar library juga punya dua pilihan itu.
+Menyeret folder dari pengelola berkas ke sebuah koleksi melakukan hal yang
+sama. Koleksi yang namanya sudah ada di tempat yang sama dipakai ulang, jadi
+mengimpor folder yang sama dua kali tidak membuat koleksi kembar. Berkas
+tersembunyi (`.git`, `.DS_Store`) dan berkas sementara Office (`~$…`) dilewati.
+
+Di koleksi paper, setiap berkas menjadi item Zotero dengan lampirannya, dan
+terlihat juga di Zotero, yang membuka berkas non-PDF dengan aplikasi
+bawaannya. Di koleksi catatan, setiap berkas menjadi catatan.
+
+### Membuka berkas selain PDF
+
+PDF dan EPUB dibuka di pembacanya. **Gambar** dibuka di penampil yang bisa
+diperbesar. **CSV, TSV, dan Excel (.xlsx)** dibuka sebagai tabel, dengan tab
+untuk tiap lembar. Isinya hanya untuk dibaca: rumus menampilkan nilai terakhir
+yang disimpan Excel, dan tabel lebih dari 5000 baris dipotong. Jenis lain
+(Word, PowerPoint, zip, dan sebagainya) dibuka dengan aplikasi bawaan sistem di
+Linux dan Windows lewat tombol **Buka**.
+
+### Menghapus koleksi
+
+Menghapus koleksi, baik paper maupun catatan, selalu ditanyakan dulu. Bila
+koleksinya berisi, pertanyaannya menyebut berapa paper atau catatan dan berapa
+sub-koleksi di dalamnya, dan tombolnya merah. Paper dan catatannya sendiri tidak
+ikut terhapus; hanya dilepas dari koleksi itu.
 
 ### Koleksi baru dari pohon
 
@@ -631,7 +664,11 @@ Folder clone sudah dipakai sesuatu. Di desktop, pilih **Folder clone lokal**
 lain di profil.
 
 **"Git for Windows tidak ditemukan…"** / **"git tidak ditemukan…"** Semua
-fitur repositori di desktop memakai `git` sistem. Pasang dulu:
+fitur repositori di desktop memakai `git`. Sejak 0.25.3, zip Windows membawa git
+sendiri (MinGit dan git-lfs, di folder `git` di samping `readpaper.exe`), jadi
+pesan ini di Windows hanya muncul bila folder itu terpisah dari aplikasinya.
+Paket Linux (.deb dan Arch) memasang git sebagai dependensi. Bila tetap muncul,
+pasang git sendiri:
 
 - Windows: dari `git-scm.com`, atau di PowerShell `winget install --id Git.Git -e`.
 - CachyOS/Arch: `sudo pacman -S git git-lfs`.

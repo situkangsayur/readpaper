@@ -137,6 +137,25 @@ class LibraryRepositoryImpl implements LibraryRepository {
   );
 
   @override
+  Future<CreatedItem> addFileAsItem({
+    required String libraryDir,
+    required String libraryName,
+    required int libraryId,
+    required String filePath,
+    required String title,
+    String? collectionKey,
+    String? collectionPath,
+  }) => writer.createItemFromFile(
+    libraryDir: libraryDir,
+    libraryName: libraryName,
+    libraryId: libraryId,
+    filePath: filePath,
+    title: title,
+    collectionKey: collectionKey,
+    collectionPath: collectionPath,
+  );
+
+  @override
   Future<CreatedItem> addPdfAsItem({
     required String libraryDir,
     required String libraryName,

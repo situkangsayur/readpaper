@@ -16,6 +16,7 @@ import '../../domain/entities/zotero_annotation.dart';
 import '../../domain/entities/zotero_item.dart';
 import '../controllers/library_controllers.dart';
 import 'item_list_pane.dart' show itemTypeIcon;
+import '../../../files/presentation/open_any_file.dart';
 
 /// The right pane: metadata, attachments, notes and the annotation list of the
 /// selected item.
@@ -195,6 +196,10 @@ class _AttachmentCard extends ConsumerWidget {
     final repository = ref.watch(libraryRepositoryProvider);
     final isPointer = file != null && repository.isLfsPointer(file!);
     final canRead = file != null && !isPointer && (attachment.isPdf || attachment.isEpub);
+    // Lampiran selain PDF/EPUB: gambar dan tabel dibuka di penampilnya,
+    // sisanya — Word, PowerPoint, zip — di aplikasi bawaan sistem (desktop).
+    final canOpen =
+        file != null && !isPointer && !canRead && (canOpenInApp(file!.path) || canOpenWithSystem);
 
     // A partial clone (and the Android mirror) keeps metadata only, so a PDF
     // that is not on disk can still be fetched on demand.
@@ -230,8 +235,8 @@ class _AttachmentCard extends ConsumerWidget {
             if (file == null && expected != null) 'ada di GitHub, belum diunduh',
             if (file == null && expected == null) 'berkas belum diunduh',
             if (isPointer) 'pointer Git LFS — jalankan LFS pull',
-            if (file != null && !attachment.isPdf && !attachment.isEpub && !isPointer)
-              'format belum didukung pembaca',
+            if (file != null && !canRead && !canOpen && !isPointer)
+              'format belum bisa dibuka di perangkat ini',
           ].join(' · '),
           style: Theme.of(context).textTheme.labelSmall,
         ),
@@ -258,6 +263,15 @@ class _AttachmentCard extends ConsumerWidget {
                 ),
                 icon: const Icon(Icons.chrome_reader_mode_outlined, size: 18),
                 label: const Text('Baca'),
+              )
+            : canOpen
+            ? FilledButton.tonalIcon(
+                onPressed: () => openAnyFile(context, file!.path, title: attachment.displayName),
+                icon: Icon(
+                  canOpenInApp(file!.path) ? Icons.visibility_outlined : Icons.open_in_new,
+                  size: 18,
+                ),
+                label: const Text('Buka'),
               )
             : isPointer
             ? TextButton(

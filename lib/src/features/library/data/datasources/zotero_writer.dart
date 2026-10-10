@@ -564,11 +564,74 @@ class ZoteroWriter {
     String? collectionKey,
     String? collectionPath,
     DateTime? now,
+  }) => createItemFromFile(
+    libraryDir: libraryDir,
+    libraryName: libraryName,
+    libraryId: libraryId,
+    filePath: pdfPath,
+    title: title,
+    collectionKey: collectionKey,
+    collectionPath: collectionPath,
+    now: now,
+  );
+
+  /// Jenis isi lampiran menurut akhiran nama berkasnya, seperti yang ditulis
+  /// Zotero sendiri untuk lampiran yang diimpor.
+  static String contentTypeOf(String path) =>
+      switch (p.extension(path).toLowerCase().replaceFirst('.', '')) {
+        'pdf' => 'application/pdf',
+        'epub' => 'application/epub+zip',
+        'png' => 'image/png',
+        'jpg' || 'jpeg' => 'image/jpeg',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'bmp' => 'image/bmp',
+        'svg' => 'image/svg+xml',
+        'csv' => 'text/csv',
+        'tsv' => 'text/tab-separated-values',
+        'txt' => 'text/plain',
+        'md' => 'text/markdown',
+        'html' || 'htm' => 'text/html',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'xls' => 'application/vnd.ms-excel',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'doc' => 'application/msword',
+        'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'ppt' => 'application/vnd.ms-powerpoint',
+        'odt' => 'application/vnd.oasis.opendocument.text',
+        'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
+        'zip' => 'application/zip',
+        'json' => 'application/json',
+        'tex' => 'application/x-tex',
+        'bib' => 'application/x-bibtex',
+        _ => 'application/octet-stream',
+      };
+
+  /// Judul lampiran seperti yang dipakai Zotero: "PDF" untuk PDF, selain itu
+  /// nama berkasnya.
+  static String attachmentTitleOf(String path) =>
+      p.extension(path).toLowerCase() == '.pdf' ? 'PDF' : p.basename(path);
+
+  /// Membuat item baru dari berkas apa pun — PDF, gambar, CSV, Excel, Word —
+  /// sebagai dokumen dengan satu lampiran yang diimpor. Zotero menerima
+  /// lampiran jenis apa pun dan membukanya dengan aplikasi bawaan sistem.
+  Future<CreatedItem> createItemFromFile({
+    required String libraryDir,
+    required String libraryName,
+    required int libraryId,
+    required String filePath,
+    required String title,
+    String? collectionKey,
+    String? collectionPath,
+    DateTime? now,
   }) async {
+    final pdfPath = filePath;
     final source = File(pdfPath);
     if (!source.existsSync()) {
-      throw LibraryFailure('Berkas PDF tidak ditemukan', details: pdfPath);
+      throw LibraryFailure('Berkas tidak ditemukan', details: pdfPath);
     }
+    final contentType = contentTypeOf(pdfPath);
+    final attachmentTitle = attachmentTitleOf(pdfPath);
 
     final moment = now ?? DateTime.now();
     final itemKey = ZoteroKey.generate();
@@ -593,7 +656,7 @@ class ZoteroWriter {
       'children': <dynamic>[
         <String, dynamic>{
           'charset': '',
-          'contentType': 'application/pdf',
+          'contentType': contentType,
           'dateAdded': stamp,
           'dateModified': stamp,
           'filename': filename,
@@ -603,14 +666,14 @@ class ZoteroWriter {
           'parentItem': itemKey,
           'relations': <String, dynamic>{},
           'tags': <dynamic>[],
-          'title': 'PDF',
+          'title': attachmentTitle,
         },
       ],
       'meta': <String, dynamic>{
         'attachments': <dynamic>[
           <String, dynamic>{
             'annotationCount': 0,
-            'contentType': 'application/pdf',
+            'contentType': contentType,
             'filename': filename,
             'files': <dynamic>[
               <String, dynamic>{'path': relativeAttachment, 'size': size, 'storage': 'git'},
@@ -618,7 +681,7 @@ class ZoteroWriter {
             'key': attachmentKey,
             'linkMode': 'imported_file',
             'status': 'ok',
-            'title': 'PDF',
+            'title': attachmentTitle,
             'url': null,
           },
         ],
