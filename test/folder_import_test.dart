@@ -38,7 +38,19 @@ void main() {
     write(p.join(source.path, '.git', 'config'), 'jangan ikut');
     write(p.join(source.path, '.DS_Store'), 'x');
   });
-  tearDown(() => root.deleteSync(recursive: true));
+  // Di Windows, berkas yang baru dilepas git atau pengamat folder kadang
+  // masih terkunci sesaat; folder sementara dicoba beberapa kali, lalu
+  // dibiarkan — gagal membersihkan folder sementara bukan kegagalan fitur.
+  tearDown(() async {
+    for (var attempt = 0; attempt < 10; attempt++) {
+      try {
+        if (root.existsSync()) root.deleteSync(recursive: true);
+        return;
+      } on FileSystemException {
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+      }
+    }
+  });
 
   test('pemindai melewati berkas tersembunyi dan menghitung isinya', () {
     final node = FolderScan.scan(source.path);
@@ -65,7 +77,6 @@ void main() {
     await git(repo, <String>['commit', '-q', '-m', 'awal']);
 
     final container = ProviderContainer();
-    addTearDown(container.dispose);
     final ctl = container.read(workspaceControllerProvider.notifier);
     await ctl.bootstrap();
     await ctl.saveProfile(
@@ -124,5 +135,8 @@ void main() {
       ).listSync(recursive: true).where((e) => e.path.contains('catatan')),
       isEmpty,
     );
+    // Ditutup di sini, bukan di tearDown: pengamat folder catatan memegang
+    // folder repo, dan Windows tidak mau menghapus folder yang dipegang.
+    container.dispose();
   });
 }
