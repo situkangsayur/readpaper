@@ -230,15 +230,19 @@ void main() {
     await pumpUntil(tester, find.text('Tandai'));
     await pumpFor(tester, const Duration(seconds: 4)); // halaman dan teksnya dimuat
 
+    await shot(tester, '1-pembaca');
+
+    // 1) Tandai: tekan tombolnya, seret mouse di atas teks. Posisinya diukur
+    // SESUDAH mode menyala: bilah petunjuknya mendorong halaman ke bawah, dan
+    // di jendela yang pendek (runner Windows 1028x681) garis yang diukur
+    // sebelumnya jatuh di margin kosong di atas teks.
+    await tester.tap(find.text('Tandai'));
+    await pumpFor(tester, const Duration(milliseconds: 500));
     final viewer = tester.getRect(find.byType(PdfViewer));
     final view = tester.view;
     diag('jendela ${view.physicalSize} dpr=${view.devicePixelRatio} viewer=$viewer');
-    await shot(tester, '1-pembaca');
-    final line = Offset(viewer.center.dx, viewer.top + viewer.height * 0.25);
-
-    // 1) Tandai: tekan tombolnya, seret mouse di atas teks.
-    await tester.tap(find.text('Tandai'));
-    await tester.pump();
+    // Tengah blok teks: halaman uji penuh baris tulisan dari atas ke bawah.
+    final line = Offset(viewer.center.dx, viewer.top + viewer.height * 0.45);
     final drag = await tester.startGesture(
       Offset(viewer.left + viewer.width * 0.2, line.dy),
       kind: PointerDeviceKind.mouse,
