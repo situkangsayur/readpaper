@@ -62,4 +62,18 @@ class SettingsLocalDataSource {
   }
 
   Future<String?> tokenFor(String profileId) async => (await loadCredentials())[profileId];
+
+  static const String _accountPrefix = 'github-account:';
+
+  /// Akun GitHub yang pernah dipakai masuk, nama login → token. Disimpan di
+  /// berkas kredensial yang sama (izin 600), supaya profil berikutnya — repo
+  /// lain di akun yang sama — tidak perlu masuk ulang.
+  Future<Map<String, String>> githubAccounts() async => <String, String>{
+    for (final entry in (await loadCredentials()).entries)
+      if (entry.key.startsWith(_accountPrefix))
+        entry.key.substring(_accountPrefix.length): entry.value,
+  };
+
+  Future<void> saveGitHubAccount({required String login, required String? token}) =>
+      saveToken(profileId: '$_accountPrefix$login', token: token);
 }

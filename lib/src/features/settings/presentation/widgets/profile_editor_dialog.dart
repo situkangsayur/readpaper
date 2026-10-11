@@ -3,6 +3,8 @@ import 'dart:io';
 import '../../../../core/utils/file_pick.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'github_login_dialog.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/app_constants.dart';
@@ -135,6 +137,28 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
     });
   }
 
+  /// Mengisi profil dari login GitHub: alamat HTTPS repositorinya, nama
+  /// pengguna dan token, branch bawaan, serta nama dan surel penulis commit.
+  Future<void> _signInWithGitHub() async {
+    final result = await showGitHubLoginDialog(context);
+    if (result == null || !mounted) return;
+    setState(() {
+      _remote.text = result.repo.cloneUrl;
+      _transport = GitTransport.https;
+      _httpsUser.text = result.account.login;
+      _token.text = result.token;
+      _branch.text = result.repo.defaultBranch;
+      if (!_nameEdited) _name.text = result.repo.name;
+      if (_authorName.text.trim().isEmpty) _authorName.text = result.account.name;
+      if (_authorEmail.text.trim().isEmpty) _authorEmail.text = result.account.email;
+    });
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      SnackBar(
+        content: Text(context.l10n.githubLoginDone(result.account.login, result.repo.fullName)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Android mirrors through the GitHub API, which can only authenticate with
@@ -161,6 +185,19 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
+                // Jalan termudah: masuk lewat browser, pilih atau buat
+                // repositorinya — tanpa tahu apa itu token akses.
+                FilledButton.tonalIcon(
+                  icon: const Icon(Icons.login),
+                  label: Text(context.l10n.githubLoginButton),
+                  onPressed: _signInWithGitHub,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  context.l10n.githubLoginButtonHint,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _remote,
                   decoration: InputDecoration(

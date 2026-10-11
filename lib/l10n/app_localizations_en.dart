@@ -86,8 +86,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get filesCannotDeleteRoot =>
-      'The work folder itself cannot be deleted from here.';
+  String get filesCannotDeleteRoot => 'The work folder itself cannot be deleted from here.';
 
   @override
   String get filesDeleteFolderTitle => 'Delete this folder?';
@@ -110,8 +109,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get filesLibraryCopiesUntouched =>
-      'Copies already in the library are not touched.';
+  String get filesLibraryCopiesUntouched => 'Copies already in the library are not touched.';
 
   @override
   String filesDeleteCount(int count) {
@@ -141,8 +139,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filesNewBoardTitle => 'New whiteboard';
 
   @override
-  String get filesNewBoardBody =>
-      'Several sheets to draw on, then saved as a PDF in this folder.';
+  String get filesNewBoardBody => 'Several sheets to draw on, then saved as a PDF in this folder.';
 
   @override
   String get filesPortrait => 'Portrait';
@@ -192,8 +189,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filesFolder => 'Folder';
 
   @override
-  String get filesCopyInTooltip =>
-      'Copy files or a folder here — from anywhere on this device';
+  String get filesCopyInTooltip => 'Copy files or a folder here — from anywhere on this device';
 
   @override
   String get filesPickFolderToCopy => 'Choose a folder to copy here';
@@ -238,8 +234,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get filesNoAppForThis =>
-      'No application on this system opens this file.';
+  String get filesNoAppForThis => 'No application on this system opens this file.';
 
   @override
   String get filesOpenWithOtherApp => 'Open with another app';
@@ -275,8 +270,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get settingsDeleteProfileBody =>
-      'The profile will be removed from ReadPaper.';
+  String get settingsDeleteProfileBody => 'The profile will be removed from ReadPaper.';
 
   @override
   String get settingsDeleteCloneToo => 'Also delete the local clone folder';
@@ -316,8 +310,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSshKeyOptional => 'SSH private key (optional)';
 
   @override
-  String get settingsSshKeyHelper =>
-      'Leave empty to use ssh-agent or the default key.';
+  String get settingsSshKeyHelper => 'Leave empty to use ssh-agent or the default key.';
 
   @override
   String get settingsGithubUsername => 'GitHub username';
@@ -326,15 +319,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAccessToken => 'Personal access token';
 
   @override
-  String get settingsTokenHelper =>
-      'Stored separately in credentials.json (permission 600).';
+  String get settingsTokenHelper => 'Stored separately in credentials.json (permission 600).';
 
   @override
   String get settingsLocalCloneFolder => 'Local clone folder';
 
   @override
-  String get settingsPrivateStorage =>
-      'Data is kept in the app\'s private storage.';
+  String get settingsPrivateStorage => 'Data is kept in the app\'s private storage.';
 
   @override
   String get settingsCommitIdentity => 'Commit identity';
@@ -353,12 +344,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Fetch the library metadata first (tens of MB); PDFs follow one by one. Turn off to download every PDF after fetch and pull, so they can be read offline.';
 
   @override
-  String get settingsAutoPushTitle =>
-      'Push automatically after saving an annotation';
+  String get settingsAutoPushTitle => 'Push automatically after saving an annotation';
 
   @override
-  String get settingsAutoPushSubtitle =>
-      'Every highlight/comment is sent to GitHub right away.';
+  String get settingsAutoPushSubtitle => 'Every highlight/comment is sent to GitHub right away.';
 
   @override
   String get settingsPickSshKey => 'Choose an SSH private key';
@@ -372,8 +361,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get citationOff =>
-      'Off. The Word and OnlyOffice add-ins cannot connect.';
+  String get citationOff => 'Off. The Word and OnlyOffice add-ins cannot connect.';
 
   @override
   String get citationStarting => 'Starting…';
@@ -382,8 +370,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get citationTitle => 'Citations in Word & OnlyOffice';
 
   @override
-  String get citationSubtitle =>
-      'Local server the add-ins use to search and cite.';
+  String get citationSubtitle => 'Local server the add-ins use to search and cite.';
 
   @override
   String get citationRetry => 'Retry';
@@ -608,15 +595,108 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonShapeArrow => 'Arrow';
 
   @override
-  String get libraryAddToLibraryTooltip =>
-      'Add files or a folder to the library';
+  String get githubLoginButton => 'Sign in with GitHub';
+
+  @override
+  String get githubLoginButtonHint =>
+      'No token needed: sign in in the browser, then pick or create the library repository.';
+
+  @override
+  String get githubLoginTitle => 'Sign in with GitHub';
+
+  @override
+  String get githubLoginCancel => 'Cancel';
+
+  @override
+  String get githubLoginRetry => 'Try again';
+
+  @override
+  String get githubLoginStep1 =>
+      'Open GitHub, enter this code, then press Authorize. The code is already on your clipboard.';
+
+  @override
+  String get githubLoginCopyCode => 'Copy code';
+
+  @override
+  String get githubLoginOpen => 'Open GitHub';
+
+  @override
+  String get githubLoginWaiting => 'Waiting for approval on GitHub…';
+
+  @override
+  String githubLoginSignedIn(String login) {
+    return 'Signed in as $login';
+  }
+
+  @override
+  String get githubLoginChooseRepo => 'Choose the library repository:';
+
+  @override
+  String get githubLoginSearchRepo => 'Search repositories…';
+
+  @override
+  String get githubLoginNoRepos => 'No repositories you can write to. Create one below.';
+
+  @override
+  String get githubLoginCreateTitle => 'No repository yet?';
+
+  @override
+  String get githubLoginCreateHint =>
+      'ReadPaper creates it in your GitHub account, with a README so it can be fetched right away.';
+
+  @override
+  String get githubLoginRepoName => 'New repository name';
+
+  @override
+  String get githubLoginPrivate => 'Private (only you can see it)';
+
+  @override
+  String get githubLoginCreate => 'Create repository';
+
+  @override
+  String get githubLoginExpired => 'The code expired before it was approved. Try again.';
+
+  @override
+  String get githubLoginDenied => 'Access was denied on GitHub.';
+
+  @override
+  String githubLoginFailed(String detail) {
+    return 'Could not sign in to GitHub: $detail';
+  }
+
+  @override
+  String githubRepoNameTaken(String name) {
+    return 'Repository \"$name\" already exists in this account, or the name is invalid. Choose another name, or pick it from the list above.';
+  }
+
+  @override
+  String githubLoginDone(String login, String repo) {
+    return 'Signed in as $login — repository $repo chosen. Review, then Save.';
+  }
+
+  @override
+  String get githubLoginChooseAccount =>
+      'Use an account you already signed in with, or sign in with another one:';
+
+  @override
+  String githubLoginUseAccount(String login) {
+    return 'Use account $login';
+  }
+
+  @override
+  String get githubLoginForgetAccount => 'Forget this account on this device';
+
+  @override
+  String get githubLoginOtherAccount => 'Sign in with another account';
+
+  @override
+  String get libraryAddToLibraryTooltip => 'Add files or a folder to the library';
 
   @override
   String get libraryAddFiles => 'Add files…';
 
   @override
-  String get libraryAddFolderAsCollection =>
-      'Add a folder (becomes a collection)…';
+  String get libraryAddFolderAsCollection => 'Add a folder (becomes a collection)…';
 
   @override
   String get libraryNewPaperCollection => 'New paper collection';
@@ -673,8 +753,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryNewPaperSubcollection => 'New paper sub-collection';
 
   @override
-  String get libraryNewCollectionHint =>
-      'Written to collections.json and synced to GitHub';
+  String get libraryNewCollectionHint => 'Written to collections.json and synced to GitHub';
 
   @override
   String get libraryCreateCollectionFailed => 'Could not create the collection';
@@ -686,8 +765,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryAddFilesHere => 'Add files here…';
 
   @override
-  String get libraryAnyTypeOrDrag =>
-      'any type, several at once; or drag from your file manager';
+  String get libraryAnyTypeOrDrag => 'any type, several at once; or drag from your file manager';
 
   @override
   String get libraryAnyTypeSeveral => 'any type, several at once';
@@ -717,8 +795,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryExportBibtex => 'Export to BibTeX (.bib)';
 
   @override
-  String get libraryExportBibtexHint =>
-      'for LaTeX manuscripts; sub-collections included';
+  String get libraryExportBibtexHint => 'for LaTeX manuscripts; sub-collections included';
 
   @override
   String get libraryDeleteCollection => 'Delete collection';
@@ -733,8 +810,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryRenameCollection => 'Rename collection';
 
   @override
-  String get libraryRenameCollectionHint =>
-      'Its papers stay; its sub-collection paths follow';
+  String get libraryRenameCollectionHint => 'Its papers stay; its sub-collection paths follow';
 
   @override
   String libraryCollectionRenamed(String name) {
@@ -1006,8 +1082,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryLfsPointer => 'Git LFS pointer — run LFS pull';
 
   @override
-  String get libraryCannotOpenFormat =>
-      'this format cannot be opened on this device yet';
+  String get libraryCannotOpenFormat => 'this format cannot be opened on this device yet';
 
   @override
   String get libraryRead => 'Read';
@@ -1264,12 +1339,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String libraryFilesAddedPartly(
-    int added,
-    int total,
-    String name,
-    String failed,
-  ) {
+  String libraryFilesAddedPartly(int added, int total, String name, String failed) {
     String _temp0 = intl.Intl.pluralLogic(
       total,
       locale: localeName,
@@ -1510,8 +1580,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryErrCollectionGone => 'The collection no longer exists';
 
   @override
-  String get libraryErrTargetCollectionMissing =>
-      'The target collection does not exist';
+  String get libraryErrTargetCollectionMissing => 'The target collection does not exist';
 
   @override
   String libraryErrTargetHasCollection(String name) {
@@ -1532,12 +1601,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Refusing to delete: this file is not an item inside items/';
 
   @override
-  String get libraryErrCollectionNameEmpty =>
-      'The collection name cannot be empty';
+  String get libraryErrCollectionNameEmpty => 'The collection name cannot be empty';
 
   @override
-  String get libraryErrCollectionNameSlash =>
-      'The collection name cannot contain a slash';
+  String get libraryErrCollectionNameSlash => 'The collection name cannot contain a slash';
 
   @override
   String get libraryErrCollectionsNotListRefuse =>
@@ -1559,8 +1626,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get libraryErrCollectionKey => 'Could not create a new collection key';
 
   @override
-  String get libraryErrMoveIntoSelf =>
-      'A collection cannot be moved into itself';
+  String get libraryErrMoveIntoSelf => 'A collection cannot be moved into itself';
 
   @override
   String get libraryErrCollectionsMissing => 'collections.json does not exist';
@@ -1694,8 +1760,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notesNoRepoToSave => 'No active repository to save notes in.';
 
   @override
-  String get notesErrEmptyCollectionName =>
-      'A note collection name cannot be empty';
+  String get notesErrEmptyCollectionName => 'A note collection name cannot be empty';
 
   @override
   String get notesErrParentMissing => 'The parent collection does not exist';
@@ -1713,8 +1778,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notesErrEmptyTitle => 'A note title cannot be empty';
 
   @override
-  String get notesErrTargetCollectionMissing =>
-      'The target note collection does not exist';
+  String get notesErrTargetCollectionMissing => 'The target note collection does not exist';
 
   @override
   String get notesErrFileOutside => 'The note file is outside the notes folder';
@@ -1787,8 +1851,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get epubErrNoContainer =>
-      'Not an EPUB: META-INF/container.xml is missing.';
+  String get epubErrNoContainer => 'Not an EPUB: META-INF/container.xml is missing.';
 
   @override
   String get epubErrNoOpf => 'Not an EPUB: OPF file not found.';
@@ -1895,8 +1958,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markdownTable => 'Table';
 
   @override
-  String get markdownTableTemplate =>
-      '| Column | Value |\n| --- | --- |\n|  |  |\n';
+  String get markdownTableTemplate => '| Column | Value |\n| --- | --- |\n|  |  |\n';
 
   @override
   String get markdownMermaid => 'Mermaid diagram';
@@ -1983,8 +2045,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whiteboardLeaveTitle => 'Leave this board?';
 
   @override
-  String get whiteboardLeaveBody =>
-      'The drawing is not saved and cannot be recovered.';
+  String get whiteboardLeaveBody => 'The drawing is not saved and cannot be recovered.';
 
   @override
   String get whiteboardKeepDrawing => 'Keep drawing';
@@ -2009,12 +2070,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get whiteboardFingerOn =>
-      'Finger + stylus can draw — tap for stylus only';
+  String get whiteboardFingerOn => 'Finger + stylus can draw — tap for stylus only';
 
   @override
-  String get whiteboardStylusOnly =>
-      'Stylus only — touching with a hand draws nothing';
+  String get whiteboardStylusOnly => 'Stylus only — touching with a hand draws nothing';
 
   @override
   String get whiteboardBackToWriting => 'Back to writing';
@@ -2029,8 +2088,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whiteboardPortraitTurn => 'Portrait sheet — tap to turn landscape';
 
   @override
-  String get whiteboardLandscapeTurn =>
-      'Landscape sheet — tap to turn portrait';
+  String get whiteboardLandscapeTurn => 'Landscape sheet — tap to turn portrait';
 
   @override
   String get notesUndo => 'Undo';
@@ -2083,8 +2141,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get notebookErrUnknownContent =>
-      'The note file content is not recognised';
+  String get notebookErrUnknownContent => 'The note file content is not recognised';
 
   @override
   String notebookErrNewerFormat(int version) {
@@ -2122,8 +2179,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notebookPickImage => 'Choose an image for the note';
 
   @override
-  String get notebookImagePlaced =>
-      'Image placed — it can now be moved, resized or deleted.';
+  String get notebookImagePlaced => 'Image placed — it can now be moved, resized or deleted.';
 
   @override
   String get notebookEditText => 'Edit text';
@@ -2163,8 +2219,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get notebookSaveToCollectionFailed =>
-      'Could not save to the collection';
+  String get notebookSaveToCollectionFailed => 'Could not save to the collection';
 
   @override
   String get notebookSavedToCollection => 'Added to the note collection';
@@ -2179,13 +2234,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notebookDiscard => 'Discard';
 
   @override
-  String notebookStatus(
-    int page,
-    int count,
-    String paper,
-    String orientation,
-    String tool,
-  ) {
+  String notebookStatus(int page, int count, String paper, String orientation, String tool) {
     return 'Sheet $page of $count · $paper $orientation · tool: $tool';
   }
 
@@ -2228,8 +2277,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get notebookTapFirstThenSecond =>
-      'Tap the first item, then the second.';
+  String get notebookTapFirstThenSecond => 'Tap the first item, then the second.';
 
   @override
   String notebookPickedCount(int count) {
@@ -2374,8 +2422,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerCopyNotAllowed => 'This document does not allow copying';
 
   @override
-  String get readerNothingSelected =>
-      'No text selected — long-press right on a word';
+  String get readerNothingSelected => 'No text selected — long-press right on a word';
 
   @override
   String get readerEraserOn => 'Eraser on — swipe over the ink';
@@ -2411,8 +2458,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerNothingToRedo => 'Nothing to redo';
 
   @override
-  String get readerTapToPlaceSignature =>
-      'Tap the page where the signature goes';
+  String get readerTapToPlaceSignature => 'Tap the page where the signature goes';
 
   @override
   String get readerCannotOverwriteAttachment =>
@@ -2441,8 +2487,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerNoCollection => 'No collection';
 
   @override
-  String get readerNoCollectionHint =>
-      'into the library, not into any collection';
+  String get readerNoCollectionHint => 'into the library, not into any collection';
 
   @override
   String get readerNewCollectionEllipsis => 'New collection…';
@@ -2475,8 +2520,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerCollectionName => 'Collection name';
 
   @override
-  String get readerCollectionNameHelper =>
-      'Written to collections.json, synced to GitHub';
+  String get readerCollectionNameHelper => 'Written to collections.json, synced to GitHub';
 
   @override
   String get readerCreate => 'Create';
@@ -2485,8 +2529,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerReadingPageText => 'Reading page text…';
 
   @override
-  String get readerPrintWithoutLatest =>
-      'Print without the latest annotations?';
+  String get readerPrintWithoutLatest => 'Print without the latest annotations?';
 
   @override
   String get readerPrintAsIs => 'Print as is';
@@ -2530,8 +2573,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerMark => 'Mark';
 
   @override
-  String get readerTapToPlaceNote =>
-      'Tap the page to place a note (tap again to cancel)';
+  String get readerTapToPlaceNote => 'Tap the page to place a note (tap again to cancel)';
 
   @override
   String get readerPlaceNote => 'Place a note on the page';
@@ -2543,8 +2585,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerDrawOnPage => 'Write or draw on the page';
 
   @override
-  String get readerTapToPlaceText =>
-      'Tap the page to place text (tap again to cancel)';
+  String get readerTapToPlaceText => 'Tap the page to place text (tap again to cancel)';
 
   @override
   String get readerFillText => 'Type text on the page — for filling in forms';
@@ -2556,12 +2597,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerKeepScreenOn => 'Keep the screen on while reading';
 
   @override
-  String get readerKeepScreenOnEnabled =>
-      'The screen will stay on while reading';
+  String get readerKeepScreenOnEnabled => 'The screen will stay on while reading';
 
   @override
-  String get readerKeepScreenOnDisabled =>
-      'The screen will turn off by itself again';
+  String get readerKeepScreenOnDisabled => 'The screen will turn off by itself again';
 
   @override
   String get readerPresent => 'Present — one page, full screen';
@@ -2582,8 +2621,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerAddToCollectionMenu => 'Add to collection…';
 
   @override
-  String get readerAddToCollectionMenuHint =>
-      'goes into the library and is synced';
+  String get readerAddToCollectionMenuHint => 'goes into the library and is synced';
 
   @override
   String get readerPrintMenu => 'Print…';
@@ -2601,16 +2639,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerToNotebook => 'Make a notebook';
 
   @override
-  String get readerToNotebookHint =>
-      'its pages become backgrounds you can edit';
+  String get readerToNotebookHint => 'its pages become backgrounds you can edit';
 
   @override
-  String get readerBlankPagesMenuHint =>
-      'whiteboard at the end of the document';
+  String get readerBlankPagesMenuHint => 'whiteboard at the end of the document';
 
   @override
-  String get readerSaveMenuHintNew =>
-      'choose a name and place; the original stays safe';
+  String get readerSaveMenuHintNew => 'choose a name and place; the original stays safe';
 
   @override
   String get readerSaveAsMenu => 'Save as…';
@@ -2631,12 +2666,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerShareHint => 'chat, email or another app';
 
   @override
-  String get readerStylusOnlyTooltip =>
-      'Stylus only — touches from your hand do not draw';
+  String get readerStylusOnlyTooltip => 'Stylus only — touches from your hand do not draw';
 
   @override
-  String get readerFingerAndStylusTooltip =>
-      'Finger + stylus can draw — tap for stylus only';
+  String get readerFingerAndStylusTooltip => 'Finger + stylus can draw — tap for stylus only';
 
   @override
   String get readerAddBlankSheet => 'Add a blank sheet';
@@ -2645,8 +2678,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerReadMode => 'Reading mode — hide all bars';
 
   @override
-  String get readerSaveAnnotatedCopyFormats =>
-      'Save annotated copy (PNG, JPG, PDF)';
+  String get readerSaveAnnotatedCopyFormats => 'Save annotated copy (PNG, JPG, PDF)';
 
   @override
   String get readerZoomOut => 'Zoom out';
@@ -2679,8 +2711,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerNextPage => 'Next page';
 
   @override
-  String get readerFingerAndStylusShort =>
-      'Finger + stylus — tap for stylus only';
+  String get readerFingerAndStylusShort => 'Finger + stylus — tap for stylus only';
 
   @override
   String get readerFitPage => 'Fit one page to the screen';
@@ -2707,8 +2738,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerClipboardFallback => 'ReadPaper annotation';
 
   @override
-  String get readerClipboardEmpty =>
-      'The clipboard holds no image or annotation';
+  String get readerClipboardEmpty => 'The clipboard holds no image or annotation';
 
   @override
   String get readerPasteImageUnsupported =>
@@ -2725,8 +2755,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerPreparingImage => 'Preparing image…';
 
   @override
-  String get readerNotAnImage =>
-      'The clipboard or file is not a readable image';
+  String get readerNotAnImage => 'The clipboard or file is not a readable image';
 
   @override
   String get readerUndoPasteImage => 'pasting an image';
@@ -2738,22 +2767,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerPasteImage => 'Paste image from the clipboard';
 
   @override
-  String get readerPasteImageHint =>
-      'e.g. \"Copy image\" in a browser — Ctrl+V';
+  String get readerPasteImageHint => 'e.g. \"Copy image\" in a browser — Ctrl+V';
 
   @override
   String get readerChooseImageFile => 'Choose an image file…';
 
   @override
-  String get readerAnnotationCopied =>
-      'Annotation copied — go to the target page, then Paste';
+  String get readerAnnotationCopied => 'Annotation copied — go to the target page, then Paste';
 
   @override
   String get readerUndoCut => 'cutting an annotation';
 
   @override
-  String get readerAnnotationCut =>
-      'Annotation cut — go to the target page, then Paste';
+  String get readerAnnotationCut => 'Annotation cut — go to the target page, then Paste';
 
   @override
   String get readerUndoPaste => 'pasting an annotation';
@@ -2948,8 +2974,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readerClearSelection => 'Clear selection';
 
   @override
-  String get readerSignatureHint =>
-      'Write here, then tap the page to place it.';
+  String get readerSignatureHint => 'Write here, then tap the page to place it.';
 
   @override
   String get readerClear => 'Clear';
@@ -3251,8 +3276,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Eraser: swipe over the wrong ink — every stroke it touches is removed whole.';
 
   @override
-  String get readerPenBanner =>
-      'Draw freely on the page with a finger or stylus.';
+  String get readerPenBanner => 'Draw freely on the page with a finger or stylus.';
 
   @override
   String readerPenPending(int count, int page) {
@@ -3608,8 +3632,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workspaceRepository => 'Repository';
 
   @override
-  String get syncLfsMissing =>
-      'git-lfs is not installed; large attachments stay as pointers';
+  String get syncLfsMissing => 'git-lfs is not installed; large attachments stay as pointers';
 
   @override
   String get syncLfsPullAll => 'Download all LFS files';
@@ -3697,8 +3720,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Removed from this repository once the copy is complete at the destination.';
 
   @override
-  String get workspaceTransferCopyNote =>
-      'This one stays; the destination gets a copy.';
+  String get workspaceTransferCopyNote => 'This one stays; the destination gets a copy.';
 
   @override
   String get workspaceTransferNotesRoot => 'Notes root';
@@ -3862,8 +3884,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrAnnotationDeleteNoLibrary =>
-      'Annotation not deleted: no library is open.';
+  String get workspaceErrAnnotationDeleteNoLibrary => 'Annotation not deleted: no library is open.';
 
   @override
   String workspaceErrAnnotationDelete(String error) {
@@ -3871,8 +3892,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrPictureNoRepo =>
-      'Image not saved: no repository is open.';
+  String get workspaceErrPictureNoRepo => 'Image not saved: no repository is open.';
 
   @override
   String workspaceErrPictureSave(String error) {
@@ -3885,8 +3905,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrNoLibraryForFile =>
-      'No library is open to hold this file.';
+  String get workspaceErrNoLibraryForFile => 'No library is open to hold this file.';
 
   @override
   String workspaceErrAddToLibrary(String error) {
@@ -3894,8 +3913,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrNoLibraryForFolder =>
-      'No library is open to hold this folder.';
+  String get workspaceErrNoLibraryForFolder => 'No library is open to hold this folder.';
 
   @override
   String workspaceErrImportStopped(String error) {
@@ -3937,8 +3955,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrTargetCollectionGone =>
-      'The destination collection no longer exists.';
+  String get workspaceErrTargetCollectionGone => 'The destination collection no longer exists.';
 
   @override
   String workspaceErrMove(String error) {
@@ -4025,8 +4042,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get syncRebasedOnGitHub =>
-      'Local changes were applied on top of the GitHub version';
+  String get syncRebasedOnGitHub => 'Local changes were applied on top of the GitHub version';
 
   @override
   String syncAutoMerged(String files) {
@@ -4066,8 +4082,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'SSH refused: GitHub did not accept the key. Check the key path in the profile.';
 
   @override
-  String get syncErrHttpsAuth =>
-      'HTTPS authentication failed: the token is empty or invalid.';
+  String get syncErrHttpsAuth => 'HTTPS authentication failed: the token is empty or invalid.';
 
   @override
   String get syncErrRepoNotFound => 'Repository not found, or no access to it.';
@@ -4164,8 +4179,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get syncErrNotGitHubUrl =>
-      'The repository URL is not recognised as a GitHub repository.';
+  String get syncErrNotGitHubUrl => 'The repository URL is not recognised as a GitHub repository.';
 
   @override
   String get syncErrAndroidNeedsToken =>
@@ -4220,8 +4234,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get syncLfsUnsupportedAndroid =>
-      'Git LFS files are not supported by Android sync yet.';
+  String get syncLfsUnsupportedAndroid => 'Git LFS files are not supported by Android sync yet.';
 
   @override
   String syncAttachmentsSkippedOnly(int count) {
@@ -4304,8 +4317,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get syncErrNotMirrored =>
-      'The repository has not been mirrored on this device.';
+  String get syncErrNotMirrored => 'The repository has not been mirrored on this device.';
 
   @override
   String syncRejectedMore(int count) {
@@ -4327,13 +4339,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String syncRejectedSummary(
-    String head,
-    int count,
-    String names,
-    String more,
-    String reason,
-  ) {
+  String syncRejectedSummary(String head, int count, String names, String more, String reason) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
@@ -4366,8 +4372,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Git for Windows was not found. Install it from git-scm.com, or in PowerShell: winget install --id Git.Git -e — then press Try again.';
 
   @override
-  String get syncInstallGitMac =>
-      'git was not found. Run in Terminal: xcode-select --install.';
+  String get syncInstallGitMac => 'git was not found. Run in Terminal: xcode-select --install.';
 
   @override
   String get syncInstallGitLinux =>

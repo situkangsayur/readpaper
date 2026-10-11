@@ -1,0 +1,67 @@
+{
+  "githubLoginButton": "Masuk dengan GitHub",
+  "githubLoginButtonHint": "Tanpa membuat token: masuk lewat browser, lalu pilih atau buat repositori library.",
+  "githubLoginTitle": "Masuk dengan GitHub",
+  "githubLoginCancel": "Batal",
+  "githubLoginRetry": "Coba lagi",
+  "githubLoginStep1": "Buka GitHub, masukkan kode ini, lalu tekan Authorize. Kodenya sudah disalin ke papan klip.",
+  "githubLoginCopyCode": "Salin kode",
+  "githubLoginOpen": "Buka GitHub",
+  "githubLoginWaiting": "Menunggu persetujuan di GitHub…",
+  "githubLoginSignedIn": "Masuk sebagai {login}",
+  "githubLoginChooseRepo": "Pilih repositori library:",
+  "githubLoginSearchRepo": "Cari repositori…",
+  "githubLoginNoRepos": "Tidak ada repositori yang bisa ditulisi. Buat yang baru di bawah.",
+  "githubLoginCreateTitle": "Belum punya repositorinya?",
+  "githubLoginCreateHint": "ReadPaper membuatkannya di akun GitHub Anda, lengkap dengan README supaya langsung bisa diambil.",
+  "githubLoginRepoName": "Nama repositori baru",
+  "githubLoginPrivate": "Privat (hanya Anda yang bisa melihat)",
+  "githubLoginCreate": "Buat repositori",
+  "githubLoginExpired": "Kodenya kedaluwarsa sebelum disetujui. Coba lagi.",
+  "githubLoginDenied": "Akses ditolak di GitHub.",
+  "githubLoginFailed": "Gagal masuk ke GitHub: {detail}",
+  "githubRepoNameTaken": "Repositori \"{name}\" sudah ada di akun ini, atau namanya tidak valid. Pilih nama lain, atau pilih repositorinya dari daftar di atas.",
+  "githubLoginDone": "Masuk sebagai {login} — repositori {repo} dipilih. Periksa lalu Simpan.",
+  "@githubLoginSignedIn": {
+    "placeholders": {
+      "login": {
+        "type": "String"
+      }
+    }
+  },
+  "@githubLoginFailed": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "@githubRepoNameTaken": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@githubLoginDone": {
+    "placeholders": {
+      "login": {
+        "type": "String"
+      },
+      "repo": {
+        "type": "String"
+      }
+    }
+  },
+  "githubLoginChooseAccount": "Pakai akun yang sudah masuk, atau masuk dengan akun lain:",
+  "githubLoginUseAccount": "Pakai akun {login}",
+  "githubLoginForgetAccount": "Lupakan akun ini di perangkat ini",
+  "githubLoginOtherAccount": "Masuk dengan akun lain",
+  "@githubLoginUseAccount": {
+    "placeholders": {
+      "login": {
+        "type": "String"
+      }
+    }
+  }
+}

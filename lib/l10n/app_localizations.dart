@@ -62,8 +62,7 @@ import 'app_localizations_id.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale)
-    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -71,8 +70,7 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate =
-      _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -93,10 +91,7 @@ abstract class AppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[
-    Locale('en'),
-    Locale('id'),
-  ];
+  static const List<Locale> supportedLocales = <Locale>[Locale('en'), Locale('id')];
 
   /// No description provided for @appTitle.
   ///
@@ -1076,6 +1071,168 @@ abstract class AppLocalizations {
   /// **'Panah'**
   String get commonShapeArrow;
 
+  /// No description provided for @githubLoginButton.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk dengan GitHub'**
+  String get githubLoginButton;
+
+  /// No description provided for @githubLoginButtonHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Tanpa membuat token: masuk lewat browser, lalu pilih atau buat repositori library.'**
+  String get githubLoginButtonHint;
+
+  /// No description provided for @githubLoginTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk dengan GitHub'**
+  String get githubLoginTitle;
+
+  /// No description provided for @githubLoginCancel.
+  ///
+  /// In id, this message translates to:
+  /// **'Batal'**
+  String get githubLoginCancel;
+
+  /// No description provided for @githubLoginRetry.
+  ///
+  /// In id, this message translates to:
+  /// **'Coba lagi'**
+  String get githubLoginRetry;
+
+  /// No description provided for @githubLoginStep1.
+  ///
+  /// In id, this message translates to:
+  /// **'Buka GitHub, masukkan kode ini, lalu tekan Authorize. Kodenya sudah disalin ke papan klip.'**
+  String get githubLoginStep1;
+
+  /// No description provided for @githubLoginCopyCode.
+  ///
+  /// In id, this message translates to:
+  /// **'Salin kode'**
+  String get githubLoginCopyCode;
+
+  /// No description provided for @githubLoginOpen.
+  ///
+  /// In id, this message translates to:
+  /// **'Buka GitHub'**
+  String get githubLoginOpen;
+
+  /// No description provided for @githubLoginWaiting.
+  ///
+  /// In id, this message translates to:
+  /// **'Menunggu persetujuan di GitHub…'**
+  String get githubLoginWaiting;
+
+  /// No description provided for @githubLoginSignedIn.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk sebagai {login}'**
+  String githubLoginSignedIn(String login);
+
+  /// No description provided for @githubLoginChooseRepo.
+  ///
+  /// In id, this message translates to:
+  /// **'Pilih repositori library:'**
+  String get githubLoginChooseRepo;
+
+  /// No description provided for @githubLoginSearchRepo.
+  ///
+  /// In id, this message translates to:
+  /// **'Cari repositori…'**
+  String get githubLoginSearchRepo;
+
+  /// No description provided for @githubLoginNoRepos.
+  ///
+  /// In id, this message translates to:
+  /// **'Tidak ada repositori yang bisa ditulisi. Buat yang baru di bawah.'**
+  String get githubLoginNoRepos;
+
+  /// No description provided for @githubLoginCreateTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum punya repositorinya?'**
+  String get githubLoginCreateTitle;
+
+  /// No description provided for @githubLoginCreateHint.
+  ///
+  /// In id, this message translates to:
+  /// **'ReadPaper membuatkannya di akun GitHub Anda, lengkap dengan README supaya langsung bisa diambil.'**
+  String get githubLoginCreateHint;
+
+  /// No description provided for @githubLoginRepoName.
+  ///
+  /// In id, this message translates to:
+  /// **'Nama repositori baru'**
+  String get githubLoginRepoName;
+
+  /// No description provided for @githubLoginPrivate.
+  ///
+  /// In id, this message translates to:
+  /// **'Privat (hanya Anda yang bisa melihat)'**
+  String get githubLoginPrivate;
+
+  /// No description provided for @githubLoginCreate.
+  ///
+  /// In id, this message translates to:
+  /// **'Buat repositori'**
+  String get githubLoginCreate;
+
+  /// No description provided for @githubLoginExpired.
+  ///
+  /// In id, this message translates to:
+  /// **'Kodenya kedaluwarsa sebelum disetujui. Coba lagi.'**
+  String get githubLoginExpired;
+
+  /// No description provided for @githubLoginDenied.
+  ///
+  /// In id, this message translates to:
+  /// **'Akses ditolak di GitHub.'**
+  String get githubLoginDenied;
+
+  /// No description provided for @githubLoginFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Gagal masuk ke GitHub: {detail}'**
+  String githubLoginFailed(String detail);
+
+  /// No description provided for @githubRepoNameTaken.
+  ///
+  /// In id, this message translates to:
+  /// **'Repositori \"{name}\" sudah ada di akun ini, atau namanya tidak valid. Pilih nama lain, atau pilih repositorinya dari daftar di atas.'**
+  String githubRepoNameTaken(String name);
+
+  /// No description provided for @githubLoginDone.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk sebagai {login} — repositori {repo} dipilih. Periksa lalu Simpan.'**
+  String githubLoginDone(String login, String repo);
+
+  /// No description provided for @githubLoginChooseAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Pakai akun yang sudah masuk, atau masuk dengan akun lain:'**
+  String get githubLoginChooseAccount;
+
+  /// No description provided for @githubLoginUseAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Pakai akun {login}'**
+  String githubLoginUseAccount(String login);
+
+  /// No description provided for @githubLoginForgetAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Lupakan akun ini di perangkat ini'**
+  String get githubLoginForgetAccount;
+
+  /// No description provided for @githubLoginOtherAccount.
+  ///
+  /// In id, this message translates to:
+  /// **'Masuk dengan akun lain'**
+  String get githubLoginOtherAccount;
+
   /// No description provided for @libraryAddToLibraryTooltip.
   ///
   /// In id, this message translates to:
@@ -2052,12 +2209,7 @@ abstract class AppLocalizations {
   ///
   /// In id, this message translates to:
   /// **'{added} dari {total} berkas masuk ke {name}. Gagal: {failed}. '**
-  String libraryFilesAddedPartly(
-    int added,
-    int total,
-    String name,
-    String failed,
-  );
+  String libraryFilesAddedPartly(int added, int total, String name, String failed);
 
   /// No description provided for @libraryMovingInto.
   ///
@@ -3551,13 +3703,7 @@ abstract class AppLocalizations {
   ///
   /// In id, this message translates to:
   /// **'Lembar {page} dari {count} · {paper} {orientation} · alat: {tool}'**
-  String notebookStatus(
-    int page,
-    int count,
-    String paper,
-    String orientation,
-    String tool,
-  );
+  String notebookStatus(int page, int count, String paper, String orientation, String tool);
 
   /// No description provided for @notebookUnsavedSuffix.
   ///
@@ -6851,13 +6997,7 @@ abstract class AppLocalizations {
   ///
   /// In id, this message translates to:
   /// **'{head}; {count} berkas ditolak GitHub dan tetap menunggu: {names}{more}. {reason}'**
-  String syncRejectedSummary(
-    String head,
-    int count,
-    String names,
-    String more,
-    String reason,
-  );
+  String syncRejectedSummary(String head, int count, String names, String more, String reason);
 
   /// No description provided for @syncResumingMetadata.
   ///
@@ -6908,8 +7048,7 @@ abstract class AppLocalizations {
   String get syncInstallGitLinux;
 }
 
-class _AppLocalizationsDelegate
-    extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -6918,8 +7057,7 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'id'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['en', 'id'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
