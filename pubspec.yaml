@@ -9,6 +9,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Antarmuka dua bahasa (Indonesia, English): gen-l10n dari lib/l10n/*.arb
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
 
   # State
@@ -42,7 +45,7 @@ dependencies:
   # Utils
   collection: ^1.19.1
   meta: ^1.16.0
-  intl: ^0.20.3
+  intl: ^0.20.2
   uuid: ^4.5.1
   share_plus: ^13.3.0
   wakelock_plus: ^1.8.0
@@ -80,6 +83,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   # Gaya dan locale CSL, dikelola oleh scripts/csl-style.py. Ikut ke dalam
   # aplikasi supaya sitasi bisa dirender tanpa jaringan — yang sedang menulis

@@ -1,0 +1,8 @@
+# Teks antarmuka dua bahasa. Templatnya Indonesia (bahasa asli aplikasi);
+# English mengikuti kunci yang sama. Jalankan `flutter gen-l10n` (atau
+# `flutter pub get`) setelah mengubah berkas ARB.
+arb-dir: lib/l10n
+template-arb-file: app_id.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

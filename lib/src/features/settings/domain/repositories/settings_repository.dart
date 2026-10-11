@@ -16,6 +16,7 @@ abstract class SettingsRepository {
     bool? keepScreenOn,
     bool? stylusOnly,
     bool? citationServer,
+    String? language,
   });
 
   /// Records a paper as opened, or moves it back to the front of the history.

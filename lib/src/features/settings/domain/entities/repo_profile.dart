@@ -162,6 +162,7 @@ class AppSettings {
     this.keepScreenOn = false,
     this.stylusOnly = false,
     this.citationServer = true,
+    this.language = 'id',
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -179,6 +180,7 @@ class AppSettings {
     keepScreenOn: json['keepScreenOn'] as bool? ?? false,
     stylusOnly: json['stylusOnly'] as bool? ?? false,
     citationServer: json['citationServer'] as bool? ?? true,
+    language: json['language'] as String? ?? 'id',
   );
 
   final List<RepoProfile> profiles;
@@ -211,6 +213,11 @@ class AppSettings {
   /// iOS nilainya diabaikan.
   final bool citationServer;
 
+  /// Bahasa antarmuka: `id`, `en`, atau `system` (ikut bahasa sistem, dengan
+  /// Indonesia bila bahasa sistemnya bukan salah satu dari keduanya).
+  /// Bawaannya Indonesia, supaya tidak ada yang berubah bagi pengguna lama.
+  final String language;
+
   RepoProfile? get activeProfile {
     if (profiles.isEmpty) return null;
     for (final profile in profiles) {
@@ -228,6 +235,7 @@ class AppSettings {
     'keepScreenOn': keepScreenOn,
     'stylusOnly': stylusOnly,
     'citationServer': citationServer,
+    'language': language,
   };
 
   AppSettings copyWith({
@@ -240,6 +248,7 @@ class AppSettings {
     bool? stylusOnly,
     bool? citationServer,
     bool clearActive = false,
+    String? language,
   }) => AppSettings(
     profiles: profiles ?? this.profiles,
     activeProfileId: clearActive ? null : (activeProfileId ?? this.activeProfileId),
@@ -249,6 +258,7 @@ class AppSettings {
     keepScreenOn: keepScreenOn ?? this.keepScreenOn,
     stylusOnly: stylusOnly ?? this.stylusOnly,
     citationServer: citationServer ?? this.citationServer,
+    language: language ?? this.language,
   );
 
   /// Puts [entry] at the front, replacing any earlier visit to the same file.

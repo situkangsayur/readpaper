@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/l10n.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../citation/presentation/controllers/citation_server_controller.dart';
@@ -23,15 +25,28 @@ class ProfilesScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Repositori'),
         actions: <Widget>[
+          // Bahasa antarmuka — kedua nama bahasa ditulis dalam bahasanya
+          // sendiri, supaya bisa ditemukan oleh yang tidak membaca yang lain.
           PopupMenuButton<String>(
-            tooltip: 'Tema',
+            tooltip: '${context.l10n.languageMenu} / Language',
+            icon: const Icon(Icons.translate),
+            initialValue: state.settings.language,
+            onSelected: controller.setLanguage,
+            itemBuilder: (_) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(value: 'system', child: Text(context.l10n.languageSystem)),
+              PopupMenuItem<String>(value: 'id', child: Text(context.l10n.languageIndonesian)),
+              PopupMenuItem<String>(value: 'en', child: Text(context.l10n.languageEnglish)),
+            ],
+          ),
+          PopupMenuButton<String>(
+            tooltip: context.l10n.themeMenu,
             icon: const Icon(Icons.brightness_6_outlined),
             initialValue: state.settings.themeMode,
             onSelected: controller.setThemeMode,
-            itemBuilder: (_) => const <PopupMenuEntry<String>>[
-              PopupMenuItem<String>(value: 'system', child: Text('Ikut sistem')),
-              PopupMenuItem<String>(value: 'light', child: Text('Terang')),
-              PopupMenuItem<String>(value: 'dark', child: Text('Gelap')),
+            itemBuilder: (_) => <PopupMenuEntry<String>>[
+              PopupMenuItem<String>(value: 'system', child: Text(context.l10n.themeSystem)),
+              PopupMenuItem<String>(value: 'light', child: Text(context.l10n.themeLight)),
+              PopupMenuItem<String>(value: 'dark', child: Text(context.l10n.themeDark)),
             ],
           ),
         ],

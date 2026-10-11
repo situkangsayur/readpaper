@@ -67,6 +67,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     bool? keepScreenOn,
     bool? stylusOnly,
     bool? citationServer,
+    String? language,
   }) async {
     final settings = await _local.load();
     final updated = settings.copyWith(
@@ -75,6 +76,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       keepScreenOn: keepScreenOn,
       stylusOnly: stylusOnly,
       citationServer: citationServer,
+      language: language,
     );
     await _local.save(updated);
     return updated;

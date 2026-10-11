@@ -1110,6 +1110,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     state = state.copyWith(settings: settings);
   }
 
+  Future<void> setLanguage(String language) async {
+    final settings = await ref
+        .read(settingsRepositoryProvider)
+        .updatePreferences(language: language);
+    state = state.copyWith(settings: settings);
+  }
+
   void clearMessages() => state = state.copyWith(clearError: true, clearMessage: true);
 
   // ------------------------------------------------------------------ internals

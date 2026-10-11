@@ -1,0 +1,12 @@
+{
+  "@@locale": "id",
+  "appTitle": "ReadPaper",
+  "languageMenu": "Bahasa",
+  "languageSystem": "Ikuti sistem",
+  "languageIndonesian": "Bahasa Indonesia",
+  "languageEnglish": "English",
+  "themeMenu": "Tema",
+  "themeSystem": "Ikut sistem",
+  "themeLight": "Terang",
+  "themeDark": "Gelap"
+}
