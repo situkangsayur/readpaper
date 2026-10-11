@@ -243,6 +243,27 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Menyimpan dari dalam mode menyajikan**, karena coretan yang dibuat saat
   menjelaskan sering yang paling berharga. Goresan yang belum selesai ikut
   disimpan lebih dulu.
+- **Layar audiens di monitor kedua / proyektor** (Windows, Linux) atau layar
+  eksternal tablet Android (HDMI, USB-C, cast): audiens hanya melihat slide
+  sepenuh layar. Semua yang terjadi di slide — pindah halaman, coretan
+  (termasuk goresan yang sedang ditarik), teks, gambar, urungkan/ulangi,
+  warna halaman, halaman kosong baru — langsung tampil di sana. Dengan satu
+  monitor, layar audiens berupa jendela biasa yang bisa diseret ke proyektor
+  (F11 untuk layar penuh).
+- **Layar presenter**: slide sekarang (tempat semua alat bekerja), slide
+  berikutnya, catatan presenter per slide yang hanya terlihat di sisi
+  presenter, waktu berjalan, **Layar hitam**, **Slide penuh** (sembunyikan
+  panel), dan tutup layar audiens. Catatan presenter ikut tersinkron:
+  `presenter/<kunci lampiran>.json` di repositori untuk paper library,
+  `presenter.json` di folder catatan untuk PDF Catatan.
+- **Clicker presenter** (Bluetooth/USB) dan papan ketik: maju dengan panah
+  kanan/bawah, Page Down, Spasi, Enter, N; mundur dengan panah kiri/atas,
+  Page Up, Backspace, P; layar hitam dengan B atau titik; keluar dengan Esc.
+  Tombol yang ditekan saat jendela audiens yang fokus juga diteruskan ke
+  presenter.
+- **Penunjuk (pointer laser)**: mouse, jari, atau stylus menjadi titik merah
+  dengan buntut yang memudar, tampil juga di layar audiens. Lama buntut bisa
+  diatur (tanpa buntut sampai 2 detik) dan diingat.
 
 ## Catatan, papan tulis, buku catatan, dan Markdown
 

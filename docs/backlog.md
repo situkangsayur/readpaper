@@ -48,7 +48,37 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
    menulis anotasinya juga ke dalam PDF sebagai anotasi PDF sungguhan
    (bukan dileburkan), supaya terbaca Zotero dan pembaca PDF lain.
 
-### Setelah itu
+### Berikutnya — mode presenter (permintaan 2026-10-12)
+
+8. [x] **Mode presenter dengan layar audiens terpisah** (monitor kedua /
+   jendela lain):
+   - Layar audiens: hanya slide penuh, coretan presenter tersinkron
+     seketika.
+   - Layar presenter: slide sekarang + berikutnya, catatan presenter per
+     slide (hanya terlihat di presenter), navigasi.
+   - Presenter bisa membuka slide sekarang penuh lalu mencoret/menulis
+     dengan alat yang sudah ada: pena (stylus/jari), warna, penghapus,
+     urungkan/ulangi, buang, teks, gambar, salin/tempel, halaman kosong baru.
+   - Semua perubahan di presenter tampil di layar audiens.
+   - Tombol presenter clicker (Bluetooth/USB, juga keyboard): maju dengan
+     panah kanan/bawah, Page Down, Spasi, Enter, N; mundur dengan panah
+     kiri/atas, Page Up, Backspace, P; layar hitam dengan B atau titik;
+     keluar dengan Esc.
+   - Platform: Windows, Linux, dan tablet Android (layar eksternal
+     HDMI/USB-C) sekaligus. Catatan presenter ikut tersinkron (repo).
+   - Fitur penunjuk (pointer laser), bukan mode tersendiri: alat di bilah
+     presentasi; mouse/jari/stylus menjadi titik merah untuk menunjuk
+     bagian slide, dengan buntut yang memudar. Lama buntut bisa diatur
+     (mati … beberapa detik). Tidak meninggalkan coretan; tampil juga di
+     layar audiens.
+
+9. [ ] **Video demo untuk blog** (permintaan 2026-10-12): beberapa video
+   pendek per fitur, bukan satu video ujung ke ujung — library dan koleksi,
+   menandai dan anotasi gaya Zotero, pena dan teks, catatan dan Markdown,
+   sitasi di Word/OnlyOffice, sinkronisasi (Kirim, masuk GitHub), dua bahasa,
+   mode presenter dengan layar audiens dan penunjuk.
+
+## Setelah itu
 
 4. [x] **Pemasang Windows**: bila sudah terpasang, tawarkan Perbarui / Ubah /
    Perbaiki / Hapus.
