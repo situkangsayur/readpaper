@@ -38,22 +38,22 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
 
 ### Berikutnya — anotasi (didahulukan)
 
-1. **Catatan gaya Zotero**: penanda kecil (ikon) di halaman; diklik membesar
+1. [x] **Catatan gaya Zotero**: penanda kecil (ikon) di halaman; diklik membesar
    menampilkan isinya, diklik lagi mengecil. Ditulis sebagai `annotationType:
    note` supaya Zotero menampilkannya sama.
-2. **Teks langsung di halaman** (`annotationType: text`): bisa diputar,
+2. [x] **Teks langsung di halaman** (`annotationType: text`): bisa diputar,
    diperbesar/diperkecil, dipindah — seperti di Zotero.
-3. **Anotasi terbaca Zotero**: paper library sudah (format Zotero lewat
+3. [x] **Anotasi terbaca Zotero**: paper library sudah (format Zotero lewat
    plugin sinkronisasi). Untuk PDF di Catatan (bukan item Zotero), pilihannya
    menulis anotasinya juga ke dalam PDF sebagai anotasi PDF sungguhan
    (bukan dileburkan), supaya terbaca Zotero dan pembaca PDF lain.
 
 ### Setelah itu
 
-4. **Pemasang Windows**: bila sudah terpasang, tawarkan Perbarui / Ubah /
+4. [x] **Pemasang Windows**: bila sudah terpasang, tawarkan Perbarui / Ubah /
    Perbaiki / Hapus.
-5. **Dua bahasa** (Indonesia / English), dipilih di Pengaturan.
-6. **Masuk GitHub tanpa token**: login lewat browser (OAuth device flow);
+5. [x] **Dua bahasa** (Indonesia / English), dipilih di Pengaturan.
+6. [x] **Masuk GitHub tanpa token**: login lewat browser (OAuth device flow);
    bila repo belum ada, minta izin lalu buatkan; bila sudah ada, pilih/ketik
    nama repo.
 7. **MCP / API untuk LLM** — *ditunda (permintaan 2026-10-11)*: menambah dokumen ke koleksi tertentu, beserta

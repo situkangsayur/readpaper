@@ -143,7 +143,17 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Mode Tandai** untuk layar sentuh: nyalakan, sapukan jari di atas teks, dan
   begitu jari diangkat teksnya langsung berwarna. Lebih cepat daripada memilih
   teks lalu memilih tombol, untuk paper yang ditandai banyak.
-- **Catatan tempel di halaman**, ditaruh dengan satu ketukan.
+- **Catatan tempel di halaman** gaya Zotero (`annotationType: note`, kotak
+  22 × 22 pt): penanda kecil di halaman; diklik membuka balon berisi
+  catatannya (sunting, tutup), diklik lagi menutupnya.
+- **Teks di halaman (Tt)** bisa diputar dan diperbesar/diperkecil lewat
+  pegangannya; ukuran dan sudutnya disimpan sebagai `fontSize` dan
+  `rotation` seperti Zotero, dan ikut berputar di PDF hasil simpan.
+- **Anotasi PDF di Catatan tersimpan seketika** (`anotasi.json` di folder
+  catatannya, format anotasi Zotero): tampil di panel anotasi, bisa
+  disunting dan dihapus, tetap ada saat dibuka lagi. "Tambahkan ke
+  koleksi…" menyalin PDF catatan beserta anotasinya menjadi item Zotero,
+  sehingga terbaca di Zotero.
 - **Panel anotasi**: semua kutipan dan komentar di dokumen itu, ketuk untuk
   melompat ke tempatnya, pensil untuk mengubah warna atau komentar.
 - **Pena**: gambar bebas dengan warna dan ketebalan pilihan. Satu gambar
@@ -309,6 +319,12 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 
 ## Sinkronisasi
 
+- **Masuk dengan GitHub** tanpa membuat token: kode perangkat di
+  github.com/login/device, lalu pilih repositori yang ada atau buatkan yang
+  baru (privat, ber-README). Akun yang pernah masuk diingat, jadi profil
+  berikutnya cukup "Pakai akun …"; akun lain bisa ditambahkan.
+- **Tidak ada commit otomatis**: perubahan menunggu tombol **Kirim**, yang
+  meng-commit semuanya sekaligus dengan ringkasan lalu mengirim.
 - **Profil repositori**: beberapa repositori bisa didaftarkan dan dipindah kapan
   saja. Tiap profil punya folder sendiri, jadi berpindah tidak mengunduh ulang.
 - **Ambil library**: hanya metadata yang diunduh di awal (pada library 1.740
@@ -329,6 +345,11 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   ditolak tetap menunggu di antrean dengan nama dan alasannya.
 - **Tidak pernah memaksa.** Kalau GitHub sudah punya commit lebih baru,
   pengiriman ditolak dan diminta menarik dulu.
+
+## Bahasa
+
+- **Bahasa Indonesia dan English**, dipilih di layar Repositori (ikon
+  terjemah): Indonesia, English, atau ikuti sistem. Bawaannya Indonesia.
 
 ## Platform
 
