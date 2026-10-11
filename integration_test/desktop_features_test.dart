@@ -584,15 +584,24 @@ void main() {
       await Fixture.gitIn(other, <String>['config', 'user.email', 'lain@readpaper.test']);
       await Fixture.gitIn(other, <String>['config', 'user.name', 'Lain']);
       final cols = p.join(other, 'zotero', 'uji', 'collections.json');
-      File(cols).writeAsStringSync(
-        File(cols).readAsStringSync().replaceFirst(
-          '[\n',
-          '[\n\t{\n\t\t"key": "LAIN0001",\n\t\t"name": "Dari mesin lain",\n\t\t"parentKey": null,'
-              '\n\t\t"path": "Dari mesin lain",\n\t\t"relations": {}\n\t},\n',
-        ),
+      // Di Windows git meng-checkout dengan CRLF (autocrlf); polanya harus
+      // menerima keduanya, kalau tidak tidak ada yang berubah untuk di-commit.
+      final before = File(cols).readAsStringSync();
+      final after = before.replaceFirst(
+        RegExp(r'^\[\r?\n'),
+        '[\n\t{\n\t\t"key": "LAIN0001",\n\t\t"name": "Dari mesin lain",\n\t\t"parentKey": null,'
+        '\n\t\t"path": "Dari mesin lain",\n\t\t"relations": {}\n\t},\n',
       );
-      await Fixture.gitIn(other, <String>['commit', '-qam', 'Koleksi dari mesin lain']);
-      await Fixture.gitIn(other, <String>['push', '-q']);
+      expect(after, isNot(before), reason: 'collections.json mesin lain harus berubah');
+      File(cols).writeAsStringSync(after);
+      final commit = await Fixture.gitIn(other, <String>[
+        'commit',
+        '-qam',
+        'Koleksi dari mesin lain',
+      ]);
+      expect(commit.exitCode, 0, reason: '${commit.stdout}${commit.stderr}');
+      final push = await Fixture.gitIn(other, <String>['push', '-q']);
+      expect(push.exitCode, 0, reason: '${push.stderr}');
     });
     diag(
       'remote setelah mesin lain: ${await tester.runAsync(() => fx.commitCount(fx.remote))} commit',
