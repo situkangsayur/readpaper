@@ -13,6 +13,7 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../markdown/data/mermaid_pdf.dart';
 import '../domain/note_document.dart';
 import '../../../core/utils/shape_geometry.dart';
+import '../../../core/l10n.dart';
 
 /// Mengeluarkan buku catatan sebagai Markdown atau PDF.
 ///
@@ -100,7 +101,7 @@ class NoteExport {
             await file.parent.create(recursive: true);
             await file.writeAsBytes(drawing, flush: true);
             out
-              ..writeln('![tulisan tangan](${p.basename(name)})')
+              ..writeln('![${l10n.notebookHandwritingAlt}](${p.basename(name)})')
               ..writeln();
         }
       }
@@ -306,7 +307,7 @@ class NoteExport {
       NoteImage() =>
         images[component.file] == null
             ? pw.Text(
-                '[gambar tidak ditemukan: ${component.file}]',
+                l10n.markdownPdfImageMissing(component.file),
                 style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
               )
             : pw.Image(images[component.file]!, fit: pw.BoxFit.contain),

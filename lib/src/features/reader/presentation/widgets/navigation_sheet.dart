@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdfrx/pdfrx.dart';
+import '../../../../core/l10n.dart';
 
 /// Where the reader should jump to.
 @immutable
@@ -64,7 +65,9 @@ class _NavigationSheetState extends State<_NavigationSheet> {
       // Saying which range is valid beats clearing the field silently.
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Halaman harus antara 1 dan ${widget.pageCount}')));
+        ..showSnackBar(
+          SnackBar(content: Text(context.l10n.readerPageMustBeBetween(widget.pageCount))),
+        );
       return;
     }
     Navigator.of(context).pop(NavigationTarget.page(n));
@@ -87,7 +90,7 @@ class _NavigationSheetState extends State<_NavigationSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text('Lompat ke halaman', style: text.titleMedium),
+                  Text(context.l10n.readerJumpToPage, style: text.titleMedium),
                   const SizedBox(height: 12),
                   Row(
                     children: <Widget>[
@@ -100,18 +103,18 @@ class _NavigationSheetState extends State<_NavigationSheet> {
                           inputFormatters: <TextInputFormatter>[
                             FilteringTextInputFormatter.digitsOnly,
                           ],
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             isDense: true,
                             border: OutlineInputBorder(),
-                            labelText: 'Halaman',
+                            labelText: context.l10n.readerPage,
                           ),
                           onSubmitted: (_) => _goToTyped(),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text('dari ${widget.pageCount}', style: text.bodyMedium),
+                      Text(context.l10n.readerOfPages(widget.pageCount), style: text.bodyMedium),
                       const Spacer(),
-                      FilledButton(onPressed: _goToTyped, child: const Text('Pergi')),
+                      FilledButton(onPressed: _goToTyped, child: Text(context.l10n.readerGo)),
                     ],
                   ),
                   if (widget.pageCount > 1)
@@ -134,13 +137,13 @@ class _NavigationSheetState extends State<_NavigationSheet> {
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
-              child: Text('Daftar isi', style: text.titleMedium),
+              child: Text(context.l10n.readerTableOfContents, style: text.titleMedium),
             ),
             Flexible(
               child: widget.outline.isEmpty
                   ? Padding(
                       padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                      child: Text('Berkas ini tidak membawa daftar isi.', style: text.bodySmall),
+                      child: Text(context.l10n.readerNoTableOfContents, style: text.bodySmall),
                     )
                   : ListView(
                       shrinkWrap: true,
@@ -166,7 +169,7 @@ class _OutlineTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = Text(
-      node.title.trim().isEmpty ? '(tanpa judul)' : node.title.trim(),
+      node.title.trim().isEmpty ? context.l10n.readerUntitled : node.title.trim(),
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
       style: Theme.of(context).textTheme.bodyMedium,
@@ -201,7 +204,7 @@ class _OutlineTile extends StatelessWidget {
           ? null
           : IconButton(
               iconSize: 18,
-              tooltip: 'Buka halaman ${node.dest!.pageNumber}',
+              tooltip: context.l10n.readerOpenPage(node.dest!.pageNumber),
               icon: const Icon(Icons.open_in_new),
               onPressed: () => Navigator.of(context).pop(NavigationTarget.dest(node.dest!)),
             ),

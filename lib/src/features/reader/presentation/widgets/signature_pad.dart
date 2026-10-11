@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../library/domain/entities/zotero_annotation.dart';
+import '../../../../core/l10n.dart';
 
 /// Draw a signature once, large, then place it on the page.
 ///
@@ -84,12 +85,9 @@ class _SignaturePadState extends State<_SignaturePad> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Tanda tangan', style: Theme.of(context).textTheme.titleMedium),
+            Text(context.l10n.readerSignature, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
-            Text(
-              'Tulis di sini, lalu ketuk halaman untuk menaruhnya.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            Text(context.l10n.readerSignatureHint, style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: 12),
             Expanded(
               child: LayoutBuilder(
@@ -131,24 +129,24 @@ class _SignaturePadState extends State<_SignaturePad> {
                           _live = null;
                         }),
                   icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text('Bersihkan'),
+                  label: Text(context.l10n.readerClear),
                 ),
                 TextButton.icon(
                   onPressed: _strokes.isEmpty ? null : () => setState(_strokes.removeLast),
                   icon: const Icon(Icons.undo, size: 18),
-                  label: const Text('Urungkan'),
+                  label: Text(context.l10n.readerUndo),
                 ),
                 const Spacer(),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Batal'),
+                  child: Text(context.l10n.readerCancel),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
                   onPressed: _strokes.isEmpty
                       ? null
                       : () => Navigator.of(context).pop(_normalised()),
-                  child: const Text('Pakai'),
+                  child: Text(context.l10n.readerUse),
                 ),
               ],
             ),

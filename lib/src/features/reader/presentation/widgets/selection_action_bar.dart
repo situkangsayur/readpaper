@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/formatting.dart';
 import '../../../../core/utils/layout_size.dart';
+import '../../../../core/l10n.dart';
 
 /// Floating bar shown while text is selected in the reader.
 ///
@@ -76,32 +77,32 @@ class SelectionActionBar extends StatelessWidget {
               const SizedBox(width: 6),
               _Action(
                 icon: Icons.format_color_fill,
-                label: 'Stabilo',
+                label: context.l10n.readerHighlight,
                 compact: compact,
                 onPressed: onHighlight,
               ),
               _Action(
                 icon: Icons.format_underlined,
-                label: 'Garis bawah',
+                label: context.l10n.readerUnderline,
                 compact: compact,
                 onPressed: onUnderline,
               ),
               _Action(
                 icon: Icons.add_comment_outlined,
-                label: 'Komentar',
+                label: context.l10n.readerComment,
                 compact: compact,
                 onPressed: onComment,
               ),
               if (onCopy != null)
                 _Action(
                   icon: Icons.copy_all_outlined,
-                  label: 'Salin',
+                  label: context.l10n.readerCopy,
                   compact: compact,
                   onPressed: onCopy!,
                 ),
               IconButton(
                 iconSize: 18,
-                tooltip: 'Batalkan pilihan',
+                tooltip: context.l10n.readerClearSelection,
                 icon: const Icon(Icons.close),
                 onPressed: onDismiss,
               ),
@@ -135,7 +136,9 @@ class _Swatch extends StatelessWidget {
       child: Tooltip(
         // Zotero only knows its own eight; the rest still round-trip, but it
         // shows them as a custom colour rather than one of its buttons.
-        message: AnnotationPalette.isZoteroPreset(hex) ? name : '$name (di luar palet Zotero)',
+        message: AnnotationPalette.isZoteroPreset(hex)
+            ? name
+            : context.l10n.readerOutsideZoteroPalette(name),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(size),

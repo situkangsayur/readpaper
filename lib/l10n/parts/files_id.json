@@ -1,0 +1,368 @@
+{
+  "filesCancel": "Batal",
+  "filesSave": "Simpan",
+  "filesCreate": "Buat",
+  "filesDelete": "Hapus",
+  "filesRename": "Ganti nama",
+  "filesOpen": "Buka",
+  "filesShare": "Bagikan",
+  "filesPickWorkFolder": "Pilih folder kerja",
+  "filesWorkFolderNotReady": "Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.",
+  "filesPickFilesToCopy": "Pilih berkas untuk disalin ke sini",
+  "filesCopiedHere": "{count} berkas disalin ke sini",
+  "@filesCopiedHere": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filesNameTaken": "Sudah ada berkas atau folder bernama itu",
+  "filesRenameFailed": "Gagal mengganti nama: {error}",
+  "@filesRenameFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "filesCannotDeleteRoot": "Folder kerja itu sendiri tidak bisa dihapus dari sini.",
+  "filesDeleteFolderTitle": "Hapus folder ini?",
+  "filesFolderEmpty": "Foldernya kosong.",
+  "filesFolderUncountable": "Isinya tidak bisa dihitung.",
+  "filesFolderDeletesCount": "{count} berkas di dalamnya ikut terhapus.",
+  "@filesFolderDeletesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filesLibraryCopiesUntouched": "Salinan yang sudah masuk library tidak tersentuh.",
+  "filesDeleteCount": "Hapus {count} berkas",
+  "@filesDeleteCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filesDeleteFailed": "Gagal menghapus: {error}",
+  "@filesDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "filesDeleteFileTitle": "Hapus berkas ini?",
+  "filesDeleteFileBody": "{name}\n\nDihapus dari folder ini. Salinan yang sudah masuk library tidak tersentuh.",
+  "@filesDeleteFileBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "filesNewBoardTitle": "Papan tulis baru",
+  "filesNewBoardBody": "Berlembar-lembar, bisa dicoreti, lalu disimpan sebagai PDF di folder ini.",
+  "filesPortrait": "Tegak",
+  "filesLandscape": "Mendatar",
+  "filesSavedHere": "{name} tersimpan di folder ini",
+  "@filesSavedHere": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "filesNewFolderTitle": "Folder baru",
+  "filesNameLabel": "Nama",
+  "filesNewMarkdownTitle": "Berkas Markdown baru",
+  "filesFileNameLabel": "Nama berkas",
+  "filesNewNotebookTitle": "Buku catatan baru",
+  "filesHeader": "Berkas",
+  "filesUpOneLevel": "Naik satu tingkat",
+  "filesCreateHere": "Buat baru di folder ini",
+  "filesWhiteboard": "Papan tulis",
+  "filesNotebook": "Buku catatan",
+  "filesMarkdownFile": "Berkas Markdown",
+  "filesFolder": "Folder",
+  "filesCopyInTooltip": "Salin berkas atau folder ke sini — dari mana pun di perangkat",
+  "filesPickFolderToCopy": "Pilih folder untuk disalin ke sini",
+  "filesCopyFiles": "Salin berkas…",
+  "filesCopyFolder": "Salin folder (beserta isinya)…",
+  "filesOpenOtherFolder": "Buka folder lain",
+  "filesEmptyFolderHint": "Folder ini kosong.\n\nBuat papan tulis, atau salin PDF ke sini dengan tombol unduh di atas — lalu seret ke sebuah koleksi untuk memasukkannya ke library.",
+  "filesFolderActions": "Tindakan folder",
+  "filesDeleteFolder": "Hapus folder",
+  "filesFileActions": "Tindakan berkas",
+  "filesDeleteFile": "Hapus berkas",
+  "filesCannotOpenExt": "Berkas {ext} belum bisa dibuka di dalam ReadPaper. Yang bisa: PDF, EPUB, gambar, CSV, dan Excel.",
+  "@filesCannotOpenExt": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "filesCannotOpenThis": "Berkas ini belum bisa dibuka di dalam ReadPaper. Yang bisa: PDF, EPUB, gambar, CSV, dan Excel.",
+  "filesNoAppForExt": "Tidak ada aplikasi di sistem ini yang membuka berkas {ext}.",
+  "@filesNoAppForExt": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "filesNoAppForThis": "Tidak ada aplikasi di sistem ini yang membuka berkas ini.",
+  "filesOpenWithOtherApp": "Buka dengan aplikasi lain",
+  "filesTableUnreadable": "Tabel ini tidak bisa dibaca: {error}",
+  "@filesTableUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "filesNoSheets": "Tidak ada lembar di berkas ini.",
+  "filesSheetEmpty": "Lembar ini kosong.",
+  "filesOnlyFirstRows": "Hanya {count} baris pertama yang ditampilkan. Buka dengan aplikasi lain untuk melihat semuanya.",
+  "@filesOnlyFirstRows": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsRepositories": "Repositori",
+  "settingsAddRepository": "Tambah repositori",
+  "settingsNoRepositories": "Belum ada repositori.",
+  "settingsDeleteProfileTitle": "Hapus \"{name}\"?",
+  "@settingsDeleteProfileTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsDeleteProfileBody": "Profil akan dihapus dari ReadPaper.",
+  "settingsDeleteCloneToo": "Hapus juga folder clone lokal",
+  "settingsUrlTransportMismatch": "URL tidak cocok dengan mode {mode}.",
+  "@settingsUrlTransportMismatch": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMakeActive": "Jadikan aktif",
+  "settingsLicense": "Perangkat lunak bebas, lisensi AGPL-3.0-or-later.\nKode sumber: github.com/situkangsayur/readpaper",
+  "settingsEditRepository": "Ubah repositori",
+  "settingsRepoUrl": "URL repositori",
+  "settingsUrlRequired": "URL tidak boleh kosong",
+  "settingsApiTokenNote": "Perangkat ini menyinkronkan lewat GitHub API, jadi aksesnya memakai token HTTPS.",
+  "settingsDisplayName": "Nama tampilan",
+  "settingsNameRequired": "Nama tidak boleh kosong",
+  "settingsSshKeyOptional": "Kunci privat SSH (opsional)",
+  "settingsSshKeyHelper": "Kosongkan untuk memakai ssh-agent atau kunci bawaan.",
+  "settingsGithubUsername": "Username GitHub",
+  "settingsAccessToken": "Personal access token",
+  "settingsTokenHelper": "Disimpan terpisah di credentials.json (izin 600).",
+  "settingsLocalCloneFolder": "Folder clone lokal",
+  "settingsPrivateStorage": "Data disimpan di penyimpanan privat aplikasi.",
+  "settingsCommitIdentity": "Identitas commit",
+  "settingsNameLabel": "Nama",
+  "settingsAuthorHint": "kosong = pakai konfigurasi git",
+  "settingsLazyPdfTitle": "Unduh PDF hanya saat dibuka",
+  "settingsLazyPdfSubtitle": "Ambil metadata library dulu (puluhan MB); berkas PDF menyusul satu per satu. Matikan kalau ingin semua PDF diunduh sekaligus sesudah ambil dan pull, supaya bisa dibaca offline.",
+  "settingsAutoPushTitle": "Push otomatis setelah menyimpan anotasi",
+  "settingsAutoPushSubtitle": "Setiap highlight/komentar langsung dikirim ke GitHub.",
+  "settingsPickSshKey": "Pilih kunci privat SSH",
+  "settingsPickCloneFolder": "Pilih folder clone",
+  "citationRunningAt": "Berjalan di {address}",
+  "@citationRunningAt": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "citationOff": "Mati. Add-in Word dan OnlyOffice tidak bisa tersambung.",
+  "citationStarting": "Menyalakan…",
+  "citationTitle": "Sitasi di Word & OnlyOffice",
+  "citationSubtitle": "Server lokal yang dipakai add-in untuk mencari dan menyitasi.",
+  "citationRetry": "Coba lagi",
+  "citationAddress": "Alamat",
+  "citationCopyAddress": "Salin alamat",
+  "citationAddressCopied": "Alamat disalin.",
+  "citationNoToken": "Belum ada",
+  "citationHideToken": "Sembunyikan token",
+  "citationShowToken": "Tampilkan token",
+  "citationCopyToken": "Salin token",
+  "citationTokenCopied": "Token disalin.",
+  "citationNewToken": "Buat token baru",
+  "citationPasteHint": "Tempel alamat dan token ini di add-in. Panduannya: docs/api-sitasi.md di repositori ReadPaper.",
+  "citationNewTokenTitle": "Buat token baru?",
+  "citationNewTokenBody": "Token lama langsung tidak berlaku. Add-in Word dan OnlyOffice yang sudah tersambung harus diberi token baru.",
+  "citationCreateNew": "Buat baru",
+  "citationTokenSaveFailed": "Token baru tidak bisa disimpan: {error}",
+  "@citationTokenSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "citationSettingsUnreadable": "Pengaturan server sitasi tidak terbaca: {error}",
+  "@citationSettingsUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "citationPortInUse": "Port {port} sudah dipakai program lain (mungkin ReadPaper lain yang sedang terbuka). {reason}",
+  "@citationPortInUse": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "citationEmptyCollection": "Koleksi ini belum berisi paper.",
+  "citationBibWritten": "{count} entri ditulis ke {file} di folder kerja",
+  "@citationBibWritten": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "citationBibCopied": "BibTeX disalin — kuncinya {key}",
+  "@citationBibCopied": {
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "commonColorYellow": "Kuning",
+  "commonColorRed": "Merah",
+  "commonColorGreen": "Hijau",
+  "commonColorBlue": "Biru",
+  "commonColorPurple": "Ungu",
+  "commonColorMagenta": "Magenta",
+  "commonColorOrange": "Oranye",
+  "commonColorGray": "Abu-abu",
+  "commonColorTeal": "Tosca",
+  "commonColorPink": "Merah muda",
+  "commonColorBrown": "Cokelat",
+  "commonColorInk": "Tinta",
+  "commonColorWhite": "Putih",
+  "commonColorBlack": "Hitam",
+  "commonColorGrayShort": "Abu",
+  "commonColorOrangeInk": "Jingga",
+  "commonColorLightGreen": "Hijau muda",
+  "commonColorSkyBlue": "Biru langit",
+  "commonColorNavyBlue": "Biru malam",
+  "commonFilePickUnreadable": "Berkas itu tidak bisa dibaca dari tempatnya. Salin dulu ke folder kerja.",
+  "commonFilePickerFailed": "Pemilih berkas gagal dibuka: {error}",
+  "@commonFilePickerFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonFolderPickerFailed": "Pemilih folder gagal dibuka: {error}",
+  "@commonFolderPickerFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonLinuxPickerHelp": "Dialog pilih berkas tidak bisa dibuka ({error}). Pasang xdg-desktop-portal beserta backend-nya (mis. xdg-desktop-portal-gtk), atau zenity.",
+  "@commonLinuxPickerHelp": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonShareUnsupported": "Berbagi berkas belum didukung di sini ({error}). Berkasnya ada di {path}",
+  "@commonShareUnsupported": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      },
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "commonJustNow": "baru saja",
+  "commonMinutesAgo": "{count} menit lalu",
+  "@commonMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonHoursAgo": "{count} jam lalu",
+  "@commonHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonDaysAgo": "{count} hari lalu",
+  "@commonDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonWeeksAgo": "{count} pekan lalu",
+  "@commonWeeksAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonMonthsAgo": "{count} bulan lalu",
+  "@commonMonthsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonYearsAgo": "{count} tahun lalu",
+  "@commonYearsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonWorkFolder": "Folder kerja",
+  "commonYesterday": "kemarin",
+  "commonShapeRectangle": "Kotak",
+  "commonShapeEllipse": "Bulat",
+  "commonShapeDiamond": "Belah ketupat",
+  "commonShapeTriangle": "Segitiga",
+  "commonShapeLine": "Garis",
+  "commonShapeArrow": "Panah"
+}

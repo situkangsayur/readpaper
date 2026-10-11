@@ -24,6 +24,7 @@ import '../../../sync/data/datasources/git_locator.dart';
 import '../../../sync/data/datasources/github_api_backend.dart';
 import '../../../sync/domain/repositories/git_backend.dart';
 import '../../domain/entities/workspace_state.dart';
+import '../../../../core/l10n.dart';
 
 /// Owns the active repository: its clone, its git state and the parsed library.
 ///
@@ -107,9 +108,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           loadingLibrary: false,
           clearLayout: true,
           clearIndex: true,
-          error:
-              'Tidak menemukan ekspor Zotero di repositori ini. '
-              'Struktur yang diharapkan: zotero/<library>/collections.json',
+          error: l10n.workspaceErrNoZoteroExport,
         );
         return;
       }
@@ -131,7 +130,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     } on Failure catch (e) {
       state = state.copyWith(loadingLibrary: false, error: e.message);
     } catch (e) {
-      state = state.copyWith(loadingLibrary: false, error: 'Gagal membaca library: $e');
+      state = state.copyWith(loadingLibrary: false, error: l10n.workspaceErrReadLibrary('$e'));
     }
   }
 
@@ -159,7 +158,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final profile = state.profile;
     if (profile == null) return false;
     if (profile.remoteUrl.trim().isEmpty) {
-      state = state.copyWith(error: 'URL remote belum diisi untuk profil ini.');
+      state = state.copyWith(error: l10n.workspaceErrNoRemoteUrl);
       return false;
     }
 
@@ -210,11 +209,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
     final status = state.gitStatus;
     if (status != null && (status.isDirty || status.ahead > 0)) {
-      state = state.copyWith(
-        error:
-            'Masih ada perubahan yang belum dikirim ke GitHub. '
-            'Kirim dulu, baru ambil ulang.',
-      );
+      state = state.copyWith(error: l10n.workspaceErrUnsentBeforeReclone);
       return false;
     }
 
@@ -223,7 +218,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       try {
         await dir.delete(recursive: true);
       } on FileSystemException catch (e) {
-        state = state.copyWith(error: 'Gagal menghapus salinan lama: ${e.message}');
+        state = state.copyWith(error: l10n.workspaceErrDeleteOldCopy(e.message));
         return false;
       }
     }
@@ -352,9 +347,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final library = state.library;
     final profile = state.profile;
     if (library == null || profile == null) {
-      state = state.copyWith(
-        error: 'Anotasi tidak tersimpan: tidak ada library aktif di aplikasi.',
-      );
+      state = state.copyWith(error: l10n.workspaceErrAnnotationNoLibrary);
       return false;
     }
 
@@ -367,7 +360,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             annotation: annotation,
           );
       if (changed.isEmpty) {
-        state = state.copyWith(error: 'Anotasi tidak tersimpan: berkas item tidak berubah.');
+        state = state.copyWith(error: l10n.workspaceErrAnnotationUnchanged);
         return false;
       }
 
@@ -381,10 +374,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       return true;
     } on Failure catch (e) {
-      state = state.copyWith(error: 'Anotasi tidak tersimpan: ${e.message}');
+      state = state.copyWith(error: l10n.workspaceErrAnnotationSave(e.message));
       return false;
     } catch (e) {
-      state = state.copyWith(error: 'Anotasi tidak tersimpan: $e');
+      state = state.copyWith(error: l10n.workspaceErrAnnotationSave('$e'));
       return false;
     }
   }
@@ -396,7 +389,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final library = state.library;
     final profile = state.profile;
     if (library == null || profile == null) {
-      state = state.copyWith(error: 'Anotasi tidak dihapus: tidak ada library aktif.');
+      state = state.copyWith(error: l10n.workspaceErrAnnotationDeleteNoLibrary);
       return false;
     }
 
@@ -409,7 +402,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             annotationKey: annotation.key,
           );
     } catch (e) {
-      state = state.copyWith(error: 'Anotasi tidak dihapus: $e');
+      state = state.copyWith(error: l10n.workspaceErrAnnotationDelete('$e'));
       return false;
     }
 
@@ -445,13 +438,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final store = pagePictures(attachmentKey);
     final profile = state.profile;
     if (store == null || profile == null) {
-      state = state.copyWith(error: 'Gambar tidak tersimpan: tidak ada repositori aktif.');
+      state = state.copyWith(error: l10n.workspaceErrPictureNoRepo);
       return false;
     }
     try {
       await store.put(annotation, bytes: bytes);
     } catch (e) {
-      state = state.copyWith(error: 'Gambar tidak tersimpan: $e');
+      state = state.copyWith(error: l10n.workspaceErrPictureSave('$e'));
       return false;
     }
     await _commitAnnotation(
@@ -472,7 +465,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     try {
       await store.remove(annotation.key);
     } catch (e) {
-      state = state.copyWith(error: 'Gambar tidak dihapus: $e');
+      state = state.copyWith(error: l10n.workspaceErrPictureDelete('$e'));
       return false;
     }
     await _commitAnnotation(
@@ -506,7 +499,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final profile = state.profile;
     final index = state.index;
     if (library == null || profile == null || index == null) {
-      state = state.copyWith(error: 'Tidak ada library aktif untuk menampung berkas ini.');
+      state = state.copyWith(error: l10n.workspaceErrNoLibraryForFile);
       return null;
     }
 
@@ -531,7 +524,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       await reloadLibrary();
       return created;
     } on Object catch (e) {
-      state = state.copyWith(error: 'Gagal menambahkan ke library: $e');
+      state = state.copyWith(error: l10n.workspaceErrAddToLibrary('$e'));
       return null;
     }
   }
@@ -552,7 +545,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final profile = state.profile;
     final index = state.index;
     if (library == null || profile == null || index == null) {
-      state = state.copyWith(error: 'Tidak ada library aktif untuk menampung folder ini.');
+      state = state.copyWith(error: l10n.workspaceErrNoLibraryForFolder);
       return null;
     }
     final repo = ref.read(libraryRepositoryProvider);
@@ -605,7 +598,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     try {
       await walk(folder, parentKey);
     } on Object catch (e) {
-      state = state.copyWith(error: 'Impor folder berhenti: $e');
+      state = state.copyWith(error: l10n.workspaceErrImportStopped('$e'));
     }
     if (added > 0 || createdCollections > 0) {
       await _commitAnnotation(
@@ -626,7 +619,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final library = state.library;
     final profile = state.profile;
     if (library == null || profile == null) {
-      state = state.copyWith(error: 'Tidak ada library aktif.');
+      state = state.copyWith(error: l10n.workspaceErrNoLibrary);
       return null;
     }
     try {
@@ -640,7 +633,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       state = state.copyWith(error: e.message);
       return null;
     } on Object catch (e) {
-      state = state.copyWith(error: 'Gagal membuat koleksi: $e');
+      state = state.copyWith(error: l10n.workspaceErrCreateCollection('$e'));
       return null;
     }
   }
@@ -733,8 +726,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }) async {
     final source = state.library;
     final profile = state.profile;
-    if (source == null || profile == null) return 'Tidak ada library aktif.';
-    if (target.id == profile.id) return 'Repositori tujuannya sama dengan asal.';
+    if (source == null || profile == null) return l10n.workspaceErrNoLibrary;
+    if (target.id == profile.id) return l10n.workspaceErrSameRepo;
     const transfer = LibraryTransfer();
     final missing = await transfer.missingAttachments(source.directoryPath, item.filePath);
     if (missing.isNotEmpty) return _missingMessage(missing.length);
@@ -770,7 +763,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     } on Failure catch (e) {
       return e.message;
     } on Object catch (e) {
-      return 'Gagal ${move ? 'memindah' : 'menyalin'}: $e';
+      return move ? l10n.workspaceErrMoveFailed('$e') : l10n.workspaceErrCopyFailed('$e');
     }
   }
 
@@ -790,9 +783,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final profile = state.profile;
     final collection = state.index?.collections[collectionKey];
     if (source == null || profile == null || collection == null) {
-      return 'Koleksinya tidak ada lagi.';
+      return l10n.workspaceErrCollectionGone;
     }
-    if (target.id == profile.id) return 'Repositori tujuannya sama dengan asal.';
+    if (target.id == profile.id) return l10n.workspaceErrSameRepo;
     const transfer = LibraryTransfer();
     try {
       final result = await transfer.copyCollection(
@@ -832,7 +825,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     } on Failure catch (e) {
       return e.message;
     } on Object catch (e) {
-      return 'Gagal ${move ? 'memindah' : 'menyalin'}: $e';
+      return move ? l10n.workspaceErrMoveFailed('$e') : l10n.workspaceErrCopyFailed('$e');
     }
   }
 
@@ -841,10 +834,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<void> commitIn(RepoProfile profile, String message) =>
       _commitAnnotation(profile: profile, message: message, now: true);
 
-  static String _missingMessage(int count) =>
-      '$count lampiran belum ada di perangkat ini — belum diunduh, atau masih penunjuk '
-      'Git LFS. Buka papernya sekali supaya PDF-nya diunduh (di desktop: LFS pull), '
-      'lalu ulangi. Tidak ada yang dipindah: tanpa PDF-nya, paper itu akan tiba kosong.';
+  static String _missingMessage(int count) => l10n.workspaceErrMissingAttachments(count);
 
   /// Mengganti nama, memindah, atau menghapus koleksi paper, lalu meng-commit.
   ///
@@ -858,7 +848,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final library = state.library;
     final profile = state.profile;
     if (library == null || profile == null) {
-      state = state.copyWith(error: 'Tidak ada library aktif.');
+      state = state.copyWith(error: l10n.workspaceErrNoLibrary);
       return false;
     }
     try {
@@ -870,7 +860,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       state = state.copyWith(error: e.message);
       return false;
     } on Object catch (e) {
-      state = state.copyWith(error: 'Gagal mengubah koleksi: $e');
+      state = state.copyWith(error: l10n.workspaceErrChangeCollection('$e'));
       return false;
     }
   }
@@ -892,12 +882,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final profile = state.profile;
     final index = state.index;
     if (library == null || profile == null || index == null) {
-      state = state.copyWith(error: 'Tidak ada library aktif.');
+      state = state.copyWith(error: l10n.workspaceErrNoLibrary);
       return false;
     }
     final collection = collectionKey == null ? null : index.collections[collectionKey];
     if (collectionKey != null && collection == null) {
-      state = state.copyWith(error: 'Koleksi tujuan tidak ada lagi.');
+      state = state.copyWith(error: l10n.workspaceErrTargetCollectionGone);
       return false;
     }
 
@@ -919,7 +909,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       await reloadLibrary();
       return true;
     } on Object catch (e) {
-      state = state.copyWith(error: 'Gagal memindahkan: $e');
+      state = state.copyWith(error: l10n.workspaceErrMove('$e'));
       return false;
     }
   }
@@ -929,7 +919,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final library = state.library;
     final profile = state.profile;
     if (library == null || profile == null) {
-      state = state.copyWith(error: 'Tidak ada library aktif.');
+      state = state.copyWith(error: l10n.workspaceErrNoLibrary);
       return false;
     }
     try {
@@ -940,7 +930,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       await reloadLibrary();
       return true;
     } on Object catch (e) {
-      state = state.copyWith(error: 'Gagal menghapus: $e');
+      state = state.copyWith(error: l10n.workspaceErrDelete('$e'));
       return false;
     }
   }
@@ -1045,7 +1035,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           try {
             await dir.delete(recursive: true);
           } on FileSystemException catch (e) {
-            state = state.copyWith(error: 'Gagal menghapus clone lokal: ${e.message}');
+            state = state.copyWith(error: l10n.workspaceErrDeleteClone(e.message));
           }
         }
       }

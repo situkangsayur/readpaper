@@ -1,0 +1,799 @@
+{
+  "readerStylusOnlyOn": "Stylus saja: tangan yang bertumpu tidak akan menggambar.",
+  "readerStylusOnlyOff": "Jari dan stylus dua-duanya boleh menggambar.",
+  "readerCopyNotAllowed": "Dokumen ini tidak mengizinkan penyalinan",
+  "readerNothingSelected": "Tidak ada teks terpilih — tekan lama tepat di atas sebuah kata",
+  "readerEraserOn": "Penghapus aktif — sapukan di atas coretan",
+  "readerBackToWriting": "Kembali menulis",
+  "readerEraserTooltip": "Penghapus — sapukan di atas coretan yang salah",
+  "readerEraser": "Penghapus",
+  "readerBackToPreviousColor": "Kembali ke warna sebelumnya",
+  "readerWhiteInk": "Tinta putih — menutup coretan",
+  "readerUndoEraseInk": "menghapus coretan",
+  "readerUndoEraseStroke": "menghapus goresan",
+  "readerEraserMissed": "Tidak ada coretan yang tersentuh penghapus",
+  "readerRedoStroke": "Ulangi goresan",
+  "readerNothingToRedo": "Tidak ada yang bisa diulangi",
+  "readerTapToPlaceSignature": "Ketuk halaman di tempat tanda tangannya ditaruh",
+  "readerCannotOverwriteAttachment": "Lampiran library tidak bisa ditimpa — pilih nama lain",
+  "readerPreparingPdf": "Menyiapkan PDF…",
+  "readerSavePdf": "Simpan PDF",
+  "readerNotSaved": "Tidak jadi disimpan",
+  "readerNoLibraryOpen": "Belum ada library yang terbuka di aplikasi ini.",
+  "readerUnsavedNotIncluded": "Anotasi yang belum disimpan tidak ikut. Simpan PDF dulu bila perlu.",
+  "readerAddToCollectionTitle": "Tambahkan ke koleksi",
+  "readerNoCollection": "Tanpa koleksi",
+  "readerNoCollectionHint": "masuk library, tidak masuk koleksi mana pun",
+  "readerNewCollectionEllipsis": "Koleksi baru…",
+  "readerNewCollectionHint": "dibuat lalu langsung dipakai",
+  "readerCreateCollectionFailed": "Gagal membuat koleksi",
+  "readerDocumentTitle": "Judul dokumen",
+  "readerCancel": "Batal",
+  "readerAdd": "Tambahkan",
+  "readerAddingToLibrary": "Menambahkan ke library…",
+  "readerAddFailed": "Gagal menambahkan",
+  "readerNewCollection": "Koleksi baru",
+  "readerCollectionName": "Nama koleksi",
+  "readerCollectionNameHelper": "Ditulis ke collections.json, ikut tersinkron ke GitHub",
+  "readerCreate": "Buat",
+  "readerReadingPageText": "Membaca teks halaman…",
+  "readerPrintWithoutLatest": "Cetak tanpa anotasi terbaru?",
+  "readerPrintAsIs": "Cetak apa adanya",
+  "readerAddBlankPages": "Tambah halaman kosong",
+  "readerPdfSavedAsImages": "PDF ini tidak bisa ditulisi langsung; halamannya disimpan sebagai gambar.",
+  "readerPreparingFile": "Menyiapkan berkas…",
+  "readerNothingSaved": "Tidak ada yang disimpan",
+  "readerSaveAnnotatedCopy": "Simpan salinan beranotasi",
+  "readerSaveChangesFirst": "Simpan perubahan dulu?",
+  "readerUnsavedStrokes": "Ada goresan yang belum disimpan. Kalau keluar sekarang, goresan itu hilang.",
+  "readerLeaveWithoutSaving": "Keluar tanpa menyimpan",
+  "readerSaveEllipsis": "Simpan…",
+  "readerSave": "Simpan",
+  "readerMarking": "Menandai",
+  "readerMark": "Tandai",
+  "readerTapToPlaceNote": "Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)",
+  "readerPlaceNote": "Tempel catatan di halaman",
+  "readerDoneDrawing": "Selesai menggambar",
+  "readerDrawOnPage": "Tulis atau gambar di halaman",
+  "readerTapToPlaceText": "Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)",
+  "readerFillText": "Isi teks di halaman — untuk mengisi formulir",
+  "readerKeepScreenOnActive": "Layar tetap menyala — tekan untuk mematikan",
+  "readerKeepScreenOn": "Biarkan layar menyala selama membaca",
+  "readerKeepScreenOnEnabled": "Layar akan tetap menyala selama membaca",
+  "readerKeepScreenOnDisabled": "Layar kembali mati sendiri",
+  "readerPresent": "Sajikan — satu halaman penuh layar",
+  "readerNothingToUndo": "Belum ada yang bisa diurungkan",
+  "readerNothingToRedoYet": "Belum ada yang bisa diulangi",
+  "readerSignature": "Tanda tangan",
+  "readerSaveAndShare": "Simpan dan bagikan",
+  "readerAddToCollectionMenu": "Tambahkan ke koleksi…",
+  "readerAddToCollectionMenuHint": "masuk library dan ikut tersinkron",
+  "readerPrintMenu": "Cetak…",
+  "readerPrintMenuHint": "ke pencetak, atau simpan sebagai PDF",
+  "readerToMarkdown": "Ubah ke Markdown",
+  "readerToMarkdownHint": "teksnya jadi dokumen yang bisa disunting",
+  "readerToNotebook": "Jadikan buku catatan",
+  "readerToNotebookHint": "halamannya jadi alas, bisa disunting lagi",
+  "readerBlankPagesMenuHint": "papan tulis di akhir dokumen",
+  "readerSaveMenuHintNew": "pilih nama dan tempat; yang asli aman",
+  "readerSaveAsMenu": "Simpan sebagai…",
+  "readerSaveAsMenuHint": "nama atau tempat lain",
+  "readerExportPagesMenu": "Ekspor halaman…",
+  "readerExportPagesMenuHint": "PDF, PNG, atau JPG",
+  "readerShare": "Bagikan",
+  "readerShareHint": "chat, surel, atau aplikasi lain",
+  "readerStylusOnlyTooltip": "Stylus saja — sentuhan tangan tidak menggambar",
+  "readerFingerAndStylusTooltip": "Jari + stylus boleh menggambar — ketuk untuk stylus saja",
+  "readerAddBlankSheet": "Tambah lembar kosong",
+  "readerReadMode": "Mode baca — sembunyikan semua bilah",
+  "readerSaveAnnotatedCopyFormats": "Simpan salinan beranotasi (PNG, JPG, PDF)",
+  "readerZoomOut": "Perkecil",
+  "readerZoomIn": "Perbesar",
+  "readerAnnotationPanel": "Panel anotasi",
+  "readerGotIt": "Mengerti",
+  "readerDone": "Selesai",
+  "readerUndoLastStroke": "Urungkan goresan terakhir",
+  "readerDiscardStrokes": "Buang semua goresan yang belum disimpan",
+  "readerTapWhereNote": "Ketuk tempat di halaman untuk menaruh catatan.",
+  "readerPreviousPage": "Halaman sebelumnya",
+  "readerNextPage": "Halaman berikutnya",
+  "readerFingerAndStylusShort": "Jari + stylus — ketuk untuk stylus saja",
+  "readerFitPage": "Pas satu halaman ke layar",
+  "readerScribble": "Coret-coret di halaman",
+  "readerUndo": "Urungkan",
+  "readerSaveChooseTooltip": "Simpan… (pilih nama dan tempat)",
+  "readerAddScribbleSheet": "Tambah lembar kosong untuk dicoreti",
+  "readerExitPresent": "Keluar dari mode menyajikan",
+  "readerExitReadMode": "Keluar dari mode baca",
+  "readerClipboardFallback": "Anotasi ReadPaper",
+  "readerClipboardEmpty": "Papan klip tidak berisi gambar atau anotasi",
+  "readerPasteImageUnsupported": "Menempel gambar belum bisa di perangkat ini — pakai \"Pilih berkas gambar\"",
+  "readerClipboardNoImage": "Papan klip tidak berisi gambar. Di peramban: klik kanan gambar → Salin gambar.",
+  "readerChooseImage": "Pilih gambar",
+  "readerPreparingImage": "Menyiapkan gambar…",
+  "readerNotAnImage": "Isi papan klip atau berkasnya bukan gambar yang bisa dibaca",
+  "readerUndoPasteImage": "menempel gambar",
+  "readerInsertImage": "Sisipkan gambar",
+  "readerPasteImage": "Tempel gambar dari papan klip",
+  "readerPasteImageHint": "mis. \"Salin gambar\" di peramban — Ctrl+V",
+  "readerChooseImageFile": "Pilih berkas gambar…",
+  "readerAnnotationCopied": "Anotasi disalin — buka halaman tujuan, lalu Tempel",
+  "readerUndoCut": "memotong anotasi",
+  "readerAnnotationCut": "Anotasi dipotong — buka halaman tujuan, lalu Tempel",
+  "readerUndoPaste": "menempel anotasi",
+  "readerMoveToPage": "Pindahkan ke halaman",
+  "readerMove": "Pindahkan",
+  "readerCopy": "Salin",
+  "readerCut": "Potong",
+  "readerToPage": "Ke halaman…",
+  "readerPaste": "Tempel",
+  "readerDeselect": "Batal pilih",
+  "readerClearClipboard": "Kosongkan papan klip",
+  "readerDropOnPage": "Lepaskan di atas halaman untuk memindahkannya",
+  "readerOutsidePage": "Di luar halaman",
+  "readerUndoReshape": "mengubah bentuk anotasi",
+  "readerUndoMove": "memindahkan anotasi",
+  "readerHighlight": "Stabilo",
+  "readerHighlightComment": "Stabilo + komentar",
+  "readerUnderline": "Garis bawah",
+  "readerText": "Teks",
+  "readerComment": "Komentar",
+  "readerTextHint": "Yang ditulis di halaman…",
+  "readerCommentHint": "Catatan untuk bagian ini…",
+  "readerUndoEdit": "mengubah anotasi",
+  "readerDeleteAnnotationQuestion": "Hapus anotasi?",
+  "readerDelete": "Hapus",
+  "readerUndoDelete": "menghapus anotasi",
+  "readerAnnotationDeleted": "Anotasi dihapus",
+  "readerDeleteFailed": "Gagal menghapus anotasi",
+  "readerSaveImageFailed": "Gagal menyimpan gambar",
+  "readerSaved": "Tersimpan",
+  "readerChangesSaved": "Perubahan tersimpan",
+  "readerAddedNotSaved": "Ditambahkan — belum disimpan ke berkas",
+  "readerAdded": "Ditambahkan",
+  "readerSaveAnnotationFailed": "Gagal menyimpan anotasi",
+  "readerEditNote": "Sunting catatan",
+  "readerCloseNote": "Tutup catatan",
+  "readerDragToMove": "Seret untuk memindahkan",
+  "readerDragToResize": "Seret untuk mengubah ukuran",
+  "readerDragToRotate": "Seret untuk memutar",
+  "readerEditCommentColor": "Ubah komentar / warna",
+  "readerDpiScreen": "Layar (72 dpi)",
+  "readerDpiGood": "Baik (144 dpi)",
+  "readerDpiPrint": "Cetak (288 dpi)",
+  "readerFormat": "Format",
+  "readerDensity": "Kerapatan",
+  "readerWholeDocument": "Seluruh dokumen",
+  "readerJumpToPage": "Lompat ke halaman",
+  "readerPage": "Halaman",
+  "readerGo": "Pergi",
+  "readerTableOfContents": "Daftar isi",
+  "readerNoTableOfContents": "Berkas ini tidak membawa daftar isi.",
+  "readerUntitled": "(tanpa judul)",
+  "readerTintNormal": "Normal",
+  "readerTintSepia": "Sepia",
+  "readerTintDim": "Redup",
+  "readerTintInvert": "Balik warna",
+  "readerSaveInFolder": "Simpan di folder",
+  "readerFileNameTaken": "Nama berkas sudah dipakai",
+  "readerNo": "Tidak",
+  "readerYesOverwrite": "Ya, timpa",
+  "readerSaveAs": "Simpan sebagai",
+  "readerFileName": "Nama berkas",
+  "readerSaveIn": "Simpan di",
+  "readerChooseOtherFolder": "Pilih folder lain…",
+  "readerOtherPlace": "Tempat lain…",
+  "readerClearSelection": "Batalkan pilihan",
+  "readerSignatureHint": "Tulis di sini, lalu ketuk halaman untuk menaruhnya.",
+  "readerClear": "Bersihkan",
+  "readerUse": "Pakai",
+  "readerErrSourceMissing": "Berkas asalnya tidak ada",
+  "readerErrPdfUnreadable": "PDF-nya tidak bisa dibaca",
+  "readerErrPageCopy": "Halaman aslinya tidak bisa disalin",
+  "readerErrBlankPage": "Halaman kosongnya tidak bisa dibuat",
+  "readerErrFileMissing": "Berkasnya tidak ada",
+  "readerErrPdfWrite": "PDF-nya gagal ditulis",
+  "readerErrPdfOpen": "PDF-nya tidak bisa dibuka",
+  "readerErrPageRewrite": "Isi halaman gagal ditulis ulang",
+  "readerErrRender": "Halaman gagal dirender",
+  "readerErrPngEncode": "PNG gagal dikodekan",
+  "readerErrPixels": "Piksel gagal dibaca",
+  "readerLoadAnnotationsFailed": "Gagal membaca anotasi: {error}",
+  "readerNoteAnnotationsUnreadable": "Anotasi catatan ini tidak terbaca: {error}",
+  "readerCharactersCopied": "{count} karakter disalin",
+  "readerRedoStep": "Ulangi: {step}",
+  "readerPageColorInverted": "Warna halaman: {color} — warna penanda ikut terbalik",
+  "readerPageColor": "Warna halaman: {color}",
+  "readerResumedAtPage": "Dilanjutkan di halaman {page}",
+  "readerUndone": "Diurungkan: {step}",
+  "readerRedone": "Diulangi: {step}",
+  "readerOriginalFolder": "Folder berkas aslinya ({folder})",
+  "readerSavedFile": "Tersimpan: {name} ({size})",
+  "readerSaveFailed": "Gagal menyimpan: {error}",
+  "readerPdfSaved": "PDF disimpan ({size})",
+  "readerAddToCollectionExplain": "Berkasnya disalin ke dalam library, dibuatkan item Zotero, lalu di-commit — jadi ikut tersinkron ke GitHub.",
+  "readerNewSubcollectionIn": "Sub-koleksi baru di dalam {name}",
+  "readerAddedButAnnotationsFailed": "Masuk library, tetapi anotasinya gagal disalin: {error}",
+  "readerAddedAs": "Masuk library sebagai {key}",
+  "readerAddedWithAnnotations": "Masuk library sebagai {key} beserta {count} anotasi — terbaca juga di Zotero setelah dikirim",
+  "readerPreparingNotebook": "Menyiapkan buku catatan dari {title}…",
+  "readerNotebookFailed": "Gagal membuat buku catatan: {error}",
+  "readerSubcollectionIn": "Sub-koleksi di {name}",
+  "readerNoTextLayer": "PDF ini tidak punya lapisan teks — kemungkinan hasil pindaian. Yang keluar hanya judulnya.",
+  "readerMarkdownFailed": "Gagal mengubah ke Markdown: {error}",
+  "readerPrintExplain": "Ada anotasi yang belum menyatu dengan halaman, jadi belum akan ikut tercetak. Simpan PDF dulu kalau anotasinya perlu ikut.",
+  "readerPrintFailed": "Gagal mencetak: {error}",
+  "readerBlankPagesExplain": "Seukuran halaman pertamanya. Berkas aslinya tidak disentuh — yang berubah adalah salinan kerja, sampai Anda menyimpannya.",
+  "readerPagesAfter": "{count} halaman setelah halaman {page}",
+  "readerPagesAtEnd": "{count} halaman di akhir dokumen",
+  "readerBlankPagesAdded": "{count} halaman kosong ditambahkan di akhir — simpan lewat menu bagikan",
+  "readerBlankPagesInserted": "{count} halaman kosong disisipkan setelah halaman {page} — simpan lewat menu bagikan",
+  "readerAddPagesFailed": "Gagal menambah halaman: {error}",
+  "readerShareFailed": "Gagal membagikan: {error}",
+  "readerSavePage": "Simpan halaman {page}",
+  "readerSaveImageError": "Gagal menyimpan gambar: {error}",
+  "readerFilesSaved": "{count} berkas disimpan",
+  "readerPreparingPdfPages": "Menyiapkan PDF {count} halaman…",
+  "readerPdfFailed": "Gagal membuat PDF: {error}",
+  "readerUnsavedStandalone": "Coretan dan anotasi di {title} belum disimpan ke berkas. Kalau keluar sekarang, semuanya hilang.",
+  "readerUndoStep": "Urungkan: {step}",
+  "readerSaveMenuHintTo": "ke {name}",
+  "readerStatus": "{count} anotasi · halaman {page}",
+  "readerStatusOf": "{count} anotasi · halaman {page} dari {total}",
+  "readerCoachMark": "Untuk menandai: tekan \"Tandai\", pilih warna, lalu sapukan jari di atas teks — begitu jari diangkat teks langsung berwarna. Untuk menyalin: biarkan \"Tandai\" mati, tekan lama di teks, lalu pilih Salin. Untuk catatan: tekan ikon catatan, lalu ketuk halaman.",
+  "readerMarkingBannerTouch": "Sapukan jari di atas teks — lepas jari, langsung ditandai {color}. Geser halaman dan salin teks nonaktif; tekan Selesai untuk kembali.",
+  "readerMarkingBannerMouse": "Seret mouse di atas teks — lepas tombolnya, langsung ditandai {color}. Geser halaman dan salin teks nonaktif; tekan Selesai untuk kembali.",
+  "readerEraserBanner": "Penghapus: sapukan di atas coretan yang salah — goresan yang tersentuh dibuang utuh.",
+  "readerPenBanner": "Gambar bebas di halaman dengan jari atau stylus.",
+  "readerPenPending": "{count} goresan di halaman {page} — disimpan saat menekan Selesai.",
+  "readerSaveTo": "Simpan ke {name}",
+  "readerPageNumber": "Halaman {page}",
+  "readerImagePasted": "Gambar ditempel di halaman {page} — seret sudutnya untuk mengubah ukuran",
+  "readerPastedOnPage": "Ditempel di halaman {page} — seret untuk memindahkannya",
+  "readerPageRange": "Halaman 1 sampai {count}",
+  "readerNoSuchPage": "Tidak ada halaman {page} — dokumen ini {count} halaman",
+  "readerUndoMoveToPage": "memindahkan anotasi ke halaman {page}",
+  "readerMovedToPage": "Dipindah ke halaman {page}",
+  "readerPasteOnPage": "Tempel di halaman {page}",
+  "readerTextOnPage": "Isi teks di halaman {page}",
+  "readerNoteOnPage": "Catatan di halaman {page}",
+  "readerAnnotationOnPage": "Anotasi halaman {page}",
+  "readerUndoAdd": "menambah {type}",
+  "readerNoteBubbleTitle": "Catatan · hal. {page}",
+  "readerHighlightColor": "Warna stabilo: {color}",
+  "readerStrokeWidth": "Tebal goresan: {width}",
+  "readerOnlyPage": "Hanya halaman {page}",
+  "readerOnePdfPages": "Satu PDF berisi {count} halaman",
+  "readerFilesOnePerPage": "{count} berkas, satu per halaman",
+  "readerExportExplain": "Stabilo, garis bawah, dan coretan ikut tergambar. Berkas aslinya tidak disentuh.",
+  "readerExportPdfImages": "Halaman disimpan sebagai gambar di dalam PDF, jadi teksnya tidak bisa dicari atau disalin lagi di salinan itu.",
+  "readerExportLarge": "{count} halaman pada kerapatan ini akan makan waktu dan ruang penyimpanan yang tidak sedikit.",
+  "readerNoAnnotationsYet": "Belum ada anotasi.\n\nPilih teks pada halaman, lalu pilih Stabilo atau Stabilo + komentar.",
+  "readerPageShort": "hal. {page}",
+  "readerPageMustBeBetween": "Halaman harus antara 1 dan {count}",
+  "readerOfPages": "dari {count}",
+  "readerOpenPage": "Buka halaman {page}",
+  "readerOverwriteOriginal": "{name} adalah berkas yang sedang dibuka. Menimpanya membuat versi aslinya hilang, dan coretannya melebur ke halaman.\n\nTimpa berkas aslinya?",
+  "readerOverwriteExisting": "{name} sudah ada di folder ini.\n\nTimpa dengan yang baru?",
+  "readerSaveAsExplain": "Berkas yang dibuka tidak disentuh. Setelah ini, Simpan menulis ke berkas baru ini.",
+  "readerOutsideZoteroPalette": "{name} (di luar palet Zotero)",
+  "readerErrCannotRead": "Tidak bisa dibaca: {path}",
+  "readerErrPageSize": "Ukuran halaman tidak masuk akal: {size}",
+  "@readerLoadAnnotationsFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerNoteAnnotationsUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerCharactersCopied": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerRedoStep": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPageColorInverted": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPageColor": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerResumedAtPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerUndone": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerRedone": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerOriginalFolder": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerSavedFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPdfSaved": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerNewSubcollectionIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerAddedButAnnotationsFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerAddedAs": {
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerAddedWithAnnotations": {
+    "placeholders": {
+      "key": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPreparingNotebook": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerNotebookFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerSubcollectionIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerMarkdownFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPrintFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPagesAfter": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPagesAtEnd": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerBlankPagesAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerBlankPagesInserted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerAddPagesFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerShareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerSavePage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerSaveImageError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerFilesSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPreparingPdfPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPdfFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerUnsavedStandalone": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerUndoStep": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerSaveMenuHintTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerStatus": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerStatusOf": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerMarkingBannerTouch": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerMarkingBannerMouse": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPenPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerSaveTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPageNumber": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerImagePasted": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPastedOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPageRange": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerNoSuchPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerUndoMoveToPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerMovedToPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPasteOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerTextOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerNoteOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerAnnotationOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerUndoAdd": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerNoteBubbleTitle": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerHighlightColor": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerStrokeWidth": {
+    "placeholders": {
+      "width": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerOnlyPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerOnePdfPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerFilesOnePerPage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerExportLarge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPageShort": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPageMustBeBetween": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerOfPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerOpenPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerOverwriteOriginal": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerOverwriteExisting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerOutsideZoteroPalette": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerErrCannotRead": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerErrPageSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  }
+}

@@ -9,6 +9,7 @@ import '../../domain/entities/zotero_annotation.dart';
 import '../../domain/entities/zotero_collection.dart';
 import '../../domain/entities/zotero_item.dart';
 import 'zotero_json.dart';
+import '../../../../core/l10n.dart';
 
 /// Reads a Zotero export from disk.
 ///
@@ -29,7 +30,7 @@ class ZoteroFsDataSource {
   Future<ItemDetail> loadItemDetail(String itemFilePath) async {
     final file = File(itemFilePath);
     if (!file.existsSync()) {
-      throw LibraryFailure('Berkas item tidak ditemukan', details: itemFilePath);
+      throw LibraryFailure(l10n.libraryErrItemNotFound, details: itemFilePath);
     }
     final json = ZoteroJson.decodeObject(await file.readAsString());
     return buildItemDetail(json, itemFilePath);
@@ -45,7 +46,7 @@ LibraryIndex parseLibrarySync(
 ) {
   final dir = Directory(directoryPath);
   if (!dir.existsSync()) {
-    throw LibraryFailure('Direktori library tidak ada', details: directoryPath);
+    throw LibraryFailure(l10n.libraryErrLibraryDirMissing, details: directoryPath);
   }
 
   final collections = <String, ZoteroCollection>{};
@@ -257,7 +258,7 @@ ZoteroItem? buildItem(Map<String, dynamic> json, String filePath) {
 ItemDetail buildItemDetail(Map<String, dynamic> json, String filePath) {
   final item = buildItem(json, filePath);
   if (item == null) {
-    throw LibraryFailure('Berkas item tidak valid', details: filePath);
+    throw LibraryFailure(l10n.libraryErrItemInvalid, details: filePath);
   }
   final annotations = <ZoteroAnnotation>[];
   for (final entry in (json['children'] as List?) ?? const <dynamic>[]) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/formatting.dart';
+import '../../../../core/l10n.dart';
 
 /// What the editor sheet asks the caller to do.
 enum AnnotationEditorAction { save, delete }
@@ -23,9 +24,9 @@ Future<AnnotationEditorResult?> showAnnotationEditor(
   required String initialColor,
   String initialComment = '',
   String? quotedText,
-  String title = 'Komentar',
-  String fieldLabel = 'Komentar',
-  String fieldHint = 'Catatan untuk bagian ini…',
+  String? title,
+  String? fieldLabel,
+  String? fieldHint,
   bool allowDelete = false,
 }) => showDialog<AnnotationEditorResult>(
   context: context,
@@ -33,9 +34,9 @@ Future<AnnotationEditorResult?> showAnnotationEditor(
     initialColor: initialColor,
     initialComment: initialComment,
     quotedText: quotedText,
-    title: title,
-    fieldLabel: fieldLabel,
-    fieldHint: fieldHint,
+    title: title ?? context.l10n.readerComment,
+    fieldLabel: fieldLabel ?? context.l10n.readerComment,
+    fieldHint: fieldHint ?? context.l10n.readerCommentHint,
     allowDelete: allowDelete,
   ),
 );
@@ -133,10 +134,13 @@ class _AnnotationEditorDialogState extends State<_AnnotationEditorDialog> {
                   context,
                 ).pop(const AnnotationEditorResult(AnnotationEditorAction.delete)),
                 icon: const Icon(Icons.delete_outline, size: 18),
-                label: const Text('Hapus'),
+                label: Text(context.l10n.readerDelete),
               ),
             const Spacer(),
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(context.l10n.readerCancel),
+            ),
             const SizedBox(width: 8),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(
@@ -146,7 +150,7 @@ class _AnnotationEditorDialogState extends State<_AnnotationEditorDialog> {
                   color: _color,
                 ),
               ),
-              child: const Text('Simpan'),
+              child: Text(context.l10n.readerSave),
             ),
           ],
         ),

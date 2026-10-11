@@ -10,6 +10,7 @@ import '../../../notes/domain/note_entities.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../domain/entities/repo_stats.dart';
 import '../controllers/workspace_controller.dart';
+import '../../../../core/l10n.dart';
 
 /// Pilihan dari [showRepoTransferSheet].
 class RepoTransferChoice {
@@ -93,9 +94,7 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
         _loading = false;
         _notes = notes;
         if (notes == null) {
-          _error =
-              'Repositori "${profile.name}" belum diambil ke perangkat ini. Buka sekali '
-              'dan ambil library-nya, lalu ulangi.';
+          _error = context.l10n.workspaceTransferRepoNotFetched(profile.name);
         }
       });
       return;
@@ -106,9 +105,7 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
       _loading = false;
       _library = library;
       if (library == null) {
-        _error =
-            'Library di "${profile.name}" belum ada di perangkat ini. Buka repositori itu '
-            'sekali dan ambil library-nya, lalu ulangi.';
+        _error = context.l10n.workspaceTransferLibraryMissing(profile.name);
       }
     });
   }
@@ -127,16 +124,14 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Text('Ke repositori lain', style: theme.textTheme.titleMedium),
+              Text(context.l10n.workspaceTransferTitle, style: theme.textTheme.titleMedium),
               const SizedBox(height: 2),
               Text(widget.what, style: theme.textTheme.bodySmall, maxLines: 2),
               const SizedBox(height: 12),
               if (others.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Text(
-                    'Belum ada repositori lain. Tambahkan dulu di pengaturan Repositori.',
-                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(context.l10n.workspaceTransferNoOthers),
                 )
               else if (_target == null)
                 Flexible(
@@ -161,7 +156,7 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
                   subtitle: RepoStatsLine(profile: _target!),
                   trailing: TextButton(
                     onPressed: () => setState(() => _target = null),
-                    child: const Text('Ganti'),
+                    child: Text(context.l10n.workspaceTransferChange),
                   ),
                 ),
                 const Divider(height: 1),
@@ -178,16 +173,16 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
                   Flexible(child: _noteCollectionList(_notes!)),
                 const SizedBox(height: 8),
                 SegmentedButton<bool>(
-                  segments: const <ButtonSegment<bool>>[
+                  segments: <ButtonSegment<bool>>[
                     ButtonSegment<bool>(
                       value: true,
-                      icon: Icon(Icons.drive_file_move_outline),
-                      label: Text('Pindahkan'),
+                      icon: const Icon(Icons.drive_file_move_outline),
+                      label: Text(context.l10n.workspaceTransferMove),
                     ),
                     ButtonSegment<bool>(
                       value: false,
-                      icon: Icon(Icons.copy_outlined),
-                      label: Text('Salin'),
+                      icon: const Icon(Icons.copy_outlined),
+                      label: Text(context.l10n.workspaceTransferCopy),
                     ),
                   ],
                   selected: <bool>{_move},
@@ -196,8 +191,8 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
                 const SizedBox(height: 4),
                 Text(
                   _move
-                      ? 'Dihapus dari repositori ini setelah salinannya utuh di tujuan.'
-                      : 'Yang di sini tetap; tujuan mendapat salinannya.',
+                      ? context.l10n.workspaceTransferMoveNote
+                      : context.l10n.workspaceTransferCopyNote,
                   style: theme.textTheme.bodySmall,
                 ),
                 const SizedBox(height: 12),
@@ -212,7 +207,9 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
                             move: _move,
                           ),
                         ),
-                  child: Text(_move ? 'Pindahkan' : 'Salin'),
+                  child: Text(
+                    _move ? context.l10n.workspaceTransferMove : context.l10n.workspaceTransferCopy,
+                  ),
                 ),
               ],
             ],
@@ -239,7 +236,11 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
           RadioListTile<String?>(
             dense: true,
             value: null,
-            title: Text(widget.forCollection ? 'Akar Catatan' : 'Catatan, tanpa koleksi'),
+            title: Text(
+              widget.forCollection
+                  ? context.l10n.workspaceTransferNotesRoot
+                  : context.l10n.workspaceTransferNotesUnfiled,
+            ),
           ),
           for (final (c, path) in rows)
             RadioListTile<String?>(
@@ -265,7 +266,11 @@ class _TransferSheetState extends ConsumerState<_TransferSheet> {
           RadioListTile<String?>(
             dense: true,
             value: null,
-            title: Text(widget.forCollection ? 'Akar library' : 'Tanpa koleksi'),
+            title: Text(
+              widget.forCollection
+                  ? context.l10n.workspaceTransferLibraryRoot
+                  : context.l10n.workspaceTransferUnfiled,
+            ),
             subtitle: Text(library.library.name),
           ),
           for (final c in collections)
@@ -308,7 +313,7 @@ class _RepoStatsLineState extends ConsumerState<RepoStatsLine> {
   Widget build(BuildContext context) => FutureBuilder<RepoStats>(
     future: _stats,
     builder: (context, snapshot) => Text(
-      snapshot.data?.summary ?? 'menghitung ukuran…',
+      snapshot.data?.summary ?? context.l10n.workspaceComputingSize,
       style: widget.style ?? Theme.of(context).textTheme.bodySmall,
     ),
   );

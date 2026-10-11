@@ -8,6 +8,7 @@ import '../../epub/presentation/epub_reader_screen.dart';
 import '../../notes/presentation/screens/image_viewer_screen.dart';
 import '../../reader/presentation/screens/reader_screen.dart';
 import 'screens/table_viewer_screen.dart';
+import '../../../core/l10n.dart';
 
 /// Jenis berkas menurut cara ReadPaper membukanya.
 enum FileKind { pdf, epub, image, table, other }
@@ -52,13 +53,12 @@ Future<void> openAnyFile(BuildContext context, String path, {String? title}) asy
 
 /// Menyerahkan berkas ke aplikasi bawaan sistem (Word, LibreOffice, dsb.).
 Future<void> openWithSystem(BuildContext context, String path) async {
-  final ext = p.extension(path).isEmpty ? 'ini' : p.extension(path);
+  final ext = p.extension(path);
   if (!canOpenWithSystem) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Berkas $ext belum bisa dibuka di dalam ReadPaper. Yang bisa: PDF, EPUB, '
-          'gambar, CSV, dan Excel.',
+          ext.isEmpty ? context.l10n.filesCannotOpenThis : context.l10n.filesCannotOpenExt(ext),
         ),
       ),
     );
@@ -72,7 +72,11 @@ Future<void> openWithSystem(BuildContext context, String path) async {
   }
   if (!ok && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Tidak ada aplikasi di sistem ini yang membuka berkas $ext.')),
+      SnackBar(
+        content: Text(
+          ext.isEmpty ? context.l10n.filesNoAppForThis : context.l10n.filesNoAppForExt(ext),
+        ),
+      ),
     );
   }
 }

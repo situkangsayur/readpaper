@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
+import '../../../core/l10n.dart';
 
 /// Satu bab dalam urutan baca (spine) sebuah EPUB.
 class EpubChapter {
@@ -82,7 +83,7 @@ class EpubBook {
 
     final container = text('META-INF/container.xml');
     if (container == null) {
-      throw const FormatException('Bukan EPUB: META-INF/container.xml tidak ada.');
+      throw FormatException(l10n.epubErrNoContainer);
     }
     final opfPath = XmlDocument.parse(container)
         .findAllElements('rootfile')
@@ -91,7 +92,7 @@ class EpubBook {
         .firstOrNull;
     final opfText = opfPath == null ? null : text(opfPath);
     if (opfPath == null || opfText == null) {
-      throw const FormatException('Bukan EPUB: berkas OPF tidak ditemukan.');
+      throw FormatException(l10n.epubErrNoOpf);
     }
     final opfDir = p.posix.dirname(opfPath);
     String resolve(String href, [String? base]) {

@@ -23,6 +23,7 @@ import '../../domain/note_document.dart';
 import '../../domain/note_history.dart';
 import '../widgets/component_frame.dart';
 import '../widgets/note_canvas.dart';
+import '../../../../core/l10n.dart';
 
 /// Alat yang sedang dipegang.
 enum NoteTool { pena, hapusGoresan, hapusSebagian, pilih, bangun, hubung, teks, gambar, diagram }
@@ -470,7 +471,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     final first = _connectFrom;
     if (first == null) {
       setState(() => _connectFrom = hit.id);
-      _say('Sekarang ketuk benda yang kedua.');
+      _say(l10n.notebookTapSecond);
       return;
     }
     if (first == hit.id) {
@@ -573,7 +574,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   }
 
   Future<void> _addText(Offset at) async {
-    final text = await _ask(title: 'Teks baru', hint: 'Tulis teksnya');
+    final text = await _ask(title: l10n.notebookNewText, hint: l10n.notebookTextHint);
     if (text == null || text.trim().isEmpty) return;
     _placed(
       NoteText(
@@ -588,9 +589,9 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
 
   Future<void> _addDiagram(Offset at) async {
     final source = await _ask(
-      title: 'Diagram baru',
-      hint: 'Sumber Mermaid',
-      initial: 'graph TD\n  A[Mulai] --> B[Selesai]',
+      title: l10n.notebookNewDiagram,
+      hint: l10n.notebookMermaidSource,
+      initial: 'graph TD\n  A[${l10n.markdownMermaidStart}] --> B[${l10n.markdownMermaidFinish}]',
       lines: 6,
     );
     if (source == null || source.trim().isEmpty) return;
@@ -608,7 +609,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     final picked = await pickFilesOrTell(
       context,
       type: FileType.image,
-      title: 'Pilih gambar untuk catatan',
+      title: l10n.notebookPickImage,
       multiple: false,
     );
     if (picked.isEmpty) return;
@@ -636,18 +637,22 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
         alt: p.basenameWithoutExtension(source),
       ),
     );
-    if (mounted) _say('Gambar ditaruh — sekarang bisa digeser, diubah ukuran, atau dihapus.');
+    if (mounted) _say(l10n.notebookImagePlaced);
   }
 
   Future<void> _editSelected() async {
     final component = _selected;
     switch (component) {
       case NoteText():
-        final text = await _ask(title: 'Ubah teks', initial: component.text, lines: 4);
+        final text = await _ask(title: l10n.notebookEditText, initial: component.text, lines: 4);
         if (text == null) return;
         _update(component.copyWith(text: text), commit: true);
       case NoteDiagram():
-        final source = await _ask(title: 'Ubah diagram', initial: component.source, lines: 8);
+        final source = await _ask(
+          title: l10n.notebookEditDiagram,
+          initial: component.source,
+          lines: 8,
+        );
         if (source == null) return;
         _update(component.copyWith(source: source), commit: true);
       case NoteImage():
@@ -702,13 +707,13 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     final picked = await pickFilesOrTell(
       context,
       extensions: const <String>['pdf'],
-      title: 'Pilih PDF untuk disisipkan sebagai lembar',
+      title: l10n.notebookPickPdf,
       multiple: false,
     );
     if (picked.isEmpty) return;
     final source = picked.first;
 
-    _say('Menyiapkan lembar dari ${p.basename(source)}…');
+    _say(l10n.notebookPreparingSheets(p.basename(source)));
     try {
       final relativeDir = '${NoteDocumentStore.stemOf(widget.path)}-berkas';
       final pages = await PdfToNotebook.pagesOf(
@@ -719,7 +724,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       );
       if (!mounted) return;
       if (pages.isEmpty) {
-        _say('PDF itu tidak punya halaman yang bisa dibaca.');
+        _say(l10n.notebookPdfNoPages);
         return;
       }
 
@@ -733,9 +738,9 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
         _page = at;
         _selectedId = null;
       });
-      _say('${pages.length} lembar disisipkan dari ${p.basename(source)}.');
+      _say(l10n.notebookSheetsInserted(pages.length, p.basename(source)));
     } on Object catch (e) {
-      if (mounted) _say('Gagal menyisipkan PDF: $e');
+      if (mounted) _say(l10n.notebookInsertPdfFailed('$e'));
     }
   }
 
@@ -761,10 +766,10 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       await NoteDocumentStore.write(widget.path, _document);
       if (!mounted) return true;
       setState(() => _dirty = false);
-      _say('Tersimpan: ${p.basename(widget.path)}');
+      _say(l10n.markdownSaved(p.basename(widget.path)));
       return true;
     } on Object catch (e) {
-      if (mounted) _say('Gagal menyimpan: $e');
+      if (mounted) _say(l10n.whiteboardSaveFailed('$e'));
       return false;
     }
   }
@@ -781,9 +786,9 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       final fixed = markdown.replaceAll('($stem-tinta', '($stem-berkas/$stem-tinta');
       final file = File(p.join(_baseDir, '$stem.md'));
       await file.writeAsString(fixed, flush: true);
-      if (mounted) _say('Markdown tersimpan: ${p.basename(file.path)}');
+      if (mounted) _say(l10n.notebookMarkdownSaved(p.basename(file.path)));
     } on Object catch (e) {
-      if (mounted) _say('Gagal menulis Markdown: $e');
+      if (mounted) _say(l10n.notebookMarkdownFailed('$e'));
     }
   }
 
@@ -799,7 +804,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       final failure = await shareBytes(context, bytes, '$stem.pdf', title: stem);
       if (failure != null && mounted) _say(failure);
     } on Object catch (e) {
-      if (mounted) _say('Gagal membagikan: $e');
+      if (mounted) _say(l10n.whiteboardShareFailed('$e'));
     }
   }
 
@@ -813,15 +818,15 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text('PDF tersimpan: ${p.basename(file.path)}'),
+            content: Text(l10n.markdownPdfSaved(p.basename(file.path))),
             action: SnackBarAction(
-              label: 'Cetak',
+              label: l10n.markdownPrint,
               onPressed: () => Printing.layoutPdf(onLayout: (_) async => bytes),
             ),
           ),
         );
     } on Object catch (e) {
-      if (mounted) _say('Gagal menulis PDF: $e');
+      if (mounted) _say(l10n.markdownPdfFailed('$e'));
     }
   }
 
@@ -832,10 +837,13 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
       await showDialog<void>(
         context: context,
         builder: (dialog) => AlertDialog(
-          title: const Text('Belum bisa disimpan sebagai catatan'),
+          title: Text(l10n.notesCannotSaveAsNote),
           content: Text(target.refusal!),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Mengerti')),
+            TextButton(
+              onPressed: () => Navigator.of(dialog).pop(),
+              child: Text(l10n.notesUnderstood),
+            ),
           ],
         ),
       );
@@ -852,8 +860,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     if (!mounted) return;
     _say(
       key == null
-          ? (ref.read(notesErrorProvider) ?? 'Gagal menyimpan ke koleksi')
-          : 'Masuk ke koleksi catatan',
+          ? (ref.read(notesErrorProvider) ?? l10n.notebookSaveToCollectionFailed)
+          : l10n.notebookSavedToCollection,
     );
   }
 
@@ -875,10 +883,10 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
           style: lines > 1 ? const TextStyle(fontFamily: 'monospace', fontSize: 13) : null,
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Batal')),
+          TextButton(onPressed: () => Navigator.of(dialog).pop(), child: Text(l10n.notesCancel)),
           FilledButton(
             onPressed: () => Navigator.of(dialog).pop(controller.text),
-            child: const Text('Simpan'),
+            child: Text(l10n.notesSave),
           ),
         ],
       ),
@@ -890,20 +898,20 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     final choice = await showDialog<String>(
       context: context,
       builder: (dialog) => AlertDialog(
-        title: const Text('Simpan dulu?'),
-        content: const Text('Ada tulisan yang belum disimpan.'),
+        title: Text(l10n.markdownSaveFirstTitle),
+        content: Text(l10n.notebookUnsavedBody),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialog).pop('batal'),
-            child: const Text('Kembali menulis'),
+            child: Text(l10n.notebookKeepWriting),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialog).pop('buang'),
-            child: const Text('Buang'),
+            child: Text(l10n.notebookDiscard),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialog).pop('simpan'),
-            child: const Text('Simpan'),
+            child: Text(l10n.notesSave),
           ),
         ],
       ),
@@ -931,32 +939,36 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
             children: <Widget>[
               Text(widget.title ?? NoteDocumentStore.stemOf(widget.path)),
               Text(
-                'Lembar ${_page + 1} dari ${_document.pages.length} · '
-                '${_sheet.paper.label} ${_sheet.orientation.label.toLowerCase()} · '
-                'alat: ${_toolLabel(_tool)}'
-                '${_dirty ? ' · belum disimpan' : ''}',
+                context.l10n.notebookStatus(
+                      _page + 1,
+                      _document.pages.length,
+                      _sheet.paper.label,
+                      _sheet.orientation.label.toLowerCase(),
+                      _toolLabel(_tool),
+                    ) +
+                    (_dirty ? context.l10n.notebookUnsavedSuffix : ''),
                 style: Theme.of(context).textTheme.labelSmall,
               ),
             ],
           ),
           actions: <Widget>[
             IconButton(
-              tooltip: 'Perkecil',
+              tooltip: context.l10n.notebookZoomOut,
               icon: const Icon(Icons.zoom_out),
               onPressed: _userScale <= 1.001 ? null : () => _zoomBy(1 / 1.4),
             ),
             IconButton(
-              tooltip: 'Perbesar',
+              tooltip: context.l10n.notebookZoomIn,
               icon: const Icon(Icons.zoom_in),
               onPressed: _userScale >= 7.99 ? null : () => _zoomBy(1.4),
             ),
             IconButton(
-              tooltip: 'Pas ke layar — kembalikan zum',
+              tooltip: context.l10n.notebookFit,
               icon: const Icon(Icons.fit_screen_outlined),
               onPressed: _userScale == 1 ? null : _resetZoom,
             ),
             IconButton(
-              tooltip: 'Urungkan',
+              tooltip: context.l10n.notesUndo,
               icon: const Icon(Icons.undo),
               onPressed: _history.canUndo
                   ? () => setState(() {
@@ -968,7 +980,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                   : null,
             ),
             IconButton(
-              tooltip: 'Ulangi',
+              tooltip: context.l10n.notesRedo,
               icon: const Icon(Icons.redo),
               onPressed: _history.canRedo
                   ? () => setState(() {
@@ -980,7 +992,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                   : null,
             ),
             PopupMenuButton<String>(
-              tooltip: 'Simpan dan bagikan',
+              tooltip: context.l10n.notebookSaveAndShare,
               onSelected: (choice) => switch (choice) {
                 'markdown' => _exportMarkdown(),
                 'pdf' => _exportPdf(),
@@ -989,14 +1001,14 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                 'garis' => _cycleRule(),
                 _ => null,
               },
-              itemBuilder: (_) => const <PopupMenuEntry<String>>[
+              itemBuilder: (_) => <PopupMenuEntry<String>>[
                 PopupMenuItem<String>(
                   value: 'markdown',
                   child: ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.notes_outlined),
-                    title: Text('Simpan sebagai Markdown'),
+                    leading: const Icon(Icons.notes_outlined),
+                    title: Text(context.l10n.notebookSaveAsMarkdown),
                   ),
                 ),
                 PopupMenuItem<String>(
@@ -1004,8 +1016,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                   child: ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.picture_as_pdf_outlined),
-                    title: Text('Simpan sebagai PDF'),
+                    leading: const Icon(Icons.picture_as_pdf_outlined),
+                    title: Text(context.l10n.markdownSaveAsPdf),
                   ),
                 ),
                 PopupMenuItem<String>(
@@ -1013,8 +1025,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                   child: ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.share_outlined),
-                    title: Text('Bagikan sebagai PDF'),
+                    leading: const Icon(Icons.share_outlined),
+                    title: Text(context.l10n.notesShareAsPdf2),
                   ),
                 ),
                 PopupMenuItem<String>(
@@ -1022,8 +1034,8 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                   child: ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.sticky_note_2_outlined),
-                    title: Text('Simpan ke koleksi catatan'),
+                    leading: const Icon(Icons.sticky_note_2_outlined),
+                    title: Text(context.l10n.notebookSaveToNoteCollection),
                   ),
                 ),
                 PopupMenuItem<String>(
@@ -1031,14 +1043,14 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                   child: ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.grid_4x4),
-                    title: Text('Garis bantu lembar'),
+                    leading: const Icon(Icons.grid_4x4),
+                    title: Text(context.l10n.notebookGuideLines),
                   ),
                 ),
               ],
             ),
             IconButton(
-              tooltip: 'Simpan',
+              tooltip: context.l10n.notesSave,
               icon: const Icon(Icons.save_outlined),
               onPressed: _dirty ? _save : null,
             ),
@@ -1068,15 +1080,15 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                 // dikatakan, memilihnya terasa seperti tidak terjadi apa-apa —
                 // dan kesimpulannya "tidak bisa", bukan "belum".
                 final tempel = switch (tool) {
-                  NoteTool.teks => 'teks',
-                  NoteTool.gambar => 'gambar',
-                  NoteTool.diagram => 'diagram',
+                  NoteTool.teks => l10n.notebookPlaceText,
+                  NoteTool.gambar => l10n.notebookPlaceImage,
+                  NoteTool.diagram => l10n.notebookPlaceDiagram,
                   NoteTool.hubung => null,
                   _ => null,
                 };
-                if (tempel != null) _say('Ketuk lembar untuk menaruh $tempel.');
+                if (tempel != null) _say(l10n.notebookTapToPlace(tempel));
                 if (tool == NoteTool.hubung) {
-                  _say('Ketuk benda pertama, lalu benda kedua.');
+                  _say(l10n.notebookTapFirstThenSecond);
                 }
                 setState(() {
                   _tool = tool;
@@ -1117,15 +1129,15 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   child: Row(
                     children: <Widget>[
-                      Expanded(child: Text('${_picked.length} benda dipilih')),
+                      Expanded(child: Text(context.l10n.notebookPickedCount(_picked.length))),
                       TextButton.icon(
                         onPressed: _deletePicked,
                         icon: const Icon(Icons.delete_outline, size: 18),
-                        label: const Text('Hapus'),
+                        label: Text(context.l10n.notesDeleteButton),
                       ),
                       TextButton(
                         onPressed: () => setState(() => _picked = const <String>{}),
-                        child: const Text('Lepas'),
+                        child: Text(context.l10n.notebookRelease),
                       ),
                     ],
                   ),
@@ -1164,7 +1176,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     _apply(_document.replacePage(_page, next));
     final outside = next.outsidePaper;
     if (outside == 0) return;
-    _say('Kertas jadi ${paper.label}. $outside benda sekarang di luar kertas.');
+    _say(l10n.notebookPaperChanged(paper.label, outside));
   }
 
   /// Memutar kertas lembar ini seperempat putaran, beserta isinya.
@@ -1172,10 +1184,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
     final turned = _sheet.turned();
     _apply(_document.replacePage(_page, turned));
     if (_sheet.components.isEmpty) return;
-    _say(
-      'Kertas jadi ${turned.orientation.label.toLowerCase()} — '
-      'isinya ikut berputar, tidak ada yang keluar tepi.',
-    );
+    _say(l10n.notebookTurned(turned.orientation.label.toLowerCase()));
   }
 
   void _cycleRule() {
@@ -1374,7 +1383,7 @@ class _NotebookScreenState extends ConsumerState<NotebookScreen> {
   void _explainIdleDrag() {
     if (_explainedIdleDrag) return;
     _explainedIdleDrag = true;
-    _say('Alat sekarang "${_toolLabel(_tool)}" — pilih ikon pena untuk menggambar.');
+    _say(l10n.notebookIdleTool(_toolLabel(_tool)));
   }
 
   void _onTap(Offset sheetPoint) {
@@ -1445,30 +1454,36 @@ class _Tools extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: <Widget>[
-          _Tool(icon: Icons.edit, label: 'Pena', value: NoteTool.pena, tool: tool, onTool: onTool),
+          _Tool(
+            icon: Icons.edit,
+            label: context.l10n.notebookToolPen,
+            value: NoteTool.pena,
+            tool: tool,
+            onTool: onTool,
+          ),
           _Tool(
             icon: Icons.auto_fix_normal,
-            label: 'Hapus goresan',
+            label: context.l10n.notebookToolEraseStroke,
             value: NoteTool.hapusGoresan,
             tool: tool,
             onTool: onTool,
           ),
           _Tool(
             icon: Icons.cleaning_services_outlined,
-            label: 'Hapus sebagian',
+            label: context.l10n.notebookToolErasePart,
             value: NoteTool.hapusSebagian,
             tool: tool,
             onTool: onTool,
           ),
           _Tool(
             icon: Icons.touch_app_outlined,
-            label: 'Pilih',
+            label: context.l10n.notebookToolSelect,
             value: NoteTool.pilih,
             tool: tool,
             onTool: onTool,
           ),
           PopupMenuButton<ShapeKind>(
-            tooltip: 'Bangun: ${shape.label}',
+            tooltip: context.l10n.whiteboardShape(shape.label),
             onSelected: onShape,
             icon: Icon(
               _shapeIcon(shape),
@@ -1490,30 +1505,38 @@ class _Tools extends StatelessWidget {
           ),
           _Tool(
             icon: Icons.linear_scale,
-            label: 'Hubungkan dua benda',
+            label: context.l10n.notebookToolConnectTwo,
             value: NoteTool.hubung,
             tool: tool,
             onTool: onTool,
           ),
           const VerticalDivider(width: 12),
-          _Tool(icon: Icons.title, label: 'Teks', value: NoteTool.teks, tool: tool, onTool: onTool),
+          _Tool(
+            icon: Icons.title,
+            label: context.l10n.notebookToolText,
+            value: NoteTool.teks,
+            tool: tool,
+            onTool: onTool,
+          ),
           _Tool(
             icon: Icons.account_tree_outlined,
-            label: 'Diagram',
+            label: context.l10n.notebookToolDiagram,
             value: NoteTool.diagram,
             tool: tool,
             onTool: onTool,
           ),
           _Tool(
             icon: Icons.image_outlined,
-            label: 'Gambar',
+            label: context.l10n.notebookToolImage,
             value: NoteTool.gambar,
             tool: tool,
             onTool: onTool,
           ),
           const VerticalDivider(width: 12),
           PopupMenuButton<Color>(
-            tooltip: selected == null ? 'Warna pena' : 'Warna komponen',
+            tooltip: selected == null
+                ? context.l10n.notesPenColor
+                : context.l10n.notebookComponentColor,
             icon: Icon(Icons.circle, color: selected == null ? pen : Color(selected!.color)),
             onSelected: selected == null ? onPen : onColor,
             itemBuilder: (_) => <PopupMenuEntry<Color>>[
@@ -1524,14 +1547,16 @@ class _Tools extends StatelessWidget {
                     children: <Widget>[
                       Icon(Icons.circle, color: option.color, size: 18),
                       const SizedBox(width: 10),
-                      Text(option.name),
+                      Text(InkPalette.label(option.name)),
                     ],
                   ),
                 ),
             ],
           ),
           PopupMenuButton<double>(
-            tooltip: tool == NoteTool.pena ? 'Tebal pena' : 'Ukuran penghapus',
+            tooltip: tool == NoteTool.pena
+                ? context.l10n.notebookPenWidth
+                : context.l10n.notebookEraserSize,
             icon: const Icon(Icons.line_weight),
             onSelected: tool == NoteTool.pena ? onPenWidth : onEraser,
             itemBuilder: (_) => <PopupMenuEntry<double>>[
@@ -1543,15 +1568,15 @@ class _Tools extends StatelessWidget {
                   value: value,
                   child: Text(
                     tool == NoteTool.pena
-                        ? 'Tebal ${value.toStringAsFixed(1)}'
-                        : 'Penghapus ${value.toStringAsFixed(0)}',
+                        ? context.l10n.notebookWidthValue(value.toStringAsFixed(1))
+                        : context.l10n.notebookEraserValue(value.toStringAsFixed(0)),
                   ),
                 ),
             ],
           ),
           if (selected != null)
             PopupMenuButton<double>(
-              tooltip: 'Kepekatan',
+              tooltip: context.l10n.notebookOpacity,
               icon: const Icon(Icons.opacity),
               onSelected: onOpacity,
               itemBuilder: (_) => <PopupMenuEntry<double>>[
@@ -1594,7 +1619,7 @@ class _PaperChip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         PopupMenuButton<NotePaper>(
-          tooltip: 'Ukuran kertas: ${paper.label}',
+          tooltip: context.l10n.notebookPaperSize(paper.label),
           onSelected: onPaper,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
@@ -1627,8 +1652,8 @@ class _PaperChip extends StatelessWidget {
         // ketukan, dan namanya ikut tertulis supaya jelas sekarang sedang apa.
         Tooltip(
           message: orientation == NoteOrientation.tegak
-              ? 'Kertas tegak — ketuk untuk mendatar'
-              : 'Kertas mendatar — ketuk untuk tegak',
+              ? context.l10n.notebookPortraitTap
+              : context.l10n.notebookLandscapeTap,
           child: InkWell(
             borderRadius: BorderRadius.circular(20),
             onTap: onTurn,
@@ -1660,15 +1685,15 @@ class _PaperChip extends StatelessWidget {
 }
 
 String _toolLabel(NoteTool tool) => switch (tool) {
-  NoteTool.pena => 'Pena',
-  NoteTool.hapusGoresan => 'Hapus goresan',
-  NoteTool.hapusSebagian => 'Hapus sebagian',
-  NoteTool.pilih => 'Pilih',
-  NoteTool.bangun => 'Bangun',
-  NoteTool.hubung => 'Hubungkan',
-  NoteTool.teks => 'Teks',
-  NoteTool.gambar => 'Gambar',
-  NoteTool.diagram => 'Diagram',
+  NoteTool.pena => l10n.notebookToolPen,
+  NoteTool.hapusGoresan => l10n.notebookToolEraseStroke,
+  NoteTool.hapusSebagian => l10n.notebookToolErasePart,
+  NoteTool.pilih => l10n.notebookToolSelect,
+  NoteTool.bangun => l10n.notebookToolShape,
+  NoteTool.hubung => l10n.notebookToolConnect,
+  NoteTool.teks => l10n.notebookToolText,
+  NoteTool.gambar => l10n.notebookToolImage,
+  NoteTool.diagram => l10n.notebookToolDiagram,
 };
 
 /// Sakelar "siapa yang boleh menggambar" — bukan alat, jadi tidak berbentuk
@@ -1683,11 +1708,7 @@ class _ModeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Tooltip(
-      message: finger
-          ? 'Jari dan stylus sama-sama menggambar. Ketuk untuk hanya stylus — '
-                'jari lalu dipakai menggeser dan memperbesar saja.'
-          : 'Stylus menggambar, jari menggeser dan memperbesar. Ketuk untuk '
-                'mengizinkan jari menggambar lagi.',
+      message: finger ? context.l10n.notebookFingerOn : context.l10n.notebookStylusOnly,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () => onFinger(!finger),
@@ -1702,7 +1723,7 @@ class _ModeChip extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               Text(
-                finger ? 'Jari + stylus' : 'Stylus saja',
+                finger ? context.l10n.notebookFingerChip : context.l10n.notebookStylusChip,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: finger ? scheme.onSurfaceVariant : scheme.primary,
                   fontWeight: finger ? FontWeight.w400 : FontWeight.w600,
@@ -1792,13 +1813,13 @@ class _PageBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             IconButton(
-              tooltip: 'Lembar sebelumnya',
+              tooltip: context.l10n.notebookPrevSheet,
               icon: const Icon(Icons.chevron_left),
               onPressed: page == 0 ? null : () => onGo(page - 1),
             ),
             Text('${page + 1} / $count', style: Theme.of(context).textTheme.labelMedium),
             IconButton(
-              tooltip: 'Lembar berikutnya',
+              tooltip: context.l10n.notebookNextSheet,
               icon: const Icon(Icons.chevron_right),
               onPressed: page >= count - 1 ? null : () => onGo(page + 1),
             ),
@@ -1809,17 +1830,17 @@ class _PageBar extends StatelessWidget {
             _PaperChip(paper: paper, orientation: orientation, onPaper: onPaper, onTurn: onTurn),
             const SizedBox(width: 4),
             IconButton(
-              tooltip: 'Lembar kosong baru',
+              tooltip: context.l10n.notebookNewSheet,
               icon: const Icon(Icons.note_add_outlined),
               onPressed: onAdd,
             ),
             IconButton(
-              tooltip: 'Sisipkan halaman PDF sebagai lembar',
+              tooltip: context.l10n.notebookInsertPdfSheet,
               icon: const Icon(Icons.picture_as_pdf_outlined),
               onPressed: onAddPdf,
             ),
             IconButton(
-              tooltip: 'Hapus lembar ini',
+              tooltip: context.l10n.notebookDeleteSheet,
               icon: const Icon(Icons.delete_outline),
               onPressed: onDelete,
             ),

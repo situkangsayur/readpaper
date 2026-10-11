@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import '../../../core/utils/share_file.dart';
 import '../data/note_document_store.dart';
 import '../data/note_export.dart';
+import '../../../core/l10n.dart';
 
 /// Membagikan berkas apa pun dari panel berkas atau daftar catatan.
 ///
@@ -24,7 +25,7 @@ Future<void> shareAnyFile(BuildContext context, String path, {String? title}) as
       failure = await shareFile(context, path, title: title);
     }
   } on Object catch (e) {
-    failure = 'Gagal membagikan: $e';
+    failure = l10n.whiteboardShareFailed('$e');
   }
   if (failure != null) {
     messenger

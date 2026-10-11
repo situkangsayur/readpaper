@@ -9,6 +9,7 @@ import '../../../core/utils/work_folder.dart';
 import '../../library/domain/entities/zotero_item.dart';
 import '../domain/bibtex.dart';
 import '../domain/csl_json.dart';
+import '../../../core/l10n.dart';
 
 /// Menulis `.bib` untuk [items] ke folder kerja, lalu menawarkan untuk
 /// membagikannya.
@@ -24,7 +25,7 @@ Future<void> exportBibTex(
 }) async {
   final messenger = ScaffoldMessenger.of(context);
   if (items.isEmpty) {
-    messenger.showSnackBar(const SnackBar(content: Text('Koleksi ini belum berisi paper.')));
+    messenger.showSnackBar(SnackBar(content: Text(context.l10n.citationEmptyCollection)));
     return;
   }
   final text = BibTex.export(CslJson.ofAll(items));
@@ -38,9 +39,9 @@ Future<void> exportBibTex(
     ..showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 6),
-        content: Text('${items.length} entri ditulis ke ${p.basename(file.path)} di folder kerja'),
+        content: Text(context.l10n.citationBibWritten(items.length, p.basename(file.path))),
         action: SnackBarAction(
-          label: 'Bagikan',
+          label: context.l10n.filesShare,
           onPressed: () => shareFile(context, file.path, title: p.basename(file.path)),
         ),
       ),
@@ -55,5 +56,5 @@ Future<void> copyBibTex(BuildContext context, ZoteroItem item) async {
   final key = text.substring(text.indexOf('{') + 1, text.indexOf(','));
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text('BibTeX disalin — kuncinya $key')));
+    ..showSnackBar(SnackBar(content: Text(context.l10n.citationBibCopied(key))));
 }

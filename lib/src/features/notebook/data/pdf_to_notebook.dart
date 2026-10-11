@@ -9,6 +9,7 @@ import 'package:pdfrx/pdfrx.dart';
 
 import '../domain/note_document.dart';
 import 'note_document_store.dart';
+import '../../../core/l10n.dart';
 
 /// Mengubah sebuah PDF jadi buku catatan yang bisa disunting.
 ///
@@ -85,7 +86,7 @@ class PdfToNotebook {
                   position: box.topLeft,
                   size: box.size,
                   file: '$relativeDir/$name',
-                  alt: 'Halaman ${i + 1}',
+                  alt: l10n.notebookPageAlt(i + 1),
                 ),
               ],
             ),

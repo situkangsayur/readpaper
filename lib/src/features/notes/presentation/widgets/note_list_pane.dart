@@ -23,6 +23,7 @@ import '../../domain/note_entities.dart';
 import '../controllers/notes_controller.dart';
 import '../../../files/presentation/open_any_file.dart';
 import '../../../library/presentation/import_actions.dart';
+import '../../../../core/l10n.dart';
 
 /// Panel tengah saat yang dipilih ada di bawah akar catatan.
 ///
@@ -41,14 +42,14 @@ class NoteListPane extends ConsumerWidget {
     final index = asyncNotes.value ?? NotesIndex.empty;
     final notes = notesFor(index, selection);
     final title = switch (selection.kind) {
-      SelectionKind.notesUnfiled => 'Catatan tanpa koleksi',
+      SelectionKind.notesUnfiled => context.l10n.notesUnfiledTitle,
       SelectionKind.noteCollection =>
         index.collections
                 .where((c) => c.key == selection.collectionKey)
                 .map((c) => c.name)
                 .firstOrNull ??
-            'Catatan',
-      _ => 'Semua catatan',
+            context.l10n.notesRootTitle,
+      _ => context.l10n.notesAllTitle,
     };
 
     return Column(
@@ -63,17 +64,20 @@ class NoteListPane extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(title, style: Theme.of(context).textTheme.titleSmall),
-                    Text('${notes.length} catatan', style: Theme.of(context).textTheme.labelSmall),
+                    Text(
+                      context.l10n.notesCount(notes.length),
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
                   ],
                 ),
               ),
               IconButton(
-                tooltip: 'Buku catatan baru',
+                tooltip: context.l10n.notesNewNotebook,
                 icon: const Icon(Icons.auto_stories_outlined, size: 20),
                 onPressed: () => _newNotebook(context, ref, selection),
               ),
               IconButton(
-                tooltip: 'Catatan Markdown baru',
+                tooltip: context.l10n.notesNewMarkdown,
                 icon: const Icon(Icons.post_add_outlined, size: 20),
                 onPressed: () => _newMarkdown(context, ref, selection),
               ),
@@ -98,16 +102,11 @@ class NoteListPane extends ConsumerWidget {
               child: notes.isEmpty
                   ? ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      children: const <Widget>[
+                      children: <Widget>[
                         Padding(
-                          padding: EdgeInsets.all(32),
+                          padding: const EdgeInsets.all(32),
                           child: Center(
-                            child: Text(
-                              'Belum ada catatan di sini. Seret berkas dari panel berkas, '
-                              'atau pakai tombol tambah di atas. Tarik ke bawah untuk '
-                              'mengambil perubahan dari GitHub.',
-                              textAlign: TextAlign.center,
-                            ),
+                            child: Text(context.l10n.notesEmpty, textAlign: TextAlign.center),
                           ),
                         ),
                       ],
@@ -189,7 +188,7 @@ class _NoteTile extends StatelessWidget {
         style: Theme.of(context).textTheme.labelSmall,
       ),
       trailing: IconButton(
-        tooltip: 'Tindakan',
+        tooltip: context.l10n.notesActions,
         icon: const Icon(Icons.more_vert, size: 20),
         onPressed: onMenu,
       ),
@@ -231,7 +230,7 @@ class _NoteBanner extends StatelessWidget {
             ),
             IconButton(
               icon: Icon(Icons.close, size: 16, color: scheme.onErrorContainer),
-              tooltip: 'Tutup',
+              tooltip: context.l10n.notesClose,
               onPressed: onClose,
             ),
           ],
@@ -246,7 +245,11 @@ class _NoteBanner extends StatelessWidget {
 /// Berkasnya ditulis di folder sementara lalu disalin masuk oleh [NotesStore],
 /// sama seperti catatan lain — supaya penamaan dan pencatatannya satu jalur.
 Future<void> _newNotebook(BuildContext context, WidgetRef ref, LibrarySelection selection) async {
-  final title = await _askText(context, title: 'Buku catatan baru', initial: 'Catatan');
+  final title = await _askText(
+    context,
+    title: context.l10n.notesNewNotebook,
+    initial: context.l10n.notesNotebookDefaultTitle,
+  );
   if (title == null || title.trim().isEmpty || !context.mounted) return;
 
   final stem = title.trim().replaceAll(RegExp(r'[\\/:*?"<>|]'), '-');
@@ -264,7 +267,7 @@ Future<void> _newNotebook(BuildContext context, WidgetRef ref, LibrarySelection 
   if (!context.mounted) return;
   if (key == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ref.read(notesErrorProvider) ?? 'Gagal membuat buku catatan')),
+      SnackBar(content: Text(ref.read(notesErrorProvider) ?? context.l10n.notesNewNotebookFailed)),
     );
     return;
   }
@@ -287,7 +290,11 @@ Future<void> _newNotebook(BuildContext context, WidgetRef ref, LibrarySelection 
 /// [NotesStore], supaya penamaan dan pencatatannya tetap satu jalur dengan
 /// catatan yang datang dari mana pun.
 Future<void> _newMarkdown(BuildContext context, WidgetRef ref, LibrarySelection selection) async {
-  final title = await _askText(context, title: 'Catatan baru', initial: 'Catatan');
+  final title = await _askText(
+    context,
+    title: context.l10n.notesNewNoteTitle,
+    initial: context.l10n.notesNotebookDefaultTitle,
+  );
   if (title == null || title.trim().isEmpty || !context.mounted) return;
 
   final stem = title.trim().replaceAll(RegExp(r'[\\/:*?"<>|]'), '-');
@@ -305,7 +312,7 @@ Future<void> _newMarkdown(BuildContext context, WidgetRef ref, LibrarySelection 
   if (!context.mounted) return;
   if (key == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ref.read(notesErrorProvider) ?? 'Gagal membuat catatan')),
+      SnackBar(content: Text(ref.read(notesErrorProvider) ?? context.l10n.notesNewNoteFailed)),
     );
     return;
   }
@@ -408,29 +415,31 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.drive_file_rename_outline),
-            title: const Text('Ubah judul'),
+            title: Text(context.l10n.notesRename),
             onTap: () => Navigator.of(sheet).pop('nama'),
           ),
           ListTile(
             leading: const Icon(Icons.share_outlined),
-            title: const Text('Bagikan'),
-            subtitle: Text(note.isNotebook ? 'sebagai PDF' : 'ke aplikasi lain'),
+            title: Text(context.l10n.notesShare),
+            subtitle: Text(
+              note.isNotebook ? context.l10n.notesShareAsPdf : context.l10n.notesShareToApps,
+            ),
             onTap: () => Navigator.of(sheet).pop('bagikan'),
           ),
           ListTile(
             leading: const Icon(Icons.drive_file_move_outline),
-            title: const Text('Pindahkan ke koleksi'),
+            title: Text(context.l10n.notesMoveToCollection),
             onTap: () => Navigator.of(sheet).pop('pindah'),
           ),
           ListTile(
             leading: const Icon(Icons.storage_outlined),
-            title: const Text('Pindahkan atau salin ke repositori lain…'),
+            title: Text(context.l10n.notesTransferToRepo),
             onTap: () => Navigator.of(sheet).pop('repo'),
           ),
           ListTile(
             leading: const Icon(Icons.delete_outline),
-            title: const Text('Hapus catatan'),
-            subtitle: const Text('Berkasnya ikut terhapus'),
+            title: Text(context.l10n.notesDelete),
+            subtitle: Text(context.l10n.notesDeleteSubtitle),
             onTap: () => Navigator.of(sheet).pop('hapus'),
           ),
         ],
@@ -444,12 +453,13 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
     case 'repo':
       final choice = await showRepoTransferSheet(
         context,
-        what: 'Catatan "${note.title}"',
+        what: context.l10n.notesTransferWhat(note.title),
         forCollection: false,
         notes: true,
       );
       if (choice == null || !context.mounted) return;
       final messenger = ScaffoldMessenger.of(context);
+      final text = context.l10n;
       final failure = await controller.transferItem(
         itemKey: note.key,
         target: choice.target,
@@ -463,14 +473,16 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
             duration: Duration(seconds: failure == null ? 4 : 8),
             content: Text(
               failure ??
-                  'Catatan ${choice.move ? 'dipindahkan' : 'disalin'} ke ${choice.target.name}',
+                  (choice.move
+                      ? text.notesMoved(choice.target.name)
+                      : text.notesCopied(choice.target.name)),
             ),
           ),
         );
     case 'bagikan':
       await shareAnyFile(context, p.join(index.directory, note.file), title: note.title);
     case 'nama':
-      final name = await _askText(context, title: 'Ubah judul', initial: note.title);
+      final name = await _askText(context, title: context.l10n.notesRename, initial: note.title);
       if (name == null || name.trim().isEmpty) return;
       await controller.rename(itemKey: note.key, title: name);
     case 'pindah':
@@ -481,16 +493,16 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
       final yes = await showDialog<bool>(
         context: context,
         builder: (dialog) => AlertDialog(
-          title: const Text('Hapus catatan?'),
-          content: Text('“${note.title}” beserta berkasnya akan dihapus dari repositori.'),
+          title: Text(context.l10n.notesDeleteConfirmTitle),
+          content: Text(context.l10n.notesDeleteConfirmBody(note.title)),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialog).pop(false),
-              child: const Text('Batal'),
+              child: Text(context.l10n.notesCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialog).pop(true),
-              child: const Text('Hapus'),
+              child: Text(context.l10n.notesDeleteButton),
             ),
           ],
         ),
@@ -510,7 +522,7 @@ Future<String?> _pickCollection(BuildContext context, NotesIndex index) =>
           children: <Widget>[
             ListTile(
               leading: const Icon(Icons.folder_off_outlined),
-              title: const Text('Tanpa koleksi'),
+              title: Text(context.l10n.notesNoCollection),
               onTap: () => Navigator.of(sheet).pop(''),
             ),
             const Divider(height: 1),
@@ -534,14 +546,17 @@ Future<String?> _askText(BuildContext context, {required String title, String in
       content: TextField(
         controller: controller,
         autofocus: true,
-        decoration: const InputDecoration(labelText: 'Judul'),
+        decoration: InputDecoration(labelText: context.l10n.notesTitleField),
         onSubmitted: (value) => Navigator.of(dialog).pop(value),
       ),
       actions: <Widget>[
-        TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Batal')),
+        TextButton(
+          onPressed: () => Navigator.of(dialog).pop(),
+          child: Text(context.l10n.notesCancel),
+        ),
         FilledButton(
           onPressed: () => Navigator.of(dialog).pop(controller.text),
-          child: const Text('Simpan'),
+          child: Text(context.l10n.notesSave),
         ),
       ],
     ),

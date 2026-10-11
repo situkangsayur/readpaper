@@ -1,5 +1,6 @@
 import '../constants/app_constants.dart';
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 
 /// Parses a `#rrggbb` string into a [Color]; falls back to the Zotero yellow.
 Color colorFromHex(String? hex) {
@@ -65,13 +66,13 @@ String humanFileSize(int bytes) {
 /// question faster than a timestamp does, and the exact minute never matters.
 String relativeTime(DateTime when, {DateTime? now}) {
   final diff = (now ?? DateTime.now()).difference(when);
-  if (diff.isNegative) return 'baru saja';
-  if (diff.inMinutes < 1) return 'baru saja';
-  if (diff.inMinutes < 60) return '${diff.inMinutes} menit lalu';
-  if (diff.inHours < 24) return '${diff.inHours} jam lalu';
-  if (diff.inDays == 1) return 'kemarin';
-  if (diff.inDays < 7) return '${diff.inDays} hari lalu';
-  if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} pekan lalu';
-  if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} bulan lalu';
-  return '${(diff.inDays / 365).floor()} tahun lalu';
+  if (diff.isNegative) return l10n.commonJustNow;
+  if (diff.inMinutes < 1) return l10n.commonJustNow;
+  if (diff.inMinutes < 60) return l10n.commonMinutesAgo(diff.inMinutes);
+  if (diff.inHours < 24) return l10n.commonHoursAgo(diff.inHours);
+  if (diff.inDays == 1) return l10n.commonYesterday;
+  if (diff.inDays < 7) return l10n.commonDaysAgo(diff.inDays);
+  if (diff.inDays < 30) return l10n.commonWeeksAgo((diff.inDays / 7).floor());
+  if (diff.inDays < 365) return l10n.commonMonthsAgo((diff.inDays / 30).floor());
+  return l10n.commonYearsAgo((diff.inDays / 365).floor());
 }

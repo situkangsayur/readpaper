@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/library_stats.dart';
 import '../controllers/library_controllers.dart';
+import '../../../../core/l10n.dart';
 
 /// Bentuk sebuah library dalam angka.
 ///
@@ -19,31 +20,31 @@ class LibraryStatsScreen extends ConsumerWidget {
     final stats = ref.watch(libraryStatsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Statistik library')),
+      appBar: AppBar(title: Text(context.l10n.libraryStats)),
       body: stats.isEmpty
-          ? const Center(child: Text('Belum ada item untuk dihitung.'))
+          ? Center(child: Text(context.l10n.libraryStatsEmpty))
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
               children: <Widget>[
                 _Summary(stats: stats),
                 const SizedBox(height: 20),
                 _Section(
-                  title: 'Per tahun terbit',
+                  title: context.l10n.libraryStatsByYear,
                   note: stats.withoutYear == 0
                       ? null
-                      : '${stats.withoutYear} item tanpa tahun tidak ikut dihitung di sini.',
+                      : context.l10n.libraryStatsWithoutYear(stats.withoutYear),
                   tallies: stats.byYear,
                 ),
                 _Section(
-                  title: 'Per jenis',
+                  title: context.l10n.libraryStatsByType,
                   tallies: <StatTally>[
                     for (final t in stats.byType)
                       (label: LibraryStats.labelForType(t.label), count: t.count),
                   ],
                 ),
-                _Section(title: 'Pengarang tersering', tallies: stats.topCreators),
+                _Section(title: context.l10n.libraryStatsTopAuthors, tallies: stats.topCreators),
                 if (stats.topTags.isNotEmpty)
-                  _Section(title: 'Tag tersering', tallies: stats.topTags),
+                  _Section(title: context.l10n.libraryStatsTopTags, tallies: stats.topTags),
               ],
             ),
     );
@@ -66,9 +67,9 @@ class _Summary extends StatelessWidget {
       spacing: 10,
       runSpacing: 10,
       children: <Widget>[
-        _Tile(label: 'Item', value: '${stats.itemCount}'),
+        _Tile(label: context.l10n.libraryStatsItems, value: '${stats.itemCount}'),
         _Tile(
-          label: 'Berkasnya ada',
+          label: context.l10n.libraryStatsWithFile,
           value: '${stats.withFile}',
           note: '${stats.filePercent}%',
           // Yang paling pantas diperhatikan: library yang separuhnya tanpa
@@ -76,13 +77,17 @@ class _Summary extends StatelessWidget {
           tint: stats.filePercent < 50 ? scheme.error : null,
         ),
         _Tile(
-          label: 'Ada anotasi',
+          label: context.l10n.libraryStatsWithAnnotations,
           value: '${stats.withAnnotations}',
-          note: '${stats.annotationTotal} anotasi',
+          note: context.l10n.libraryAnnotationCount(stats.annotationTotal),
         ),
-        if (span != null) _Tile(label: 'Rentang tahun', value: span),
+        if (span != null) _Tile(label: context.l10n.libraryStatsYearSpan, value: span),
         if (stats.untitledCount > 0)
-          _Tile(label: 'Tanpa judul', value: '${stats.untitledCount}', tint: scheme.error),
+          _Tile(
+            label: context.l10n.libraryStatsUntitled,
+            value: '${stats.untitledCount}',
+            tint: scheme.error,
+          ),
       ],
     );
   }

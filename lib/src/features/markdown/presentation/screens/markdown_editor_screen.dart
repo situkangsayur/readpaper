@@ -10,6 +10,7 @@ import '../../../../core/utils/layout_size.dart';
 import '../../data/markdown_pdf.dart';
 import '../../domain/markdown_doc.dart';
 import '../widgets/markdown_view.dart';
+import '../../../../core/l10n.dart';
 
 /// Apa yang sedang ditampilkan.
 enum MarkdownPane { sunting, pratinjau, keduanya }
@@ -73,7 +74,7 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
       _controller.text = text;
       _doc = MarkdownDoc.parse(text);
     } on Object catch (e) {
-      _error = 'Gagal membaca berkas: $e';
+      _error = l10n.markdownReadFailed('$e');
     }
   }
 
@@ -98,13 +99,13 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
       setState(() => _dirty = false);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Tersimpan: ${p.basename(widget.path)}')));
+        ..showSnackBar(SnackBar(content: Text(l10n.markdownSaved(p.basename(widget.path)))));
       return true;
     } on Object catch (e) {
       if (!mounted) return false;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
+        ..showSnackBar(SnackBar(content: Text(l10n.markdownSaveFailed('$e'))));
       return false;
     }
   }
@@ -138,7 +139,7 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
     final messenger = ScaffoldMessenger.of(context);
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Menulis PDF…')));
+      ..showSnackBar(SnackBar(content: Text(l10n.markdownWritingPdf)));
     try {
       final bytes = await MarkdownPdf.build(_doc, baseDir: p.dirname(widget.path));
       final stem = p.basenameWithoutExtension(widget.path);
@@ -152,9 +153,9 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
         ..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text('PDF tersimpan: ${p.basename(file.path)}'),
+            content: Text(l10n.markdownPdfSaved(p.basename(file.path))),
             action: SnackBarAction(
-              label: 'Cetak',
+              label: l10n.markdownPrint,
               onPressed: () => Printing.layoutPdf(onLayout: (_) async => bytes),
             ),
           ),
@@ -163,7 +164,7 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
       if (!mounted) return;
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Gagal menulis PDF: $e')));
+        ..showSnackBar(SnackBar(content: Text(l10n.markdownPdfFailed('$e'))));
     }
   }
 
@@ -214,20 +215,20 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
     final choice = await showDialog<String>(
       context: context,
       builder: (dialog) => AlertDialog(
-        title: const Text('Simpan dulu?'),
-        content: const Text('Ada perubahan yang belum disimpan.'),
+        title: Text(context.l10n.markdownSaveFirstTitle),
+        content: Text(context.l10n.markdownUnsavedBody),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(dialog).pop('batal'),
-            child: const Text('Kembali menyunting'),
+            child: Text(context.l10n.markdownKeepEditing),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialog).pop('buang'),
-            child: const Text('Buang perubahan'),
+            child: Text(context.l10n.markdownDiscard),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialog).pop('simpan'),
-            child: const Text('Simpan'),
+            child: Text(context.l10n.markdownSave),
           ),
         ],
       ),
@@ -256,7 +257,7 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
             children: <Widget>[
               Text(widget.title ?? p.basenameWithoutExtension(widget.path)),
               Text(
-                _dirty ? 'Belum disimpan' : p.basename(widget.path),
+                _dirty ? context.l10n.markdownUnsaved : p.basename(widget.path),
                 style: Theme.of(context).textTheme.labelSmall,
               ),
             ],
@@ -266,21 +267,21 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
               showSelectedIcon: false,
               style: const ButtonStyle(visualDensity: VisualDensity.compact),
               segments: <ButtonSegment<MarkdownPane>>[
-                const ButtonSegment<MarkdownPane>(
+                ButtonSegment<MarkdownPane>(
                   value: MarkdownPane.sunting,
-                  icon: Icon(Icons.edit_outlined, size: 18),
-                  tooltip: 'Sunting',
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  tooltip: context.l10n.markdownEdit,
                 ),
-                const ButtonSegment<MarkdownPane>(
+                ButtonSegment<MarkdownPane>(
                   value: MarkdownPane.pratinjau,
-                  icon: Icon(Icons.visibility_outlined, size: 18),
-                  tooltip: 'Pratinjau',
+                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                  tooltip: context.l10n.markdownPreview,
                 ),
                 if (wide)
-                  const ButtonSegment<MarkdownPane>(
+                  ButtonSegment<MarkdownPane>(
                     value: MarkdownPane.keduanya,
-                    icon: Icon(Icons.vertical_split_outlined, size: 18),
-                    tooltip: 'Keduanya',
+                    icon: const Icon(Icons.vertical_split_outlined, size: 18),
+                    tooltip: context.l10n.markdownBoth,
                   ),
               ],
               selected: <MarkdownPane>{pane},
@@ -288,7 +289,7 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
             ),
             const SizedBox(width: 8),
             PopupMenuButton<String>(
-              tooltip: 'Lainnya',
+              tooltip: context.l10n.markdownMore,
               onSelected: (value) => switch (value) {
                 'pdf' => _exportPdf(),
                 'bagikan' => _share(asPdf: false),
@@ -296,43 +297,43 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
                 'salin' => Clipboard.setData(ClipboardData(text: _controller.text)),
                 _ => null,
               },
-              itemBuilder: (menu) => const <PopupMenuEntry<String>>[
+              itemBuilder: (menu) => <PopupMenuEntry<String>>[
                 PopupMenuItem<String>(
                   value: 'pdf',
                   child: ListTile(
                     dense: true,
-                    leading: Icon(Icons.picture_as_pdf_outlined),
-                    title: Text('Simpan sebagai PDF'),
+                    leading: const Icon(Icons.picture_as_pdf_outlined),
+                    title: Text(context.l10n.markdownSaveAsPdf),
                   ),
                 ),
                 PopupMenuItem<String>(
                   value: 'bagikan',
                   child: ListTile(
                     dense: true,
-                    leading: Icon(Icons.share_outlined),
-                    title: Text('Bagikan berkas Markdown'),
+                    leading: const Icon(Icons.share_outlined),
+                    title: Text(context.l10n.markdownShareFile),
                   ),
                 ),
                 PopupMenuItem<String>(
                   value: 'bagikan-pdf',
                   child: ListTile(
                     dense: true,
-                    leading: Icon(Icons.ios_share),
-                    title: Text('Bagikan sebagai PDF'),
+                    leading: const Icon(Icons.ios_share),
+                    title: Text(context.l10n.markdownShareAsPdf),
                   ),
                 ),
                 PopupMenuItem<String>(
                   value: 'salin',
                   child: ListTile(
                     dense: true,
-                    leading: Icon(Icons.copy_all_outlined),
-                    title: Text('Salin seluruh teks'),
+                    leading: const Icon(Icons.copy_all_outlined),
+                    title: Text(context.l10n.markdownCopyAll),
                   ),
                 ),
               ],
             ),
             IconButton(
-              tooltip: 'Simpan',
+              tooltip: context.l10n.markdownSave,
               icon: const Icon(Icons.save_outlined),
               onPressed: _dirty ? _save : null,
             ),
@@ -378,10 +379,7 @@ class _MarkdownEditorScreenState extends State<MarkdownEditorScreen> {
         maxLines: null,
         keyboardType: TextInputType.multiline,
         style: const TextStyle(fontFamily: 'monospace', fontSize: 13.5, height: 1.45),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          hintText: 'Tulis di sini. Markdown: # tajuk, **tebal**, - daftar, ```mermaid diagram.',
-        ),
+        decoration: InputDecoration(border: InputBorder.none, hintText: context.l10n.markdownHint),
       ),
     ),
   );
@@ -403,37 +401,58 @@ class _Toolbar extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: <Widget>[
-          _Insert(icon: Icons.title, tooltip: 'Tajuk', onTap: () => onInsert('## Tajuk\n')),
+          _Insert(
+            icon: Icons.title,
+            tooltip: context.l10n.markdownHeading,
+            onTap: () => onInsert('## ${context.l10n.markdownHeading}\n'),
+          ),
           _Insert(
             icon: Icons.format_bold,
-            tooltip: 'Tebal',
+            tooltip: context.l10n.markdownBold,
             onTap: () => onInsert('****', caretBack: 2),
           ),
           _Insert(
             icon: Icons.format_italic,
-            tooltip: 'Miring',
+            tooltip: context.l10n.markdownItalic,
             onTap: () => onInsert('**', caretBack: 1),
           ),
-          _Insert(icon: Icons.format_list_bulleted, tooltip: 'Daftar', onTap: () => onInsert('- ')),
-          _Insert(icon: Icons.checklist, tooltip: 'Daftar tugas', onTap: () => onInsert('- [ ] ')),
-          _Insert(icon: Icons.format_quote, tooltip: 'Kutipan', onTap: () => onInsert('> ')),
+          _Insert(
+            icon: Icons.format_list_bulleted,
+            tooltip: context.l10n.markdownList,
+            onTap: () => onInsert('- '),
+          ),
+          _Insert(
+            icon: Icons.checklist,
+            tooltip: context.l10n.markdownTaskList,
+            onTap: () => onInsert('- [ ] '),
+          ),
+          _Insert(
+            icon: Icons.format_quote,
+            tooltip: context.l10n.markdownQuote,
+            onTap: () => onInsert('> '),
+          ),
           _Insert(
             icon: Icons.code,
-            tooltip: 'Kode',
+            tooltip: context.l10n.markdownCode,
             onTap: () => onInsert('```\n\n```\n', caretBack: 5),
           ),
           _Insert(
             icon: Icons.table_chart_outlined,
-            tooltip: 'Tabel',
-            onTap: () => onInsert('| Kolom | Nilai |\n| --- | --- |\n|  |  |\n'),
+            tooltip: context.l10n.markdownTable,
+            onTap: () => onInsert(context.l10n.markdownTableTemplate),
           ),
           _Insert(
             icon: Icons.account_tree_outlined,
-            tooltip: 'Diagram mermaid',
-            onTap: () => onInsert(
-              '```mermaid\ngraph TD\n  A[Mulai] --> B{Sudah?}\n  B -->|ya| C(Selesai)\n'
-              '  B -->|belum| A\n```\n',
-            ),
+            tooltip: context.l10n.markdownMermaid,
+            onTap: () {
+              final t = context.l10n;
+              onInsert(
+                '```mermaid\ngraph TD\n  A[${t.markdownMermaidStart}] --> '
+                'B{${t.markdownMermaidDone}}\n'
+                '  B -->|${t.markdownMermaidYes}| C(${t.markdownMermaidFinish})\n'
+                '  B -->|${t.markdownMermaidNo}| A\n```\n',
+              );
+            },
           ),
         ],
       ),

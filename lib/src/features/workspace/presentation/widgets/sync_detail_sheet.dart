@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../sync/domain/entities/git_entities.dart';
 import '../controllers/workspace_controller.dart';
+import '../../../../core/l10n.dart';
 
 /// Shows pending changes, recent commits and the raw git output.
 Future<void> showSyncDetailSheet(BuildContext context) => showModalBottomSheet<void>(
@@ -32,14 +33,14 @@ class _SyncDetailSheet extends ConsumerWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    profile?.name ?? 'Repositori',
+                    profile?.name ?? context.l10n.workspaceRepository,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
                 if (status?.lfsAvailable == false)
-                  const Tooltip(
-                    message: 'git-lfs tidak terpasang; lampiran besar tetap berupa pointer',
-                    child: Icon(Icons.warning_amber_outlined, size: 18),
+                  Tooltip(
+                    message: context.l10n.syncLfsMissing,
+                    child: const Icon(Icons.warning_amber_outlined, size: 18),
                   ),
                 // Deliberately manual: LFS objects are attachments, and one
                 // real library keeps 136 MB of them in a couple of books.
@@ -48,7 +49,7 @@ class _SyncDetailSheet extends ConsumerWidget {
                       ? null
                       : () => ref.read(workspaceControllerProvider.notifier).lfsPull(),
                   icon: const Icon(Icons.file_download_outlined, size: 16),
-                  label: const Text('Unduh semua berkas LFS'),
+                  label: Text(context.l10n.syncLfsPullAll),
                 ),
               ],
             ),
@@ -65,16 +66,16 @@ class _SyncDetailSheet extends ConsumerWidget {
                 alignment: Alignment.centerLeft,
                 child: SelectableText(
                   '${profile.shortRemote} · ${profile.transport.label} · '
-                  'branch ${status?.branch ?? profile.branch}\n${profile.localPath}',
+                  '${context.l10n.syncBranchLine(status?.branch ?? profile.branch)}\n${profile.localPath}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),
             ),
-          const TabBar(
+          TabBar(
             tabs: <Widget>[
-              Tab(text: 'Perubahan'),
-              Tab(text: 'Riwayat'),
-              Tab(text: 'Log git'),
+              Tab(text: context.l10n.syncTabChanges),
+              Tab(text: context.l10n.syncTabHistory),
+              Tab(text: context.l10n.syncTabLog),
             ],
           ),
           Expanded(
@@ -115,15 +116,14 @@ class _RecloneNotice extends ConsumerWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Salinan lokal ini masih menyimpan semua lampiran. Mengambilnya ulang '
-              'hanya mengunduh metadata; PDF menyusul saat papernya dibuka.',
+              context.l10n.syncRecloneNotice,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
           const SizedBox(width: 8),
           FilledButton.tonal(
             onPressed: busy ? null : () => _confirm(context, ref),
-            child: const Text('Ambil ulang'),
+            child: Text(context.l10n.syncReclone),
           ),
         ],
       ),
@@ -134,17 +134,16 @@ class _RecloneNotice extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Ambil ulang salinan lokal?'),
-        content: const Text(
-          'Folder lokal dihapus lalu diambil lagi tanpa lampiran. '
-          'Anotasi yang sudah dikirim ke GitHub tetap aman; yang belum dikirim '
-          'akan hilang, jadi ini ditolak kalau masih ada perubahan tertunda.',
-        ),
+        title: Text(context.l10n.syncRecloneTitle),
+        content: Text(context.l10n.syncRecloneBody),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.workspaceCancel),
+          ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Ambil ulang'),
+            child: Text(context.l10n.syncReclone),
           ),
         ],
       ),
@@ -165,7 +164,7 @@ class _ChangesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final changes = status?.changes ?? const <GitChange>[];
     if (changes.isEmpty) {
-      return const Center(child: Text('Tidak ada perubahan lokal.'));
+      return Center(child: Text(context.l10n.syncNoLocalChanges));
     }
     return ListView.builder(
       itemCount: changes.length,
@@ -203,7 +202,7 @@ class _HistoryTab extends ConsumerWidget {
           return const Center(child: CircularProgressIndicator());
         }
         final commits = snapshot.data!;
-        if (commits.isEmpty) return const Center(child: Text('Belum ada commit.'));
+        if (commits.isEmpty) return Center(child: Text(context.l10n.syncNoCommits));
         return ListView.builder(
           itemCount: commits.length,
           itemBuilder: (context, i) {
@@ -230,7 +229,7 @@ class _LogTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (lines.isEmpty) return const Center(child: Text('Belum ada keluaran git.'));
+    if (lines.isEmpty) return Center(child: Text(context.l10n.syncNoGitOutput));
     return ListView(
       padding: const EdgeInsets.all(16),
       children: <Widget>[

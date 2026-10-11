@@ -1,3 +1,5 @@
+import '../l10n.dart';
+
 /// Application-wide constants for ReadPaper.
 class AppConstants {
   const AppConstants._();
@@ -84,20 +86,21 @@ class AnnotationPalette {
   /// True for a colour Zotero will show as one of its own presets.
   static bool isZoteroPreset(String hex) => zotero.contains(hex);
 
-  static const Map<String, String> names = <String, String>{
-    yellow: 'Kuning',
-    red: 'Merah',
-    green: 'Hijau',
-    blue: 'Biru',
-    purple: 'Ungu',
-    magenta: 'Magenta',
-    orange: 'Oranye',
-    gray: 'Abu-abu',
-    teal: 'Tosca',
-    pink: 'Merah muda',
-    brown: 'Cokelat',
-    ink: 'Tinta',
-    white: 'Putih',
-    black: 'Hitam',
+  /// Nama warna dalam bahasa antarmuka yang aktif.
+  static Map<String, String> get names => <String, String>{
+    yellow: l10n.commonColorYellow,
+    red: l10n.commonColorRed,
+    green: l10n.commonColorGreen,
+    blue: l10n.commonColorBlue,
+    purple: l10n.commonColorPurple,
+    magenta: l10n.commonColorMagenta,
+    orange: l10n.commonColorOrange,
+    gray: l10n.commonColorGray,
+    teal: l10n.commonColorTeal,
+    pink: l10n.commonColorPink,
+    brown: l10n.commonColorBrown,
+    ink: l10n.commonColorInk,
+    white: l10n.commonColorWhite,
+    black: l10n.commonColorBlack,
   };
 }

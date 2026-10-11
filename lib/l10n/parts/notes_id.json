@@ -1,0 +1,530 @@
+{
+  "notesUnfiledTitle": "Catatan tanpa koleksi",
+  "notesRootTitle": "Catatan",
+  "notesAllTitle": "Semua catatan",
+  "notesCount": "{count} catatan",
+  "@notesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notesNewNotebook": "Buku catatan baru",
+  "notesNewMarkdown": "Catatan Markdown baru",
+  "notesEmpty": "Belum ada catatan di sini. Seret berkas dari panel berkas, atau pakai tombol tambah di atas. Tarik ke bawah untuk mengambil perubahan dari GitHub.",
+  "notesActions": "Tindakan",
+  "notesClose": "Tutup",
+  "notesNotebookDefaultTitle": "Catatan",
+  "notesNewNotebookFailed": "Gagal membuat buku catatan",
+  "notesNewNoteTitle": "Catatan baru",
+  "notesNewNoteFailed": "Gagal membuat catatan",
+  "notesRename": "Ubah judul",
+  "notesShare": "Bagikan",
+  "notesShareAsPdf": "sebagai PDF",
+  "notesShareToApps": "ke aplikasi lain",
+  "notesMoveToCollection": "Pindahkan ke koleksi",
+  "notesTransferToRepo": "Pindahkan atau salin ke repositori lain…",
+  "notesDelete": "Hapus catatan",
+  "notesDeleteSubtitle": "Berkasnya ikut terhapus",
+  "notesTransferWhat": "Catatan \"{title}\"",
+  "@notesTransferWhat": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notesMoved": "Catatan dipindahkan ke {target}",
+  "@notesMoved": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "notesCopied": "Catatan disalin ke {target}",
+  "@notesCopied": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "notesDeleteConfirmTitle": "Hapus catatan?",
+  "notesDeleteConfirmBody": "“{title}” beserta berkasnya akan dihapus dari repositori.",
+  "@notesDeleteConfirmBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notesCancel": "Batal",
+  "notesDeleteButton": "Hapus",
+  "notesNoCollection": "Tanpa koleksi",
+  "notesTitleField": "Judul",
+  "notesSave": "Simpan",
+  "notesNoActiveRepo": "Belum ada repositori aktif.",
+  "notesNoteGone": "Catatannya tidak ada lagi.",
+  "notesCollectionGone": "Koleksinya tidak ada lagi.",
+  "notesNoRepoToSave": "Belum ada repositori aktif untuk menyimpan catatan.",
+  "notesErrEmptyCollectionName": "Nama koleksi catatan tidak boleh kosong",
+  "notesErrParentMissing": "Koleksi induk tidak ada",
+  "notesErrCollectionMissing": "Koleksi catatan tidak ada",
+  "notesErrFileNotFound": "Berkas catatan tidak ditemukan",
+  "notesErrNoteMissing": "Catatan tidak ada",
+  "notesErrEmptyTitle": "Judul catatan tidak boleh kosong",
+  "notesErrTargetCollectionMissing": "Koleksi catatan tujuan tidak ada",
+  "notesErrFileOutside": "Berkas catatan ada di luar folder catatan",
+  "notesErrFileNotOnDevice": "Berkas catatan tidak ada di perangkat ini",
+  "notesErrTargetNameTaken": "Di tempat tujuan sudah ada koleksi catatan bernama \"{name}\". Ganti namanya dulu.",
+  "@notesErrTargetNameTaken": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notesErrNamedFileNotOnDevice": "Berkas catatan \"{title}\" tidak ada di perangkat ini",
+  "@notesErrNamedFileNotOnDevice": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notesErrNoNewKey": "Gagal membuat kunci catatan baru",
+  "notesTargetRefusal": "Catatan hanya bisa disimpan di akar \"Catatan\". Akar paper berisi item Zotero — item di sana punya properti rujukan dan bibliografi, dan formatnya dijaga oleh plugin sinkronisasi Zotero. Pilih koleksi di bawah akar Catatan, atau buat satu lebih dulu.",
+  "notesImageMissing": "Berkas gambarnya tidak ada lagi:\n{path}",
+  "@notesImageMissing": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "epubThemeLight": "Terang",
+  "epubThemeSepia": "Sepia",
+  "epubThemeDark": "Gelap",
+  "epubUnreadable": "EPUB ini tidak bisa dibaca: {error}",
+  "@epubUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "epubSmallerText": "Perkecil huruf",
+  "epubLargerText": "Perbesar huruf",
+  "epubPageColor": "Warna halaman: {name}",
+  "@epubPageColor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "epubContents": "Daftar isi",
+  "epubNoChapters": "EPUB ini tidak punya bab yang bisa dibaca.",
+  "epubPrevChapter": "Bab sebelumnya",
+  "epubNextChapter": "Bab berikutnya",
+  "epubChapterN": "Bab {number}",
+  "@epubChapterN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "epubErrNoContainer": "Bukan EPUB: META-INF/container.xml tidak ada.",
+  "epubErrNoOpf": "Bukan EPUB: berkas OPF tidak ditemukan.",
+  "markdownReadFailed": "Gagal membaca berkas: {error}",
+  "@markdownReadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownSaved": "Tersimpan: {name}",
+  "@markdownSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownSaveFailed": "Gagal menyimpan: {error}",
+  "@markdownSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownWritingPdf": "Menulis PDF…",
+  "markdownPdfSaved": "PDF tersimpan: {name}",
+  "@markdownPdfSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownPrint": "Cetak",
+  "markdownPdfFailed": "Gagal menulis PDF: {error}",
+  "@markdownPdfFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownSaveFirstTitle": "Simpan dulu?",
+  "markdownUnsavedBody": "Ada perubahan yang belum disimpan.",
+  "markdownKeepEditing": "Kembali menyunting",
+  "markdownDiscard": "Buang perubahan",
+  "markdownSave": "Simpan",
+  "markdownUnsaved": "Belum disimpan",
+  "markdownEdit": "Sunting",
+  "markdownPreview": "Pratinjau",
+  "markdownBoth": "Keduanya",
+  "markdownMore": "Lainnya",
+  "markdownSaveAsPdf": "Simpan sebagai PDF",
+  "markdownShareFile": "Bagikan berkas Markdown",
+  "markdownShareAsPdf": "Bagikan sebagai PDF",
+  "markdownCopyAll": "Salin seluruh teks",
+  "markdownHint": "Tulis di sini. Markdown: # tajuk, **tebal**, - daftar, ```mermaid diagram.",
+  "markdownHeading": "Tajuk",
+  "markdownBold": "Tebal",
+  "markdownItalic": "Miring",
+  "markdownList": "Daftar",
+  "markdownTaskList": "Daftar tugas",
+  "markdownQuote": "Kutipan",
+  "markdownCode": "Kode",
+  "markdownTable": "Tabel",
+  "markdownTableTemplate": "| Kolom | Nilai |\n| --- | --- |\n|  |  |\n",
+  "markdownMermaid": "Diagram mermaid",
+  "markdownMermaidEmpty": "Diagram kosong.",
+  "markdownMermaidUnsupported": "Jenis diagram \"{kind}\" belum digambar — yang sudah: graph dan flowchart. Sumbernya tetap ditampilkan apa adanya.",
+  "@markdownMermaidUnsupported": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownMermaidNoNodes": "Tidak ada simpul yang bisa dibaca dari diagram ini.",
+  "markdownMermaidCannotDraw": "Diagram ini belum bisa digambar.",
+  "markdownPdfEmpty": "(dokumen kosong)",
+  "markdownPdfImageMissing": "[gambar tidak ditemukan: {path}]",
+  "@markdownPdfImageMissing": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownEmptyDoc": "Dokumen masih kosong.",
+  "whiteboardPortrait": "Tegak",
+  "whiteboardLandscape": "Mendatar",
+  "whiteboardBgWhite": "Putih",
+  "whiteboardBgBlack": "Hitam",
+  "whiteboardBgGreen": "Hijau papan",
+  "whiteboardBgCream": "Krem",
+  "whiteboardBgNavy": "Biru malam",
+  "whiteboardTurned": "Kertas jadi {orientation} — coretannya ikut berputar, tidak ada yang hilang.",
+  "@whiteboardTurned": {
+    "placeholders": {
+      "orientation": {
+        "type": "String"
+      }
+    }
+  },
+  "whiteboardSaveFailed": "Gagal menyimpan: {error}",
+  "@whiteboardSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "whiteboardShareFailed": "Gagal membagikan: {error}",
+  "@whiteboardShareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "whiteboardSavedAs": "Tersimpan sebagai {name}",
+  "@whiteboardSavedAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notesCannotSaveAsNote": "Belum bisa disimpan sebagai catatan",
+  "notesUnderstood": "Mengerti",
+  "whiteboardSaveNoteFailed": "Gagal menyimpan catatan",
+  "whiteboardSavedAsNote": "Tersimpan sebagai catatan",
+  "whiteboardLeaveTitle": "Tinggalkan papan ini?",
+  "whiteboardLeaveBody": "Coretannya belum disimpan, dan tidak bisa dikembalikan.",
+  "whiteboardKeepDrawing": "Kembali menggambar",
+  "whiteboardLeave": "Tinggalkan",
+  "whiteboardTitle": "Papan tulis",
+  "whiteboardSheetStatus": "Lembar {page} dari {count} · kertas {orientation}",
+  "@whiteboardSheetStatus": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      },
+      "orientation": {
+        "type": "String"
+      }
+    }
+  },
+  "whiteboardFreehand": "Tangan bebas",
+  "whiteboardShape": "Bangun: {shape}",
+  "@whiteboardShape": {
+    "placeholders": {
+      "shape": {
+        "type": "String"
+      }
+    }
+  },
+  "whiteboardFingerOn": "Jari + stylus boleh menggambar — ketuk untuk hanya stylus",
+  "whiteboardStylusOnly": "Stylus saja — sentuhan tangan tidak menggambar apa pun",
+  "whiteboardBackToWriting": "Kembali menulis",
+  "whiteboardEraserHint": "Penghapus — sapukan di atas goresan",
+  "whiteboardEraser": "Penghapus",
+  "whiteboardPortraitTurn": "Kertas tegak — ketuk untuk memutar jadi mendatar",
+  "whiteboardLandscapeTurn": "Kertas mendatar — ketuk untuk memutar jadi tegak",
+  "notesUndo": "Urungkan",
+  "notesRedo": "Ulangi",
+  "whiteboardClearSheet": "Kosongkan lembar ini",
+  "notesShareAsPdf2": "Bagikan sebagai PDF",
+  "whiteboardSaveAsNote": "Simpan sebagai catatan",
+  "whiteboardSavePdf": "Simpan PDF",
+  "whiteboardSheet": "Lembar",
+  "whiteboardStrokeWidth": "Tebal goresan",
+  "notesPenColor": "Warna pena",
+  "markdownMermaidStart": "Mulai",
+  "markdownMermaidDone": "Sudah?",
+  "markdownMermaidYes": "ya",
+  "markdownMermaidFinish": "Selesai",
+  "markdownMermaidNo": "belum",
+  "notebookHandwritingAlt": "tulisan tangan",
+  "notebookPageAlt": "Halaman {number}",
+  "@notebookPageAlt": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "notebookErrUnknownContent": "Isi berkas catatan tidak dikenali",
+  "notebookErrNewerFormat": "Catatan ini ditulis versi ReadPaper yang lebih baru (format {version}). Perbarui aplikasinya dulu supaya isinya tidak rusak.",
+  "@notebookErrNewerFormat": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "notebookImageMissing": "gambar hilang",
+  "notebookDragMove": "Seret untuk memindahkan",
+  "notebookDragResize": "Seret untuk mengubah ukuran",
+  "notebookDragRotate": "Seret untuk memutar",
+  "notebookTapSecond": "Sekarang ketuk benda yang kedua.",
+  "notebookNewText": "Teks baru",
+  "notebookTextHint": "Tulis teksnya",
+  "notebookNewDiagram": "Diagram baru",
+  "notebookMermaidSource": "Sumber Mermaid",
+  "notebookPickImage": "Pilih gambar untuk catatan",
+  "notebookImagePlaced": "Gambar ditaruh — sekarang bisa digeser, diubah ukuran, atau dihapus.",
+  "notebookEditText": "Ubah teks",
+  "notebookEditDiagram": "Ubah diagram",
+  "notebookPickPdf": "Pilih PDF untuk disisipkan sebagai lembar",
+  "notebookPreparingSheets": "Menyiapkan lembar dari {name}…",
+  "@notebookPreparingSheets": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookPdfNoPages": "PDF itu tidak punya halaman yang bisa dibaca.",
+  "notebookSheetsInserted": "{count} lembar disisipkan dari {name}.",
+  "@notebookSheetsInserted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookInsertPdfFailed": "Gagal menyisipkan PDF: {error}",
+  "@notebookInsertPdfFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookMarkdownSaved": "Markdown tersimpan: {name}",
+  "@notebookMarkdownSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookMarkdownFailed": "Gagal menulis Markdown: {error}",
+  "@notebookMarkdownFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookSaveToCollectionFailed": "Gagal menyimpan ke koleksi",
+  "notebookSavedToCollection": "Masuk ke koleksi catatan",
+  "notebookUnsavedBody": "Ada tulisan yang belum disimpan.",
+  "notebookKeepWriting": "Kembali menulis",
+  "notebookDiscard": "Buang",
+  "notebookStatus": "Lembar {page} dari {count} · {paper} {orientation} · alat: {tool}",
+  "@notebookStatus": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      },
+      "paper": {
+        "type": "String"
+      },
+      "orientation": {
+        "type": "String"
+      },
+      "tool": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookUnsavedSuffix": " · belum disimpan",
+  "notebookZoomOut": "Perkecil",
+  "notebookZoomIn": "Perbesar",
+  "notebookFit": "Pas ke layar — kembalikan zum",
+  "notebookSaveAndShare": "Simpan dan bagikan",
+  "notebookSaveAsMarkdown": "Simpan sebagai Markdown",
+  "notebookSaveToNoteCollection": "Simpan ke koleksi catatan",
+  "notebookGuideLines": "Garis bantu lembar",
+  "notebookPlaceText": "teks",
+  "notebookPlaceImage": "gambar",
+  "notebookPlaceDiagram": "diagram",
+  "notebookTapToPlace": "Ketuk lembar untuk menaruh {what}.",
+  "@notebookTapToPlace": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookTapFirstThenSecond": "Ketuk benda pertama, lalu benda kedua.",
+  "notebookPickedCount": "{count} benda dipilih",
+  "@notebookPickedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notebookRelease": "Lepas",
+  "notebookPaperChanged": "Kertas jadi {paper}. {count} benda sekarang di luar kertas.",
+  "@notebookPaperChanged": {
+    "placeholders": {
+      "paper": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notebookTurned": "Kertas jadi {orientation} — isinya ikut berputar, tidak ada yang keluar tepi.",
+  "@notebookTurned": {
+    "placeholders": {
+      "orientation": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookIdleTool": "Alat sekarang \"{tool}\" — pilih ikon pena untuk menggambar.",
+  "@notebookIdleTool": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookToolPen": "Pena",
+  "notebookToolEraseStroke": "Hapus goresan",
+  "notebookToolErasePart": "Hapus sebagian",
+  "notebookToolSelect": "Pilih",
+  "notebookToolConnectTwo": "Hubungkan dua benda",
+  "notebookToolText": "Teks",
+  "notebookToolDiagram": "Diagram",
+  "notebookToolImage": "Gambar",
+  "notebookComponentColor": "Warna komponen",
+  "notebookPenWidth": "Tebal pena",
+  "notebookEraserSize": "Ukuran penghapus",
+  "notebookWidthValue": "Tebal {value}",
+  "@notebookWidthValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookEraserValue": "Penghapus {value}",
+  "@notebookEraserValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookOpacity": "Kepekatan",
+  "notebookPaperSize": "Ukuran kertas: {paper}",
+  "@notebookPaperSize": {
+    "placeholders": {
+      "paper": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookPortraitTap": "Kertas tegak — ketuk untuk mendatar",
+  "notebookLandscapeTap": "Kertas mendatar — ketuk untuk tegak",
+  "notebookToolShape": "Bangun",
+  "notebookToolConnect": "Hubungkan",
+  "notebookFingerOn": "Jari dan stylus sama-sama menggambar. Ketuk untuk hanya stylus — jari lalu dipakai menggeser dan memperbesar saja.",
+  "notebookStylusOnly": "Stylus menggambar, jari menggeser dan memperbesar. Ketuk untuk mengizinkan jari menggambar lagi.",
+  "notebookFingerChip": "Jari + stylus",
+  "notebookStylusChip": "Stylus saja",
+  "notebookPrevSheet": "Lembar sebelumnya",
+  "notebookNextSheet": "Lembar berikutnya",
+  "notebookNewSheet": "Lembar kosong baru",
+  "notebookInsertPdfSheet": "Sisipkan halaman PDF sebagai lembar",
+  "notebookDeleteSheet": "Hapus lembar ini",
+  "whiteboardErrPngEncode": "PNG gagal dikodekan",
+  "whiteboardErrPixels": "Piksel gagal dibaca"
+}

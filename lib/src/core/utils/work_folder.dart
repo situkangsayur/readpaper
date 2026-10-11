@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import '../l10n.dart';
 
 /// Folder kerja ReadPaper: tempat papan tulis, buku catatan, berkas yang
 /// disalin masuk, dan PDF hasil suntingan mendarat.
@@ -54,6 +55,6 @@ class WorkFolder {
   /// Nama folder yang enak dibaca: "Folder kerja" untuk akarnya.
   static String label(Directory folder) {
     final base = p.basename(folder.path);
-    return base == name ? 'Folder kerja' : base;
+    return base == name ? l10n.commonWorkFolder : base;
   }
 }

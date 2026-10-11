@@ -4,6 +4,7 @@ import '../../../library/domain/entities/library_index.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../sync/domain/entities/git_entities.dart';
 import '../../../sync/domain/entities/sync_progress.dart';
+import '../../../../core/l10n.dart';
 
 /// What the app is currently doing with the remote.
 enum SyncPhase { idle, cloning, fetching, pulling, committing, pushing }
@@ -57,11 +58,11 @@ class WorkspaceState {
 
   String get phaseLabel => switch (phase) {
     SyncPhase.idle => '',
-    SyncPhase.cloning => 'Meng-clone repositori…',
-    SyncPhase.fetching => 'Memeriksa perubahan…',
-    SyncPhase.pulling => 'Menarik perubahan…',
-    SyncPhase.committing => 'Menyimpan perubahan…',
-    SyncPhase.pushing => 'Mengirim perubahan…',
+    SyncPhase.cloning => l10n.syncPhaseCloning,
+    SyncPhase.fetching => l10n.syncPhaseFetching,
+    SyncPhase.pulling => l10n.syncPhasePulling,
+    SyncPhase.committing => l10n.syncPhaseCommitting,
+    SyncPhase.pushing => l10n.syncPhasePushing,
   };
 
   WorkspaceState copyWith({

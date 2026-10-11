@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import '../../../core/errors/failure.dart';
 import '../../../core/utils/zotero_key.dart';
 import '../domain/note_entities.dart';
+import '../../../core/l10n.dart';
 
 /// Baca dan tulis folder catatan di dalam repositori.
 ///
@@ -123,11 +124,11 @@ class NotesStore {
   Future<NoteCollection> createCollection({required String name, String? parentKey}) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
-      throw const LibraryFailure('Nama koleksi catatan tidak boleh kosong');
+      throw LibraryFailure(l10n.notesErrEmptyCollectionName);
     }
     final index = await read();
     if (parentKey != null && !index.collections.any((c) => c.key == parentKey)) {
-      throw LibraryFailure('Koleksi induk tidak ada', details: parentKey);
+      throw LibraryFailure(l10n.notesErrParentMissing, details: parentKey);
     }
     final created = NoteCollection(key: _freshKey(), name: trimmed, parentKey: parentKey);
     await _writeCollections(<NoteCollection>[...index.collections, created]);
@@ -137,11 +138,11 @@ class NotesStore {
   Future<void> renameCollection({required String key, required String name}) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
-      throw const LibraryFailure('Nama koleksi catatan tidak boleh kosong');
+      throw LibraryFailure(l10n.notesErrEmptyCollectionName);
     }
     final index = await read();
     if (!index.collections.any((c) => c.key == key)) {
-      throw LibraryFailure('Koleksi catatan tidak ada', details: key);
+      throw LibraryFailure(l10n.notesErrCollectionMissing, details: key);
     }
     await _writeCollections(<NoteCollection>[
       for (final c in index.collections)
@@ -200,12 +201,12 @@ class NotesStore {
   }) async {
     final source = File(sourcePath);
     if (!source.existsSync()) {
-      throw LibraryFailure('Berkas catatan tidak ditemukan', details: sourcePath);
+      throw LibraryFailure(l10n.notesErrFileNotFound, details: sourcePath);
     }
     if (collectionKey != null) {
       final index = await read();
       if (!index.collections.any((c) => c.key == collectionKey)) {
-        throw LibraryFailure('Koleksi catatan tidak ada', details: collectionKey);
+        throw LibraryFailure(l10n.notesErrCollectionMissing, details: collectionKey);
       }
     }
 
@@ -234,9 +235,9 @@ class NotesStore {
   Future<NoteItem> fileInto({required String itemKey, String? collectionKey}) async {
     final index = await read();
     final item = index.items.where((i) => i.key == itemKey).firstOrNull;
-    if (item == null) throw LibraryFailure('Catatan tidak ada', details: itemKey);
+    if (item == null) throw LibraryFailure(l10n.notesErrNoteMissing, details: itemKey);
     if (collectionKey != null && !index.collections.any((c) => c.key == collectionKey)) {
-      throw LibraryFailure('Koleksi catatan tidak ada', details: collectionKey);
+      throw LibraryFailure(l10n.notesErrCollectionMissing, details: collectionKey);
     }
     final moved = item.copyWith(
       collectionKeys: collectionKey == null ? const <String>[] : <String>[collectionKey],
@@ -258,10 +259,10 @@ class NotesStore {
 
   Future<NoteItem> rename({required String itemKey, required String title}) async {
     final trimmed = title.trim();
-    if (trimmed.isEmpty) throw const LibraryFailure('Judul catatan tidak boleh kosong');
+    if (trimmed.isEmpty) throw LibraryFailure(l10n.notesErrEmptyTitle);
     final index = await read();
     final item = index.items.where((i) => i.key == itemKey).firstOrNull;
-    if (item == null) throw LibraryFailure('Catatan tidak ada', details: itemKey);
+    if (item == null) throw LibraryFailure(l10n.notesErrNoteMissing, details: itemKey);
     final renamed = item.copyWith(title: trimmed);
     await _writeItem(renamed);
     return renamed;
@@ -314,21 +315,21 @@ class NotesStore {
   }) async {
     final index = await read();
     final item = index.items.where((i) => i.key == itemKey).firstOrNull;
-    if (item == null) throw LibraryFailure('Catatan tidak ada', details: itemKey);
+    if (item == null) throw LibraryFailure(l10n.notesErrNoteMissing, details: itemKey);
     final targetIndex = await target.read();
     for (final key in collectionKeys) {
       if (!targetIndex.collections.any((c) => c.key == key)) {
-        throw LibraryFailure('Koleksi catatan tujuan tidak ada', details: key);
+        throw LibraryFailure(l10n.notesErrTargetCollectionMissing, details: key);
       }
     }
 
     final source = File(p.normalize(p.join(directory, item.file)));
     final holder = source.parent;
     if (!p.isWithin(p.normalize(_filesRoot), p.normalize(holder.path))) {
-      throw LibraryFailure('Berkas catatan ada di luar folder catatan', details: item.file);
+      throw LibraryFailure(l10n.notesErrFileOutside, details: item.file);
     }
     if (!source.existsSync()) {
-      throw LibraryFailure('Berkas catatan tidak ada di perangkat ini', details: item.file);
+      throw LibraryFailure(l10n.notesErrFileNotOnDevice, details: item.file);
     }
     final key = File(target._itemPath(item.key)).existsSync() ? target._freshKey() : item.key;
     final destHolder = Directory(p.join(target._filesRoot, ZoteroKey.bucket(key), key));
@@ -363,17 +364,15 @@ class NotesStore {
   }) async {
     final index = await read();
     final root = index.collections.where((c) => c.key == collectionKey).firstOrNull;
-    if (root == null) throw LibraryFailure('Koleksi catatan tidak ada', details: collectionKey);
+    if (root == null) throw LibraryFailure(l10n.notesErrCollectionMissing, details: collectionKey);
     final targetIndex = await target.read();
     if (targetParentKey != null && !targetIndex.collections.any((c) => c.key == targetParentKey)) {
-      throw LibraryFailure('Koleksi catatan tujuan tidak ada', details: targetParentKey);
+      throw LibraryFailure(l10n.notesErrTargetCollectionMissing, details: targetParentKey);
     }
     if (targetIndex.collections.any(
       (c) => c.parentKey == targetParentKey && c.name.toLowerCase() == root.name.toLowerCase(),
     )) {
-      throw LibraryFailure(
-        'Di tempat tujuan sudah ada koleksi catatan bernama "${root.name}". Ganti namanya dulu.',
-      );
+      throw LibraryFailure(l10n.notesErrTargetNameTaken(root.name));
     }
 
     final subtree = <NoteCollection>[root];
@@ -396,7 +395,7 @@ class NotesStore {
     final members = index.items.where((i) => i.collectionKeys.any(moving.contains)).toList();
     for (final item in members) {
       if (!File(p.join(directory, item.file)).existsSync()) {
-        throw LibraryFailure('Berkas catatan "${item.title}" tidak ada di perangkat ini');
+        throw LibraryFailure(l10n.notesErrNamedFileNotOnDevice(item.title));
       }
     }
 
@@ -445,7 +444,7 @@ class NotesStore {
       final key = ZoteroKey.generate();
       if (!File(_itemPath(key)).existsSync()) return key;
     }
-    throw const LibraryFailure('Gagal membuat kunci catatan baru');
+    throw LibraryFailure(l10n.notesErrNoNewKey);
   }
 
   /// Nama berkas yang aman: tanpa garis miring, tanpa `..`.

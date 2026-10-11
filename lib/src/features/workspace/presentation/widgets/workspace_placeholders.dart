@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import '../../../../shared/providers/app_providers.dart';
 import '../../../settings/presentation/widgets/profile_editor_dialog.dart';
 import '../controllers/workspace_controller.dart';
+import '../../../../core/l10n.dart';
 
 /// Shown before any repository has been configured.
 class NoProfileView extends ConsumerWidget {
@@ -16,22 +17,18 @@ class NoProfileView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final backend = ref.watch(gitBackendProvider);
     final akses = backend.supportedTransports.length > 1
-        ? 'lewat SSH atau HTTPS'
-        : 'lewat token GitHub';
+        ? context.l10n.workspaceAccessSshHttps
+        : context.l10n.workspaceAccessToken;
 
     return _CenteredCard(
       icon: Icons.library_books_outlined,
-      title: 'Belum ada repositori',
-      body: Text(
-        'ReadPaper membaca library Zotero yang disinkronkan ke GitHub oleh plugin '
-        'zotero-github-sync. Tambahkan repositori ($akses) untuk mulai '
-        'membaca, menandai dan memberi komentar pada paper.',
-      ),
+      title: context.l10n.workspaceNoRepoTitle,
+      body: Text(context.l10n.workspaceNoRepoBody(akses)),
       actions: <Widget>[
         FilledButton.icon(
           onPressed: () => showProfileEditor(context, ref),
           icon: const Icon(Icons.add),
-          label: const Text('Tambah repositori'),
+          label: Text(context.l10n.workspaceAddRepo),
         ),
       ],
     );
@@ -57,7 +54,9 @@ class NotClonedView extends ConsumerWidget {
 
     return _CenteredCard(
       icon: Icons.cloud_download_outlined,
-      title: lazy ? 'Ambil library "${profile.name}"' : 'Clone "${profile.name}"',
+      title: lazy
+          ? context.l10n.workspaceFetchLibraryNamed(profile.name)
+          : context.l10n.workspaceCloneNamed(profile.name),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -65,12 +64,10 @@ class NotClonedView extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             partial
-                ? 'Unduhan sebelumnya terputus. Melanjutkan hanya mengambil berkas '
-                      'yang belum sempat tersimpan.'
+                ? context.l10n.workspaceResumeNote
                 : lazy
-                ? 'Metadata library diunduh sekarang; berkas PDF menyusul saat '
-                      'papernya dibuka.'
-                : 'Akan disimpan di ${profile.localPath}',
+                ? context.l10n.workspaceLazyNote
+                : context.l10n.workspaceWillSaveAt(profile.localPath),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           if (state.progressLines.isNotEmpty) ...<Widget>[
@@ -98,12 +95,12 @@ class NotClonedView extends ConsumerWidget {
         TextButton.icon(
           onPressed: state.isBusy ? null : controller.checkConnection,
           icon: const Icon(Icons.wifi_tethering, size: 18),
-          label: const Text('Periksa koneksi'),
+          label: Text(context.l10n.workspaceCheckConnection),
         ),
         TextButton.icon(
           onPressed: () => showProfileEditor(context, ref, existing: profile),
           icon: const Icon(Icons.edit_outlined, size: 18),
-          label: const Text('Ubah profil'),
+          label: Text(context.l10n.workspaceEditProfile),
         ),
         FilledButton.icon(
           onPressed: state.isBusy ? null : controller.clone,
@@ -116,8 +113,10 @@ class NotClonedView extends ConsumerWidget {
               : const Icon(Icons.download),
           label: Text(
             state.isBusy
-                ? (lazy ? 'Mengunduh…' : 'Meng-clone…')
-                : (partial ? 'Lanjutkan' : (lazy ? 'Ambil sekarang' : 'Clone sekarang')),
+                ? (lazy ? context.l10n.workspaceDownloading : context.l10n.workspaceCloning)
+                : (partial
+                      ? context.l10n.workspaceResume
+                      : (lazy ? context.l10n.workspaceFetchNow : context.l10n.workspaceCloneNow)),
           ),
         ),
       ],
@@ -134,22 +133,18 @@ class NoLibraryView extends ConsumerWidget {
     final controller = ref.read(workspaceControllerProvider.notifier);
     return _CenteredCard(
       icon: Icons.folder_off_outlined,
-      title: 'Library tidak terbaca',
-      body: const Text(
-        'Repositori sudah ada di lokal tetapi tidak ditemukan struktur Zotero '
-        '(collections.json dan folder items/). Pastikan repositori memang hasil '
-        'ekspor plugin Zotero GitHub Sync, lalu tarik perubahan terbaru.',
-      ),
+      title: context.l10n.workspaceLibraryUnreadableTitle,
+      body: Text(context.l10n.workspaceLibraryUnreadableBody),
       actions: <Widget>[
         TextButton.icon(
           onPressed: controller.reloadLibrary,
           icon: const Icon(Icons.refresh, size: 18),
-          label: const Text('Baca ulang'),
+          label: Text(context.l10n.workspaceReload),
         ),
         FilledButton.icon(
           onPressed: controller.pull,
           icon: const Icon(Icons.download_outlined, size: 18),
-          label: const Text('Pull'),
+          label: Text(context.l10n.workspacePull),
         ),
       ],
     );

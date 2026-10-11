@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n.dart';
 
 /// How the page is tinted while reading.
 ///
@@ -7,15 +8,22 @@ import 'package:flutter/material.dart';
 /// rendered page, so nothing about the document itself changes and the
 /// annotations keep their own colours relative to it.
 enum PageTint {
-  none('Normal', Icons.brightness_7_outlined),
-  sepia('Sepia', Icons.wb_twilight),
-  dim('Redup', Icons.brightness_4_outlined),
-  invert('Balik warna', Icons.invert_colors);
+  none(Icons.brightness_7_outlined),
+  sepia(Icons.wb_twilight),
+  dim(Icons.brightness_4_outlined),
+  invert(Icons.invert_colors);
 
-  const PageTint(this.label, this.icon);
+  const PageTint(this.icon);
 
-  final String label;
   final IconData icon;
+
+  /// Nama warnanya, dalam bahasa antarmuka yang sedang aktif.
+  String get label => switch (this) {
+    PageTint.none => l10n.readerTintNormal,
+    PageTint.sepia => l10n.readerTintSepia,
+    PageTint.dim => l10n.readerTintDim,
+    PageTint.invert => l10n.readerTintInvert,
+  };
 
   /// Null leaves the page exactly as rendered.
   ColorFilter? get filter => switch (this) {

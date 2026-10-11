@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../../../../core/l10n.dart';
 
 /// Bingkai di atas komponen yang sedang dipilih: geser, ubah ukuran, putar,
 /// hapus.
@@ -84,7 +85,7 @@ class ComponentFrame extends StatelessWidget {
               child: _Grip(
                 icon: Icons.open_with,
                 color: scheme.primary,
-                tooltip: 'Seret untuk memindahkan',
+                tooltip: context.l10n.notebookDragMove,
                 onUpdate: onMove,
                 onEnd: onSettled,
               ),
@@ -95,7 +96,7 @@ class ComponentFrame extends StatelessWidget {
               child: _Grip(
                 icon: Icons.open_in_full,
                 color: scheme.primary,
-                tooltip: 'Seret untuk mengubah ukuran',
+                tooltip: context.l10n.notebookDragResize,
                 onUpdate: onResize,
                 onEnd: onSettled,
               ),
@@ -106,7 +107,7 @@ class ComponentFrame extends StatelessWidget {
               child: _Grip(
                 icon: Icons.rotate_right,
                 color: scheme.primary,
-                tooltip: 'Seret untuk memutar',
+                tooltip: context.l10n.notebookDragRotate,
                 // Satu layar penuh ke samping memutar setengah lingkaran:
                 // cukup halus untuk meluruskan tulisan yang miring.
                 onUpdate: (delta) => onRotate(delta.dx * 0.01),

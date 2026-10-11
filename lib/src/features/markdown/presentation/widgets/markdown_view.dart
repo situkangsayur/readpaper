@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../domain/markdown_doc.dart';
 import 'mermaid_view.dart';
+import '../../../../core/l10n.dart';
 
 /// Menampilkan dokumen Markdown yang sudah dibaca.
 ///
@@ -39,7 +40,7 @@ class MarkdownView extends StatelessWidget {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: Text('Dokumen masih kosong.', style: Theme.of(context).textTheme.bodySmall),
+          child: Text(context.l10n.markdownEmptyDoc, style: Theme.of(context).textTheme.bodySmall),
         ),
       );
     }

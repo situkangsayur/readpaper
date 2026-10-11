@@ -1,0 +1,787 @@
+{
+  "workspaceSwitchRepoCount": "Ganti repositori ({count} tersedia)",
+  "@workspaceSwitchRepoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceAddAnotherRepo": "{remote} — tambah repositori lain",
+  "@workspaceAddAnotherRepo": {
+    "placeholders": {
+      "remote": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceManageRepos": "Kelola repositori…",
+  "workspaceSwitchLibrary": "Ganti library",
+  "workspaceFetchingLibrary": "Mengambil…",
+  "workspaceFetchLibrary": "Ambil library",
+  "syncPullCount": "Tarik {count} commit baru",
+  "@syncPullCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPull": "Tarik perubahan",
+  "syncMenu": "Sinkronisasi",
+  "syncCheck": "Periksa perubahan",
+  "syncSend": "Kirim perubahan",
+  "syncDetails": "Detail sinkronisasi",
+  "syncCheckRemote": "Periksa perubahan di remote",
+  "syncSendToGitHub": "Kirim perubahan ke GitHub",
+  "syncBusyWait": "Sinkronisasi sedang berjalan, tunggu sampai selesai.",
+  "syncBusyPhaseWait": "{phase} Tunggu sampai selesai.",
+  "@syncBusyPhaseWait": {
+    "placeholders": {
+      "phase": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNothingToSend": "Tidak ada perubahan untuk dikirim.",
+  "syncTooltipBranch": "Branch: {branch}",
+  "@syncTooltipBranch": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTooltipLastCommit": "Commit terakhir: {subject}",
+  "@syncTooltipLastCommit": {
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTooltipLastSync": "Sinkron terakhir: {time}",
+  "@syncTooltipLastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceReadingLibrary": "Membaca library dari berkas…",
+  "syncCommitMessage": "Pesan commit",
+  "syncCommitAndSend": "Commit & kirim",
+  "workspaceCancel": "Batal",
+  "workspaceAccessSshHttps": "lewat SSH atau HTTPS",
+  "workspaceAccessToken": "lewat token GitHub",
+  "workspaceNoRepoTitle": "Belum ada repositori",
+  "workspaceNoRepoBody": "ReadPaper membaca library Zotero yang disinkronkan ke GitHub oleh plugin zotero-github-sync. Tambahkan repositori ({access}) untuk mulai membaca, menandai dan memberi komentar pada paper.",
+  "@workspaceNoRepoBody": {
+    "placeholders": {
+      "access": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceAddRepo": "Tambah repositori",
+  "workspaceFetchLibraryNamed": "Ambil library \"{name}\"",
+  "@workspaceFetchLibraryNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceCloneNamed": "Clone \"{name}\"",
+  "@workspaceCloneNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceResumeNote": "Unduhan sebelumnya terputus. Melanjutkan hanya mengambil berkas yang belum sempat tersimpan.",
+  "workspaceLazyNote": "Metadata library diunduh sekarang; berkas PDF menyusul saat papernya dibuka.",
+  "workspaceWillSaveAt": "Akan disimpan di {path}",
+  "@workspaceWillSaveAt": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceCheckConnection": "Periksa koneksi",
+  "workspaceEditProfile": "Ubah profil",
+  "workspaceDownloading": "Mengunduh…",
+  "workspaceCloning": "Meng-clone…",
+  "workspaceResume": "Lanjutkan",
+  "workspaceFetchNow": "Ambil sekarang",
+  "workspaceCloneNow": "Clone sekarang",
+  "workspaceLibraryUnreadableTitle": "Library tidak terbaca",
+  "workspaceLibraryUnreadableBody": "Repositori sudah ada di lokal tetapi tidak ditemukan struktur Zotero (collections.json dan folder items/). Pastikan repositori memang hasil ekspor plugin Zotero GitHub Sync, lalu tarik perubahan terbaru.",
+  "workspaceReload": "Baca ulang",
+  "workspacePull": "Pull",
+  "workspaceRepository": "Repositori",
+  "syncLfsMissing": "git-lfs tidak terpasang; lampiran besar tetap berupa pointer",
+  "syncLfsPullAll": "Unduh semua berkas LFS",
+  "syncBranchLine": "branch {branch}",
+  "@syncBranchLine": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTabChanges": "Perubahan",
+  "syncTabHistory": "Riwayat",
+  "syncTabLog": "Log git",
+  "syncRecloneNotice": "Salinan lokal ini masih menyimpan semua lampiran. Mengambilnya ulang hanya mengunduh metadata; PDF menyusul saat papernya dibuka.",
+  "syncReclone": "Ambil ulang",
+  "syncRecloneTitle": "Ambil ulang salinan lokal?",
+  "syncRecloneBody": "Folder lokal dihapus lalu diambil lagi tanpa lampiran. Anotasi yang sudah dikirim ke GitHub tetap aman; yang belum dikirim akan hilang, jadi ini ditolak kalau masih ada perubahan tertunda.",
+  "syncNoLocalChanges": "Tidak ada perubahan lokal.",
+  "syncNoCommits": "Belum ada commit.",
+  "syncNoGitOutput": "Belum ada keluaran git.",
+  "workspaceManageReposTooltip": "Kelola repositori",
+  "workspaceReadingLibraryShort": "Membaca library…",
+  "workspaceFillToken": "Isi token",
+  "workspaceRetry": "Coba lagi",
+  "workspaceClose": "Tutup",
+  "workspaceTransferRepoNotFetched": "Repositori \"{name}\" belum diambil ke perangkat ini. Buka sekali dan ambil library-nya, lalu ulangi.",
+  "@workspaceTransferRepoNotFetched": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceTransferLibraryMissing": "Library di \"{name}\" belum ada di perangkat ini. Buka repositori itu sekali dan ambil library-nya, lalu ulangi.",
+  "@workspaceTransferLibraryMissing": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceTransferTitle": "Ke repositori lain",
+  "workspaceTransferNoOthers": "Belum ada repositori lain. Tambahkan dulu di pengaturan Repositori.",
+  "workspaceTransferChange": "Ganti",
+  "workspaceTransferMove": "Pindahkan",
+  "workspaceTransferCopy": "Salin",
+  "workspaceTransferMoveNote": "Dihapus dari repositori ini setelah salinannya utuh di tujuan.",
+  "workspaceTransferCopyNote": "Yang di sini tetap; tujuan mendapat salinannya.",
+  "workspaceTransferNotesRoot": "Akar Catatan",
+  "workspaceTransferNotesUnfiled": "Catatan, tanpa koleksi",
+  "workspaceTransferLibraryRoot": "Akar library",
+  "workspaceTransferUnfiled": "Tanpa koleksi",
+  "workspaceComputingSize": "menghitung ukuran…",
+  "syncPhaseCounting": "Menghitung objek",
+  "syncPhaseCompressing": "Memampatkan objek",
+  "syncPhaseReceiving": "Mengunduh objek",
+  "syncPhaseResolving": "Menyusun delta",
+  "syncPhaseWritingFiles": "Menulis berkas",
+  "syncPhaseFiltering": "Mengunduh berkas besar",
+  "syncPhaseLfs": "Mengunduh berkas LFS",
+  "syncPhaseSending": "Mengirim objek",
+  "syncPhaseEnumerating": "Mendata objek",
+  "workspaceStatsNotFetched": "belum diambil ke perangkat ini",
+  "workspaceStatsItems": "{count} item",
+  "@workspaceStatsItems": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceStatsCollections": "{count} koleksi",
+  "@workspaceStatsCollections": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceStatsAttachments": "lampiran {size}",
+  "@workspaceStatsAttachments": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceStatsUnsent": "{count} belum terkirim",
+  "@workspaceStatsUnsent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceStatsBehind": "{count} baru di GitHub",
+  "@workspaceStatsBehind": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPhaseCloning": "Meng-clone repositori…",
+  "syncPhaseFetching": "Memeriksa perubahan…",
+  "syncPhasePulling": "Menarik perubahan…",
+  "syncPhaseCommitting": "Menyimpan perubahan…",
+  "syncPhasePushing": "Mengirim perubahan…",
+  "syncChangeNew": "baru",
+  "syncChangeAdded": "ditambah",
+  "syncChangeModified": "diubah",
+  "syncChangeDeleted": "dihapus",
+  "syncChangeRenamed": "dipindah",
+  "syncStatusNotCloned": "Belum di-clone",
+  "syncStatusLocalChanges": "{count} perubahan lokal",
+  "@syncStatusLocalChanges": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatusAhead": "{count} commit belum di-push",
+  "@syncStatusAhead": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatusBehind": "{count} commit baru di remote",
+  "@syncStatusBehind": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatusInSync": "Sinkron",
+  "workspaceErrNoZoteroExport": "Tidak menemukan ekspor Zotero di repositori ini. Struktur yang diharapkan: zotero/<library>/collections.json",
+  "workspaceErrReadLibrary": "Gagal membaca library: {error}",
+  "@workspaceErrReadLibrary": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrNoRemoteUrl": "URL remote belum diisi untuk profil ini.",
+  "workspaceErrUnsentBeforeReclone": "Masih ada perubahan yang belum dikirim ke GitHub. Kirim dulu, baru ambil ulang.",
+  "workspaceErrDeleteOldCopy": "Gagal menghapus salinan lama: {error}",
+  "@workspaceErrDeleteOldCopy": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrAnnotationNoLibrary": "Anotasi tidak tersimpan: tidak ada library aktif di aplikasi.",
+  "workspaceErrAnnotationUnchanged": "Anotasi tidak tersimpan: berkas item tidak berubah.",
+  "workspaceErrAnnotationSave": "Anotasi tidak tersimpan: {error}",
+  "@workspaceErrAnnotationSave": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrAnnotationDeleteNoLibrary": "Anotasi tidak dihapus: tidak ada library aktif.",
+  "workspaceErrAnnotationDelete": "Anotasi tidak dihapus: {error}",
+  "@workspaceErrAnnotationDelete": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrPictureNoRepo": "Gambar tidak tersimpan: tidak ada repositori aktif.",
+  "workspaceErrPictureSave": "Gambar tidak tersimpan: {error}",
+  "@workspaceErrPictureSave": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrPictureDelete": "Gambar tidak dihapus: {error}",
+  "@workspaceErrPictureDelete": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrNoLibraryForFile": "Tidak ada library aktif untuk menampung berkas ini.",
+  "workspaceErrAddToLibrary": "Gagal menambahkan ke library: {error}",
+  "@workspaceErrAddToLibrary": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrNoLibraryForFolder": "Tidak ada library aktif untuk menampung folder ini.",
+  "workspaceErrImportStopped": "Impor folder berhenti: {error}",
+  "@workspaceErrImportStopped": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrNoLibrary": "Tidak ada library aktif.",
+  "workspaceErrCreateCollection": "Gagal membuat koleksi: {error}",
+  "@workspaceErrCreateCollection": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrSameRepo": "Repositori tujuannya sama dengan asal.",
+  "workspaceErrMoveFailed": "Gagal memindah: {error}",
+  "@workspaceErrMoveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrCopyFailed": "Gagal menyalin: {error}",
+  "@workspaceErrCopyFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrCollectionGone": "Koleksinya tidak ada lagi.",
+  "workspaceErrMissingAttachments": "{count} lampiran belum ada di perangkat ini — belum diunduh, atau masih penunjuk Git LFS. Buka papernya sekali supaya PDF-nya diunduh (di desktop: LFS pull), lalu ulangi. Tidak ada yang dipindah: tanpa PDF-nya, paper itu akan tiba kosong.",
+  "@workspaceErrMissingAttachments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceErrChangeCollection": "Gagal mengubah koleksi: {error}",
+  "@workspaceErrChangeCollection": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrTargetCollectionGone": "Koleksi tujuan tidak ada lagi.",
+  "workspaceErrMove": "Gagal memindahkan: {error}",
+  "@workspaceErrMove": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrDelete": "Gagal menghapus: {error}",
+  "@workspaceErrDelete": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrDeleteClone": "Gagal menghapus clone lokal: {error}",
+  "@workspaceErrDeleteClone": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "syncGitCliLabel": "git (CLI sistem)",
+  "syncFileAlreadyLocal": "Berkas sudah ada di lokal",
+  "syncFileLocationUnknown": "Lokasi berkas tidak dikenali.",
+  "syncDownloadingFile": "Mengunduh {name}…",
+  "@syncDownloadingFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFileDownloaded": "Berkas selesai diunduh",
+  "syncFileNotInRepo": "Berkas tidak ada di repositori ini.",
+  "syncDownloadingLfs": "Mengunduh berkas besar (Git LFS)…",
+  "syncRemoteReachable": "Remote terjangkau",
+  "syncConnected": "Terhubung · {count} branch di remote",
+  "@syncConnected": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTargetNotEmpty": "Direktori tujuan sudah berisi berkas. Hapus atau pilih lokasi lain.",
+  "syncCloned": "Repositori berhasil di-clone",
+  "syncPreparingMetadata": "Menyiapkan berkas metadata…",
+  "syncMetadataReady": "Metadata siap",
+  "syncRepoReadyLazy": "Repositori siap. Lampiran diunduh saat papernya dibuka.",
+  "syncFetchDone": "Fetch selesai",
+  "syncPullDone": "Pull selesai",
+  "syncInterruptedNotAborted": "Sinkronisasi sebelumnya berhenti di tengah {operation} dan tidak bisa dibatalkan otomatis. Keadaannya dicadangkan di {backup}.",
+  "@syncInterruptedNotAborted": {
+    "placeholders": {
+      "operation": {
+        "type": "String"
+      },
+      "backup": {
+        "type": "String"
+      }
+    }
+  },
+  "syncInterruptedRecovered": "Sinkronisasi yang dulu berhenti di tengah sudah dipulihkan (cadangan: {backup})",
+  "@syncInterruptedRecovered": {
+    "placeholders": {
+      "backup": {
+        "type": "String"
+      }
+    }
+  },
+  "syncConflict": "Perubahan di sini dan di GitHub bentrok dan tidak bisa disatukan otomatis. Tidak ada yang hilang: perubahan lokal tetap di commit-nya{detail}.",
+  "@syncConflict": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "syncRebasedOnGitHub": "Perubahan lokal dipasang di atas versi GitHub",
+  "syncAutoMerged": "Digabung otomatis: {files}",
+  "@syncAutoMerged": {
+    "placeholders": {
+      "files": {
+        "type": "String"
+      }
+    }
+  },
+  "syncGitHubCopies": "Versi GitHub disimpan sebagai {files}",
+  "@syncGitHubCopies": {
+    "placeholders": {
+      "files": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNothingToCommit": "Tidak ada perubahan untuk di-commit",
+  "syncCommitCreated": "Commit dibuat",
+  "syncPushDone": "Push selesai",
+  "syncLfsSkipped": "git-lfs tidak terpasang, dilewati",
+  "syncLfsDownloaded": "Berkas LFS diunduh",
+  "syncRemoteUpdated": "Remote diperbarui",
+  "syncGitCannotRun": "git tidak dapat dijalankan: {error}",
+  "@syncGitCannotRun": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrSshRejected": "SSH ditolak: kunci tidak diterima GitHub. Periksa path kunci di profil.",
+  "syncErrHttpsAuth": "Autentikasi HTTPS gagal: token kosong atau tidak berlaku.",
+  "syncErrRepoNotFound": "Repositori tidak ditemukan atau tidak punya akses.",
+  "syncErrMergeConflict": "Ada konflik saat menggabungkan perubahan. Selesaikan konflik di repo lokal.",
+  "syncErrNoNetwork": "Jaringan tidak tersedia.",
+  "syncErrGitFailed": "git gagal (kode {code})",
+  "@syncErrGitFailed": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "syncUnknownUser": "(tidak diketahui)",
+  "syncErrTreeTooLarge": "Daftar berkas repositori terlalu besar untuk dibaca sekaligus oleh API GitHub.",
+  "syncErrBlobTooLarge": "Berkasnya {size} MB, di atas batas 100 MB yang diterima API GitHub untuk satu berkas. Kirimkan lewat git biasa di komputer, atau simpan lampirannya di luar repositori.",
+  "@syncErrBlobTooLarge": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrConnectionLost": "Koneksi ke GitHub terputus dan tidak pulih setelah {attempts} percobaan. Unduhan bisa dilanjutkan dari tempatnya berhenti.",
+  "@syncErrConnectionLost": {
+    "placeholders": {
+      "attempts": {
+        "type": "int"
+      }
+    }
+  },
+  "syncErrTokenRejected": "Token GitHub ditolak. Periksa token di profil repositori.",
+  "syncErrQuota": "Kuota permintaan GitHub habis. Coba lagi setelah kuota pulih (sekitar satu jam), atau pakai token dengan kuota lebih besar.",
+  "syncErrSlowDown": "GitHub meminta pengiriman diperlambat karena terlalu banyak berkas beruntun. Tunggu beberapa menit lalu kirim lagi.",
+  "syncErrForbidden": "Akses ditolak. Token perlu izin \"Contents: read and write\" untuk repositori ini.",
+  "syncErrNotFound": "Repositori atau berkas tidak ditemukan. Untuk repositori privat, token harus punya akses ke repositori tersebut.",
+  "syncErrBranchMoved": "Branch di GitHub sudah berubah. Tarik perubahan dulu, lalu kirim ulang.",
+  "syncErrRejectedNoReason": "GitHub menolak perubahan ini (422), tanpa menyebut alasannya.",
+  "syncErrRejected": "GitHub menolak perubahan ini: {reason}",
+  "@syncErrRejected": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrStatus": "GitHub membalas dengan kode {code}.",
+  "@syncErrStatus": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "syncErrStatusReason": "GitHub membalas dengan kode {code}: {reason}",
+  "@syncErrStatusReason": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncGitHubApiLabel": "GitHub API",
+  "syncErrRepoUrlUnknown": "URL repositori tidak dikenali.",
+  "syncErrTokenMissing": "Token GitHub belum diisi.",
+  "syncConnectedAs": "Terhubung sebagai {login} · {slug} pada {head}{quota}",
+  "@syncConnectedAs": {
+    "placeholders": {
+      "login": {
+        "type": "String"
+      },
+      "slug": {
+        "type": "String"
+      },
+      "head": {
+        "type": "String"
+      },
+      "quota": {
+        "type": "String"
+      }
+    }
+  },
+  "syncQuotaLeft": " · sisa kuota {count}",
+  "@syncQuotaLeft": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrNotGitHubUrl": "URL repositori tidak dikenali sebagai repositori GitHub.",
+  "syncErrAndroidNeedsToken": "Di Android sinkronisasi memakai token GitHub. Isi token pada profil repositori.",
+  "syncReadingBranch": "Membaca branch {branch} di {slug}…",
+  "@syncReadingBranch": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "slug": {
+        "type": "String"
+      }
+    }
+  },
+  "syncMirrorReady": "Mirror siap: {files} berkas metadata, {attachments} lampiran menunggu diunduh saat dibuka",
+  "@syncMirrorReady": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "attachments": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPartialSaved": "{error} {count} berkas sudah tersimpan — tekan \"Lanjutkan\" untuk meneruskan.",
+  "@syncPartialSaved": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncUpToDate": "Sudah paling baru",
+  "syncBehindWaiting": "{count} commit baru menunggu di GitHub",
+  "@syncBehindWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncComparing": "Membandingkan dengan commit {head}…",
+  "@syncComparing": {
+    "placeholders": {
+      "head": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNoMetadataChanges": "Tidak ada perubahan metadata",
+  "syncPullUpdated": "Pull selesai: {count} berkas diperbarui",
+  "@syncPullUpdated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncLfsUnsupportedAndroid": "Berkas Git LFS belum didukung pada sinkronisasi Android.",
+  "syncAttachmentsSkippedOnly": "{count} lampiran dilewati; tidak ada perubahan lain untuk dikirim",
+  "@syncAttachmentsSkippedOnly": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncReadyToSend": "{count} berkas siap dikirim",
+  "@syncReadyToSend": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncReadyToSendSkipped": "{count} berkas siap dikirim; {skipped} lampiran dilewati (kirim lewat git di komputer)",
+  "@syncReadyToSendSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "syncNothingToSendShort": "Tidak ada yang perlu dikirim",
+  "syncErrRemoteNewer": "GitHub sudah punya commit lebih baru. Tarik perubahan dulu, lalu kirim ulang.",
+  "syncErrQueueOnlyAttachments": "Antrean hanya berisi lampiran; tidak ada yang bisa dikirim lewat jalur ini.",
+  "syncUploading": "Mengunggah berkas",
+  "syncSentCount": "Terkirim: {count} berkas",
+  "@syncSentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncErrAttachmentNotInRepo": "Lampiran tidak ada di repositori: {path}",
+  "@syncErrAttachmentNotInRepo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "syncAllPdfsPresent": "Semua PDF sudah ada di perangkat",
+  "syncAllPdfsPresentLfs": "Semua PDF sudah ada; {count} lampiran LFS diambil dari komputer",
+  "@syncAllPdfsPresentLfs": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDownloadingPdfOf": "Mengunduh PDF {current} dari {total}: {name}",
+  "@syncDownloadingPdfOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPdfsDownloadedOffline": "{count} PDF diunduh untuk dibaca offline",
+  "@syncPdfsDownloadedOffline": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncMirrorAtCommit": "Mirror pada commit {sha}",
+  "@syncMirrorAtCommit": {
+    "placeholders": {
+      "sha": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrNotMirrored": "Repositori belum di-mirror di perangkat ini.",
+  "syncRejectedMore": " dan {count} lainnya",
+  "@syncRejectedMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncNothingSent": "Tidak ada yang terkirim",
+  "syncSentFiles": "{count} berkas terkirim",
+  "@syncSentFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncRejectedSummary": "{head}; {count} berkas ditolak GitHub dan tetap menunggu: {names}{more}. {reason}",
+  "@syncRejectedSummary": {
+    "placeholders": {
+      "head": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      },
+      "more": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncResumingMetadata": "Melanjutkan unduhan metadata",
+  "syncDownloadingMetadata": "Mengunduh metadata",
+  "syncErrCorruptDownload": "Berkas rusak saat diunduh: {name}. Jalankan lagi untuk mengunduh ulang bagian yang gagal.",
+  "@syncErrCorruptDownload": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrGitHubUrlUnknown": "URL repositori GitHub tidak dikenali.",
+  "syncErrTokenMissingProfile": "Token GitHub belum diisi pada profil repositori.",
+  "syncInstallGitWindows": "Git for Windows tidak ditemukan. Pasang dari git-scm.com, atau di PowerShell: winget install --id Git.Git -e — lalu tekan Coba lagi.",
+  "syncInstallGitMac": "git tidak ditemukan. Jalankan di Terminal: xcode-select --install.",
+  "syncInstallGitLinux": "git tidak ditemukan. Pasang git dan git-lfs — CachyOS/Arch: sudo pacman -S git git-lfs; Debian/Ubuntu: sudo apt install git git-lfs."
+}

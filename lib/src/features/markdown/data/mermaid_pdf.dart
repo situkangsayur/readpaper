@@ -4,6 +4,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../domain/mermaid_graph.dart';
+import '../../../core/l10n.dart';
 
 /// Menggambar diagram Mermaid ke dalam PDF.
 ///
@@ -36,7 +37,7 @@ class MermaidPdf {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: <pw.Widget>[
               pw.Text(
-                graph.problem ?? 'Diagram ini belum bisa digambar.',
+                graph.problem ?? l10n.markdownMermaidCannotDraw,
                 style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
               ),
               pw.SizedBox(height: 4),

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../l10n.dart';
 
 /// Pemilih berkas dan folder yang tidak pernah gagal diam-diam.
 ///
@@ -39,15 +40,13 @@ class FilePick {
       // Beberapa penyedia berkas Android hanya menyerahkan URI tanpa jalur.
       // Dikatakan, bukan didiamkan.
       if (paths.isEmpty && picked.isNotEmpty) {
-        throw const FilePickFailure(
-          'Berkas itu tidak bisa dibaca dari tempatnya. Salin dulu ke folder kerja.',
-        );
+        throw FilePickFailure(l10n.commonFilePickUnreadable);
       }
       return multiple ? paths : paths.take(1).toList();
     } on FilePickFailure {
       rethrow;
     } on Object catch (error) {
-      if (!Platform.isLinux) throw FilePickFailure('Pemilih berkas gagal dibuka: $error');
+      if (!Platform.isLinux) throw FilePickFailure(l10n.commonFilePickerFailed('$error'));
       final fallback = await _linuxFiles(
         title: title,
         extensions: extensions ?? _extensionsFor(type),
@@ -63,7 +62,7 @@ class FilePick {
     try {
       return await FilePicker.getDirectoryPath(dialogTitle: title);
     } on Object catch (error) {
-      if (!Platform.isLinux) throw FilePickFailure('Pemilih folder gagal dibuka: $error');
+      if (!Platform.isLinux) throw FilePickFailure(l10n.commonFolderPickerFailed('$error'));
       final fallback = await _linuxDirectory(title: title);
       if (fallback != null) return fallback.isEmpty ? null : fallback;
       throw FilePickFailure(_linuxHelp(error));
@@ -80,9 +79,7 @@ class FilePick {
     _ => null,
   };
 
-  static String _linuxHelp(Object error) =>
-      'Dialog pilih berkas tidak bisa dibuka ($error). Pasang xdg-desktop-portal '
-      'beserta backend-nya (mis. xdg-desktop-portal-gtk), atau zenity.';
+  static String _linuxHelp(Object error) => l10n.commonLinuxPickerHelp('$error');
 
   /// Hasil zenity/kdialog: null bila keduanya tidak ada; daftar kosong bila
   /// dibatalkan.

@@ -11,6 +11,7 @@ import '../../../../shared/providers/app_providers.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../data/citation_server.dart';
 import '../../data/citation_token_store.dart';
+import '../../../../core/l10n.dart';
 
 /// Keadaan server sitasi, seperti yang ditampilkan di pengaturan.
 @immutable
@@ -103,7 +104,7 @@ class CitationServerController extends Notifier<CitationServerStatus> {
       _server?.token = token;
       state = state.copyWith(token: token, clearError: true);
     } catch (e) {
-      state = state.copyWith(error: 'Token baru tidak bisa disimpan: $e');
+      state = state.copyWith(error: l10n.citationTokenSaveFailed('$e'));
     }
   });
 
@@ -123,7 +124,7 @@ class CitationServerController extends Notifier<CitationServerStatus> {
       final token = await _tokens.loadOrCreate();
       state = state.copyWith(token: token, enabled: enabled);
     } catch (e) {
-      state = state.copyWith(error: 'Pengaturan server sitasi tidak terbaca: $e');
+      state = state.copyWith(error: l10n.citationSettingsUnreadable('$e'));
       return;
     }
     if (enabled) await _start();
@@ -160,9 +161,7 @@ class CitationServerController extends Notifier<CitationServerStatus> {
       final reason = e.osError?.message ?? e.message;
       state = state.copyWith(
         running: false,
-        error:
-            'Port ${CitationServer.defaultPort} sudah dipakai program lain '
-            '(mungkin ReadPaper lain yang sedang terbuka). $reason',
+        error: l10n.citationPortInUse(CitationServer.defaultPort, reason),
       );
     }
   }

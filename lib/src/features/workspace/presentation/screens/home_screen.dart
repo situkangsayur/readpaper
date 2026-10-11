@@ -21,6 +21,7 @@ import '../controllers/workspace_controller.dart';
 import '../widgets/workspace_bar.dart';
 import '../widgets/workspace_placeholders.dart';
 import '../../../settings/presentation/widgets/profile_editor_dialog.dart';
+import '../../../../core/l10n.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -96,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Kelola repositori',
+            tooltip: context.l10n.workspaceManageReposTooltip,
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => Navigator.of(
               context,
@@ -187,7 +188,10 @@ class _LoadingLibrary extends StatelessWidget {
     children: <Widget>[
       const SizedBox(width: 28, height: 28, child: CircularProgressIndicator(strokeWidth: 3)),
       const SizedBox(height: 16),
-      Text('Membaca library…', style: Theme.of(context).textTheme.bodyMedium),
+      Text(
+        context.l10n.workspaceReadingLibraryShort,
+        style: Theme.of(context).textTheme.bodyMedium,
+      ),
     ],
   );
 }
@@ -233,16 +237,16 @@ class _Banner extends ConsumerWidget {
                   final profile = ref.read(workspaceControllerProvider).profile;
                   if (profile != null) showProfileEditor(context, ref, existing: profile);
                 },
-                child: Text('Isi token', style: TextStyle(color: foreground)),
+                child: Text(context.l10n.workspaceFillToken, style: TextStyle(color: foreground)),
               )
             else if (isError)
               TextButton(
                 onPressed: () => ref.read(workspaceControllerProvider.notifier).retryOpen(),
-                child: Text('Coba lagi', style: TextStyle(color: foreground)),
+                child: Text(context.l10n.workspaceRetry, style: TextStyle(color: foreground)),
               ),
             IconButton(
               icon: Icon(Icons.close, size: 16, color: foreground),
-              tooltip: 'Tutup',
+              tooltip: context.l10n.workspaceClose,
               onPressed: () => ref.read(workspaceControllerProvider.notifier).clearMessages(),
             ),
           ],

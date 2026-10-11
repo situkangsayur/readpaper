@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import '../../../../core/errors/failure.dart';
+import '../../../../core/l10n.dart';
 
 /// One entry of a git tree as returned by the GitHub API.
 class GitTreeEntry {
@@ -129,7 +130,7 @@ class GitHubApiClient {
     final uri = Uri.parse('${ref.apiBase}/user');
     final response = await _send(() => _client.get(uri, headers: _headers()), uri);
     final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return json['login'] as String? ?? '(tidak diketahui)';
+    return json['login'] as String? ?? l10n.syncUnknownUser;
   }
 
   void close() => _client.close();
@@ -164,9 +165,7 @@ class GitHubApiClient {
     final response = await _get(_uri('/git/trees/$commitSha', <String, String>{'recursive': '1'}));
     final json = jsonDecode(response.body) as Map<String, dynamic>;
     if (json['truncated'] == true) {
-      throw const GitFailure(
-        'Daftar berkas repositori terlalu besar untuk dibaca sekaligus oleh API GitHub.',
-      );
+      throw GitFailure(l10n.syncErrTreeTooLarge);
     }
     final entries = <GitTreeEntry>[];
     for (final item in (json['tree'] as List?) ?? const <dynamic>[]) {
@@ -198,12 +197,7 @@ class GitHubApiClient {
 
   Future<String> createBlob(List<int> content) async {
     if (content.length > maxBlobBytes) {
-      throw GitFailure(
-        'Berkasnya ${_megabytes(content.length)} MB, di atas batas 100 MB yang '
-        'diterima API GitHub untuk satu berkas. Kirimkan lewat git biasa di '
-        'komputer, atau simpan lampirannya di luar repositori.',
-        exitCode: 413,
-      );
+      throw GitFailure(l10n.syncErrBlobTooLarge(_megabytes(content.length)), exitCode: 413);
     }
     final response = await _post(
       _uri('/git/blobs'),
@@ -316,11 +310,7 @@ class GitHubApiClient {
       }
       if (tries < maxAttempts) await Future<void>.delayed(_backoff(tries));
     }
-    throw GitFailure(
-      'Koneksi ke GitHub terputus dan tidak pulih setelah $maxAttempts percobaan. '
-      'Unduhan bisa dilanjutkan dari tempatnya berhenti.',
-      details: '${uri.path} — $lastError',
-    );
+    throw GitFailure(l10n.syncErrConnectionLost(maxAttempts), details: '${uri.path} — $lastError');
   }
 
   /// Lama menunggu yang diminta GitHub, kalau jawaban ini batas kecepatan
@@ -359,22 +349,19 @@ class GitHubApiClient {
     final remaining = response.headers['x-ratelimit-remaining'];
     switch (response.statusCode) {
       case 401:
-        return 'Token GitHub ditolak. Periksa token di profil repositori.';
+        return l10n.syncErrTokenRejected;
       case 403:
         if (remaining == '0') {
-          return 'Kuota permintaan GitHub habis. Coba lagi setelah kuota pulih '
-              '(sekitar satu jam), atau pakai token dengan kuota lebih besar.';
+          return l10n.syncErrQuota;
         }
         if (_isSecondaryLimit(response) || response.headers['retry-after'] != null) {
-          return 'GitHub meminta pengiriman diperlambat karena terlalu banyak berkas '
-              'beruntun. Tunggu beberapa menit lalu kirim lagi.';
+          return l10n.syncErrSlowDown;
         }
-        return 'Akses ditolak. Token perlu izin "Contents: read and write" untuk repositori ini.';
+        return l10n.syncErrForbidden;
       case 404:
-        return 'Repositori atau berkas tidak ditemukan. Untuk repositori privat, '
-            'token harus punya akses ke repositori tersebut.';
+        return l10n.syncErrNotFound;
       case 409:
-        return 'Branch di GitHub sudah berubah. Tarik perubahan dulu, lalu kirim ulang.';
+        return l10n.syncErrBranchMoved;
       case 422:
         // Dulu di sini tertulis "kemungkinan branch sudah bergerak, tarik
         // perubahan dulu" — sebuah tebakan, dan tebakan yang mahal. 422 juga
@@ -382,14 +369,12 @@ class GitHubApiClient {
         // membacanya lalu menarik perubahan berulang kali tanpa pernah bisa
         // berhasil. Sekarang alasan GitHub sendiri yang ditampilkan.
         final reason = _reasonFrom(response);
-        return reason.isEmpty
-            ? 'GitHub menolak perubahan ini (422), tanpa menyebut alasannya.'
-            : 'GitHub menolak perubahan ini: $reason';
+        return reason.isEmpty ? l10n.syncErrRejectedNoReason : l10n.syncErrRejected(reason);
       default:
         final reason = _reasonFrom(response);
         return reason.isEmpty
-            ? 'GitHub membalas dengan kode ${response.statusCode}.'
-            : 'GitHub membalas dengan kode ${response.statusCode}: $reason';
+            ? l10n.syncErrStatus(response.statusCode)
+            : l10n.syncErrStatusReason(response.statusCode, reason);
     }
   }
 

@@ -9,6 +9,7 @@ import 'package:pdfium_dart/pdfium_dart.dart' as pdfium;
 
 import '../../library/domain/entities/zotero_annotation.dart';
 import 'page_picture.dart';
+import '../../../core/l10n.dart';
 
 /// Menyusun ulang halaman sebuah PDF tanpa menggambar ulang isinya.
 ///
@@ -57,7 +58,7 @@ class PdfPageEditor {
   }) async {
     if (count < 1) throw ArgumentError.value(count, 'count', 'minimal satu halaman');
     if (!File(source).existsSync()) {
-      throw FileSystemException('Berkas asalnya tidak ada', source);
+      throw FileSystemException(l10n.readerErrSourceMissing, source);
     }
 
     final lib = _library();
@@ -66,7 +67,7 @@ class PdfPageEditor {
     final srcDoc = lib.FPDF_LoadDocument(sourcePath.cast(), nullptr);
     calloc.free(sourcePath);
     if (srcDoc == nullptr) {
-      throw const FormatException('PDF-nya tidak bisa dibaca');
+      throw FormatException(l10n.readerErrPdfUnreadable);
     }
 
     final dstDoc = lib.FPDF_CreateNewDocument();
@@ -74,7 +75,7 @@ class PdfPageEditor {
       // Pointer kosong berarti "semua halaman", sesuai dokumentasi pdfium.
       final imported = lib.FPDF_ImportPagesByIndex(dstDoc, srcDoc, nullptr, 0, 0);
       if (imported == 0) {
-        throw const FormatException('Halaman aslinya tidak bisa disalin');
+        throw FormatException(l10n.readerErrPageCopy);
       }
 
       final pageCount = lib.FPDF_GetPageCount(dstDoc);
@@ -93,7 +94,7 @@ class PdfPageEditor {
       for (var i = 0; i < count; i++) {
         final page = lib.FPDFPage_New(dstDoc, start + i, width, height);
         if (page == nullptr) {
-          throw const FormatException('Halaman kosongnya tidak bisa dibuat');
+          throw FormatException(l10n.readerErrBlankPage);
         }
         lib.FPDF_ClosePage(page);
       }
@@ -118,12 +119,12 @@ class PdfPageEditor {
     try {
       for (final source in sources) {
         if (!File(source).existsSync()) {
-          throw FileSystemException('Berkasnya tidak ada', source);
+          throw FileSystemException(l10n.readerErrFileMissing, source);
         }
         final path = source.toNativeUtf8();
         final doc = lib.FPDF_LoadDocument(path.cast(), nullptr);
         calloc.free(path);
-        if (doc == nullptr) throw FormatException('Tidak bisa dibaca: $source');
+        if (doc == nullptr) throw FormatException(l10n.readerErrCannotRead(source));
         try {
           lib.FPDF_ImportPagesByIndex(dstDoc, doc, nullptr, 0, lib.FPDF_GetPageCount(dstDoc));
         } finally {
@@ -183,7 +184,7 @@ class PdfPageEditor {
       // 0 berarti "salinan biasa"; tanpa penulisan bertahap yang menyisakan
       // sisa dokumen lama di dalam berkasnya.
       final ok = lib.FPDF_SaveAsCopy(doc, writer, 0);
-      if (ok == 0) throw const FormatException('PDF-nya gagal ditulis');
+      if (ok == 0) throw FormatException(l10n.readerErrPdfWrite);
       return chunks.takeBytes();
     } finally {
       calloc.free(writer);
@@ -217,7 +218,7 @@ class PdfPageEditor {
     final path = source.toNativeUtf8();
     final doc = lib.FPDF_LoadDocument(path.cast(), nullptr);
     malloc.free(path);
-    if (doc == nullptr) throw FileSystemException('PDF-nya tidak bisa dibuka', source);
+    if (doc == nullptr) throw FileSystemException(l10n.readerErrPdfOpen, source);
     try {
       final count = lib.FPDF_GetPageCount(doc);
       for (var i = 0; i < count; i++) {
@@ -236,7 +237,7 @@ class PdfPageEditor {
             _drawAnnotation(lib, doc, page, annotation);
           }
           if (lib.FPDFPage_GenerateContent(page) == 0) {
-            throw const FormatException('Isi halaman gagal ditulis ulang');
+            throw FormatException(l10n.readerErrPageRewrite);
           }
         } finally {
           lib.FPDF_ClosePage(page);

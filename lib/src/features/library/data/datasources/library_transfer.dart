@@ -7,6 +7,7 @@ import '../../../../core/errors/failure.dart';
 import '../../../../core/utils/zotero_key.dart';
 import 'zotero_json.dart';
 import 'zotero_writer.dart';
+import '../../../../core/l10n.dart';
 
 /// Hasil menyalin item atau koleksi ke library lain.
 class TransferResult {
@@ -40,8 +41,7 @@ class MissingAttachments implements Exception {
 
   @override
   String toString() =>
-      '${files.length} lampiran belum ada di perangkat ini (belum diunduh, atau '
-      'masih penunjuk Git LFS): ${files.map(p.basename).join(', ')}';
+      l10n.libraryErrAttachmentsMissing(files.length, files.map(p.basename).join(', '));
 }
 
 /// Menyalin item dan koleksi Zotero dari satu library ke library lain.
@@ -73,13 +73,11 @@ class LibraryTransfer {
     final zotero = (json['zotero'] as Map?)?.cast<String, dynamic>();
     final key = zotero?['key'] as String?;
     if (zotero == null || key == null || key.isEmpty) {
-      throw LibraryFailure('Berkas item tidak punya kunci Zotero', details: itemFilePath);
+      throw LibraryFailure(l10n.libraryErrItemNoKey, details: itemFilePath);
     }
     final target = File(p.join(targetDir, 'items', ZoteroKey.bucket(key), '$key.json'));
     if (target.existsSync()) {
-      throw LibraryFailure(
-        'Item ini sudah ada di repositori tujuan (kunci $key). Tidak disalin dua kali.',
-      );
+      throw LibraryFailure(l10n.libraryErrItemExistsInTarget(key));
     }
 
     // Lampiran diperiksa dulu, sebelum apa pun ditulis: item yang tiba tanpa
@@ -148,9 +146,9 @@ class LibraryTransfer {
     final source = await _collections(sourceDir);
     final target = await _collections(targetDir);
     final root = source.where((c) => c['key'] == collectionKey).firstOrNull;
-    if (root == null) throw LibraryFailure('Koleksi tidak ada lagi', details: collectionKey);
+    if (root == null) throw LibraryFailure(l10n.libraryErrCollectionGone, details: collectionKey);
     if (targetParentKey != null && !target.any((c) => c['key'] == targetParentKey)) {
-      throw LibraryFailure('Koleksi tujuan tidak ada', details: targetParentKey);
+      throw LibraryFailure(l10n.libraryErrTargetCollectionMissing, details: targetParentKey);
     }
     final twin = target.any(
       (c) =>
@@ -159,9 +157,7 @@ class LibraryTransfer {
               ((root['name'] as String?) ?? '').toLowerCase(),
     );
     if (twin) {
-      throw LibraryFailure(
-        'Di tempat tujuan sudah ada koleksi bernama "${root['name']}". Ganti namanya dulu.',
-      );
+      throw LibraryFailure(l10n.libraryErrTargetHasCollection('${root['name']}'));
     }
 
     // Pohon yang disalin, induk lebih dulu.
@@ -226,7 +222,7 @@ class LibraryTransfer {
         p.join(targetDir, 'items', ZoteroKey.bucket(itemKey), '$itemKey.json'),
       ).existsSync()) {
         throw LibraryFailure(
-          'Item ${(json['meta'] as Map?)?['title'] ?? itemKey} sudah ada di repositori tujuan.',
+          l10n.libraryErrItemTitleExists('${(json['meta'] as Map?)?['title'] ?? itemKey}'),
         );
       }
       missing.addAll(await missingAttachments(sourceDir, file.path));
@@ -355,7 +351,7 @@ class LibraryTransfer {
     if (!file.existsSync()) return <Map<String, dynamic>>[];
     final decoded = jsonDecode(await file.readAsString());
     if (decoded is! List) {
-      throw LibraryFailure('collections.json tidak berisi daftar koleksi', details: file.path);
+      throw LibraryFailure(l10n.libraryErrCollectionsNotList, details: file.path);
     }
     return <Map<String, dynamic>>[for (final e in decoded) (e as Map).cast<String, dynamic>()];
   }

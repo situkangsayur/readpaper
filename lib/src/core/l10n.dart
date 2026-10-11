@@ -7,7 +7,10 @@ export '../../l10n/app_localizations.dart';
 /// `context.l10n.namaKunci` — teks antarmuka dalam bahasa yang dipilih di
 /// Pengaturan (Indonesia atau English).
 extension L10nContext on BuildContext {
-  AppLocalizations get l10n => AppLocalizations.of(this);
+  /// Tanpa delegasi lokalisasi di atasnya (mis. widget yang diuji sendirian
+  /// di dalam MaterialApp polos) jatuh ke bahasa aktif global, bukan crash.
+  AppLocalizations get l10n =>
+      Localizations.of<AppLocalizations>(this, AppLocalizations) ?? _current;
 }
 
 AppLocalizations _current = lookupAppLocalizations(const Locale('id'));

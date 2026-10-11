@@ -9,6 +9,7 @@ import 'package:pdfrx/pdfrx.dart';
 import '../../../core/utils/simple_pdf_writer.dart';
 import '../../library/domain/entities/zotero_annotation.dart';
 import '../presentation/widgets/annotation_overlay_painter.dart';
+import '../../../core/l10n.dart';
 
 /// What a page is saved as.
 enum PageImageFormat {
@@ -52,11 +53,11 @@ Future<Uint8List> exportPageImage({
   final width = (page.width * scale).round();
   final height = (page.height * scale).round();
   if (width <= 0 || height <= 0) {
-    throw StateError('Ukuran halaman tidak masuk akal: ${page.width}x${page.height}');
+    throw StateError(l10n.readerErrPageSize('${page.width}x${page.height}'));
   }
 
   final rendered = await page.render(fullWidth: width.toDouble(), fullHeight: height.toDouble());
-  if (rendered == null) throw StateError('Halaman gagal dirender');
+  if (rendered == null) throw StateError(l10n.readerErrRender);
 
   ui.Image base;
   try {
@@ -168,14 +169,14 @@ Future<ui.Image> _drawAnnotations({
 
 Future<Uint8List> _encodePng(ui.Image image) async {
   final data = await image.toByteData(format: ui.ImageByteFormat.png);
-  if (data == null) throw StateError('PNG gagal dikodekan');
+  if (data == null) throw StateError(l10n.readerErrPngEncode);
   return data.buffer.asUint8List();
 }
 
 Future<Uint8List> _encodeJpg(ui.Image image, int quality) async {
   // dart:ui cannot write JPEG, so the raw pixels go through the image package.
   final data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-  if (data == null) throw StateError('Piksel gagal dibaca');
+  if (data == null) throw StateError(l10n.readerErrPixels);
   final raw = img.Image.fromBytes(
     width: image.width,
     height: image.height,

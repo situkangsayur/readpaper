@@ -16,6 +16,7 @@ import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
 import '../../domain/entities/library_index.dart';
 import '../../domain/entities/zotero_collection.dart';
 import '../controllers/library_controllers.dart';
+import '../../../../core/l10n.dart';
 
 /// Pohon koleksi dengan **dua akar**: paper dan catatan.
 ///
@@ -60,7 +61,7 @@ class CollectionTreePane extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             PopupMenuButton<String>(
-              tooltip: 'Tambahkan berkas atau folder ke library',
+              tooltip: context.l10n.libraryAddToLibraryTooltip,
               iconSize: 16,
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.note_add_outlined),
@@ -74,16 +75,16 @@ class CollectionTreePane extends ConsumerWidget {
                 await pickFolderInto(host, notes: false, key: null, name: index.library.name);
               },
               itemBuilder: (_) => <PopupMenuEntry<String>>[
-                const PopupMenuItem<String>(value: 'berkas', child: Text('Tambahkan berkas…')),
+                PopupMenuItem<String>(value: 'berkas', child: Text(context.l10n.libraryAddFiles)),
                 if (FileDropZone.supported)
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     value: 'folder',
-                    child: Text('Tambahkan folder (jadi koleksi)…'),
+                    child: Text(context.l10n.libraryAddFolderAsCollection),
                   ),
               ],
             ),
             IconButton(
-              tooltip: 'Koleksi paper baru',
+              tooltip: context.l10n.libraryNewPaperCollection,
               iconSize: 16,
               visualDensity: VisualDensity.compact,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -100,7 +101,7 @@ class CollectionTreePane extends ConsumerWidget {
       if (index.unfiledItemKeys.isNotEmpty) {
         rows.add(
           _TreeRow(
-            label: 'Tanpa koleksi',
+            label: context.l10n.libraryUnfiled,
             icon: Icons.folder_off_outlined,
             count: index.unfiledItemKeys.length,
             depth: 1,
@@ -144,7 +145,7 @@ class CollectionTreePane extends ConsumerWidget {
 
     rows.add(
       _TreeRow(
-        label: 'Catatan',
+        label: context.l10n.libraryNotesRoot,
         icon: Icons.sticky_note_2_outlined,
         count: notes.items.length,
         depth: 0,
@@ -154,18 +155,19 @@ class CollectionTreePane extends ConsumerWidget {
         isExpanded: notesOpen,
         onToggle: () => expandedController.toggle(notesRootNodeKey),
         onTap: () => selectionController.select(const LibrarySelection.notes()),
-        onDrop: (drag) => dropIntoNotes(ImportHost.of(context), drag, null, 'Catatan'),
+        onDrop: (drag) =>
+            dropIntoNotes(ImportHost.of(context), drag, null, context.l10n.libraryNotesRoot),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             AddFilesButton(
               notes: true,
               collectionKey: null,
-              collectionName: 'Catatan',
+              collectionName: context.l10n.libraryNotesRoot,
               iconSize: 16,
             ),
             IconButton(
-              tooltip: 'Koleksi catatan baru',
+              tooltip: context.l10n.libraryNewNoteCollection,
               iconSize: 16,
               visualDensity: VisualDensity.compact,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -182,13 +184,14 @@ class CollectionTreePane extends ConsumerWidget {
       if (notes.unfiled.isNotEmpty) {
         rows.add(
           _TreeRow(
-            label: 'Tanpa koleksi',
+            label: context.l10n.libraryUnfiled,
             icon: Icons.folder_off_outlined,
             count: notes.unfiled.length,
             depth: 1,
             selected: selection.kind == SelectionKind.notesUnfiled,
             onTap: () => selectionController.select(const LibrarySelection.notesUnfiled()),
-            onDrop: (drag) => dropIntoNotes(ImportHost.of(context), drag, null, 'Catatan'),
+            onDrop: (drag) =>
+                dropIntoNotes(ImportHost.of(context), drag, null, context.l10n.libraryNotesRoot),
           ),
         );
       }
@@ -267,7 +270,7 @@ class _Header extends ConsumerWidget {
               children: <Widget>[
                 Text(index.library.name, style: Theme.of(context).textTheme.titleSmall),
                 Text(
-                  '${index.itemCount} item · ${index.collectionCount} koleksi',
+                  context.l10n.libraryItemsAndCollections(index.itemCount, index.collectionCount),
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
               ],
@@ -275,20 +278,20 @@ class _Header extends ConsumerWidget {
           ),
           IconButton(
             tooltip: includeSub
-                ? 'Sertakan item sub-koleksi: aktif'
-                : 'Sertakan item sub-koleksi: nonaktif',
+                ? context.l10n.libraryIncludeSubOn
+                : context.l10n.libraryIncludeSubOff,
             iconSize: 18,
             icon: Icon(includeSub ? Icons.account_tree : Icons.account_tree_outlined),
             onPressed: ref.read(includeSubcollectionsProvider.notifier).toggle,
           ),
           IconButton(
-            tooltip: 'Tutup semua',
+            tooltip: context.l10n.libraryCollapseAll,
             iconSize: 18,
             icon: const Icon(Icons.unfold_less),
             onPressed: ref.read(expandedCollectionsProvider.notifier).collapseAll,
           ),
           IconButton(
-            tooltip: 'Buka semua',
+            tooltip: context.l10n.libraryExpandAll,
             iconSize: 18,
             icon: const Icon(Icons.unfold_more),
             onPressed: () => ref.read(expandedCollectionsProvider.notifier).expandAll(<String>[
@@ -312,8 +315,7 @@ class _EmptyNotesHint extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(40, 4, 12, 8),
     child: Text(
-      'Belum ada koleksi catatan. Catatan disimpan di folder tersendiri di '
-      'dalam repositori, terpisah dari paper.',
+      context.l10n.libraryNoNoteCollections,
       style: Theme.of(context).textTheme.labelSmall,
     ),
   );
@@ -444,7 +446,7 @@ class _TreeRow extends StatelessWidget {
                 ),
               if (onAddChild != null)
                 IconButton(
-                  tooltip: 'Sub-koleksi baru di sini',
+                  tooltip: context.l10n.libraryNewSubcollectionHere,
                   iconSize: 15,
                   visualDensity: VisualDensity.compact,
                   constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
@@ -454,7 +456,7 @@ class _TreeRow extends StatelessWidget {
                 ),
               if (onMenu != null)
                 IconButton(
-                  tooltip: 'Ubah nama, pindahkan, atau hapus',
+                  tooltip: context.l10n.libraryCollectionMenu,
                   iconSize: 15,
                   visualDensity: VisualDensity.compact,
                   constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
@@ -483,8 +485,10 @@ Future<void> _newPaperCollection(
 }) async {
   final name = await _askName(
     context,
-    title: parentKey == null ? 'Koleksi paper baru' : 'Sub-koleksi paper baru',
-    hint: 'Ditulis ke collections.json, ikut tersinkron ke GitHub',
+    title: parentKey == null
+        ? context.l10n.libraryNewPaperCollection
+        : context.l10n.libraryNewPaperSubcollection,
+    hint: context.l10n.libraryNewCollectionHint,
   );
   if (name == null || name.trim().isEmpty) return;
 
@@ -495,7 +499,9 @@ Future<void> _newPaperCollection(
   if (key == null) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(ref.read(workspaceControllerProvider).error ?? 'Gagal membuat koleksi'),
+        content: Text(
+          ref.read(workspaceControllerProvider).error ?? context.l10n.libraryCreateCollectionFailed,
+        ),
         duration: const Duration(seconds: 5),
       ),
     );
@@ -512,7 +518,9 @@ Future<void> _newNoteCollection(
 }) async {
   final name = await _askName(
     context,
-    title: parentKey == null ? 'Koleksi catatan baru' : 'Sub-koleksi catatan baru',
+    title: parentKey == null
+        ? context.l10n.libraryNewNoteCollection
+        : context.l10n.libraryNewNoteSubcollection,
   );
   if (name == null || name.trim().isEmpty) return;
   final key = await ref
@@ -521,7 +529,9 @@ Future<void> _newNoteCollection(
   if (!context.mounted) return;
   if (key == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ref.read(notesErrorProvider) ?? 'Gagal membuat koleksi')),
+      SnackBar(
+        content: Text(ref.read(notesErrorProvider) ?? context.l10n.libraryCreateCollectionFailed),
+      ),
     );
     return;
   }
@@ -561,52 +571,52 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.note_add_outlined),
-              title: const Text('Tambahkan berkas ke sini…'),
+              title: Text(context.l10n.libraryAddFilesHere),
               subtitle: Text(
                 FileDropZone.supported
-                    ? 'jenis apa pun, beberapa sekaligus; atau seret dari pengelola berkas'
-                    : 'jenis apa pun, beberapa sekaligus',
+                    ? context.l10n.libraryAnyTypeOrDrag
+                    : context.l10n.libraryAnyTypeSeveral,
               ),
               onTap: () => Navigator.of(sheet).pop('pdf'),
             ),
             if (FileDropZone.supported)
               ListTile(
                 leading: const Icon(Icons.drive_folder_upload_outlined),
-                title: const Text('Tambahkan folder ke sini…'),
-                subtitle: const Text('subfolder jadi sub-koleksi'),
+                title: Text(context.l10n.libraryAddFolderHere),
+                subtitle: Text(context.l10n.librarySubfoldersBecomeSub),
                 onTap: () => Navigator.of(sheet).pop('folder'),
               ),
             ListTile(
               leading: const Icon(Icons.create_new_folder_outlined),
-              title: const Text('Sub-koleksi baru'),
+              title: Text(context.l10n.libraryNewSubcollection),
               onTap: () => Navigator.of(sheet).pop('baru'),
             ),
             ListTile(
               leading: const Icon(Icons.drive_file_rename_outline),
-              title: const Text('Ubah nama'),
+              title: Text(context.l10n.libraryRename),
               onTap: () => Navigator.of(sheet).pop('nama'),
             ),
             ListTile(
               leading: const Icon(Icons.drive_file_move_outline),
-              title: const Text('Pindahkan ke…'),
+              title: Text(context.l10n.libraryMoveTo),
               onTap: () => Navigator.of(sheet).pop('pindah'),
             ),
             ListTile(
               leading: const Icon(Icons.storage_outlined),
-              title: const Text('Pindahkan atau salin ke repositori lain…'),
-              subtitle: const Text('beserta sub-koleksi dan paper-nya'),
+              title: Text(context.l10n.libraryTransferToRepo),
+              subtitle: Text(context.l10n.libraryWithSubsAndPapers),
               onTap: () => Navigator.of(sheet).pop('repo'),
             ),
             ListTile(
               leading: const Icon(Icons.functions),
-              title: const Text('Ekspor ke BibTeX (.bib)'),
-              subtitle: const Text('untuk naskah LaTeX; sub-koleksi ikut'),
+              title: Text(context.l10n.libraryExportBibtex),
+              subtitle: Text(context.l10n.libraryExportBibtexHint),
               onTap: () => Navigator.of(sheet).pop('bib'),
             ),
             ListTile(
               leading: const Icon(Icons.folder_delete_outlined),
-              title: const Text('Hapus koleksi'),
-              subtitle: const Text('Paper di dalamnya tidak ikut terhapus'),
+              title: Text(context.l10n.libraryDeleteCollection),
+              subtitle: Text(context.l10n.libraryPapersKept),
               onTap: () => Navigator.of(sheet).pop('hapus'),
             ),
           ],
@@ -624,7 +634,10 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
       ..showSnackBar(
         SnackBar(
           content: Text(
-            ok ? done : (ref.read(workspaceControllerProvider).error ?? 'Gagal mengubah koleksi'),
+            ok
+                ? done
+                : (ref.read(workspaceControllerProvider).error ??
+                      context.l10n.libraryChangeCollectionFailed),
           ),
           duration: Duration(seconds: ok ? 3 : 6),
         ),
@@ -641,29 +654,29 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
     case 'nama':
       final name = await _askName(
         context,
-        title: 'Ubah nama koleksi',
+        title: context.l10n.libraryRenameCollection,
         initial: collection.name,
-        hint: 'Paper di dalamnya tetap; jalur sub-koleksinya ikut berubah',
+        hint: context.l10n.libraryRenameCollectionHint,
       );
       if (name == null || name.trim().isEmpty || name.trim() == collection.name) return;
       final ok = await controller.changePaperCollection(
         message: 'Ubah nama koleksi: ${collection.path} → ${name.trim()}',
         change: (repo, dir) => repo.renameCollection(libraryDir: dir, key: key, name: name),
       );
-      report(ok, 'Koleksi diubah namanya jadi "${name.trim()}"');
+      report(ok, l10n.libraryCollectionRenamed(name.trim()));
     case 'pindah':
       if (!context.mounted) return;
       final target = await _pickPaperParent(context, index, collection);
       if (target == null) return;
       final parentKey = target.isEmpty ? null : target;
       if (parentKey == collection.parentKey) return;
-      final parentName = parentKey == null ? 'akar' : index.collections[parentKey]!.path;
+      final parentName = parentKey == null ? l10n.libraryRoot : index.collections[parentKey]!.path;
       final ok = await controller.changePaperCollection(
         message: 'Pindahkan koleksi ${collection.path} ke $parentName',
         change: (repo, dir) =>
             repo.moveCollection(libraryDir: dir, key: key, newParentKey: parentKey),
       );
-      report(ok, 'Koleksi dipindah ke $parentName');
+      report(ok, l10n.libraryCollectionMoved(parentName));
     case 'bib':
       if (!context.mounted) return;
       await exportBibTex(context, items: index.itemsIn(key), name: collection.name);
@@ -671,7 +684,7 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
       if (!context.mounted) return;
       final choice = await showRepoTransferSheet(
         context,
-        what: 'Koleksi ${collection.path}, beserta sub-koleksi dan paper-nya',
+        what: context.l10n.libraryTransferWhatCollection(collection.path),
         forCollection: true,
       );
       if (choice == null || !context.mounted) return;
@@ -693,8 +706,15 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
             duration: Duration(seconds: failure == null ? 4 : 8),
             content: Text(
               failure ??
-                  'Koleksi "${collection.name}" ${choice.move ? 'dipindahkan' : 'disalin'} '
-                      'ke ${choice.target.name}',
+                  (choice.move
+                      ? context.l10n.libraryCollectionMovedToRepo(
+                          collection.name,
+                          choice.target.name,
+                        )
+                      : context.l10n.libraryCollectionCopiedToRepo(
+                          collection.name,
+                          choice.target.name,
+                        )),
             ),
           ),
         );
@@ -707,24 +727,23 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
           icon: reach.items > 0 || reach.children > 0
               ? Icon(Icons.warning_amber_rounded, color: Theme.of(dialog).colorScheme.error)
               : null,
-          title: Text('Yakin hapus koleksi "${collection.name}"?'),
+          title: Text(context.l10n.libraryConfirmDeleteCollection(collection.name)),
           content: Text(
             <String>[
-              if (reach.items > 0)
-                '${reach.items} paper di dalamnya tidak ikut terhapus — hanya dilepas dari '
-                    'koleksi ini, sama seperti di Zotero.',
-              if (reach.children > 0)
-                'Koleksi ini punya ${reach.children} sub-koleksi. Ikut dihapus, atau naik '
-                    'satu tingkat?',
-              if (reach.items == 0 && reach.children == 0) 'Koleksinya kosong.',
+              if (reach.items > 0) context.l10n.libraryDeleteKeepsPapers(reach.items),
+              if (reach.children > 0) context.l10n.libraryDeleteHasChildren(reach.children),
+              if (reach.items == 0 && reach.children == 0) context.l10n.libraryCollectionEmpty,
             ].join('\n\n'),
           ),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.of(dialog).pop(),
+              child: Text(context.l10n.libraryCancel),
+            ),
             if (reach.children > 0)
               TextButton(
                 onPressed: () => Navigator.of(dialog).pop('naik'),
-                child: const Text('Sub-koleksi naik'),
+                child: Text(context.l10n.librarySubsMoveUp),
               ),
             FilledButton(
               // Merah bila ada isinya: yang hilang lebih dari sekadar nama.
@@ -735,7 +754,11 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
                     )
                   : null,
               onPressed: () => Navigator.of(dialog).pop('semua'),
-              child: Text(reach.children > 0 ? 'Ya, hapus semuanya' : 'Ya, hapus'),
+              child: Text(
+                reach.children > 0
+                    ? context.l10n.libraryYesDeleteAll
+                    : context.l10n.libraryYesDelete,
+              ),
             ),
           ],
         ),
@@ -750,7 +773,7 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
       if (ok && ref.read(workspaceControllerProvider).index?.collections[selected] == null) {
         ref.read(selectionProvider.notifier).select(const LibrarySelection.all());
       }
-      report(ok, 'Koleksi "${collection.name}" dihapus; paper-nya tetap ada');
+      report(ok, l10n.libraryCollectionDeleted(collection.name));
   }
 }
 
@@ -776,12 +799,12 @@ Future<String?> _pickPaperParent(
         child: ListView(
           shrinkWrap: true,
           children: <Widget>[
-            ListTile(dense: true, title: Text('Pindahkan "${moving.name}" ke…')),
+            ListTile(dense: true, title: Text(context.l10n.libraryMoveNameTo(moving.name))),
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.local_library_outlined),
-              title: const Text('Akar library'),
-              subtitle: const Text('tanpa induk'),
+              title: Text(context.l10n.libraryLibraryRoot),
+              subtitle: Text(context.l10n.libraryNoParent),
               enabled: moving.parentKey != null,
               onTap: () => Navigator.of(sheet).pop(''),
             ),
@@ -824,36 +847,36 @@ Future<void> _noteCollectionMenu(
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.create_new_folder_outlined),
-              title: const Text('Sub-koleksi baru'),
+              title: Text(context.l10n.libraryNewSubcollection),
               onTap: () => Navigator.of(sheet).pop('baru'),
             ),
             ListTile(
               leading: const Icon(Icons.drive_file_rename_outline),
-              title: const Text('Ubah nama'),
+              title: Text(context.l10n.libraryRename),
               onTap: () => Navigator.of(sheet).pop('nama'),
             ),
             ListTile(
               leading: const Icon(Icons.note_add_outlined),
-              title: const Text('Tambahkan berkas ke sini…'),
+              title: Text(context.l10n.libraryAddFilesHere),
               onTap: () => Navigator.of(sheet).pop('berkas'),
             ),
             if (FileDropZone.supported)
               ListTile(
                 leading: const Icon(Icons.drive_folder_upload_outlined),
-                title: const Text('Tambahkan folder ke sini…'),
-                subtitle: const Text('subfolder jadi sub-koleksi'),
+                title: Text(context.l10n.libraryAddFolderHere),
+                subtitle: Text(context.l10n.librarySubfoldersBecomeSub),
                 onTap: () => Navigator.of(sheet).pop('folder'),
               ),
             ListTile(
               leading: const Icon(Icons.storage_outlined),
-              title: const Text('Pindahkan atau salin ke repositori lain…'),
-              subtitle: const Text('beserta sub-koleksi dan catatannya'),
+              title: Text(context.l10n.libraryTransferToRepo),
+              subtitle: Text(context.l10n.libraryWithSubsAndNotes),
               onTap: () => Navigator.of(sheet).pop('repo'),
             ),
             ListTile(
               leading: const Icon(Icons.folder_delete_outlined),
-              title: const Text('Hapus koleksi'),
-              subtitle: const Text('Catatannya tidak ikut terhapus'),
+              title: Text(context.l10n.libraryDeleteCollection),
+              subtitle: Text(context.l10n.libraryNotesKept),
               onTap: () => Navigator.of(sheet).pop('hapus'),
             ),
           ],
@@ -868,7 +891,7 @@ Future<void> _noteCollectionMenu(
     case 'repo':
       final choice = await showRepoTransferSheet(
         context,
-        what: 'Koleksi catatan "${collection.name}", beserta sub-koleksi dan catatannya',
+        what: context.l10n.libraryTransferWhatNoteCollection(collection.name),
         forCollection: true,
         notes: true,
       );
@@ -890,15 +913,23 @@ Future<void> _noteCollectionMenu(
             duration: Duration(seconds: failure == null ? 4 : 8),
             content: Text(
               failure ??
-                  'Koleksi catatan "${collection.name}" ${choice.move ? 'dipindahkan' : 'disalin'} '
-                      'ke ${choice.target.name}',
+                  (choice.move
+                      ? l10n.libraryNoteCollectionMovedToRepo(collection.name, choice.target.name)
+                      : l10n.libraryNoteCollectionCopiedToRepo(
+                          collection.name,
+                          choice.target.name,
+                        )),
             ),
           ),
         );
     case 'baru':
       await _newNoteCollection(context, ref, parentKey: collection.key);
     case 'nama':
-      final name = await _askName(context, title: 'Ubah nama', initial: collection.name);
+      final name = await _askName(
+        context,
+        title: context.l10n.libraryRename,
+        initial: collection.name,
+      );
       if (name == null || name.trim().isEmpty) return;
       await controller.renameCollection(key: collection.key, name: name);
     case 'berkas':
@@ -916,13 +947,11 @@ Future<void> _noteCollectionMenu(
       final subs = notes == null ? 0 : _noteDescendants(notes, collection.key);
       final sure = await _confirmDelete(
         context,
-        title: 'Hapus koleksi catatan "${collection.name}"?',
+        title: context.l10n.libraryConfirmDeleteNoteCollection(collection.name),
         lines: <String>[
-          if (count > 0)
-            'Berisi $count catatan. Catatannya tidak ikut terhapus — pindah ke '
-                '"Tanpa koleksi" bila tidak ada di koleksi lain.',
-          if (subs > 0) '$subs sub-koleksi di dalamnya ikut terhapus.',
-          if (count == 0 && subs == 0) 'Koleksinya kosong.',
+          if (count > 0) context.l10n.libraryNoteCollectionHolds(count),
+          if (subs > 0) context.l10n.librarySubsDeletedToo(subs),
+          if (count == 0 && subs == 0) context.l10n.libraryCollectionEmpty,
         ],
         hasContent: count > 0 || subs > 0,
       );
@@ -959,7 +988,10 @@ Future<bool> _confirmDelete(
       title: Text(title),
       content: Text(lines.join('\n\n')),
       actions: <Widget>[
-        TextButton(onPressed: () => Navigator.of(dialog).pop(false), child: const Text('Batal')),
+        TextButton(
+          onPressed: () => Navigator.of(dialog).pop(false),
+          child: Text(context.l10n.libraryCancel),
+        ),
         FilledButton(
           style: hasContent
               ? FilledButton.styleFrom(
@@ -968,7 +1000,7 @@ Future<bool> _confirmDelete(
                 )
               : null,
           onPressed: () => Navigator.of(dialog).pop(true),
-          child: const Text('Ya, hapus'),
+          child: Text(context.l10n.libraryYesDelete),
         ),
       ],
     ),
@@ -990,14 +1022,21 @@ Future<String?> _askName(
       content: TextField(
         controller: controller,
         autofocus: true,
-        decoration: InputDecoration(labelText: 'Nama', helperText: hint, helperMaxLines: 2),
+        decoration: InputDecoration(
+          labelText: context.l10n.libraryName,
+          helperText: hint,
+          helperMaxLines: 2,
+        ),
         onSubmitted: (value) => Navigator.of(dialog).pop(value),
       ),
       actions: <Widget>[
-        TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Batal')),
+        TextButton(
+          onPressed: () => Navigator.of(dialog).pop(),
+          child: Text(context.l10n.libraryCancel),
+        ),
         FilledButton(
           onPressed: () => Navigator.of(dialog).pop(controller.text),
-          child: const Text('Simpan'),
+          child: Text(context.l10n.librarySave),
         ),
       ],
     ),

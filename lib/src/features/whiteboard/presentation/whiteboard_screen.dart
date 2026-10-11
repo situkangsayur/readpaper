@@ -14,6 +14,7 @@ import '../../../core/utils/shape_geometry.dart';
 import '../../../core/utils/ink_smoothing.dart';
 import '../data/board_export.dart';
 import '../domain/board.dart';
+import '../../../core/l10n.dart';
 
 /// Papan tulis berdiri sendiri: berlembar-lembar, bisa dicoreti, lalu
 /// disimpan sebagai PDF.
@@ -129,12 +130,7 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content: Text(
-            'Kertas jadi ${turned.orientation.label.toLowerCase()} — '
-            'coretannya ikut berputar, tidak ada yang hilang.',
-          ),
-        ),
+        SnackBar(content: Text(l10n.whiteboardTurned(turned.orientation.label.toLowerCase()))),
       );
   }
 
@@ -176,7 +172,7 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
       if (!mounted) return null;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Gagal menyimpan: $e')));
+        ..showSnackBar(SnackBar(content: Text(l10n.whiteboardSaveFailed('$e'))));
       return null;
     }
   }
@@ -199,7 +195,7 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Gagal membagikan: $e')));
+        ..showSnackBar(SnackBar(content: Text(l10n.whiteboardShareFailed('$e'))));
     }
   }
 
@@ -209,7 +205,7 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
     if (file == null || !mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('Tersimpan sebagai ${p.basename(file.path)}')));
+      ..showSnackBar(SnackBar(content: Text(l10n.whiteboardSavedAs(p.basename(file.path)))));
     Navigator.of(context).pop(file.path);
   }
 
@@ -225,10 +221,13 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
       await showDialog<void>(
         context: context,
         builder: (dialog) => AlertDialog(
-          title: const Text('Belum bisa disimpan sebagai catatan'),
+          title: Text(l10n.notesCannotSaveAsNote),
           content: Text(target.refusal!),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Mengerti')),
+            TextButton(
+              onPressed: () => Navigator.of(dialog).pop(),
+              child: Text(l10n.notesUnderstood),
+            ),
           ],
         ),
       );
@@ -245,13 +244,13 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
-          SnackBar(content: Text(ref.read(notesErrorProvider) ?? 'Gagal menyimpan catatan')),
+          SnackBar(content: Text(ref.read(notesErrorProvider) ?? l10n.whiteboardSaveNoteFailed)),
         );
       return;
     }
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Tersimpan sebagai catatan')));
+      ..showSnackBar(SnackBar(content: Text(l10n.whiteboardSavedAsNote)));
     Navigator.of(context).pop(file.path);
   }
 
@@ -261,16 +260,16 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
     final leave = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Tinggalkan papan ini?'),
-        content: const Text('Coretannya belum disimpan, dan tidak bisa dikembalikan.'),
+        title: Text(l10n.whiteboardLeaveTitle),
+        content: Text(l10n.whiteboardLeaveBody),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Kembali menggambar'),
+            child: Text(l10n.whiteboardKeepDrawing),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Tinggalkan'),
+            child: Text(l10n.whiteboardLeave),
           ),
         ],
       ),
@@ -296,10 +295,13 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Text(widget.name?.isNotEmpty ?? false ? widget.name! : 'Papan tulis'),
+              Text(widget.name?.isNotEmpty ?? false ? widget.name! : context.l10n.whiteboardTitle),
               Text(
-                'Lembar ${_current + 1} dari ${_pages.length} · '
-                'kertas ${_page.orientation.label.toLowerCase()}',
+                context.l10n.whiteboardSheetStatus(
+                  _current + 1,
+                  _pages.length,
+                  _page.orientation.label.toLowerCase(),
+                ),
                 style: Theme.of(context).textTheme.labelSmall,
               ),
             ],
@@ -315,7 +317,9 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
               }),
             ),
             PopupMenuButton<String>(
-              tooltip: _shape == null ? 'Tangan bebas' : 'Bangun: ${_shape!.label}',
+              tooltip: _shape == null
+                  ? context.l10n.whiteboardFreehand
+                  : context.l10n.whiteboardShape(_shape!.label),
               icon: Icon(
                 _shape == null ? Icons.gesture : _shapeIcon(_shape!),
                 color: _shape == null ? null : Theme.of(context).colorScheme.primary,
@@ -325,13 +329,13 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
                 _erasing = false;
               }),
               itemBuilder: (_) => <PopupMenuEntry<String>>[
-                const PopupMenuItem<String>(
+                PopupMenuItem<String>(
                   value: 'bebas',
                   child: ListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.gesture),
-                    title: Text('Tangan bebas'),
+                    leading: const Icon(Icons.gesture),
+                    title: Text(context.l10n.whiteboardFreehand),
                   ),
                 ),
                 for (final kind in ShapeKind.values)
@@ -348,8 +352,8 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
             ),
             IconButton(
               tooltip: _finger
-                  ? 'Jari + stylus boleh menggambar — ketuk untuk hanya stylus'
-                  : 'Stylus saja — sentuhan tangan tidak menggambar apa pun',
+                  ? context.l10n.whiteboardFingerOn
+                  : context.l10n.whiteboardStylusOnly,
               isSelected: !_finger,
               selectedIcon: const Icon(Icons.draw),
               icon: const Icon(Icons.touch_app_outlined),
@@ -357,23 +361,25 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
             ),
             // Berlabel: ikon tongkat ajaib saja tidak terbaca sebagai penghapus.
             Tooltip(
-              message: _erasing ? 'Kembali menulis' : 'Penghapus — sapukan di atas goresan',
+              message: _erasing
+                  ? context.l10n.whiteboardBackToWriting
+                  : context.l10n.whiteboardEraserHint,
               child: _erasing
                   ? FilledButton.tonalIcon(
                       onPressed: () => setState(() => _erasing = false),
                       icon: const Icon(Icons.auto_fix_off, size: 18),
-                      label: const Text('Penghapus'),
+                      label: Text(context.l10n.whiteboardEraser),
                     )
                   : TextButton.icon(
                       onPressed: () => setState(() => _erasing = true),
                       icon: const Icon(Icons.auto_fix_normal, size: 18),
-                      label: const Text('Penghapus'),
+                      label: Text(context.l10n.whiteboardEraser),
                     ),
             ),
             IconButton(
               tooltip: _page.orientation == BoardOrientation.tegak
-                  ? 'Kertas tegak — ketuk untuk memutar jadi mendatar'
-                  : 'Kertas mendatar — ketuk untuk memutar jadi tegak',
+                  ? context.l10n.whiteboardPortraitTurn
+                  : context.l10n.whiteboardLandscapeTurn,
               icon: Icon(
                 _page.orientation == BoardOrientation.tegak
                     ? Icons.crop_portrait
@@ -382,35 +388,35 @@ class _WhiteboardScreenState extends ConsumerState<WhiteboardScreen> {
               onPressed: _turnPage,
             ),
             IconButton(
-              tooltip: 'Urungkan',
+              tooltip: context.l10n.notesUndo,
               icon: const Icon(Icons.undo),
               onPressed: _undoPages.isEmpty ? null : _undo,
             ),
             IconButton(
-              tooltip: 'Ulangi',
+              tooltip: context.l10n.notesRedo,
               icon: const Icon(Icons.redo),
               onPressed: _redoPages.isEmpty ? null : _redo,
             ),
             IconButton(
-              tooltip: 'Kosongkan lembar ini',
+              tooltip: context.l10n.whiteboardClearSheet,
               icon: const Icon(Icons.delete_outline),
               onPressed: _deletePage,
             ),
             const SizedBox(width: 4),
             IconButton(
-              tooltip: 'Bagikan sebagai PDF',
+              tooltip: context.l10n.notesShareAsPdf2,
               icon: const Icon(Icons.share_outlined),
               onPressed: _share,
             ),
             IconButton(
-              tooltip: 'Simpan sebagai catatan',
+              tooltip: context.l10n.whiteboardSaveAsNote,
               icon: const Icon(Icons.sticky_note_2_outlined),
               onPressed: _saveToNotes,
             ),
             FilledButton.tonalIcon(
               onPressed: _save,
               icon: const Icon(Icons.save_outlined, size: 18),
-              label: const Text('Simpan PDF'),
+              label: Text(context.l10n.whiteboardSavePdf),
             ),
             const SizedBox(width: 8),
           ],
@@ -756,7 +762,7 @@ class _PageBar extends StatelessWidget {
                 child: FilledButton.tonalIcon(
                   onPressed: onAdd,
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Lembar'),
+                  label: Text(context.l10n.whiteboardSheet),
                 ),
               ),
             ],
@@ -775,7 +781,7 @@ class _WidthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<double>(
-    tooltip: 'Tebal goresan',
+    tooltip: context.l10n.whiteboardStrokeWidth,
     icon: const Icon(Icons.line_weight),
     onSelected: onSelected,
     itemBuilder: (_) => <PopupMenuEntry<double>>[
@@ -815,7 +821,7 @@ class _PenColorButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<Color>(
-    tooltip: 'Warna pena',
+    tooltip: context.l10n.notesPenColor,
     icon: Icon(Icons.circle, color: color),
     onSelected: onSelected,
     itemBuilder: (_) => <PopupMenuEntry<Color>>[
@@ -836,7 +842,7 @@ class _PenColorButton extends StatelessWidget {
                 child: Center(child: Icon(Icons.edit, size: 13, color: choice.color)),
               ),
               const SizedBox(width: 10),
-              Text(choice.name),
+              Text(InkPalette.label(choice.name)),
               if (choice.color == color) ...<Widget>[
                 const SizedBox(width: 8),
                 const Icon(Icons.check, size: 16),

@@ -3,6 +3,7 @@ import 'dart:io';
 import '../../../../core/utils/file_pick.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
+import '../../../../core/l10n.dart';
 
 /// Satu folder yang ditawarkan di dialog "Simpan sebagai".
 class SaveFolder {
@@ -112,7 +113,7 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
   }
 
   Future<void> _pickFolder() async {
-    final picked = await pickDirectoryOrTell(context, title: 'Simpan di folder');
+    final picked = await pickDirectoryOrTell(context, title: context.l10n.readerSaveInFolder);
     if (picked == null || !mounted) return;
     setState(() {
       if (!_folders.any((f) => SaveAsNames.samePath(f.path, picked))) {
@@ -135,18 +136,16 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
         context: context,
         builder: (context) => AlertDialog(
           icon: const Icon(Icons.warning_amber_rounded),
-          title: const Text('Nama berkas sudah dipakai'),
+          title: Text(context.l10n.readerFileNameTaken),
           content: Text(
             isOriginal
-                ? '$name adalah berkas yang sedang dibuka. Menimpanya membuat versi '
-                      'aslinya hilang, dan coretannya melebur ke halaman.\n\n'
-                      'Timpa berkas aslinya?'
-                : '$name sudah ada di folder ini.\n\nTimpa dengan yang baru?',
+                ? context.l10n.readerOverwriteOriginal(name)
+                : context.l10n.readerOverwriteExisting(name),
           ),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Tidak'),
+              child: Text(context.l10n.readerNo),
             ),
             FilledButton(
               style: isOriginal
@@ -156,7 +155,7 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
                     )
                   : null,
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Ya, timpa'),
+              child: Text(context.l10n.readerYesOverwrite),
             ),
           ],
         ),
@@ -171,7 +170,7 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
   Widget build(BuildContext context) {
     final valid = SaveAsNames.fileName(_name.text) != null && _folder != null;
     return AlertDialog(
-      title: const Text('Simpan sebagai'),
+      title: Text(context.l10n.readerSaveAs),
       content: SizedBox(
         width: 440,
         child: Column(
@@ -181,7 +180,10 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
             TextField(
               controller: _name,
               autofocus: true,
-              decoration: const InputDecoration(labelText: 'Nama berkas', suffixText: '.pdf'),
+              decoration: InputDecoration(
+                labelText: context.l10n.readerFileName,
+                suffixText: '.pdf',
+              ),
               onChanged: (_) => setState(() {}),
               onSubmitted: (_) => _save(),
             ),
@@ -190,7 +192,7 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
               DropdownButtonFormField<String>(
                 initialValue: _folder,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Simpan di'),
+                decoration: InputDecoration(labelText: context.l10n.readerSaveIn),
                 items: <DropdownMenuItem<String>>[
                   for (final folder in _folders)
                     DropdownMenuItem<String>(
@@ -198,9 +200,9 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
                       child: Text(folder.label, overflow: TextOverflow.ellipsis),
                     ),
                   if (widget.allowPickFolder)
-                    const DropdownMenuItem<String>(
+                    DropdownMenuItem<String>(
                       value: _pickOther,
-                      child: Text('Pilih folder lain…'),
+                      child: Text(context.l10n.readerChooseOtherFolder),
                     ),
                 ],
                 onChanged: (value) {
@@ -212,11 +214,7 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
                 },
               ),
             const SizedBox(height: 8),
-            Text(
-              'Berkas yang dibuka tidak disentuh. Setelah ini, Simpan menulis ke '
-              'berkas baru ini.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            Text(context.l10n.readerSaveAsExplain, style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
       ),
@@ -227,10 +225,13 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
               final name = SaveAsNames.fileName(_name.text) ?? '${widget.initialName}.pdf';
               Navigator.of(context).pop(SaveAsChoice.system(name));
             },
-            child: const Text('Tempat lain…'),
+            child: Text(context.l10n.readerOtherPlace),
           ),
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
-        FilledButton(onPressed: valid ? _save : null, child: const Text('Simpan')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.readerCancel),
+        ),
+        FilledButton(onPressed: valid ? _save : null, child: Text(context.l10n.readerSave)),
       ],
     );
   }

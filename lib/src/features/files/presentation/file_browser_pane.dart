@@ -19,6 +19,7 @@ import '../../whiteboard/domain/board.dart';
 import '../../whiteboard/presentation/whiteboard_screen.dart';
 import 'open_any_file.dart';
 import '../domain/folder_scan.dart';
+import '../../../core/l10n.dart';
 
 /// Penjelajah berkas di bawah pohon koleksi.
 ///
@@ -88,7 +89,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   }
 
   Future<void> _pickFolder() async {
-    final path = await pickDirectoryOrTell(context, title: 'Pilih folder kerja');
+    final path = await pickDirectoryOrTell(context, title: context.l10n.filesPickWorkFolder);
     if (path == null) return;
     await _open(Directory(path));
   }
@@ -103,10 +104,10 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   Future<void> _copyIn() async {
     final dir = _dir;
     if (dir == null) {
-      _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
+      _say(context.l10n.filesWorkFolderNotReady);
       return;
     }
-    final picked = await pickFilesOrTell(context, title: 'Pilih berkas untuk disalin ke sini');
+    final picked = await pickFilesOrTell(context, title: context.l10n.filesPickFilesToCopy);
     if (picked.isEmpty) return;
     await _copyPaths(picked);
   }
@@ -142,7 +143,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     if (mounted && copied > 0) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('$copied berkas disalin ke sini')));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.filesCopiedHere(copied))));
     }
   }
 
@@ -172,7 +173,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
       builder: (context) {
         final controller = TextEditingController(text: p.basename(file.path));
         return AlertDialog(
-          title: const Text('Ganti nama'),
+          title: Text(context.l10n.filesRename),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -180,10 +181,13 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
             onSubmitted: (value) => Navigator.of(context).pop(value),
           ),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(context.l10n.filesCancel),
+            ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(controller.text),
-              child: const Text('Simpan'),
+              child: Text(context.l10n.filesSave),
             ),
           ],
         );
@@ -196,13 +200,13 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     final safe = trimmed.replaceAll(RegExp(r'[\\/]'), '-');
     final target = p.join(file.parent.path, safe);
     if (FileSystemEntity.typeSync(target) != FileSystemEntityType.notFound) {
-      _say('Sudah ada berkas atau folder bernama itu');
+      if (mounted) _say(context.l10n.filesNameTaken);
       return;
     }
     try {
       await file.rename(target);
     } on FileSystemException catch (e) {
-      _say('Gagal mengganti nama: ${e.osError?.message ?? e.message}');
+      if (mounted) _say(context.l10n.filesRenameFailed(e.osError?.message ?? e.message));
     }
     await _open(file.parent);
   }
@@ -216,7 +220,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   Future<void> _deleteFolder(Directory folder) async {
     final root = await WorkFolder.dir();
     if (p.equals(p.normalize(folder.path), p.normalize(root.path))) {
-      _say('Folder kerja itu sendiri tidak bisa dihapus dari sini.');
+      if (mounted) _say(context.l10n.filesCannotDeleteRoot);
       return;
     }
     var files = 0;
@@ -229,22 +233,27 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     final yakin = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus folder ini?'),
+        title: Text(context.l10n.filesDeleteFolderTitle),
         content: Text(
           '${p.basename(folder.path)}\n\n'
           '${files == 0
-              ? 'Foldernya kosong.'
+              ? context.l10n.filesFolderEmpty
               : files < 0
-              ? 'Isinya tidak bisa dihitung.'
-              : '$files berkas di dalamnya ikut terhapus.'} '
-          'Salinan yang sudah masuk library tidak tersentuh.',
+              ? context.l10n.filesFolderUncountable
+              : context.l10n.filesFolderDeletesCount(files)} '
+          '${context.l10n.filesLibraryCopiesUntouched}',
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.filesCancel),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
             onPressed: () => Navigator.of(context).pop(true),
-            child: Text(files > 0 ? 'Hapus $files berkas' : 'Hapus'),
+            child: Text(
+              files > 0 ? context.l10n.filesDeleteCount(files) : context.l10n.filesDelete,
+            ),
           ),
         ],
       ),
@@ -253,7 +262,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     try {
       await folder.delete(recursive: true);
     } on FileSystemException catch (e) {
-      _say('Gagal menghapus: ${e.osError?.message ?? e.message}');
+      if (mounted) _say(context.l10n.filesDeleteFailed(e.osError?.message ?? e.message));
     }
     await _open(folder.parent);
   }
@@ -266,17 +275,17 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     final yakin = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus berkas ini?'),
-        content: Text(
-          '${p.basename(file.path)}\n\nDihapus dari folder ini. Salinan yang '
-          'sudah masuk library tidak tersentuh.',
-        ),
+        title: Text(context.l10n.filesDeleteFileTitle),
+        content: Text(context.l10n.filesDeleteFileBody(p.basename(file.path))),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.filesCancel),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Hapus'),
+            child: Text(context.l10n.filesDelete),
           ),
         ],
       ),
@@ -289,7 +298,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   Future<void> _newBoard() async {
     final dir = _dir;
     if (dir == null) {
-      _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
+      _say(context.l10n.filesWorkFolderNotReady);
       return;
     }
 
@@ -306,26 +315,22 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
             shrinkWrap: true,
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             children: <Widget>[
-              Text('Papan tulis baru', style: Theme.of(context).textTheme.titleMedium),
+              Text(context.l10n.filesNewBoardTitle, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 4),
-              Text(
-                'Berlembar-lembar, bisa dicoreti, lalu disimpan sebagai PDF di '
-                'folder ini.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              Text(context.l10n.filesNewBoardBody, style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 12),
               SegmentedButton<BoardOrientation>(
                 showSelectedIcon: false,
-                segments: const <ButtonSegment<BoardOrientation>>[
+                segments: <ButtonSegment<BoardOrientation>>[
                   ButtonSegment<BoardOrientation>(
                     value: BoardOrientation.tegak,
-                    icon: Icon(Icons.crop_portrait, size: 18),
-                    label: Text('Tegak'),
+                    icon: const Icon(Icons.crop_portrait, size: 18),
+                    label: Text(context.l10n.filesPortrait),
                   ),
                   ButtonSegment<BoardOrientation>(
                     value: BoardOrientation.mendatar,
-                    icon: Icon(Icons.crop_landscape, size: 18),
-                    label: Text('Mendatar'),
+                    icon: const Icon(Icons.crop_landscape, size: 18),
+                    label: Text(context.l10n.filesLandscape),
                   ),
                 ],
                 selected: <BoardOrientation>{orientation},
@@ -363,14 +368,14 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     if (saved != null && mounted) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('${p.basename(saved)} tersimpan di folder ini')));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.filesSavedHere(p.basename(saved)))));
     }
   }
 
   Future<void> _newFolder() async {
     final dir = _dir;
     if (dir == null) {
-      _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
+      _say(context.l10n.filesWorkFolderNotReady);
       return;
     }
     final name = await showDialog<String>(
@@ -378,18 +383,24 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
       builder: (context) {
         final controller = TextEditingController();
         return AlertDialog(
-          title: const Text('Folder baru'),
+          title: Text(context.l10n.filesNewFolderTitle),
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(border: OutlineInputBorder(), labelText: 'Nama'),
+            decoration: InputDecoration(
+              border: const OutlineInputBorder(),
+              labelText: context.l10n.filesNameLabel,
+            ),
             onSubmitted: (value) => Navigator.of(context).pop(value),
           ),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(context.l10n.filesCancel),
+            ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(controller.text),
-              child: const Text('Buat'),
+              child: Text(context.l10n.filesCreate),
             ),
           ],
         );
@@ -408,7 +419,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   Future<void> _newMarkdown() async {
     final dir = _dir;
     if (dir == null) {
-      _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
+      _say(context.l10n.filesWorkFolderNotReady);
       return;
     }
     final name = await showDialog<String>(
@@ -416,18 +427,24 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
       builder: (dialog) {
         final controller = TextEditingController(text: 'catatan');
         return AlertDialog(
-          title: const Text('Berkas Markdown baru'),
+          title: Text(context.l10n.filesNewMarkdownTitle),
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(labelText: 'Nama berkas', suffixText: '.md'),
+            decoration: InputDecoration(
+              labelText: context.l10n.filesFileNameLabel,
+              suffixText: '.md',
+            ),
             onSubmitted: (value) => Navigator.of(dialog).pop(value),
           ),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.of(dialog).pop(),
+              child: Text(context.l10n.filesCancel),
+            ),
             FilledButton(
               onPressed: () => Navigator.of(dialog).pop(controller.text),
-              child: const Text('Buat'),
+              child: Text(context.l10n.filesCreate),
             ),
           ],
         );
@@ -457,7 +474,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   Future<void> _newNotebook() async {
     final dir = _dir;
     if (dir == null) {
-      _say('Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.');
+      _say(context.l10n.filesWorkFolderNotReady);
       return;
     }
     final name = await showDialog<String>(
@@ -465,18 +482,24 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
       builder: (dialog) {
         final controller = TextEditingController(text: 'catatan');
         return AlertDialog(
-          title: const Text('Buku catatan baru'),
+          title: Text(context.l10n.filesNewNotebookTitle),
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration: const InputDecoration(labelText: 'Nama', suffixText: '.catatan.json'),
+            decoration: InputDecoration(
+              labelText: context.l10n.filesNameLabel,
+              suffixText: '.catatan.json',
+            ),
             onSubmitted: (value) => Navigator.of(dialog).pop(value),
           ),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(dialog).pop(), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.of(dialog).pop(),
+              child: Text(context.l10n.filesCancel),
+            ),
             FilledButton(
               onPressed: () => Navigator.of(dialog).pop(controller.text),
-              child: const Text('Buat'),
+              child: Text(context.l10n.filesCreate),
             ),
           ],
         );
@@ -574,14 +597,14 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                       ),
                     Expanded(
                       child: Text(
-                        dir == null ? 'Berkas' : p.basename(dir.path),
+                        dir == null ? context.l10n.filesHeader : p.basename(dir.path),
                         style: Theme.of(context).textTheme.titleSmall,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (!widget.collapsed) ...<Widget>[
                       IconButton(
-                        tooltip: 'Naik satu tingkat',
+                        tooltip: context.l10n.filesUpOneLevel,
                         iconSize: 18,
                         visualDensity: VisualDensity.compact,
                         icon: const Icon(Icons.drive_folder_upload_outlined),
@@ -593,7 +616,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                         // Tetap bisa dibuka walau foldernya belum siap: tombol mati
                         // tanpa keterangan adalah jebakan yang sama seperti tombol
                         // yang tidak bisa ditekan.
-                        tooltip: 'Buat baru di folder ini',
+                        tooltip: context.l10n.filesCreateHere,
                         iconSize: 20,
                         icon: const Icon(Icons.add_circle_outline),
                         onSelected: (choice) => switch (choice) {
@@ -602,14 +625,14 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                           'catatan' => _newNotebook(),
                           _ => _newFolder(),
                         },
-                        itemBuilder: (_) => const <PopupMenuEntry<String>>[
+                        itemBuilder: (_) => <PopupMenuEntry<String>>[
                           PopupMenuItem<String>(
                             value: 'papan',
                             child: ListTile(
                               dense: true,
                               contentPadding: EdgeInsets.zero,
-                              leading: Icon(Icons.draw_outlined),
-                              title: Text('Papan tulis'),
+                              leading: const Icon(Icons.draw_outlined),
+                              title: Text(context.l10n.filesWhiteboard),
                             ),
                           ),
                           PopupMenuItem<String>(
@@ -617,8 +640,8 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                             child: ListTile(
                               dense: true,
                               contentPadding: EdgeInsets.zero,
-                              leading: Icon(Icons.auto_stories_outlined),
-                              title: Text('Buku catatan'),
+                              leading: const Icon(Icons.auto_stories_outlined),
+                              title: Text(context.l10n.filesNotebook),
                             ),
                           ),
                           PopupMenuItem<String>(
@@ -626,24 +649,24 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                             child: ListTile(
                               dense: true,
                               contentPadding: EdgeInsets.zero,
-                              leading: Icon(Icons.post_add_outlined),
-                              title: Text('Berkas Markdown'),
+                              leading: const Icon(Icons.post_add_outlined),
+                              title: Text(context.l10n.filesMarkdownFile),
                             ),
                           ),
-                          PopupMenuDivider(),
+                          const PopupMenuDivider(),
                           PopupMenuItem<String>(
                             value: 'folder',
                             child: ListTile(
                               dense: true,
                               contentPadding: EdgeInsets.zero,
-                              leading: Icon(Icons.create_new_folder_outlined),
-                              title: Text('Folder'),
+                              leading: const Icon(Icons.create_new_folder_outlined),
+                              title: Text(context.l10n.filesFolder),
                             ),
                           ),
                         ],
                       ),
                       PopupMenuButton<String>(
-                        tooltip: 'Salin berkas atau folder ke sini — dari mana pun di perangkat',
+                        tooltip: context.l10n.filesCopyInTooltip,
                         iconSize: 18,
                         enabled: dir != null,
                         icon: const Icon(Icons.file_download_outlined),
@@ -654,20 +677,23 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                           }
                           final folder = await pickDirectoryOrTell(
                             context,
-                            title: 'Pilih folder untuk disalin ke sini',
+                            title: context.l10n.filesPickFolderToCopy,
                           );
                           if (folder != null) await _copyPaths(<String>[folder]);
                         },
-                        itemBuilder: (_) => const <PopupMenuEntry<String>>[
-                          PopupMenuItem<String>(value: 'berkas', child: Text('Salin berkas…')),
+                        itemBuilder: (_) => <PopupMenuEntry<String>>[
+                          PopupMenuItem<String>(
+                            value: 'berkas',
+                            child: Text(context.l10n.filesCopyFiles),
+                          ),
                           PopupMenuItem<String>(
                             value: 'folder',
-                            child: Text('Salin folder (beserta isinya)…'),
+                            child: Text(context.l10n.filesCopyFolder),
                           ),
                         ],
                       ),
                       IconButton(
-                        tooltip: 'Buka folder lain',
+                        tooltip: context.l10n.filesOpenOtherFolder,
                         iconSize: 18,
                         visualDensity: VisualDensity.compact,
                         icon: const Icon(Icons.folder_open_outlined),
@@ -691,9 +717,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Text(
-                            'Folder ini kosong.\n\nBuat papan tulis, atau salin PDF ke '
-                            'sini dengan tombol unduh di atas — lalu seret ke sebuah '
-                            'koleksi untuk memasukkannya ke library.',
+                            context.l10n.filesEmptyFolderHint,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
@@ -759,7 +783,7 @@ class _EntryRow extends StatelessWidget {
                   ),
                 ),
                 PopupMenuButton<String>(
-                  tooltip: 'Tindakan folder',
+                  tooltip: context.l10n.filesFolderActions,
                   icon: Icon(Icons.more_vert, size: 16, color: scheme.outline),
                   padding: EdgeInsets.zero,
                   onSelected: (choice) => switch (choice) {
@@ -767,10 +791,16 @@ class _EntryRow extends StatelessWidget {
                     'ganti-nama' => onRename(entry),
                     _ => onDeleteFolder(entry as Directory),
                   },
-                  itemBuilder: (_) => const <PopupMenuEntry<String>>[
-                    PopupMenuItem<String>(value: 'buka', child: Text('Buka')),
-                    PopupMenuItem<String>(value: 'ganti-nama', child: Text('Ganti nama')),
-                    PopupMenuItem<String>(value: 'hapus', child: Text('Hapus folder')),
+                  itemBuilder: (_) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(value: 'buka', child: Text(context.l10n.filesOpen)),
+                    PopupMenuItem<String>(
+                      value: 'ganti-nama',
+                      child: Text(context.l10n.filesRename),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'hapus',
+                      child: Text(context.l10n.filesDeleteFolder),
+                    ),
                   ],
                 ),
                 Icon(Icons.chevron_right, size: 16, color: scheme.outline),
@@ -826,7 +856,7 @@ class _EntryRow extends StatelessWidget {
                 ),
               ),
               PopupMenuButton<String>(
-                tooltip: 'Tindakan berkas',
+                tooltip: context.l10n.filesFileActions,
                 icon: Icon(Icons.more_vert, size: 16, color: scheme.outline),
                 padding: EdgeInsets.zero,
                 onSelected: (choice) => switch (choice) {
@@ -836,10 +866,11 @@ class _EntryRow extends StatelessWidget {
                   _ => onDelete(file),
                 },
                 itemBuilder: (_) => <PopupMenuEntry<String>>[
-                  if (canOpen) const PopupMenuItem<String>(value: 'buka', child: Text('Buka')),
-                  const PopupMenuItem<String>(value: 'bagikan', child: Text('Bagikan')),
-                  const PopupMenuItem<String>(value: 'ganti-nama', child: Text('Ganti nama')),
-                  const PopupMenuItem<String>(value: 'hapus', child: Text('Hapus berkas')),
+                  if (canOpen)
+                    PopupMenuItem<String>(value: 'buka', child: Text(context.l10n.filesOpen)),
+                  PopupMenuItem<String>(value: 'bagikan', child: Text(context.l10n.filesShare)),
+                  PopupMenuItem<String>(value: 'ganti-nama', child: Text(context.l10n.filesRename)),
+                  PopupMenuItem<String>(value: 'hapus', child: Text(context.l10n.filesDeleteFile)),
                 ],
               ),
             ],

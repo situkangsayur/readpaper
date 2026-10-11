@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/utils/formatting.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
+import '../../../../core/l10n.dart';
 
 /// The list of markers and comments next to the page view.
 class AnnotationSidebar extends StatelessWidget {
@@ -23,14 +24,10 @@ class AnnotationSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (annotations.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Text(
-            'Belum ada anotasi.\n\nPilih teks pada halaman, lalu pilih Stabilo '
-            'atau Stabilo + komentar.',
-            textAlign: TextAlign.center,
-          ),
+          padding: const EdgeInsets.all(20),
+          child: Text(context.l10n.readerNoAnnotationsYet, textAlign: TextAlign.center),
         ),
       );
     }
@@ -96,7 +93,11 @@ class _AnnotationCard extends StatelessWidget {
                       Icon(_iconFor(annotation.type), size: 12, color: scheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Text(
-                        'hal. ${annotation.pageLabel.isEmpty ? annotation.pageNumber : annotation.pageLabel}',
+                        context.l10n.readerPageShort(
+                          annotation.pageLabel.isEmpty
+                              ? '${annotation.pageNumber}'
+                              : annotation.pageLabel,
+                        ),
                         style: Theme.of(context).textTheme.labelSmall,
                       ),
                     ],
@@ -134,13 +135,13 @@ class _AnnotationCard extends StatelessWidget {
               children: <Widget>[
                 IconButton(
                   iconSize: 22,
-                  tooltip: 'Ubah komentar / warna',
+                  tooltip: context.l10n.readerEditCommentColor,
                   icon: const Icon(Icons.edit_note),
                   onPressed: onEdit,
                 ),
                 IconButton(
                   iconSize: 22,
-                  tooltip: 'Hapus',
+                  tooltip: context.l10n.readerDelete,
                   color: Theme.of(context).colorScheme.error,
                   icon: const Icon(Icons.delete_outline),
                   onPressed: onDelete,

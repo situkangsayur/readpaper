@@ -23,7 +23,7 @@ class ProfilesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Repositori'),
+        title: Text(context.l10n.settingsRepositories),
         actions: <Widget>[
           // Bahasa antarmuka — kedua nama bahasa ditulis dalam bahasanya
           // sendiri, supaya bisa ditemukan oleh yang tidak membaca yang lain.
@@ -54,7 +54,7 @@ class ProfilesScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => showProfileEditor(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('Tambah repositori'),
+        label: Text(context.l10n.settingsAddRepository),
       ),
       bottomNavigationBar: const SafeArea(child: _VersionFooter()),
       // Satu daftar bergulir untuk profil dan kartu sitasi: dengan banyak
@@ -63,9 +63,9 @@ class ProfilesScreen extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
         children: <Widget>[
           if (profiles.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 48),
-              child: Center(child: Text('Belum ada repositori.')),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: Text(context.l10n.settingsNoRepositories)),
             ),
           for (final profile in profiles) ...<Widget>[
             _ProfileCard(
@@ -98,17 +98,17 @@ class ProfilesScreen extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text('Hapus "${profile.name}"?'),
+          title: Text(context.l10n.settingsDeleteProfileTitle(profile.name)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Text('Profil akan dihapus dari ReadPaper.'),
+              Text(context.l10n.settingsDeleteProfileBody),
               const SizedBox(height: 8),
               CheckboxListTile(
                 contentPadding: EdgeInsets.zero,
                 value: deleteClone,
-                title: const Text('Hapus juga folder clone lokal'),
+                title: Text(context.l10n.settingsDeleteCloneToo),
                 subtitle: Text(profile.localPath, style: Theme.of(context).textTheme.labelSmall),
                 onChanged: (value) => setState(() => deleteClone = value ?? false),
               ),
@@ -117,11 +117,11 @@ class ProfilesScreen extends ConsumerWidget {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Batal'),
+              child: Text(context.l10n.filesCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Hapus'),
+              child: Text(context.l10n.filesDelete),
             ),
           ],
         ),
@@ -208,7 +208,7 @@ class _ProfileCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        'URL tidak cocok dengan mode ${profile.transport.label}.',
+                        context.l10n.settingsUrlTransportMismatch(profile.transport.label),
                         style: Theme.of(
                           context,
                         ).textTheme.labelSmall?.copyWith(color: scheme.error),
@@ -223,7 +223,7 @@ class _ProfileCard extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: onActivate,
                   icon: const Icon(Icons.swap_horiz, size: 16),
-                  label: const Text('Jadikan aktif'),
+                  label: Text(context.l10n.settingsMakeActive),
                 ),
               ),
           ],
@@ -272,12 +272,7 @@ class _VersionFooter extends StatelessWidget {
             const SizedBox(height: 4),
             // AGPL asks that an interactive program keeps showing where its
             // source is; this line is that notice, not decoration.
-            SelectableText(
-              'Perangkat lunak bebas, lisensi AGPL-3.0-or-later.\n'
-              'Kode sumber: github.com/situkangsayur/readpaper',
-              textAlign: TextAlign.center,
-              style: small,
-            ),
+            SelectableText(context.l10n.settingsLicense, textAlign: TextAlign.center, style: small),
           ],
         ),
       );

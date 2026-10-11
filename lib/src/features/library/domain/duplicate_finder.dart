@@ -1,4 +1,5 @@
 import 'entities/zotero_item.dart';
+import '../../../core/l10n.dart';
 
 /// Kenapa dua item dianggap salinan yang sama.
 ///
@@ -8,13 +9,15 @@ import 'entities/zotero_item.dart';
 /// dulu. Menyamakan keduanya berarti meminta orang memercayai tebakan sekuat
 /// mereka memercayai fakta.
 enum DuplicateReason {
-  doi('DOI-nya sama'),
-  isbn('ISBN-nya sama'),
-  titleYearAuthor('Judul, tahun, dan pengarangnya sama');
+  doi,
+  isbn,
+  titleYearAuthor;
 
-  const DuplicateReason(this.label);
-
-  final String label;
+  String get label => switch (this) {
+    DuplicateReason.doi => l10n.libraryReasonDoi,
+    DuplicateReason.isbn => l10n.libraryReasonIsbn,
+    DuplicateReason.titleYearAuthor => l10n.libraryReasonTitleYearAuthor,
+  };
 }
 
 /// Sekelompok item yang tampaknya salinan dari karya yang sama.

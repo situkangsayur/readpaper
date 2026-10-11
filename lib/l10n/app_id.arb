@@ -8,5 +8,3180 @@
   "themeMenu": "Tema",
   "themeSystem": "Ikut sistem",
   "themeLight": "Terang",
-  "themeDark": "Gelap"
+  "themeDark": "Gelap",
+  "filesCancel": "Batal",
+  "filesSave": "Simpan",
+  "filesCreate": "Buat",
+  "filesDelete": "Hapus",
+  "filesRename": "Ganti nama",
+  "filesOpen": "Buka",
+  "filesShare": "Bagikan",
+  "filesPickWorkFolder": "Pilih folder kerja",
+  "filesWorkFolderNotReady": "Folder kerjanya belum siap. Pilih folder lain lewat ikon folder.",
+  "filesPickFilesToCopy": "Pilih berkas untuk disalin ke sini",
+  "filesCopiedHere": "{count} berkas disalin ke sini",
+  "@filesCopiedHere": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filesNameTaken": "Sudah ada berkas atau folder bernama itu",
+  "filesRenameFailed": "Gagal mengganti nama: {error}",
+  "@filesRenameFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "filesCannotDeleteRoot": "Folder kerja itu sendiri tidak bisa dihapus dari sini.",
+  "filesDeleteFolderTitle": "Hapus folder ini?",
+  "filesFolderEmpty": "Foldernya kosong.",
+  "filesFolderUncountable": "Isinya tidak bisa dihitung.",
+  "filesFolderDeletesCount": "{count} berkas di dalamnya ikut terhapus.",
+  "@filesFolderDeletesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filesLibraryCopiesUntouched": "Salinan yang sudah masuk library tidak tersentuh.",
+  "filesDeleteCount": "Hapus {count} berkas",
+  "@filesDeleteCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "filesDeleteFailed": "Gagal menghapus: {error}",
+  "@filesDeleteFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "filesDeleteFileTitle": "Hapus berkas ini?",
+  "filesDeleteFileBody": "{name}\n\nDihapus dari folder ini. Salinan yang sudah masuk library tidak tersentuh.",
+  "@filesDeleteFileBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "filesNewBoardTitle": "Papan tulis baru",
+  "filesNewBoardBody": "Berlembar-lembar, bisa dicoreti, lalu disimpan sebagai PDF di folder ini.",
+  "filesPortrait": "Tegak",
+  "filesLandscape": "Mendatar",
+  "filesSavedHere": "{name} tersimpan di folder ini",
+  "@filesSavedHere": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "filesNewFolderTitle": "Folder baru",
+  "filesNameLabel": "Nama",
+  "filesNewMarkdownTitle": "Berkas Markdown baru",
+  "filesFileNameLabel": "Nama berkas",
+  "filesNewNotebookTitle": "Buku catatan baru",
+  "filesHeader": "Berkas",
+  "filesUpOneLevel": "Naik satu tingkat",
+  "filesCreateHere": "Buat baru di folder ini",
+  "filesWhiteboard": "Papan tulis",
+  "filesNotebook": "Buku catatan",
+  "filesMarkdownFile": "Berkas Markdown",
+  "filesFolder": "Folder",
+  "filesCopyInTooltip": "Salin berkas atau folder ke sini — dari mana pun di perangkat",
+  "filesPickFolderToCopy": "Pilih folder untuk disalin ke sini",
+  "filesCopyFiles": "Salin berkas…",
+  "filesCopyFolder": "Salin folder (beserta isinya)…",
+  "filesOpenOtherFolder": "Buka folder lain",
+  "filesEmptyFolderHint": "Folder ini kosong.\n\nBuat papan tulis, atau salin PDF ke sini dengan tombol unduh di atas — lalu seret ke sebuah koleksi untuk memasukkannya ke library.",
+  "filesFolderActions": "Tindakan folder",
+  "filesDeleteFolder": "Hapus folder",
+  "filesFileActions": "Tindakan berkas",
+  "filesDeleteFile": "Hapus berkas",
+  "filesCannotOpenExt": "Berkas {ext} belum bisa dibuka di dalam ReadPaper. Yang bisa: PDF, EPUB, gambar, CSV, dan Excel.",
+  "@filesCannotOpenExt": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "filesCannotOpenThis": "Berkas ini belum bisa dibuka di dalam ReadPaper. Yang bisa: PDF, EPUB, gambar, CSV, dan Excel.",
+  "filesNoAppForExt": "Tidak ada aplikasi di sistem ini yang membuka berkas {ext}.",
+  "@filesNoAppForExt": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "filesNoAppForThis": "Tidak ada aplikasi di sistem ini yang membuka berkas ini.",
+  "filesOpenWithOtherApp": "Buka dengan aplikasi lain",
+  "filesTableUnreadable": "Tabel ini tidak bisa dibaca: {error}",
+  "@filesTableUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "filesNoSheets": "Tidak ada lembar di berkas ini.",
+  "filesSheetEmpty": "Lembar ini kosong.",
+  "filesOnlyFirstRows": "Hanya {count} baris pertama yang ditampilkan. Buka dengan aplikasi lain untuk melihat semuanya.",
+  "@filesOnlyFirstRows": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsRepositories": "Repositori",
+  "settingsAddRepository": "Tambah repositori",
+  "settingsNoRepositories": "Belum ada repositori.",
+  "settingsDeleteProfileTitle": "Hapus \"{name}\"?",
+  "@settingsDeleteProfileTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsDeleteProfileBody": "Profil akan dihapus dari ReadPaper.",
+  "settingsDeleteCloneToo": "Hapus juga folder clone lokal",
+  "settingsUrlTransportMismatch": "URL tidak cocok dengan mode {mode}.",
+  "@settingsUrlTransportMismatch": {
+    "placeholders": {
+      "mode": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsMakeActive": "Jadikan aktif",
+  "settingsLicense": "Perangkat lunak bebas, lisensi AGPL-3.0-or-later.\nKode sumber: github.com/situkangsayur/readpaper",
+  "settingsEditRepository": "Ubah repositori",
+  "settingsRepoUrl": "URL repositori",
+  "settingsUrlRequired": "URL tidak boleh kosong",
+  "settingsApiTokenNote": "Perangkat ini menyinkronkan lewat GitHub API, jadi aksesnya memakai token HTTPS.",
+  "settingsDisplayName": "Nama tampilan",
+  "settingsNameRequired": "Nama tidak boleh kosong",
+  "settingsSshKeyOptional": "Kunci privat SSH (opsional)",
+  "settingsSshKeyHelper": "Kosongkan untuk memakai ssh-agent atau kunci bawaan.",
+  "settingsGithubUsername": "Username GitHub",
+  "settingsAccessToken": "Personal access token",
+  "settingsTokenHelper": "Disimpan terpisah di credentials.json (izin 600).",
+  "settingsLocalCloneFolder": "Folder clone lokal",
+  "settingsPrivateStorage": "Data disimpan di penyimpanan privat aplikasi.",
+  "settingsCommitIdentity": "Identitas commit",
+  "settingsNameLabel": "Nama",
+  "settingsAuthorHint": "kosong = pakai konfigurasi git",
+  "settingsLazyPdfTitle": "Unduh PDF hanya saat dibuka",
+  "settingsLazyPdfSubtitle": "Ambil metadata library dulu (puluhan MB); berkas PDF menyusul satu per satu. Matikan kalau ingin semua PDF diunduh sekaligus sesudah ambil dan pull, supaya bisa dibaca offline.",
+  "settingsAutoPushTitle": "Push otomatis setelah menyimpan anotasi",
+  "settingsAutoPushSubtitle": "Setiap highlight/komentar langsung dikirim ke GitHub.",
+  "settingsPickSshKey": "Pilih kunci privat SSH",
+  "settingsPickCloneFolder": "Pilih folder clone",
+  "citationRunningAt": "Berjalan di {address}",
+  "@citationRunningAt": {
+    "placeholders": {
+      "address": {
+        "type": "String"
+      }
+    }
+  },
+  "citationOff": "Mati. Add-in Word dan OnlyOffice tidak bisa tersambung.",
+  "citationStarting": "Menyalakan…",
+  "citationTitle": "Sitasi di Word & OnlyOffice",
+  "citationSubtitle": "Server lokal yang dipakai add-in untuk mencari dan menyitasi.",
+  "citationRetry": "Coba lagi",
+  "citationAddress": "Alamat",
+  "citationCopyAddress": "Salin alamat",
+  "citationAddressCopied": "Alamat disalin.",
+  "citationNoToken": "Belum ada",
+  "citationHideToken": "Sembunyikan token",
+  "citationShowToken": "Tampilkan token",
+  "citationCopyToken": "Salin token",
+  "citationTokenCopied": "Token disalin.",
+  "citationNewToken": "Buat token baru",
+  "citationPasteHint": "Tempel alamat dan token ini di add-in. Panduannya: docs/api-sitasi.md di repositori ReadPaper.",
+  "citationNewTokenTitle": "Buat token baru?",
+  "citationNewTokenBody": "Token lama langsung tidak berlaku. Add-in Word dan OnlyOffice yang sudah tersambung harus diberi token baru.",
+  "citationCreateNew": "Buat baru",
+  "citationTokenSaveFailed": "Token baru tidak bisa disimpan: {error}",
+  "@citationTokenSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "citationSettingsUnreadable": "Pengaturan server sitasi tidak terbaca: {error}",
+  "@citationSettingsUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "citationPortInUse": "Port {port} sudah dipakai program lain (mungkin ReadPaper lain yang sedang terbuka). {reason}",
+  "@citationPortInUse": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "citationEmptyCollection": "Koleksi ini belum berisi paper.",
+  "citationBibWritten": "{count} entri ditulis ke {file} di folder kerja",
+  "@citationBibWritten": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "citationBibCopied": "BibTeX disalin — kuncinya {key}",
+  "@citationBibCopied": {
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "commonColorYellow": "Kuning",
+  "commonColorRed": "Merah",
+  "commonColorGreen": "Hijau",
+  "commonColorBlue": "Biru",
+  "commonColorPurple": "Ungu",
+  "commonColorMagenta": "Magenta",
+  "commonColorOrange": "Oranye",
+  "commonColorGray": "Abu-abu",
+  "commonColorTeal": "Tosca",
+  "commonColorPink": "Merah muda",
+  "commonColorBrown": "Cokelat",
+  "commonColorInk": "Tinta",
+  "commonColorWhite": "Putih",
+  "commonColorBlack": "Hitam",
+  "commonColorGrayShort": "Abu",
+  "commonColorOrangeInk": "Jingga",
+  "commonColorLightGreen": "Hijau muda",
+  "commonColorSkyBlue": "Biru langit",
+  "commonColorNavyBlue": "Biru malam",
+  "commonFilePickUnreadable": "Berkas itu tidak bisa dibaca dari tempatnya. Salin dulu ke folder kerja.",
+  "commonFilePickerFailed": "Pemilih berkas gagal dibuka: {error}",
+  "@commonFilePickerFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonFolderPickerFailed": "Pemilih folder gagal dibuka: {error}",
+  "@commonFolderPickerFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonLinuxPickerHelp": "Dialog pilih berkas tidak bisa dibuka ({error}). Pasang xdg-desktop-portal beserta backend-nya (mis. xdg-desktop-portal-gtk), atau zenity.",
+  "@commonLinuxPickerHelp": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "commonShareUnsupported": "Berbagi berkas belum didukung di sini ({error}). Berkasnya ada di {path}",
+  "@commonShareUnsupported": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      },
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "commonJustNow": "baru saja",
+  "commonMinutesAgo": "{count} menit lalu",
+  "@commonMinutesAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonHoursAgo": "{count} jam lalu",
+  "@commonHoursAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonDaysAgo": "{count} hari lalu",
+  "@commonDaysAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonWeeksAgo": "{count} pekan lalu",
+  "@commonWeeksAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonMonthsAgo": "{count} bulan lalu",
+  "@commonMonthsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonYearsAgo": "{count} tahun lalu",
+  "@commonYearsAgo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commonWorkFolder": "Folder kerja",
+  "commonYesterday": "kemarin",
+  "commonShapeRectangle": "Kotak",
+  "commonShapeEllipse": "Bulat",
+  "commonShapeDiamond": "Belah ketupat",
+  "commonShapeTriangle": "Segitiga",
+  "commonShapeLine": "Garis",
+  "commonShapeArrow": "Panah",
+  "libraryAddToLibraryTooltip": "Tambahkan berkas atau folder ke library",
+  "libraryAddFiles": "Tambahkan berkas…",
+  "libraryAddFolderAsCollection": "Tambahkan folder (jadi koleksi)…",
+  "libraryNewPaperCollection": "Koleksi paper baru",
+  "libraryUnfiled": "Tanpa koleksi",
+  "libraryNotesRoot": "Catatan",
+  "libraryNewNoteCollection": "Koleksi catatan baru",
+  "libraryItemsAndCollections": "{items} item · {collections} koleksi",
+  "@libraryItemsAndCollections": {
+    "placeholders": {
+      "items": {
+        "type": "int"
+      },
+      "collections": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryIncludeSubOn": "Sertakan item sub-koleksi: aktif",
+  "libraryIncludeSubOff": "Sertakan item sub-koleksi: nonaktif",
+  "libraryCollapseAll": "Tutup semua",
+  "libraryExpandAll": "Buka semua",
+  "libraryNoNoteCollections": "Belum ada koleksi catatan. Catatan disimpan di folder tersendiri di dalam repositori, terpisah dari paper.",
+  "libraryNewSubcollectionHere": "Sub-koleksi baru di sini",
+  "libraryCollectionMenu": "Ubah nama, pindahkan, atau hapus",
+  "libraryNewPaperSubcollection": "Sub-koleksi paper baru",
+  "libraryNewCollectionHint": "Ditulis ke collections.json, ikut tersinkron ke GitHub",
+  "libraryCreateCollectionFailed": "Gagal membuat koleksi",
+  "libraryNewNoteSubcollection": "Sub-koleksi catatan baru",
+  "libraryAddFilesHere": "Tambahkan berkas ke sini…",
+  "libraryAnyTypeOrDrag": "jenis apa pun, beberapa sekaligus; atau seret dari pengelola berkas",
+  "libraryAnyTypeSeveral": "jenis apa pun, beberapa sekaligus",
+  "libraryAddFolderHere": "Tambahkan folder ke sini…",
+  "librarySubfoldersBecomeSub": "subfolder jadi sub-koleksi",
+  "libraryNewSubcollection": "Sub-koleksi baru",
+  "libraryRename": "Ubah nama",
+  "libraryMoveTo": "Pindahkan ke…",
+  "libraryTransferToRepo": "Pindahkan atau salin ke repositori lain…",
+  "libraryWithSubsAndPapers": "beserta sub-koleksi dan paper-nya",
+  "libraryExportBibtex": "Ekspor ke BibTeX (.bib)",
+  "libraryExportBibtexHint": "untuk naskah LaTeX; sub-koleksi ikut",
+  "libraryDeleteCollection": "Hapus koleksi",
+  "libraryPapersKept": "Paper di dalamnya tidak ikut terhapus",
+  "libraryChangeCollectionFailed": "Gagal mengubah koleksi",
+  "libraryRenameCollection": "Ubah nama koleksi",
+  "libraryRenameCollectionHint": "Paper di dalamnya tetap; jalur sub-koleksinya ikut berubah",
+  "libraryCollectionRenamed": "Koleksi diubah namanya jadi \"{name}\"",
+  "@libraryCollectionRenamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryRoot": "akar",
+  "libraryCollectionMoved": "Koleksi dipindah ke {parent}",
+  "@libraryCollectionMoved": {
+    "placeholders": {
+      "parent": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryTransferWhatCollection": "Koleksi {path}, beserta sub-koleksi dan paper-nya",
+  "@libraryTransferWhatCollection": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryCollectionMovedToRepo": "Koleksi \"{name}\" dipindahkan ke {repo}",
+  "@libraryCollectionMovedToRepo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "repo": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryCollectionCopiedToRepo": "Koleksi \"{name}\" disalin ke {repo}",
+  "@libraryCollectionCopiedToRepo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "repo": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryConfirmDeleteCollection": "Yakin hapus koleksi \"{name}\"?",
+  "@libraryConfirmDeleteCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryDeleteKeepsPapers": "{count} paper di dalamnya tidak ikut terhapus — hanya dilepas dari koleksi ini, sama seperti di Zotero.",
+  "@libraryDeleteKeepsPapers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryDeleteHasChildren": "Koleksi ini punya {count} sub-koleksi. Ikut dihapus, atau naik satu tingkat?",
+  "@libraryDeleteHasChildren": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryCollectionEmpty": "Koleksinya kosong.",
+  "libraryCancel": "Batal",
+  "librarySubsMoveUp": "Sub-koleksi naik",
+  "libraryYesDeleteAll": "Ya, hapus semuanya",
+  "libraryYesDelete": "Ya, hapus",
+  "libraryCollectionDeleted": "Koleksi \"{name}\" dihapus; paper-nya tetap ada",
+  "@libraryCollectionDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMoveNameTo": "Pindahkan \"{name}\" ke…",
+  "@libraryMoveNameTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryLibraryRoot": "Akar library",
+  "libraryNoParent": "tanpa induk",
+  "libraryWithSubsAndNotes": "beserta sub-koleksi dan catatannya",
+  "libraryNotesKept": "Catatannya tidak ikut terhapus",
+  "libraryTransferWhatNoteCollection": "Koleksi catatan \"{name}\", beserta sub-koleksi dan catatannya",
+  "@libraryTransferWhatNoteCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryNoteCollectionMovedToRepo": "Koleksi catatan \"{name}\" dipindahkan ke {repo}",
+  "@libraryNoteCollectionMovedToRepo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "repo": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryNoteCollectionCopiedToRepo": "Koleksi catatan \"{name}\" disalin ke {repo}",
+  "@libraryNoteCollectionCopiedToRepo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "repo": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryConfirmDeleteNoteCollection": "Hapus koleksi catatan \"{name}\"?",
+  "@libraryConfirmDeleteNoteCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryNoteCollectionHolds": "Berisi {count} catatan. Catatannya tidak ikut terhapus — pindah ke \"Tanpa koleksi\" bila tidak ada di koleksi lain.",
+  "@libraryNoteCollectionHolds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "librarySubsDeletedToo": "{count} sub-koleksi di dalamnya ikut terhapus.",
+  "@librarySubsDeletedToo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryName": "Nama",
+  "librarySave": "Simpan",
+  "libraryNoItems": "Tidak ada item.",
+  "librarySearchHelpTitle": "Mempersempit pencarian",
+  "librarySearchHelpIntro": "Kata biasa dicari di judul, pengarang, jurnal, tag, koleksi, DOI, dan abstrak. Beberapa kata berarti semuanya harus cocok.",
+  "librarySearchOpAuthor": "hanya di nama pengarang",
+  "librarySearchOpTitle": "frasa utuh di judul",
+  "librarySearchOpYear": "tahun persis",
+  "librarySearchOpTag": "hanya di tag",
+  "librarySearchOpType": "jenis item Zotero",
+  "librarySearchOpJournal": "nama publikasi",
+  "librarySearchOpAbstract": "hanya di abstrak",
+  "librarySearchOpCollection": "nama koleksi",
+  "librarySearchOpExclude": "kecualikan yang mengandungnya",
+  "librarySearchHelpEnglish": "Nama bidang boleh bahasa Inggris juga: author, title, year, type, journal, abstract, collection.",
+  "libraryClose": "Tutup",
+  "librarySearchHint": "Cari judul, pengarang, abstrak, DOI…",
+  "librarySearchHelpTooltip": "Cara mempersempit pencarian",
+  "libraryOpenAnyFile": "Buka berkas dari perangkat ini (tanpa memasukkannya ke library)",
+  "libraryPickFileToOpen": "Pilih berkas untuk dibuka",
+  "libraryFindDuplicates": "Cari item yang masuk lebih dari sekali",
+  "libraryPossibleDuplicates": "{count} kemungkinan duplikat",
+  "@libraryPossibleDuplicates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryStats": "Statistik library",
+  "libraryBrowseByAuthor": "Telusuri berdasarkan pengarang",
+  "librarySortBy": "Urutkan: {label}",
+  "@librarySortBy": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryItemCount": "{count} item",
+  "@libraryItemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryHasFile": "berkas",
+  "libraryNoFile": "tidak ada berkas",
+  "libraryPickPaper": "Pilih satu paper untuk melihat detailnya.",
+  "libraryAbstract": "Abstrak",
+  "libraryAnnotationsCount": "Anotasi ({count})",
+  "@libraryAnnotationsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryNotesCount": "Catatan ({count})",
+  "@libraryNotesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryCopyBibtex": "Salin BibTeX",
+  "libraryDeleteDocument": "Hapus dokumen ini dari library",
+  "libraryBackToList": "Kembali ke daftar",
+  "libraryNoAttachments": "Tidak ada lampiran.",
+  "libraryAnnotationCount": "{count} anotasi",
+  "@libraryAnnotationCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryOnGithubNotDownloaded": "ada di GitHub, belum diunduh",
+  "libraryFileNotDownloaded": "berkas belum diunduh",
+  "libraryLfsPointer": "pointer Git LFS — jalankan LFS pull",
+  "libraryCannotOpenFormat": "format belum bisa dibuka di perangkat ini",
+  "libraryRead": "Baca",
+  "libraryOpen": "Buka",
+  "libraryDownload": "Unduh",
+  "libraryFieldAuthors": "Pengarang",
+  "libraryFieldPublication": "Publikasi",
+  "libraryFieldDate": "Tanggal",
+  "libraryFieldPublisher": "Penerbit",
+  "libraryFieldTags": "Tag",
+  "libraryFieldCollections": "Koleksi",
+  "libraryFieldAdded": "Ditambahkan",
+  "libraryDetails": "Detail",
+  "libraryAnnotationPage": "hal. {page} · {type}",
+  "@libraryAnnotationPage": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMovingTo": "Memindah ke {target}…",
+  "@libraryMovingTo": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryCopyingTo": "Menyalin ke {target}…",
+  "@libraryCopyingTo": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMovedTo": "Dipindahkan ke {where}",
+  "@libraryMovedTo": {
+    "placeholders": {
+      "where": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryCopiedTo": "Disalin ke {where}",
+  "@libraryCopiedTo": {
+    "placeholders": {
+      "where": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryConfirmDeleteDocument": "Hapus dokumen ini?",
+  "libraryConfirmDeleteDocumentBody": "Berkas item, lampirannya, dan catatannya dihapus dari library, lalu perubahannya di-commit.\n\n\"{title}\"\n\nKoleksi dan dokumen lain tidak tersentuh.",
+  "@libraryConfirmDeleteDocumentBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryDelete": "Hapus",
+  "libraryDocumentDeleted": "Dokumen dihapus",
+  "libraryDeleteFailed": "Gagal menghapus",
+  "libraryRecentlyRead": "Terakhir dibaca",
+  "libraryClearHistory": "Bersihkan",
+  "libraryPageN": "halaman {page}",
+  "@libraryPageN": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryRemoveFromHistory": "Hapus dari riwayat",
+  "libraryAuthorsCount": "Pengarang ({count})",
+  "@libraryAuthorsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryMostWorks": "Terbanyak",
+  "libraryFilterNames": "Saring nama",
+  "libraryNoLibraryRead": "Belum ada library yang terbaca.",
+  "libraryNoMatchingNames": "Tidak ada nama yang cocok.",
+  "libraryDuplicatesTitle": "Kemungkinan duplikat",
+  "libraryDuplicatesNone": "{count} item diperiksa, tidak ada yang mencurigakan.",
+  "@libraryDuplicatesNone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryDuplicatesSummary": "{groups} kelompok · {copies} salinan dari {items} item",
+  "@libraryDuplicatesSummary": {
+    "placeholders": {
+      "groups": {
+        "type": "int"
+      },
+      "copies": {
+        "type": "int"
+      },
+      "items": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryDuplicatesRisky": " · {count} perlu hati-hati",
+  "@libraryDuplicatesRisky": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryNothingDuplicated": "Tidak ada yang tampak ganda.",
+  "libraryDuplicatesHow": "Dicocokkan lewat DOI, lalu ISBN, lalu judul bersama tahun dan nama pengarang pertama.",
+  "libraryDuplicatesFooter": "Tidak ada yang dihapus dari sini. Penggabungan dikerjakan di Zotero, tempat riwayat dan lampirannya ikut dipindahkan — daftar ini gunanya menunjukkan mana yang perlu dilihat.",
+  "libraryCopiesCount": "{count} salinan",
+  "@libraryCopiesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryAnnotationsOnSeveral": "Anotasi ada di lebih dari satu salinan — menggabungkan bisa menghilangkan sebagiannya.",
+  "libraryHasFileFact": "ada berkas",
+  "libraryStatsEmpty": "Belum ada item untuk dihitung.",
+  "libraryStatsByYear": "Per tahun terbit",
+  "libraryStatsWithoutYear": "{count} item tanpa tahun tidak ikut dihitung di sini.",
+  "@libraryStatsWithoutYear": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryStatsByType": "Per jenis",
+  "libraryStatsTopAuthors": "Pengarang tersering",
+  "libraryStatsTopTags": "Tag tersering",
+  "libraryStatsItems": "Item",
+  "libraryStatsWithFile": "Berkasnya ada",
+  "libraryStatsWithAnnotations": "Ada anotasi",
+  "libraryStatsYearSpan": "Rentang tahun",
+  "libraryStatsUntitled": "Tanpa judul",
+  "librarySortTitle": "Judul",
+  "librarySortYear": "Tahun",
+  "librarySortCreator": "Pengarang",
+  "librarySortDateAdded": "Ditambahkan",
+  "librarySortAnnotations": "Anotasi",
+  "libraryPickFolderFor": "Pilih folder untuk {name}",
+  "@libraryPickFolderFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryPickFilesFor": "Pilih berkas untuk {name}",
+  "@libraryPickFilesFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryFilesAdded": "{count} berkas masuk ke {name}",
+  "@libraryFilesAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryFilesAddedPartly": "{added} dari {total} berkas masuk ke {name}. Gagal: {failed}. ",
+  "@libraryFilesAddedPartly": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      },
+      "failed": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMovingInto": "Memindahkan ke {name}…",
+  "@libraryMovingInto": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMovedInto": "Pindah ke {name}",
+  "@libraryMovedInto": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMoveFailed": "Gagal memindahkan",
+  "libraryAddingInto": "Memasukkan ke {name}…",
+  "@libraryAddingInto": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryAddFileFailed": "Gagal memasukkan berkas",
+  "libraryAddedInto": "Masuk ke {name}",
+  "@libraryAddedInto": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryPapersStayInLibrary": "Paper tinggal di akar paper: item Zotero punya rujukan dan bibliografi yang dijaga plugin sinkronisasi, dan folder catatan tidak mengenalnya. Yang bisa dipindahkan ke sini adalah catatan.",
+  "libraryMoveNoteFailed": "Gagal memindahkan catatan",
+  "librarySaveNoteFailed": "Gagal menyimpan catatan",
+  "libraryFolderEmpty": "Folder {name} tidak berisi berkas.",
+  "@libraryFolderEmpty": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryImportFolderQuestion": "Impor folder \"{folder}\" ke {name}?",
+  "@libraryImportFolderQuestion": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryFolderSummary": "{files} berkas dalam {folders} folder ({size}).",
+  "@libraryFolderSummary": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "folders": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryFolderToNotes": "Folder ini jadi koleksi catatan, subfoldernya jadi sub-koleksi, dan setiap berkas jadi catatan.",
+  "libraryFolderToLibrary": "Folder ini jadi koleksi, subfoldernya jadi sub-koleksi, dan setiap berkas jadi item Zotero dengan lampirannya — terlihat juga di Zotero.",
+  "libraryFolderReuses": "Koleksi yang namanya sudah ada di tempat yang sama dipakai, bukan digandakan.",
+  "libraryFolderLarge": "Ukurannya besar. Semua berkas ini masuk repositori git dan ikut terkirim ke GitHub.",
+  "libraryImport": "Impor",
+  "libraryImporting": "Mengimpor {name}…",
+  "@libraryImporting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryProgress": "{done} dari {total} berkas",
+  "@libraryProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryImportFailed": "Impor folder gagal",
+  "libraryImportDone": "{added} berkas masuk, {collections} koleksi baru.",
+  "@libraryImportDone": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "collections": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryImportFailedSome": "Gagal ({count}): {names}",
+  "@libraryImportFailedSome": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryAddToTooltip": "Tambahkan berkas atau folder ke {name}",
+  "@libraryAddToTooltip": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryAnyTypeMany": "jenis apa pun, bisa beberapa sekaligus",
+  "libraryAddFolder": "Tambahkan folder…",
+  "libraryAddFolderHint": "jadi koleksi di {name}, subfolder jadi sub-koleksi",
+  "@libraryAddFolderHint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryTypeJournalArticle": "Artikel jurnal",
+  "libraryTypeConferencePaper": "Makalah konferensi",
+  "libraryTypeBook": "Buku",
+  "libraryTypeBookSection": "Bab buku",
+  "libraryTypeThesis": "Tesis / disertasi",
+  "libraryTypeReport": "Laporan",
+  "libraryTypePreprint": "Pracetak",
+  "libraryTypeWebpage": "Halaman web",
+  "libraryTypeManuscript": "Naskah",
+  "libraryTypeDocument": "Dokumen",
+  "libraryTypePresentation": "Presentasi",
+  "libraryTypeDataset": "Data",
+  "libraryTypeStandard": "Standar",
+  "libraryTypePatent": "Paten",
+  "libraryTypeMagazineArticle": "Artikel majalah",
+  "libraryTypeNewspaperArticle": "Artikel koran",
+  "libraryTypeEncyclopediaArticle": "Artikel ensiklopedia",
+  "libraryTypeBlogPost": "Tulisan blog",
+  "libraryTypeComputerProgram": "Perangkat lunak",
+  "libraryTypeAttachment": "Lampiran",
+  "libraryTypeNote": "Catatan",
+  "libraryReasonDoi": "DOI-nya sama",
+  "libraryReasonIsbn": "ISBN-nya sama",
+  "libraryReasonTitleYearAuthor": "Judul, tahun, dan pengarangnya sama",
+  "libraryErrItemNotFound": "Berkas item tidak ditemukan",
+  "libraryErrLibraryDirMissing": "Direktori library tidak ada",
+  "libraryErrItemInvalid": "Berkas item tidak valid",
+  "libraryErrAttachmentsMissing": "{count} lampiran belum ada di perangkat ini (belum diunduh, atau masih penunjuk Git LFS): {names}",
+  "@libraryErrAttachmentsMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryErrItemNoKey": "Berkas item tidak punya kunci Zotero",
+  "libraryErrItemExistsInTarget": "Item ini sudah ada di repositori tujuan (kunci {itemKey}). Tidak disalin dua kali.",
+  "@libraryErrItemExistsInTarget": {
+    "placeholders": {
+      "itemKey": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryErrCollectionGone": "Koleksi tidak ada lagi",
+  "libraryErrTargetCollectionMissing": "Koleksi tujuan tidak ada",
+  "libraryErrTargetHasCollection": "Di tempat tujuan sudah ada koleksi bernama \"{name}\". Ganti namanya dulu.",
+  "@libraryErrTargetHasCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryErrItemTitleExists": "Item {title} sudah ada di repositori tujuan.",
+  "@libraryErrItemTitleExists": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryErrCollectionsNotList": "collections.json tidak berisi daftar koleksi",
+  "libraryErrRefuseDeleteNotItem": "Menolak menghapus: berkas ini bukan item di dalam items/",
+  "libraryErrCollectionNameEmpty": "Nama koleksi tidak boleh kosong",
+  "libraryErrCollectionNameSlash": "Nama koleksi tidak boleh memuat garis miring",
+  "libraryErrCollectionsNotListRefuse": "collections.json tidak berisi daftar koleksi — menolak menulisinya",
+  "libraryErrCollectionsBadEntry": "Ada entri di collections.json yang bukan koleksi — menolak menulisinya",
+  "libraryErrParentMissing": "Koleksi induk tidak ada",
+  "libraryErrCollectionExists": "Sudah ada koleksi bernama \"{name}\" di tempat yang sama",
+  "@libraryErrCollectionExists": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryErrCollectionKey": "Gagal membuat kunci koleksi baru",
+  "libraryErrMoveIntoSelf": "Koleksi tidak bisa dipindah ke dalam dirinya sendiri",
+  "libraryErrCollectionsMissing": "collections.json tidak ada",
+  "libraryErrItemNoZotero": "Berkas item tidak punya bagian zotero",
+  "libraryErrFileNotFound": "Berkas tidak ditemukan",
+  "notesUnfiledTitle": "Catatan tanpa koleksi",
+  "notesRootTitle": "Catatan",
+  "notesAllTitle": "Semua catatan",
+  "notesCount": "{count} catatan",
+  "@notesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notesNewNotebook": "Buku catatan baru",
+  "notesNewMarkdown": "Catatan Markdown baru",
+  "notesEmpty": "Belum ada catatan di sini. Seret berkas dari panel berkas, atau pakai tombol tambah di atas. Tarik ke bawah untuk mengambil perubahan dari GitHub.",
+  "notesActions": "Tindakan",
+  "notesClose": "Tutup",
+  "notesNotebookDefaultTitle": "Catatan",
+  "notesNewNotebookFailed": "Gagal membuat buku catatan",
+  "notesNewNoteTitle": "Catatan baru",
+  "notesNewNoteFailed": "Gagal membuat catatan",
+  "notesRename": "Ubah judul",
+  "notesShare": "Bagikan",
+  "notesShareAsPdf": "sebagai PDF",
+  "notesShareToApps": "ke aplikasi lain",
+  "notesMoveToCollection": "Pindahkan ke koleksi",
+  "notesTransferToRepo": "Pindahkan atau salin ke repositori lain…",
+  "notesDelete": "Hapus catatan",
+  "notesDeleteSubtitle": "Berkasnya ikut terhapus",
+  "notesTransferWhat": "Catatan \"{title}\"",
+  "@notesTransferWhat": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notesMoved": "Catatan dipindahkan ke {target}",
+  "@notesMoved": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "notesCopied": "Catatan disalin ke {target}",
+  "@notesCopied": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "notesDeleteConfirmTitle": "Hapus catatan?",
+  "notesDeleteConfirmBody": "“{title}” beserta berkasnya akan dihapus dari repositori.",
+  "@notesDeleteConfirmBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notesCancel": "Batal",
+  "notesDeleteButton": "Hapus",
+  "notesNoCollection": "Tanpa koleksi",
+  "notesTitleField": "Judul",
+  "notesSave": "Simpan",
+  "notesNoActiveRepo": "Belum ada repositori aktif.",
+  "notesNoteGone": "Catatannya tidak ada lagi.",
+  "notesCollectionGone": "Koleksinya tidak ada lagi.",
+  "notesNoRepoToSave": "Belum ada repositori aktif untuk menyimpan catatan.",
+  "notesErrEmptyCollectionName": "Nama koleksi catatan tidak boleh kosong",
+  "notesErrParentMissing": "Koleksi induk tidak ada",
+  "notesErrCollectionMissing": "Koleksi catatan tidak ada",
+  "notesErrFileNotFound": "Berkas catatan tidak ditemukan",
+  "notesErrNoteMissing": "Catatan tidak ada",
+  "notesErrEmptyTitle": "Judul catatan tidak boleh kosong",
+  "notesErrTargetCollectionMissing": "Koleksi catatan tujuan tidak ada",
+  "notesErrFileOutside": "Berkas catatan ada di luar folder catatan",
+  "notesErrFileNotOnDevice": "Berkas catatan tidak ada di perangkat ini",
+  "notesErrTargetNameTaken": "Di tempat tujuan sudah ada koleksi catatan bernama \"{name}\". Ganti namanya dulu.",
+  "@notesErrTargetNameTaken": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notesErrNamedFileNotOnDevice": "Berkas catatan \"{title}\" tidak ada di perangkat ini",
+  "@notesErrNamedFileNotOnDevice": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "notesErrNoNewKey": "Gagal membuat kunci catatan baru",
+  "notesTargetRefusal": "Catatan hanya bisa disimpan di akar \"Catatan\". Akar paper berisi item Zotero — item di sana punya properti rujukan dan bibliografi, dan formatnya dijaga oleh plugin sinkronisasi Zotero. Pilih koleksi di bawah akar Catatan, atau buat satu lebih dulu.",
+  "notesImageMissing": "Berkas gambarnya tidak ada lagi:\n{path}",
+  "@notesImageMissing": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "epubThemeLight": "Terang",
+  "epubThemeSepia": "Sepia",
+  "epubThemeDark": "Gelap",
+  "epubUnreadable": "EPUB ini tidak bisa dibaca: {error}",
+  "@epubUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "epubSmallerText": "Perkecil huruf",
+  "epubLargerText": "Perbesar huruf",
+  "epubPageColor": "Warna halaman: {name}",
+  "@epubPageColor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "epubContents": "Daftar isi",
+  "epubNoChapters": "EPUB ini tidak punya bab yang bisa dibaca.",
+  "epubPrevChapter": "Bab sebelumnya",
+  "epubNextChapter": "Bab berikutnya",
+  "epubChapterN": "Bab {number}",
+  "@epubChapterN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "epubErrNoContainer": "Bukan EPUB: META-INF/container.xml tidak ada.",
+  "epubErrNoOpf": "Bukan EPUB: berkas OPF tidak ditemukan.",
+  "markdownReadFailed": "Gagal membaca berkas: {error}",
+  "@markdownReadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownSaved": "Tersimpan: {name}",
+  "@markdownSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownSaveFailed": "Gagal menyimpan: {error}",
+  "@markdownSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownWritingPdf": "Menulis PDF…",
+  "markdownPdfSaved": "PDF tersimpan: {name}",
+  "@markdownPdfSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownPrint": "Cetak",
+  "markdownPdfFailed": "Gagal menulis PDF: {error}",
+  "@markdownPdfFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownSaveFirstTitle": "Simpan dulu?",
+  "markdownUnsavedBody": "Ada perubahan yang belum disimpan.",
+  "markdownKeepEditing": "Kembali menyunting",
+  "markdownDiscard": "Buang perubahan",
+  "markdownSave": "Simpan",
+  "markdownUnsaved": "Belum disimpan",
+  "markdownEdit": "Sunting",
+  "markdownPreview": "Pratinjau",
+  "markdownBoth": "Keduanya",
+  "markdownMore": "Lainnya",
+  "markdownSaveAsPdf": "Simpan sebagai PDF",
+  "markdownShareFile": "Bagikan berkas Markdown",
+  "markdownShareAsPdf": "Bagikan sebagai PDF",
+  "markdownCopyAll": "Salin seluruh teks",
+  "markdownHint": "Tulis di sini. Markdown: # tajuk, **tebal**, - daftar, ```mermaid diagram.",
+  "markdownHeading": "Tajuk",
+  "markdownBold": "Tebal",
+  "markdownItalic": "Miring",
+  "markdownList": "Daftar",
+  "markdownTaskList": "Daftar tugas",
+  "markdownQuote": "Kutipan",
+  "markdownCode": "Kode",
+  "markdownTable": "Tabel",
+  "markdownTableTemplate": "| Kolom | Nilai |\n| --- | --- |\n|  |  |\n",
+  "markdownMermaid": "Diagram mermaid",
+  "markdownMermaidEmpty": "Diagram kosong.",
+  "markdownMermaidUnsupported": "Jenis diagram \"{kind}\" belum digambar — yang sudah: graph dan flowchart. Sumbernya tetap ditampilkan apa adanya.",
+  "@markdownMermaidUnsupported": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownMermaidNoNodes": "Tidak ada simpul yang bisa dibaca dari diagram ini.",
+  "markdownMermaidCannotDraw": "Diagram ini belum bisa digambar.",
+  "markdownPdfEmpty": "(dokumen kosong)",
+  "markdownPdfImageMissing": "[gambar tidak ditemukan: {path}]",
+  "@markdownPdfImageMissing": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "markdownEmptyDoc": "Dokumen masih kosong.",
+  "whiteboardPortrait": "Tegak",
+  "whiteboardLandscape": "Mendatar",
+  "whiteboardBgWhite": "Putih",
+  "whiteboardBgBlack": "Hitam",
+  "whiteboardBgGreen": "Hijau papan",
+  "whiteboardBgCream": "Krem",
+  "whiteboardBgNavy": "Biru malam",
+  "whiteboardTurned": "Kertas jadi {orientation} — coretannya ikut berputar, tidak ada yang hilang.",
+  "@whiteboardTurned": {
+    "placeholders": {
+      "orientation": {
+        "type": "String"
+      }
+    }
+  },
+  "whiteboardSaveFailed": "Gagal menyimpan: {error}",
+  "@whiteboardSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "whiteboardShareFailed": "Gagal membagikan: {error}",
+  "@whiteboardShareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "whiteboardSavedAs": "Tersimpan sebagai {name}",
+  "@whiteboardSavedAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notesCannotSaveAsNote": "Belum bisa disimpan sebagai catatan",
+  "notesUnderstood": "Mengerti",
+  "whiteboardSaveNoteFailed": "Gagal menyimpan catatan",
+  "whiteboardSavedAsNote": "Tersimpan sebagai catatan",
+  "whiteboardLeaveTitle": "Tinggalkan papan ini?",
+  "whiteboardLeaveBody": "Coretannya belum disimpan, dan tidak bisa dikembalikan.",
+  "whiteboardKeepDrawing": "Kembali menggambar",
+  "whiteboardLeave": "Tinggalkan",
+  "whiteboardTitle": "Papan tulis",
+  "whiteboardSheetStatus": "Lembar {page} dari {count} · kertas {orientation}",
+  "@whiteboardSheetStatus": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      },
+      "orientation": {
+        "type": "String"
+      }
+    }
+  },
+  "whiteboardFreehand": "Tangan bebas",
+  "whiteboardShape": "Bangun: {shape}",
+  "@whiteboardShape": {
+    "placeholders": {
+      "shape": {
+        "type": "String"
+      }
+    }
+  },
+  "whiteboardFingerOn": "Jari + stylus boleh menggambar — ketuk untuk hanya stylus",
+  "whiteboardStylusOnly": "Stylus saja — sentuhan tangan tidak menggambar apa pun",
+  "whiteboardBackToWriting": "Kembali menulis",
+  "whiteboardEraserHint": "Penghapus — sapukan di atas goresan",
+  "whiteboardEraser": "Penghapus",
+  "whiteboardPortraitTurn": "Kertas tegak — ketuk untuk memutar jadi mendatar",
+  "whiteboardLandscapeTurn": "Kertas mendatar — ketuk untuk memutar jadi tegak",
+  "notesUndo": "Urungkan",
+  "notesRedo": "Ulangi",
+  "whiteboardClearSheet": "Kosongkan lembar ini",
+  "notesShareAsPdf2": "Bagikan sebagai PDF",
+  "whiteboardSaveAsNote": "Simpan sebagai catatan",
+  "whiteboardSavePdf": "Simpan PDF",
+  "whiteboardSheet": "Lembar",
+  "whiteboardStrokeWidth": "Tebal goresan",
+  "notesPenColor": "Warna pena",
+  "markdownMermaidStart": "Mulai",
+  "markdownMermaidDone": "Sudah?",
+  "markdownMermaidYes": "ya",
+  "markdownMermaidFinish": "Selesai",
+  "markdownMermaidNo": "belum",
+  "notebookHandwritingAlt": "tulisan tangan",
+  "notebookPageAlt": "Halaman {number}",
+  "@notebookPageAlt": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "notebookErrUnknownContent": "Isi berkas catatan tidak dikenali",
+  "notebookErrNewerFormat": "Catatan ini ditulis versi ReadPaper yang lebih baru (format {version}). Perbarui aplikasinya dulu supaya isinya tidak rusak.",
+  "@notebookErrNewerFormat": {
+    "placeholders": {
+      "version": {
+        "type": "int"
+      }
+    }
+  },
+  "notebookImageMissing": "gambar hilang",
+  "notebookDragMove": "Seret untuk memindahkan",
+  "notebookDragResize": "Seret untuk mengubah ukuran",
+  "notebookDragRotate": "Seret untuk memutar",
+  "notebookTapSecond": "Sekarang ketuk benda yang kedua.",
+  "notebookNewText": "Teks baru",
+  "notebookTextHint": "Tulis teksnya",
+  "notebookNewDiagram": "Diagram baru",
+  "notebookMermaidSource": "Sumber Mermaid",
+  "notebookPickImage": "Pilih gambar untuk catatan",
+  "notebookImagePlaced": "Gambar ditaruh — sekarang bisa digeser, diubah ukuran, atau dihapus.",
+  "notebookEditText": "Ubah teks",
+  "notebookEditDiagram": "Ubah diagram",
+  "notebookPickPdf": "Pilih PDF untuk disisipkan sebagai lembar",
+  "notebookPreparingSheets": "Menyiapkan lembar dari {name}…",
+  "@notebookPreparingSheets": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookPdfNoPages": "PDF itu tidak punya halaman yang bisa dibaca.",
+  "notebookSheetsInserted": "{count} lembar disisipkan dari {name}.",
+  "@notebookSheetsInserted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookInsertPdfFailed": "Gagal menyisipkan PDF: {error}",
+  "@notebookInsertPdfFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookMarkdownSaved": "Markdown tersimpan: {name}",
+  "@notebookMarkdownSaved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookMarkdownFailed": "Gagal menulis Markdown: {error}",
+  "@notebookMarkdownFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookSaveToCollectionFailed": "Gagal menyimpan ke koleksi",
+  "notebookSavedToCollection": "Masuk ke koleksi catatan",
+  "notebookUnsavedBody": "Ada tulisan yang belum disimpan.",
+  "notebookKeepWriting": "Kembali menulis",
+  "notebookDiscard": "Buang",
+  "notebookStatus": "Lembar {page} dari {count} · {paper} {orientation} · alat: {tool}",
+  "@notebookStatus": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      },
+      "paper": {
+        "type": "String"
+      },
+      "orientation": {
+        "type": "String"
+      },
+      "tool": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookUnsavedSuffix": " · belum disimpan",
+  "notebookZoomOut": "Perkecil",
+  "notebookZoomIn": "Perbesar",
+  "notebookFit": "Pas ke layar — kembalikan zum",
+  "notebookSaveAndShare": "Simpan dan bagikan",
+  "notebookSaveAsMarkdown": "Simpan sebagai Markdown",
+  "notebookSaveToNoteCollection": "Simpan ke koleksi catatan",
+  "notebookGuideLines": "Garis bantu lembar",
+  "notebookPlaceText": "teks",
+  "notebookPlaceImage": "gambar",
+  "notebookPlaceDiagram": "diagram",
+  "notebookTapToPlace": "Ketuk lembar untuk menaruh {what}.",
+  "@notebookTapToPlace": {
+    "placeholders": {
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookTapFirstThenSecond": "Ketuk benda pertama, lalu benda kedua.",
+  "notebookPickedCount": "{count} benda dipilih",
+  "@notebookPickedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notebookRelease": "Lepas",
+  "notebookPaperChanged": "Kertas jadi {paper}. {count} benda sekarang di luar kertas.",
+  "@notebookPaperChanged": {
+    "placeholders": {
+      "paper": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "notebookTurned": "Kertas jadi {orientation} — isinya ikut berputar, tidak ada yang keluar tepi.",
+  "@notebookTurned": {
+    "placeholders": {
+      "orientation": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookIdleTool": "Alat sekarang \"{tool}\" — pilih ikon pena untuk menggambar.",
+  "@notebookIdleTool": {
+    "placeholders": {
+      "tool": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookToolPen": "Pena",
+  "notebookToolEraseStroke": "Hapus goresan",
+  "notebookToolErasePart": "Hapus sebagian",
+  "notebookToolSelect": "Pilih",
+  "notebookToolConnectTwo": "Hubungkan dua benda",
+  "notebookToolText": "Teks",
+  "notebookToolDiagram": "Diagram",
+  "notebookToolImage": "Gambar",
+  "notebookComponentColor": "Warna komponen",
+  "notebookPenWidth": "Tebal pena",
+  "notebookEraserSize": "Ukuran penghapus",
+  "notebookWidthValue": "Tebal {value}",
+  "@notebookWidthValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookEraserValue": "Penghapus {value}",
+  "@notebookEraserValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookOpacity": "Kepekatan",
+  "notebookPaperSize": "Ukuran kertas: {paper}",
+  "@notebookPaperSize": {
+    "placeholders": {
+      "paper": {
+        "type": "String"
+      }
+    }
+  },
+  "notebookPortraitTap": "Kertas tegak — ketuk untuk mendatar",
+  "notebookLandscapeTap": "Kertas mendatar — ketuk untuk tegak",
+  "notebookToolShape": "Bangun",
+  "notebookToolConnect": "Hubungkan",
+  "notebookFingerOn": "Jari dan stylus sama-sama menggambar. Ketuk untuk hanya stylus — jari lalu dipakai menggeser dan memperbesar saja.",
+  "notebookStylusOnly": "Stylus menggambar, jari menggeser dan memperbesar. Ketuk untuk mengizinkan jari menggambar lagi.",
+  "notebookFingerChip": "Jari + stylus",
+  "notebookStylusChip": "Stylus saja",
+  "notebookPrevSheet": "Lembar sebelumnya",
+  "notebookNextSheet": "Lembar berikutnya",
+  "notebookNewSheet": "Lembar kosong baru",
+  "notebookInsertPdfSheet": "Sisipkan halaman PDF sebagai lembar",
+  "notebookDeleteSheet": "Hapus lembar ini",
+  "whiteboardErrPngEncode": "PNG gagal dikodekan",
+  "whiteboardErrPixels": "Piksel gagal dibaca",
+  "readerStylusOnlyOn": "Stylus saja: tangan yang bertumpu tidak akan menggambar.",
+  "readerStylusOnlyOff": "Jari dan stylus dua-duanya boleh menggambar.",
+  "readerCopyNotAllowed": "Dokumen ini tidak mengizinkan penyalinan",
+  "readerNothingSelected": "Tidak ada teks terpilih — tekan lama tepat di atas sebuah kata",
+  "readerEraserOn": "Penghapus aktif — sapukan di atas coretan",
+  "readerBackToWriting": "Kembali menulis",
+  "readerEraserTooltip": "Penghapus — sapukan di atas coretan yang salah",
+  "readerEraser": "Penghapus",
+  "readerBackToPreviousColor": "Kembali ke warna sebelumnya",
+  "readerWhiteInk": "Tinta putih — menutup coretan",
+  "readerUndoEraseInk": "menghapus coretan",
+  "readerUndoEraseStroke": "menghapus goresan",
+  "readerEraserMissed": "Tidak ada coretan yang tersentuh penghapus",
+  "readerRedoStroke": "Ulangi goresan",
+  "readerNothingToRedo": "Tidak ada yang bisa diulangi",
+  "readerTapToPlaceSignature": "Ketuk halaman di tempat tanda tangannya ditaruh",
+  "readerCannotOverwriteAttachment": "Lampiran library tidak bisa ditimpa — pilih nama lain",
+  "readerPreparingPdf": "Menyiapkan PDF…",
+  "readerSavePdf": "Simpan PDF",
+  "readerNotSaved": "Tidak jadi disimpan",
+  "readerNoLibraryOpen": "Belum ada library yang terbuka di aplikasi ini.",
+  "readerUnsavedNotIncluded": "Anotasi yang belum disimpan tidak ikut. Simpan PDF dulu bila perlu.",
+  "readerAddToCollectionTitle": "Tambahkan ke koleksi",
+  "readerNoCollection": "Tanpa koleksi",
+  "readerNoCollectionHint": "masuk library, tidak masuk koleksi mana pun",
+  "readerNewCollectionEllipsis": "Koleksi baru…",
+  "readerNewCollectionHint": "dibuat lalu langsung dipakai",
+  "readerCreateCollectionFailed": "Gagal membuat koleksi",
+  "readerDocumentTitle": "Judul dokumen",
+  "readerCancel": "Batal",
+  "readerAdd": "Tambahkan",
+  "readerAddingToLibrary": "Menambahkan ke library…",
+  "readerAddFailed": "Gagal menambahkan",
+  "readerNewCollection": "Koleksi baru",
+  "readerCollectionName": "Nama koleksi",
+  "readerCollectionNameHelper": "Ditulis ke collections.json, ikut tersinkron ke GitHub",
+  "readerCreate": "Buat",
+  "readerReadingPageText": "Membaca teks halaman…",
+  "readerPrintWithoutLatest": "Cetak tanpa anotasi terbaru?",
+  "readerPrintAsIs": "Cetak apa adanya",
+  "readerAddBlankPages": "Tambah halaman kosong",
+  "readerPdfSavedAsImages": "PDF ini tidak bisa ditulisi langsung; halamannya disimpan sebagai gambar.",
+  "readerPreparingFile": "Menyiapkan berkas…",
+  "readerNothingSaved": "Tidak ada yang disimpan",
+  "readerSaveAnnotatedCopy": "Simpan salinan beranotasi",
+  "readerSaveChangesFirst": "Simpan perubahan dulu?",
+  "readerUnsavedStrokes": "Ada goresan yang belum disimpan. Kalau keluar sekarang, goresan itu hilang.",
+  "readerLeaveWithoutSaving": "Keluar tanpa menyimpan",
+  "readerSaveEllipsis": "Simpan…",
+  "readerSave": "Simpan",
+  "readerMarking": "Menandai",
+  "readerMark": "Tandai",
+  "readerTapToPlaceNote": "Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)",
+  "readerPlaceNote": "Tempel catatan di halaman",
+  "readerDoneDrawing": "Selesai menggambar",
+  "readerDrawOnPage": "Tulis atau gambar di halaman",
+  "readerTapToPlaceText": "Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)",
+  "readerFillText": "Isi teks di halaman — untuk mengisi formulir",
+  "readerKeepScreenOnActive": "Layar tetap menyala — tekan untuk mematikan",
+  "readerKeepScreenOn": "Biarkan layar menyala selama membaca",
+  "readerKeepScreenOnEnabled": "Layar akan tetap menyala selama membaca",
+  "readerKeepScreenOnDisabled": "Layar kembali mati sendiri",
+  "readerPresent": "Sajikan — satu halaman penuh layar",
+  "readerNothingToUndo": "Belum ada yang bisa diurungkan",
+  "readerNothingToRedoYet": "Belum ada yang bisa diulangi",
+  "readerSignature": "Tanda tangan",
+  "readerSaveAndShare": "Simpan dan bagikan",
+  "readerAddToCollectionMenu": "Tambahkan ke koleksi…",
+  "readerAddToCollectionMenuHint": "masuk library dan ikut tersinkron",
+  "readerPrintMenu": "Cetak…",
+  "readerPrintMenuHint": "ke pencetak, atau simpan sebagai PDF",
+  "readerToMarkdown": "Ubah ke Markdown",
+  "readerToMarkdownHint": "teksnya jadi dokumen yang bisa disunting",
+  "readerToNotebook": "Jadikan buku catatan",
+  "readerToNotebookHint": "halamannya jadi alas, bisa disunting lagi",
+  "readerBlankPagesMenuHint": "papan tulis di akhir dokumen",
+  "readerSaveMenuHintNew": "pilih nama dan tempat; yang asli aman",
+  "readerSaveAsMenu": "Simpan sebagai…",
+  "readerSaveAsMenuHint": "nama atau tempat lain",
+  "readerExportPagesMenu": "Ekspor halaman…",
+  "readerExportPagesMenuHint": "PDF, PNG, atau JPG",
+  "readerShare": "Bagikan",
+  "readerShareHint": "chat, surel, atau aplikasi lain",
+  "readerStylusOnlyTooltip": "Stylus saja — sentuhan tangan tidak menggambar",
+  "readerFingerAndStylusTooltip": "Jari + stylus boleh menggambar — ketuk untuk stylus saja",
+  "readerAddBlankSheet": "Tambah lembar kosong",
+  "readerReadMode": "Mode baca — sembunyikan semua bilah",
+  "readerSaveAnnotatedCopyFormats": "Simpan salinan beranotasi (PNG, JPG, PDF)",
+  "readerZoomOut": "Perkecil",
+  "readerZoomIn": "Perbesar",
+  "readerAnnotationPanel": "Panel anotasi",
+  "readerGotIt": "Mengerti",
+  "readerDone": "Selesai",
+  "readerUndoLastStroke": "Urungkan goresan terakhir",
+  "readerDiscardStrokes": "Buang semua goresan yang belum disimpan",
+  "readerTapWhereNote": "Ketuk tempat di halaman untuk menaruh catatan.",
+  "readerPreviousPage": "Halaman sebelumnya",
+  "readerNextPage": "Halaman berikutnya",
+  "readerFingerAndStylusShort": "Jari + stylus — ketuk untuk stylus saja",
+  "readerFitPage": "Pas satu halaman ke layar",
+  "readerScribble": "Coret-coret di halaman",
+  "readerUndo": "Urungkan",
+  "readerSaveChooseTooltip": "Simpan… (pilih nama dan tempat)",
+  "readerAddScribbleSheet": "Tambah lembar kosong untuk dicoreti",
+  "readerExitPresent": "Keluar dari mode menyajikan",
+  "readerExitReadMode": "Keluar dari mode baca",
+  "readerClipboardFallback": "Anotasi ReadPaper",
+  "readerClipboardEmpty": "Papan klip tidak berisi gambar atau anotasi",
+  "readerPasteImageUnsupported": "Menempel gambar belum bisa di perangkat ini — pakai \"Pilih berkas gambar\"",
+  "readerClipboardNoImage": "Papan klip tidak berisi gambar. Di peramban: klik kanan gambar → Salin gambar.",
+  "readerChooseImage": "Pilih gambar",
+  "readerPreparingImage": "Menyiapkan gambar…",
+  "readerNotAnImage": "Isi papan klip atau berkasnya bukan gambar yang bisa dibaca",
+  "readerUndoPasteImage": "menempel gambar",
+  "readerInsertImage": "Sisipkan gambar",
+  "readerPasteImage": "Tempel gambar dari papan klip",
+  "readerPasteImageHint": "mis. \"Salin gambar\" di peramban — Ctrl+V",
+  "readerChooseImageFile": "Pilih berkas gambar…",
+  "readerAnnotationCopied": "Anotasi disalin — buka halaman tujuan, lalu Tempel",
+  "readerUndoCut": "memotong anotasi",
+  "readerAnnotationCut": "Anotasi dipotong — buka halaman tujuan, lalu Tempel",
+  "readerUndoPaste": "menempel anotasi",
+  "readerMoveToPage": "Pindahkan ke halaman",
+  "readerMove": "Pindahkan",
+  "readerCopy": "Salin",
+  "readerCut": "Potong",
+  "readerToPage": "Ke halaman…",
+  "readerPaste": "Tempel",
+  "readerDeselect": "Batal pilih",
+  "readerClearClipboard": "Kosongkan papan klip",
+  "readerDropOnPage": "Lepaskan di atas halaman untuk memindahkannya",
+  "readerOutsidePage": "Di luar halaman",
+  "readerUndoReshape": "mengubah bentuk anotasi",
+  "readerUndoMove": "memindahkan anotasi",
+  "readerHighlight": "Stabilo",
+  "readerHighlightComment": "Stabilo + komentar",
+  "readerUnderline": "Garis bawah",
+  "readerText": "Teks",
+  "readerComment": "Komentar",
+  "readerTextHint": "Yang ditulis di halaman…",
+  "readerCommentHint": "Catatan untuk bagian ini…",
+  "readerUndoEdit": "mengubah anotasi",
+  "readerDeleteAnnotationQuestion": "Hapus anotasi?",
+  "readerDelete": "Hapus",
+  "readerUndoDelete": "menghapus anotasi",
+  "readerAnnotationDeleted": "Anotasi dihapus",
+  "readerDeleteFailed": "Gagal menghapus anotasi",
+  "readerSaveImageFailed": "Gagal menyimpan gambar",
+  "readerSaved": "Tersimpan",
+  "readerChangesSaved": "Perubahan tersimpan",
+  "readerAddedNotSaved": "Ditambahkan — belum disimpan ke berkas",
+  "readerAdded": "Ditambahkan",
+  "readerSaveAnnotationFailed": "Gagal menyimpan anotasi",
+  "readerEditNote": "Sunting catatan",
+  "readerCloseNote": "Tutup catatan",
+  "readerDragToMove": "Seret untuk memindahkan",
+  "readerDragToResize": "Seret untuk mengubah ukuran",
+  "readerDragToRotate": "Seret untuk memutar",
+  "readerEditCommentColor": "Ubah komentar / warna",
+  "readerDpiScreen": "Layar (72 dpi)",
+  "readerDpiGood": "Baik (144 dpi)",
+  "readerDpiPrint": "Cetak (288 dpi)",
+  "readerFormat": "Format",
+  "readerDensity": "Kerapatan",
+  "readerWholeDocument": "Seluruh dokumen",
+  "readerJumpToPage": "Lompat ke halaman",
+  "readerPage": "Halaman",
+  "readerGo": "Pergi",
+  "readerTableOfContents": "Daftar isi",
+  "readerNoTableOfContents": "Berkas ini tidak membawa daftar isi.",
+  "readerUntitled": "(tanpa judul)",
+  "readerTintNormal": "Normal",
+  "readerTintSepia": "Sepia",
+  "readerTintDim": "Redup",
+  "readerTintInvert": "Balik warna",
+  "readerSaveInFolder": "Simpan di folder",
+  "readerFileNameTaken": "Nama berkas sudah dipakai",
+  "readerNo": "Tidak",
+  "readerYesOverwrite": "Ya, timpa",
+  "readerSaveAs": "Simpan sebagai",
+  "readerFileName": "Nama berkas",
+  "readerSaveIn": "Simpan di",
+  "readerChooseOtherFolder": "Pilih folder lain…",
+  "readerOtherPlace": "Tempat lain…",
+  "readerClearSelection": "Batalkan pilihan",
+  "readerSignatureHint": "Tulis di sini, lalu ketuk halaman untuk menaruhnya.",
+  "readerClear": "Bersihkan",
+  "readerUse": "Pakai",
+  "readerErrSourceMissing": "Berkas asalnya tidak ada",
+  "readerErrPdfUnreadable": "PDF-nya tidak bisa dibaca",
+  "readerErrPageCopy": "Halaman aslinya tidak bisa disalin",
+  "readerErrBlankPage": "Halaman kosongnya tidak bisa dibuat",
+  "readerErrFileMissing": "Berkasnya tidak ada",
+  "readerErrPdfWrite": "PDF-nya gagal ditulis",
+  "readerErrPdfOpen": "PDF-nya tidak bisa dibuka",
+  "readerErrPageRewrite": "Isi halaman gagal ditulis ulang",
+  "readerErrRender": "Halaman gagal dirender",
+  "readerErrPngEncode": "PNG gagal dikodekan",
+  "readerErrPixels": "Piksel gagal dibaca",
+  "readerLoadAnnotationsFailed": "Gagal membaca anotasi: {error}",
+  "readerNoteAnnotationsUnreadable": "Anotasi catatan ini tidak terbaca: {error}",
+  "readerCharactersCopied": "{count} karakter disalin",
+  "readerRedoStep": "Ulangi: {step}",
+  "readerPageColorInverted": "Warna halaman: {color} — warna penanda ikut terbalik",
+  "readerPageColor": "Warna halaman: {color}",
+  "readerResumedAtPage": "Dilanjutkan di halaman {page}",
+  "readerUndone": "Diurungkan: {step}",
+  "readerRedone": "Diulangi: {step}",
+  "readerOriginalFolder": "Folder berkas aslinya ({folder})",
+  "readerSavedFile": "Tersimpan: {name} ({size})",
+  "readerSaveFailed": "Gagal menyimpan: {error}",
+  "readerPdfSaved": "PDF disimpan ({size})",
+  "readerAddToCollectionExplain": "Berkasnya disalin ke dalam library, dibuatkan item Zotero, lalu di-commit — jadi ikut tersinkron ke GitHub.",
+  "readerNewSubcollectionIn": "Sub-koleksi baru di dalam {name}",
+  "readerAddedButAnnotationsFailed": "Masuk library, tetapi anotasinya gagal disalin: {error}",
+  "readerAddedAs": "Masuk library sebagai {key}",
+  "readerAddedWithAnnotations": "Masuk library sebagai {key} beserta {count} anotasi — terbaca juga di Zotero setelah dikirim",
+  "readerPreparingNotebook": "Menyiapkan buku catatan dari {title}…",
+  "readerNotebookFailed": "Gagal membuat buku catatan: {error}",
+  "readerSubcollectionIn": "Sub-koleksi di {name}",
+  "readerNoTextLayer": "PDF ini tidak punya lapisan teks — kemungkinan hasil pindaian. Yang keluar hanya judulnya.",
+  "readerMarkdownFailed": "Gagal mengubah ke Markdown: {error}",
+  "readerPrintExplain": "Ada anotasi yang belum menyatu dengan halaman, jadi belum akan ikut tercetak. Simpan PDF dulu kalau anotasinya perlu ikut.",
+  "readerPrintFailed": "Gagal mencetak: {error}",
+  "readerBlankPagesExplain": "Seukuran halaman pertamanya. Berkas aslinya tidak disentuh — yang berubah adalah salinan kerja, sampai Anda menyimpannya.",
+  "readerPagesAfter": "{count} halaman setelah halaman {page}",
+  "readerPagesAtEnd": "{count} halaman di akhir dokumen",
+  "readerBlankPagesAdded": "{count} halaman kosong ditambahkan di akhir — simpan lewat menu bagikan",
+  "readerBlankPagesInserted": "{count} halaman kosong disisipkan setelah halaman {page} — simpan lewat menu bagikan",
+  "readerAddPagesFailed": "Gagal menambah halaman: {error}",
+  "readerShareFailed": "Gagal membagikan: {error}",
+  "readerSavePage": "Simpan halaman {page}",
+  "readerSaveImageError": "Gagal menyimpan gambar: {error}",
+  "readerFilesSaved": "{count} berkas disimpan",
+  "readerPreparingPdfPages": "Menyiapkan PDF {count} halaman…",
+  "readerPdfFailed": "Gagal membuat PDF: {error}",
+  "readerUnsavedStandalone": "Coretan dan anotasi di {title} belum disimpan ke berkas. Kalau keluar sekarang, semuanya hilang.",
+  "readerUndoStep": "Urungkan: {step}",
+  "readerSaveMenuHintTo": "ke {name}",
+  "readerStatus": "{count} anotasi · halaman {page}",
+  "readerStatusOf": "{count} anotasi · halaman {page} dari {total}",
+  "readerCoachMark": "Untuk menandai: tekan \"Tandai\", pilih warna, lalu sapukan jari di atas teks — begitu jari diangkat teks langsung berwarna. Untuk menyalin: biarkan \"Tandai\" mati, tekan lama di teks, lalu pilih Salin. Untuk catatan: tekan ikon catatan, lalu ketuk halaman.",
+  "readerMarkingBannerTouch": "Sapukan jari di atas teks — lepas jari, langsung ditandai {color}. Geser halaman dan salin teks nonaktif; tekan Selesai untuk kembali.",
+  "readerMarkingBannerMouse": "Seret mouse di atas teks — lepas tombolnya, langsung ditandai {color}. Geser halaman dan salin teks nonaktif; tekan Selesai untuk kembali.",
+  "readerEraserBanner": "Penghapus: sapukan di atas coretan yang salah — goresan yang tersentuh dibuang utuh.",
+  "readerPenBanner": "Gambar bebas di halaman dengan jari atau stylus.",
+  "readerPenPending": "{count} goresan di halaman {page} — disimpan saat menekan Selesai.",
+  "readerSaveTo": "Simpan ke {name}",
+  "readerPageNumber": "Halaman {page}",
+  "readerImagePasted": "Gambar ditempel di halaman {page} — seret sudutnya untuk mengubah ukuran",
+  "readerPastedOnPage": "Ditempel di halaman {page} — seret untuk memindahkannya",
+  "readerPageRange": "Halaman 1 sampai {count}",
+  "readerNoSuchPage": "Tidak ada halaman {page} — dokumen ini {count} halaman",
+  "readerUndoMoveToPage": "memindahkan anotasi ke halaman {page}",
+  "readerMovedToPage": "Dipindah ke halaman {page}",
+  "readerPasteOnPage": "Tempel di halaman {page}",
+  "readerTextOnPage": "Isi teks di halaman {page}",
+  "readerNoteOnPage": "Catatan di halaman {page}",
+  "readerAnnotationOnPage": "Anotasi halaman {page}",
+  "readerUndoAdd": "menambah {type}",
+  "readerNoteBubbleTitle": "Catatan · hal. {page}",
+  "readerHighlightColor": "Warna stabilo: {color}",
+  "readerStrokeWidth": "Tebal goresan: {width}",
+  "readerOnlyPage": "Hanya halaman {page}",
+  "readerOnePdfPages": "Satu PDF berisi {count} halaman",
+  "readerFilesOnePerPage": "{count} berkas, satu per halaman",
+  "readerExportExplain": "Stabilo, garis bawah, dan coretan ikut tergambar. Berkas aslinya tidak disentuh.",
+  "readerExportPdfImages": "Halaman disimpan sebagai gambar di dalam PDF, jadi teksnya tidak bisa dicari atau disalin lagi di salinan itu.",
+  "readerExportLarge": "{count} halaman pada kerapatan ini akan makan waktu dan ruang penyimpanan yang tidak sedikit.",
+  "readerNoAnnotationsYet": "Belum ada anotasi.\n\nPilih teks pada halaman, lalu pilih Stabilo atau Stabilo + komentar.",
+  "readerPageShort": "hal. {page}",
+  "readerPageMustBeBetween": "Halaman harus antara 1 dan {count}",
+  "readerOfPages": "dari {count}",
+  "readerOpenPage": "Buka halaman {page}",
+  "readerOverwriteOriginal": "{name} adalah berkas yang sedang dibuka. Menimpanya membuat versi aslinya hilang, dan coretannya melebur ke halaman.\n\nTimpa berkas aslinya?",
+  "readerOverwriteExisting": "{name} sudah ada di folder ini.\n\nTimpa dengan yang baru?",
+  "readerSaveAsExplain": "Berkas yang dibuka tidak disentuh. Setelah ini, Simpan menulis ke berkas baru ini.",
+  "readerOutsideZoteroPalette": "{name} (di luar palet Zotero)",
+  "readerErrCannotRead": "Tidak bisa dibaca: {path}",
+  "readerErrPageSize": "Ukuran halaman tidak masuk akal: {size}",
+  "@readerLoadAnnotationsFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerNoteAnnotationsUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerCharactersCopied": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerRedoStep": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPageColorInverted": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPageColor": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerResumedAtPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerUndone": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerRedone": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerOriginalFolder": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerSavedFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPdfSaved": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerNewSubcollectionIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerAddedButAnnotationsFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerAddedAs": {
+    "placeholders": {
+      "key": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerAddedWithAnnotations": {
+    "placeholders": {
+      "key": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPreparingNotebook": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerNotebookFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerSubcollectionIn": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerMarkdownFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPrintFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPagesAfter": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPagesAtEnd": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerBlankPagesAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerBlankPagesInserted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerAddPagesFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerShareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerSavePage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerSaveImageError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerFilesSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPreparingPdfPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPdfFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerUnsavedStandalone": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerUndoStep": {
+    "placeholders": {
+      "step": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerSaveMenuHintTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerStatus": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerStatusOf": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerMarkingBannerTouch": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerMarkingBannerMouse": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPenPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerSaveTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPageNumber": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerImagePasted": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPastedOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPageRange": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerNoSuchPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerUndoMoveToPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerMovedToPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPasteOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerTextOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerNoteOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerAnnotationOnPage": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerUndoAdd": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerNoteBubbleTitle": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerHighlightColor": {
+    "placeholders": {
+      "color": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerStrokeWidth": {
+    "placeholders": {
+      "width": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerOnlyPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerOnePdfPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerFilesOnePerPage": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerExportLarge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerPageShort": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerPageMustBeBetween": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerOfPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerOpenPage": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "@readerOverwriteOriginal": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerOverwriteExisting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerOutsideZoteroPalette": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerErrCannotRead": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "@readerErrPageSize": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceSwitchRepoCount": "Ganti repositori ({count} tersedia)",
+  "@workspaceSwitchRepoCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceAddAnotherRepo": "{remote} — tambah repositori lain",
+  "@workspaceAddAnotherRepo": {
+    "placeholders": {
+      "remote": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceManageRepos": "Kelola repositori…",
+  "workspaceSwitchLibrary": "Ganti library",
+  "workspaceFetchingLibrary": "Mengambil…",
+  "workspaceFetchLibrary": "Ambil library",
+  "syncPullCount": "Tarik {count} commit baru",
+  "@syncPullCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPull": "Tarik perubahan",
+  "syncMenu": "Sinkronisasi",
+  "syncCheck": "Periksa perubahan",
+  "syncSend": "Kirim perubahan",
+  "syncDetails": "Detail sinkronisasi",
+  "syncCheckRemote": "Periksa perubahan di remote",
+  "syncSendToGitHub": "Kirim perubahan ke GitHub",
+  "syncBusyWait": "Sinkronisasi sedang berjalan, tunggu sampai selesai.",
+  "syncBusyPhaseWait": "{phase} Tunggu sampai selesai.",
+  "@syncBusyPhaseWait": {
+    "placeholders": {
+      "phase": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNothingToSend": "Tidak ada perubahan untuk dikirim.",
+  "syncTooltipBranch": "Branch: {branch}",
+  "@syncTooltipBranch": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTooltipLastCommit": "Commit terakhir: {subject}",
+  "@syncTooltipLastCommit": {
+    "placeholders": {
+      "subject": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTooltipLastSync": "Sinkron terakhir: {time}",
+  "@syncTooltipLastSync": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceReadingLibrary": "Membaca library dari berkas…",
+  "syncCommitMessage": "Pesan commit",
+  "syncCommitAndSend": "Commit & kirim",
+  "workspaceCancel": "Batal",
+  "workspaceAccessSshHttps": "lewat SSH atau HTTPS",
+  "workspaceAccessToken": "lewat token GitHub",
+  "workspaceNoRepoTitle": "Belum ada repositori",
+  "workspaceNoRepoBody": "ReadPaper membaca library Zotero yang disinkronkan ke GitHub oleh plugin zotero-github-sync. Tambahkan repositori ({access}) untuk mulai membaca, menandai dan memberi komentar pada paper.",
+  "@workspaceNoRepoBody": {
+    "placeholders": {
+      "access": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceAddRepo": "Tambah repositori",
+  "workspaceFetchLibraryNamed": "Ambil library \"{name}\"",
+  "@workspaceFetchLibraryNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceCloneNamed": "Clone \"{name}\"",
+  "@workspaceCloneNamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceResumeNote": "Unduhan sebelumnya terputus. Melanjutkan hanya mengambil berkas yang belum sempat tersimpan.",
+  "workspaceLazyNote": "Metadata library diunduh sekarang; berkas PDF menyusul saat papernya dibuka.",
+  "workspaceWillSaveAt": "Akan disimpan di {path}",
+  "@workspaceWillSaveAt": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceCheckConnection": "Periksa koneksi",
+  "workspaceEditProfile": "Ubah profil",
+  "workspaceDownloading": "Mengunduh…",
+  "workspaceCloning": "Meng-clone…",
+  "workspaceResume": "Lanjutkan",
+  "workspaceFetchNow": "Ambil sekarang",
+  "workspaceCloneNow": "Clone sekarang",
+  "workspaceLibraryUnreadableTitle": "Library tidak terbaca",
+  "workspaceLibraryUnreadableBody": "Repositori sudah ada di lokal tetapi tidak ditemukan struktur Zotero (collections.json dan folder items/). Pastikan repositori memang hasil ekspor plugin Zotero GitHub Sync, lalu tarik perubahan terbaru.",
+  "workspaceReload": "Baca ulang",
+  "workspacePull": "Pull",
+  "workspaceRepository": "Repositori",
+  "syncLfsMissing": "git-lfs tidak terpasang; lampiran besar tetap berupa pointer",
+  "syncLfsPullAll": "Unduh semua berkas LFS",
+  "syncBranchLine": "branch {branch}",
+  "@syncBranchLine": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTabChanges": "Perubahan",
+  "syncTabHistory": "Riwayat",
+  "syncTabLog": "Log git",
+  "syncRecloneNotice": "Salinan lokal ini masih menyimpan semua lampiran. Mengambilnya ulang hanya mengunduh metadata; PDF menyusul saat papernya dibuka.",
+  "syncReclone": "Ambil ulang",
+  "syncRecloneTitle": "Ambil ulang salinan lokal?",
+  "syncRecloneBody": "Folder lokal dihapus lalu diambil lagi tanpa lampiran. Anotasi yang sudah dikirim ke GitHub tetap aman; yang belum dikirim akan hilang, jadi ini ditolak kalau masih ada perubahan tertunda.",
+  "syncNoLocalChanges": "Tidak ada perubahan lokal.",
+  "syncNoCommits": "Belum ada commit.",
+  "syncNoGitOutput": "Belum ada keluaran git.",
+  "workspaceManageReposTooltip": "Kelola repositori",
+  "workspaceReadingLibraryShort": "Membaca library…",
+  "workspaceFillToken": "Isi token",
+  "workspaceRetry": "Coba lagi",
+  "workspaceClose": "Tutup",
+  "workspaceTransferRepoNotFetched": "Repositori \"{name}\" belum diambil ke perangkat ini. Buka sekali dan ambil library-nya, lalu ulangi.",
+  "@workspaceTransferRepoNotFetched": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceTransferLibraryMissing": "Library di \"{name}\" belum ada di perangkat ini. Buka repositori itu sekali dan ambil library-nya, lalu ulangi.",
+  "@workspaceTransferLibraryMissing": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceTransferTitle": "Ke repositori lain",
+  "workspaceTransferNoOthers": "Belum ada repositori lain. Tambahkan dulu di pengaturan Repositori.",
+  "workspaceTransferChange": "Ganti",
+  "workspaceTransferMove": "Pindahkan",
+  "workspaceTransferCopy": "Salin",
+  "workspaceTransferMoveNote": "Dihapus dari repositori ini setelah salinannya utuh di tujuan.",
+  "workspaceTransferCopyNote": "Yang di sini tetap; tujuan mendapat salinannya.",
+  "workspaceTransferNotesRoot": "Akar Catatan",
+  "workspaceTransferNotesUnfiled": "Catatan, tanpa koleksi",
+  "workspaceTransferLibraryRoot": "Akar library",
+  "workspaceTransferUnfiled": "Tanpa koleksi",
+  "workspaceComputingSize": "menghitung ukuran…",
+  "syncPhaseCounting": "Menghitung objek",
+  "syncPhaseCompressing": "Memampatkan objek",
+  "syncPhaseReceiving": "Mengunduh objek",
+  "syncPhaseResolving": "Menyusun delta",
+  "syncPhaseWritingFiles": "Menulis berkas",
+  "syncPhaseFiltering": "Mengunduh berkas besar",
+  "syncPhaseLfs": "Mengunduh berkas LFS",
+  "syncPhaseSending": "Mengirim objek",
+  "syncPhaseEnumerating": "Mendata objek",
+  "workspaceStatsNotFetched": "belum diambil ke perangkat ini",
+  "workspaceStatsItems": "{count} item",
+  "@workspaceStatsItems": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceStatsCollections": "{count} koleksi",
+  "@workspaceStatsCollections": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceStatsAttachments": "lampiran {size}",
+  "@workspaceStatsAttachments": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceStatsUnsent": "{count} belum terkirim",
+  "@workspaceStatsUnsent": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceStatsBehind": "{count} baru di GitHub",
+  "@workspaceStatsBehind": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPhaseCloning": "Meng-clone repositori…",
+  "syncPhaseFetching": "Memeriksa perubahan…",
+  "syncPhasePulling": "Menarik perubahan…",
+  "syncPhaseCommitting": "Menyimpan perubahan…",
+  "syncPhasePushing": "Mengirim perubahan…",
+  "syncChangeNew": "baru",
+  "syncChangeAdded": "ditambah",
+  "syncChangeModified": "diubah",
+  "syncChangeDeleted": "dihapus",
+  "syncChangeRenamed": "dipindah",
+  "syncStatusNotCloned": "Belum di-clone",
+  "syncStatusLocalChanges": "{count} perubahan lokal",
+  "@syncStatusLocalChanges": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatusAhead": "{count} commit belum di-push",
+  "@syncStatusAhead": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatusBehind": "{count} commit baru di remote",
+  "@syncStatusBehind": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncStatusInSync": "Sinkron",
+  "workspaceErrNoZoteroExport": "Tidak menemukan ekspor Zotero di repositori ini. Struktur yang diharapkan: zotero/<library>/collections.json",
+  "workspaceErrReadLibrary": "Gagal membaca library: {error}",
+  "@workspaceErrReadLibrary": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrNoRemoteUrl": "URL remote belum diisi untuk profil ini.",
+  "workspaceErrUnsentBeforeReclone": "Masih ada perubahan yang belum dikirim ke GitHub. Kirim dulu, baru ambil ulang.",
+  "workspaceErrDeleteOldCopy": "Gagal menghapus salinan lama: {error}",
+  "@workspaceErrDeleteOldCopy": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrAnnotationNoLibrary": "Anotasi tidak tersimpan: tidak ada library aktif di aplikasi.",
+  "workspaceErrAnnotationUnchanged": "Anotasi tidak tersimpan: berkas item tidak berubah.",
+  "workspaceErrAnnotationSave": "Anotasi tidak tersimpan: {error}",
+  "@workspaceErrAnnotationSave": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrAnnotationDeleteNoLibrary": "Anotasi tidak dihapus: tidak ada library aktif.",
+  "workspaceErrAnnotationDelete": "Anotasi tidak dihapus: {error}",
+  "@workspaceErrAnnotationDelete": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrPictureNoRepo": "Gambar tidak tersimpan: tidak ada repositori aktif.",
+  "workspaceErrPictureSave": "Gambar tidak tersimpan: {error}",
+  "@workspaceErrPictureSave": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrPictureDelete": "Gambar tidak dihapus: {error}",
+  "@workspaceErrPictureDelete": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrNoLibraryForFile": "Tidak ada library aktif untuk menampung berkas ini.",
+  "workspaceErrAddToLibrary": "Gagal menambahkan ke library: {error}",
+  "@workspaceErrAddToLibrary": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrNoLibraryForFolder": "Tidak ada library aktif untuk menampung folder ini.",
+  "workspaceErrImportStopped": "Impor folder berhenti: {error}",
+  "@workspaceErrImportStopped": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrNoLibrary": "Tidak ada library aktif.",
+  "workspaceErrCreateCollection": "Gagal membuat koleksi: {error}",
+  "@workspaceErrCreateCollection": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrSameRepo": "Repositori tujuannya sama dengan asal.",
+  "workspaceErrMoveFailed": "Gagal memindah: {error}",
+  "@workspaceErrMoveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrCopyFailed": "Gagal menyalin: {error}",
+  "@workspaceErrCopyFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrCollectionGone": "Koleksinya tidak ada lagi.",
+  "workspaceErrMissingAttachments": "{count} lampiran belum ada di perangkat ini — belum diunduh, atau masih penunjuk Git LFS. Buka papernya sekali supaya PDF-nya diunduh (di desktop: LFS pull), lalu ulangi. Tidak ada yang dipindah: tanpa PDF-nya, paper itu akan tiba kosong.",
+  "@workspaceErrMissingAttachments": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "workspaceErrChangeCollection": "Gagal mengubah koleksi: {error}",
+  "@workspaceErrChangeCollection": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrTargetCollectionGone": "Koleksi tujuan tidak ada lagi.",
+  "workspaceErrMove": "Gagal memindahkan: {error}",
+  "@workspaceErrMove": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrDelete": "Gagal menghapus: {error}",
+  "@workspaceErrDelete": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workspaceErrDeleteClone": "Gagal menghapus clone lokal: {error}",
+  "@workspaceErrDeleteClone": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "syncGitCliLabel": "git (CLI sistem)",
+  "syncFileAlreadyLocal": "Berkas sudah ada di lokal",
+  "syncFileLocationUnknown": "Lokasi berkas tidak dikenali.",
+  "syncDownloadingFile": "Mengunduh {name}…",
+  "@syncDownloadingFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "syncFileDownloaded": "Berkas selesai diunduh",
+  "syncFileNotInRepo": "Berkas tidak ada di repositori ini.",
+  "syncDownloadingLfs": "Mengunduh berkas besar (Git LFS)…",
+  "syncRemoteReachable": "Remote terjangkau",
+  "syncConnected": "Terhubung · {count} branch di remote",
+  "@syncConnected": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTargetNotEmpty": "Direktori tujuan sudah berisi berkas. Hapus atau pilih lokasi lain.",
+  "syncCloned": "Repositori berhasil di-clone",
+  "syncPreparingMetadata": "Menyiapkan berkas metadata…",
+  "syncMetadataReady": "Metadata siap",
+  "syncRepoReadyLazy": "Repositori siap. Lampiran diunduh saat papernya dibuka.",
+  "syncFetchDone": "Fetch selesai",
+  "syncPullDone": "Pull selesai",
+  "syncInterruptedNotAborted": "Sinkronisasi sebelumnya berhenti di tengah {operation} dan tidak bisa dibatalkan otomatis. Keadaannya dicadangkan di {backup}.",
+  "@syncInterruptedNotAborted": {
+    "placeholders": {
+      "operation": {
+        "type": "String"
+      },
+      "backup": {
+        "type": "String"
+      }
+    }
+  },
+  "syncInterruptedRecovered": "Sinkronisasi yang dulu berhenti di tengah sudah dipulihkan (cadangan: {backup})",
+  "@syncInterruptedRecovered": {
+    "placeholders": {
+      "backup": {
+        "type": "String"
+      }
+    }
+  },
+  "syncConflict": "Perubahan di sini dan di GitHub bentrok dan tidak bisa disatukan otomatis. Tidak ada yang hilang: perubahan lokal tetap di commit-nya{detail}.",
+  "@syncConflict": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "syncRebasedOnGitHub": "Perubahan lokal dipasang di atas versi GitHub",
+  "syncAutoMerged": "Digabung otomatis: {files}",
+  "@syncAutoMerged": {
+    "placeholders": {
+      "files": {
+        "type": "String"
+      }
+    }
+  },
+  "syncGitHubCopies": "Versi GitHub disimpan sebagai {files}",
+  "@syncGitHubCopies": {
+    "placeholders": {
+      "files": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNothingToCommit": "Tidak ada perubahan untuk di-commit",
+  "syncCommitCreated": "Commit dibuat",
+  "syncPushDone": "Push selesai",
+  "syncLfsSkipped": "git-lfs tidak terpasang, dilewati",
+  "syncLfsDownloaded": "Berkas LFS diunduh",
+  "syncRemoteUpdated": "Remote diperbarui",
+  "syncGitCannotRun": "git tidak dapat dijalankan: {error}",
+  "@syncGitCannotRun": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrSshRejected": "SSH ditolak: kunci tidak diterima GitHub. Periksa path kunci di profil.",
+  "syncErrHttpsAuth": "Autentikasi HTTPS gagal: token kosong atau tidak berlaku.",
+  "syncErrRepoNotFound": "Repositori tidak ditemukan atau tidak punya akses.",
+  "syncErrMergeConflict": "Ada konflik saat menggabungkan perubahan. Selesaikan konflik di repo lokal.",
+  "syncErrNoNetwork": "Jaringan tidak tersedia.",
+  "syncErrGitFailed": "git gagal (kode {code})",
+  "@syncErrGitFailed": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "syncUnknownUser": "(tidak diketahui)",
+  "syncErrTreeTooLarge": "Daftar berkas repositori terlalu besar untuk dibaca sekaligus oleh API GitHub.",
+  "syncErrBlobTooLarge": "Berkasnya {size} MB, di atas batas 100 MB yang diterima API GitHub untuk satu berkas. Kirimkan lewat git biasa di komputer, atau simpan lampirannya di luar repositori.",
+  "@syncErrBlobTooLarge": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrConnectionLost": "Koneksi ke GitHub terputus dan tidak pulih setelah {attempts} percobaan. Unduhan bisa dilanjutkan dari tempatnya berhenti.",
+  "@syncErrConnectionLost": {
+    "placeholders": {
+      "attempts": {
+        "type": "int"
+      }
+    }
+  },
+  "syncErrTokenRejected": "Token GitHub ditolak. Periksa token di profil repositori.",
+  "syncErrQuota": "Kuota permintaan GitHub habis. Coba lagi setelah kuota pulih (sekitar satu jam), atau pakai token dengan kuota lebih besar.",
+  "syncErrSlowDown": "GitHub meminta pengiriman diperlambat karena terlalu banyak berkas beruntun. Tunggu beberapa menit lalu kirim lagi.",
+  "syncErrForbidden": "Akses ditolak. Token perlu izin \"Contents: read and write\" untuk repositori ini.",
+  "syncErrNotFound": "Repositori atau berkas tidak ditemukan. Untuk repositori privat, token harus punya akses ke repositori tersebut.",
+  "syncErrBranchMoved": "Branch di GitHub sudah berubah. Tarik perubahan dulu, lalu kirim ulang.",
+  "syncErrRejectedNoReason": "GitHub menolak perubahan ini (422), tanpa menyebut alasannya.",
+  "syncErrRejected": "GitHub menolak perubahan ini: {reason}",
+  "@syncErrRejected": {
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrStatus": "GitHub membalas dengan kode {code}.",
+  "@syncErrStatus": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      }
+    }
+  },
+  "syncErrStatusReason": "GitHub membalas dengan kode {code}: {reason}",
+  "@syncErrStatusReason": {
+    "placeholders": {
+      "code": {
+        "type": "int"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncGitHubApiLabel": "GitHub API",
+  "syncErrRepoUrlUnknown": "URL repositori tidak dikenali.",
+  "syncErrTokenMissing": "Token GitHub belum diisi.",
+  "syncConnectedAs": "Terhubung sebagai {login} · {slug} pada {head}{quota}",
+  "@syncConnectedAs": {
+    "placeholders": {
+      "login": {
+        "type": "String"
+      },
+      "slug": {
+        "type": "String"
+      },
+      "head": {
+        "type": "String"
+      },
+      "quota": {
+        "type": "String"
+      }
+    }
+  },
+  "syncQuotaLeft": " · sisa kuota {count}",
+  "@syncQuotaLeft": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrNotGitHubUrl": "URL repositori tidak dikenali sebagai repositori GitHub.",
+  "syncErrAndroidNeedsToken": "Di Android sinkronisasi memakai token GitHub. Isi token pada profil repositori.",
+  "syncReadingBranch": "Membaca branch {branch} di {slug}…",
+  "@syncReadingBranch": {
+    "placeholders": {
+      "branch": {
+        "type": "String"
+      },
+      "slug": {
+        "type": "String"
+      }
+    }
+  },
+  "syncMirrorReady": "Mirror siap: {files} berkas metadata, {attachments} lampiran menunggu diunduh saat dibuka",
+  "@syncMirrorReady": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "attachments": {
+        "type": "int"
+      }
+    }
+  },
+  "syncPartialSaved": "{error} {count} berkas sudah tersimpan — tekan \"Lanjutkan\" untuk meneruskan.",
+  "@syncPartialSaved": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncUpToDate": "Sudah paling baru",
+  "syncBehindWaiting": "{count} commit baru menunggu di GitHub",
+  "@syncBehindWaiting": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncComparing": "Membandingkan dengan commit {head}…",
+  "@syncComparing": {
+    "placeholders": {
+      "head": {
+        "type": "String"
+      }
+    }
+  },
+  "syncNoMetadataChanges": "Tidak ada perubahan metadata",
+  "syncPullUpdated": "Pull selesai: {count} berkas diperbarui",
+  "@syncPullUpdated": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncLfsUnsupportedAndroid": "Berkas Git LFS belum didukung pada sinkronisasi Android.",
+  "syncAttachmentsSkippedOnly": "{count} lampiran dilewati; tidak ada perubahan lain untuk dikirim",
+  "@syncAttachmentsSkippedOnly": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncReadyToSend": "{count} berkas siap dikirim",
+  "@syncReadyToSend": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncReadyToSendSkipped": "{count} berkas siap dikirim; {skipped} lampiran dilewati (kirim lewat git di komputer)",
+  "@syncReadyToSendSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "skipped": {
+        "type": "int"
+      }
+    }
+  },
+  "syncNothingToSendShort": "Tidak ada yang perlu dikirim",
+  "syncErrRemoteNewer": "GitHub sudah punya commit lebih baru. Tarik perubahan dulu, lalu kirim ulang.",
+  "syncErrQueueOnlyAttachments": "Antrean hanya berisi lampiran; tidak ada yang bisa dikirim lewat jalur ini.",
+  "syncUploading": "Mengunggah berkas",
+  "syncSentCount": "Terkirim: {count} berkas",
+  "@syncSentCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncErrAttachmentNotInRepo": "Lampiran tidak ada di repositori: {path}",
+  "@syncErrAttachmentNotInRepo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "syncAllPdfsPresent": "Semua PDF sudah ada di perangkat",
+  "syncAllPdfsPresentLfs": "Semua PDF sudah ada; {count} lampiran LFS diambil dari komputer",
+  "@syncAllPdfsPresentLfs": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncDownloadingPdfOf": "Mengunduh PDF {current} dari {total}: {name}",
+  "@syncDownloadingPdfOf": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPdfsDownloadedOffline": "{count} PDF diunduh untuk dibaca offline",
+  "@syncPdfsDownloadedOffline": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncMirrorAtCommit": "Mirror pada commit {sha}",
+  "@syncMirrorAtCommit": {
+    "placeholders": {
+      "sha": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrNotMirrored": "Repositori belum di-mirror di perangkat ini.",
+  "syncRejectedMore": " dan {count} lainnya",
+  "@syncRejectedMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncNothingSent": "Tidak ada yang terkirim",
+  "syncSentFiles": "{count} berkas terkirim",
+  "@syncSentFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncRejectedSummary": "{head}; {count} berkas ditolak GitHub dan tetap menunggu: {names}{more}. {reason}",
+  "@syncRejectedSummary": {
+    "placeholders": {
+      "head": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      },
+      "more": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncResumingMetadata": "Melanjutkan unduhan metadata",
+  "syncDownloadingMetadata": "Mengunduh metadata",
+  "syncErrCorruptDownload": "Berkas rusak saat diunduh: {name}. Jalankan lagi untuk mengunduh ulang bagian yang gagal.",
+  "@syncErrCorruptDownload": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "syncErrGitHubUrlUnknown": "URL repositori GitHub tidak dikenali.",
+  "syncErrTokenMissingProfile": "Token GitHub belum diisi pada profil repositori.",
+  "syncInstallGitWindows": "Git for Windows tidak ditemukan. Pasang dari git-scm.com, atau di PowerShell: winget install --id Git.Git -e — lalu tekan Coba lagi.",
+  "syncInstallGitMac": "git tidak ditemukan. Jalankan di Terminal: xcode-select --install.",
+  "syncInstallGitLinux": "git tidak ditemukan. Pasang git dan git-lfs — CachyOS/Arch: sudo pacman -S git git-lfs; Debian/Ubuntu: sudo apt install git git-lfs."
 }

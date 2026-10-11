@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 import '../../../core/utils/ink_smoothing.dart';
 import '../../../core/utils/simple_pdf_writer.dart';
 import '../domain/board.dart';
+import '../../../core/l10n.dart';
 
 /// Menggambar papan tulis dan menuliskannya sebagai PDF atau gambar.
 ///
@@ -80,7 +81,7 @@ class BoardExport {
     final image = await render(page);
     try {
       final data = await image.toByteData(format: ui.ImageByteFormat.png);
-      if (data == null) throw StateError('PNG gagal dikodekan');
+      if (data == null) throw StateError(l10n.whiteboardErrPngEncode);
       return data.buffer.asUint8List();
     } finally {
       image.dispose();
@@ -90,7 +91,7 @@ class BoardExport {
   static Future<Uint8List> _jpeg(ui.Image image, int quality) async {
     // dart:ui tidak bisa menulis JPEG, jadi pikselnya lewat paket image.
     final data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
-    if (data == null) throw StateError('Piksel gagal dibaca');
+    if (data == null) throw StateError(l10n.whiteboardErrPixels);
     final raw = img.Image.fromBytes(
       width: image.width,
       height: image.height,

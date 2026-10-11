@@ -1,4 +1,5 @@
 import '../../library/domain/entities/library_index.dart';
+import '../../../core/l10n.dart';
 
 /// Ke mana sebuah catatan boleh disimpan.
 ///
@@ -14,14 +15,10 @@ class NoteTarget {
     if (selection.isNotes) {
       return NoteTarget._(collectionKey: selection.noteCollectionKey);
     }
-    return const NoteTarget._(refusal: refusalMessage);
+    return NoteTarget._(refusal: refusalMessage);
   }
 
-  static const String refusalMessage =
-      'Catatan hanya bisa disimpan di akar "Catatan". Akar paper berisi item '
-      'Zotero — item di sana punya properti rujukan dan bibliografi, dan '
-      'formatnya dijaga oleh plugin sinkronisasi Zotero. Pilih koleksi di '
-      'bawah akar Catatan, atau buat satu lebih dulu.';
+  static String get refusalMessage => l10n.notesTargetRefusal;
 
   /// Koleksi catatan tujuannya; null berarti akar catatan (tanpa koleksi).
   final String? collectionKey;

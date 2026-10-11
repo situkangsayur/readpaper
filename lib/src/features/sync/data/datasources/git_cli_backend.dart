@@ -9,6 +9,7 @@ import '../../domain/json_merge.dart';
 import '../../domain/entities/sync_progress.dart';
 import '../../domain/repositories/git_backend.dart';
 import 'git_locator.dart';
+import '../../../../core/l10n.dart';
 
 /// Git implementation backed by the system `git` executable.
 ///
@@ -53,7 +54,7 @@ class GitCliBackend implements GitBackend {
   }
 
   @override
-  String get label => 'git (CLI sistem)';
+  String get label => l10n.syncGitCliLabel;
 
   @override
   Set<GitTransport> get supportedTransports => <GitTransport>{GitTransport.ssh, GitTransport.https};
@@ -71,42 +72,38 @@ class GitCliBackend implements GitBackend {
   }) async {
     final file = File(absoluteFilePath);
     if (file.existsSync()) {
-      return const GitResult(ok: true, exitCode: 0, message: 'Berkas sudah ada di lokal');
+      return GitResult(ok: true, exitCode: 0, message: l10n.syncFileAlreadyLocal);
     }
 
     final relativeDir = p.dirname(p.relative(absoluteFilePath, from: repoPath));
     if (relativeDir.isEmpty || relativeDir == '.') {
-      return const GitResult(ok: false, exitCode: 1, message: 'Lokasi berkas tidak dikenali.');
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncFileLocationUnknown);
     }
 
-    onProgress?.call(SyncProgress.message('Mengunduh ${p.basename(absoluteFilePath)}…'));
+    onProgress?.call(SyncProgress.message(l10n.syncDownloadingFile(p.basename(absoluteFilePath))));
     final result = await _run(
       args: <String>['sparse-checkout', 'add', '/$relativeDir/*'],
       workingDirectory: repoPath,
       auth: auth,
       onProgress: onProgress,
-      successMessage: 'Berkas selesai diunduh',
+      successMessage: l10n.syncFileDownloaded,
     );
     if (!result.ok) return result;
     if (!file.existsSync()) {
-      return const GitResult(
-        ok: false,
-        exitCode: 1,
-        message: 'Berkas tidak ada di repositori ini.',
-      );
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncFileNotInRepo);
     }
 
     // A checked-out LFS file is still just a pointer; pull the one object it
     // names rather than every LFS object in the repository.
     if (_isLfsPointer(file) && await isLfsAvailable()) {
       final relativePath = p.relative(absoluteFilePath, from: repoPath);
-      onProgress?.call(const SyncProgress.message('Mengunduh berkas besar (Git LFS)…'));
+      onProgress?.call(SyncProgress.message(l10n.syncDownloadingLfs));
       final lfs = await _run(
         args: <String>['lfs', 'pull', '--include=$relativePath'],
         workingDirectory: repoPath,
         auth: auth,
         onProgress: onProgress,
-        successMessage: 'Berkas selesai diunduh',
+        successMessage: l10n.syncFileDownloaded,
       );
       if (!lfs.ok) return lfs;
     }
@@ -132,11 +129,11 @@ class GitCliBackend implements GitBackend {
       args: <String>['ls-remote', '--heads', 'origin'],
       workingDirectory: path,
       auth: auth,
-      successMessage: 'Remote terjangkau',
+      successMessage: l10n.syncRemoteReachable,
     );
     if (!result.ok) return result;
     final branches = const LineSplitter().convert(result.stdout).where((l) => l.isNotEmpty).length;
-    return GitResult(ok: true, exitCode: 0, message: 'Terhubung · $branches branch di remote');
+    return GitResult(ok: true, exitCode: 0, message: l10n.syncConnected('$branches'));
   }
 
   @override
@@ -171,11 +168,7 @@ class GitCliBackend implements GitBackend {
 
     final target = Directory(targetPath);
     if (target.existsSync() && target.listSync().isNotEmpty) {
-      return const GitResult(
-        ok: false,
-        exitCode: 1,
-        message: 'Direktori tujuan sudah berisi berkas. Hapus atau pilih lokasi lain.',
-      );
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncTargetNotEmpty);
     }
 
     // A Zotero library is mostly PDFs: for one real library that is ~940 MB of
@@ -194,25 +187,21 @@ class GitCliBackend implements GitBackend {
       workingDirectory: parent.path,
       auth: auth,
       onProgress: onProgress,
-      successMessage: 'Repositori berhasil di-clone',
+      successMessage: l10n.syncCloned,
     );
     if (!result.ok || !lazyAttachments) return result;
 
-    onProgress?.call(const SyncProgress.message('Menyiapkan berkas metadata…'));
+    onProgress?.call(SyncProgress.message(l10n.syncPreparingMetadata));
     final sparse = await _run(
       args: <String>['sparse-checkout', 'set', '--no-cone', ..._sparsePatterns],
       workingDirectory: targetPath,
       auth: auth,
       onProgress: onProgress,
-      successMessage: 'Metadata siap',
+      successMessage: l10n.syncMetadataReady,
     );
     if (!sparse.ok) return sparse;
 
-    return const GitResult(
-      ok: true,
-      exitCode: 0,
-      message: 'Repositori siap. Lampiran diunduh saat papernya dibuka.',
-    );
+    return GitResult(ok: true, exitCode: 0, message: l10n.syncRepoReadyLazy);
   }
 
   @override
@@ -283,7 +272,7 @@ class GitCliBackend implements GitBackend {
     workingDirectory: repoPath,
     auth: auth,
     onProgress: onProgress,
-    successMessage: 'Fetch selesai',
+    successMessage: l10n.syncFetchDone,
   );
 
   @override
@@ -302,7 +291,7 @@ class GitCliBackend implements GitBackend {
       workingDirectory: repoPath,
       auth: auth,
       onProgress: onProgress,
-      successMessage: 'Pull selesai',
+      successMessage: l10n.syncPullDone,
     );
     if (!result.ok) {
       // Gagal karena jaringan atau token: tidak ada rebase yang tertinggal,
@@ -386,9 +375,7 @@ class GitCliBackend implements GitBackend {
       return GitResult(
         ok: false,
         exitCode: abort.exitCode,
-        message:
-            'Sinkronisasi sebelumnya berhenti di tengah $operation dan tidak bisa dibatalkan '
-            'otomatis. Keadaannya dicadangkan di $backup.',
+        message: l10n.syncInterruptedNotAborted(operation, backup),
         stderr: abort.stderr.toString(),
       );
     }
@@ -396,11 +383,7 @@ class GitCliBackend implements GitBackend {
       final apply = await _git(repoPath, <String>['stash', 'apply', work]);
       if (apply.exitCode != 0) await _resolveUnmerged(repoPath, keepUnstaged: true);
     }
-    return GitResult(
-      ok: true,
-      exitCode: 0,
-      message: 'Sinkronisasi yang dulu berhenti di tengah sudah dipulihkan (cadangan: $backup)',
-    );
+    return GitResult(ok: true, exitCode: 0, message: l10n.syncInterruptedRecovered(backup));
   }
 
   /// Menyelesaikan rebase yang berhenti karena bentrok, commit demi commit.
@@ -427,16 +410,13 @@ class GitCliBackend implements GitBackend {
       return GitResult(
         ok: false,
         exitCode: 1,
-        message:
-            'Perubahan di sini dan di GitHub bentrok dan tidak bisa disatukan otomatis. '
-            'Tidak ada yang hilang: perubahan lokal tetap di commit-nya'
-            '${failed == null ? '' : ' (${failed.message})'}.',
+        message: l10n.syncConflict(failed == null ? '' : ' (${failed.message})'),
       );
     }
     return GitResult(
       ok: true,
       exitCode: 0,
-      message: merged.isEmpty ? 'Perubahan lokal dipasang di atas versi GitHub' : merged.join('. '),
+      message: merged.isEmpty ? l10n.syncRebasedOnGitHub : merged.join('. '),
     );
   }
 
@@ -506,8 +486,8 @@ class GitCliBackend implements GitBackend {
       if (top.contains('autostash')) await _git(repoPath, <String>['stash', 'drop', '-q']);
     }
     final summary = <String>[
-      if (joined.isNotEmpty) 'Digabung otomatis: ${joined.join(', ')}',
-      if (copies.isNotEmpty) 'Versi GitHub disimpan sebagai ${copies.join(', ')}',
+      if (joined.isNotEmpty) l10n.syncAutoMerged(joined.join(', ')),
+      if (copies.isNotEmpty) l10n.syncGitHubCopies(copies.join(', ')),
     ].join('. ');
     return summary.isEmpty ? null : summary;
   }
@@ -598,7 +578,7 @@ class GitCliBackend implements GitBackend {
 
     final staged = await _capture(repoPath, <String>['diff', '--cached', '--name-only']);
     if (staged.trim().isEmpty) {
-      return const GitResult(ok: true, exitCode: 0, message: 'Tidak ada perubahan untuk di-commit');
+      return GitResult(ok: true, exitCode: 0, message: l10n.syncNothingToCommit);
     }
 
     final config = <String>[
@@ -610,7 +590,7 @@ class GitCliBackend implements GitBackend {
       args: <String>[...config, 'commit', '-m', message],
       workingDirectory: repoPath,
       auth: const GitAuth.ssh(),
-      successMessage: 'Commit dibuat',
+      successMessage: l10n.syncCommitCreated,
     );
   }
 
@@ -637,7 +617,7 @@ class GitCliBackend implements GitBackend {
       workingDirectory: repoPath,
       auth: auth,
       onProgress: onProgress,
-      successMessage: 'Push selesai',
+      successMessage: l10n.syncPushDone,
     );
   }
 
@@ -648,14 +628,14 @@ class GitCliBackend implements GitBackend {
     void Function(SyncProgress progress)? onProgress,
   }) async {
     if (!await isLfsAvailable()) {
-      return const GitResult(ok: true, exitCode: 0, message: 'git-lfs tidak terpasang, dilewati');
+      return GitResult(ok: true, exitCode: 0, message: l10n.syncLfsSkipped);
     }
     return _run(
       args: <String>['lfs', 'pull'],
       workingDirectory: repoPath,
       auth: auth,
       onProgress: onProgress,
-      successMessage: 'Berkas LFS diunduh',
+      successMessage: l10n.syncLfsDownloaded,
     );
   }
 
@@ -669,7 +649,7 @@ class GitCliBackend implements GitBackend {
           : <String>['remote', 'add', 'origin', remoteUrl],
       workingDirectory: repoPath,
       auth: const GitAuth.ssh(),
-      successMessage: 'Remote diperbarui',
+      successMessage: l10n.syncRemoteUpdated,
     );
   }
 
@@ -777,11 +757,7 @@ class GitCliBackend implements GitBackend {
         message: ok ? successMessage : _friendlyError(stderrBuffer.toString(), exitCode),
       );
     } on ProcessException catch (e) {
-      return GitResult(
-        ok: false,
-        exitCode: -1,
-        message: 'git tidak dapat dijalankan: ${e.message}',
-      );
+      return GitResult(ok: false, exitCode: -1, message: l10n.syncGitCannotRun(e.message));
     } finally {
       final script = askpass;
       if (script != null && script.existsSync()) {
@@ -831,23 +807,23 @@ class GitCliBackend implements GitBackend {
   String _friendlyError(String stderr, int exitCode) {
     final lower = stderr.toLowerCase();
     if (lower.contains('permission denied (publickey')) {
-      return 'SSH ditolak: kunci tidak diterima GitHub. Periksa path kunci di profil.';
+      return l10n.syncErrSshRejected;
     }
     if (lower.contains('could not read username') || lower.contains('authentication failed')) {
-      return 'Autentikasi HTTPS gagal: token kosong atau tidak berlaku.';
+      return l10n.syncErrHttpsAuth;
     }
     if (lower.contains('repository not found')) {
-      return 'Repositori tidak ditemukan atau tidak punya akses.';
+      return l10n.syncErrRepoNotFound;
     }
     if (lower.contains('conflict')) {
-      return 'Ada konflik saat menggabungkan perubahan. Selesaikan konflik di repo lokal.';
+      return l10n.syncErrMergeConflict;
     }
     if (lower.contains('could not resolve host') || lower.contains('network is unreachable')) {
-      return 'Jaringan tidak tersedia.';
+      return l10n.syncErrNoNetwork;
     }
     return stderr
         .split('\n')
         .map((e) => e.trim())
-        .firstWhere((e) => e.isNotEmpty, orElse: () => 'git gagal (kode $exitCode)');
+        .firstWhere((e) => e.isNotEmpty, orElse: () => l10n.syncErrGitFailed(exitCode));
   }
 }

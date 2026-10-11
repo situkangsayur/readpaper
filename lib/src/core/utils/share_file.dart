@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../l10n.dart';
 
 /// Menyerahkan sebuah berkas ke lembar bagikan sistem: aplikasi chat, surel,
 /// Drive, atau aplikasi lain yang mau menerimanya.
@@ -27,7 +28,7 @@ Future<String?> shareFile(BuildContext context, String path, {String? title}) as
   } on Object catch (e) {
     // Linux tidak punya lembar bagikan untuk berkas. Lebih baik dikatakan
     // daripada tombolnya diam.
-    return 'Berbagi berkas belum didukung di sini ($e). Berkasnya ada di $path';
+    return l10n.commonShareUnsupported('$e', path);
   }
 }
 

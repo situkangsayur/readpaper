@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../core/errors/failure.dart';
 import '../domain/note_document.dart';
+import '../../../core/l10n.dart';
 
 /// Membaca dan menulis berkas catatan yang **bisa disunting lagi**.
 ///
@@ -44,7 +45,7 @@ class NoteDocumentStore {
   static Future<NoteDocument> read(String path) async {
     final file = File(path);
     if (!file.existsSync()) {
-      throw LibraryFailure('Berkas catatan tidak ditemukan', details: path);
+      throw LibraryFailure(l10n.notesErrFileNotFound, details: path);
     }
     return decodeSync(await file.readAsString(), path: path);
   }
@@ -57,7 +58,7 @@ class NoteDocumentStore {
   static NoteDocument decodeSync(String source, {String? path}) {
     final decoded = jsonDecode(source);
     if (decoded is! Map) {
-      throw LibraryFailure('Isi berkas catatan tidak dikenali', details: path);
+      throw LibraryFailure(l10n.notebookErrUnknownContent, details: path);
     }
     final json = decoded.cast<String, dynamic>();
 
@@ -65,11 +66,7 @@ class NoteDocumentStore {
     // setengah-setengah lalu disimpan balik dalam keadaan rusak.
     final version = (json['version'] as num?)?.toInt() ?? 1;
     if (version > NoteDocument.formatVersion) {
-      throw LibraryFailure(
-        'Catatan ini ditulis versi ReadPaper yang lebih baru (format $version). '
-        'Perbarui aplikasinya dulu supaya isinya tidak rusak.',
-        details: path,
-      );
+      throw LibraryFailure(l10n.notebookErrNewerFormat(version), details: path);
     }
     return NoteDocument.fromJson(json);
   }

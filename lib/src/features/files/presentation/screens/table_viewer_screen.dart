@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../../domain/table_data.dart';
 import '../open_any_file.dart';
+import '../../../../core/l10n.dart';
 
 /// Menampilkan CSV, TSV, atau Excel (`.xlsx`) sebagai tabel, hanya untuk
 /// dibaca. Lembar-lembar Excel jadi tab; menyunting tetap di aplikasi
@@ -39,7 +40,7 @@ class _TableViewerScreenState extends State<TableViewerScreen> {
       final actions = <Widget>[
         if (canOpenWithSystem)
           IconButton(
-            tooltip: 'Buka dengan aplikasi lain',
+            tooltip: context.l10n.filesOpenWithOtherApp,
             icon: const Icon(Icons.open_in_new),
             onPressed: () => openWithSystem(context, widget.path),
           ),
@@ -50,7 +51,7 @@ class _TableViewerScreenState extends State<TableViewerScreen> {
           body: Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text('Tabel ini tidak bisa dibaca: ${snapshot.error}'),
+              child: Text(context.l10n.filesTableUnreadable('${snapshot.error}')),
             ),
           ),
         );
@@ -64,7 +65,7 @@ class _TableViewerScreenState extends State<TableViewerScreen> {
       if (sheets.isEmpty) {
         return Scaffold(
           appBar: AppBar(title: Text(title), actions: actions),
-          body: const Center(child: Text('Tidak ada lembar di berkas ini.')),
+          body: Center(child: Text(context.l10n.filesNoSheets)),
         );
       }
       return DefaultTabController(
@@ -102,7 +103,7 @@ class _SheetView extends StatelessWidget {
     final style = Theme.of(context).textTheme.bodySmall;
     final columns = sheet.columnCount;
     if (sheet.rows.isEmpty || columns == 0) {
-      return const Center(child: Text('Lembar ini kosong.'));
+      return Center(child: Text(context.l10n.filesSheetEmpty));
     }
     final width = _numberWidth + columns * _cellWidth;
 
@@ -160,11 +161,7 @@ class _SheetView extends StatelessWidget {
         if (sheet.rows.length >= TableData.maxRows)
           Padding(
             padding: const EdgeInsets.all(8),
-            child: Text(
-              'Hanya ${TableData.maxRows} baris pertama yang ditampilkan. '
-              'Buka dengan aplikasi lain untuk melihat semuanya.',
-              style: style,
-            ),
+            child: Text(context.l10n.filesOnlyFirstRows(TableData.maxRows), style: style),
           ),
       ],
     );

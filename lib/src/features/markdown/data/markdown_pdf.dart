@@ -7,6 +7,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../domain/markdown_doc.dart';
 import 'mermaid_pdf.dart';
+import '../../../core/l10n.dart';
 
 /// Mengubah dokumen Markdown jadi PDF dengan **teks sungguhan**.
 ///
@@ -76,7 +77,8 @@ class MarkdownPdf {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.fromLTRB(48, 48, 48, 56),
-        build: (context) => children.isEmpty ? <pw.Widget>[pw.Text('(dokumen kosong)')] : children,
+        build: (context) =>
+            children.isEmpty ? <pw.Widget>[pw.Text(l10n.markdownPdfEmpty)] : children,
         footer: (context) => pw.Align(
           alignment: pw.Alignment.centerRight,
           child: pw.Text(
@@ -222,7 +224,7 @@ class MarkdownPdf {
             pw.Padding(
               padding: const pw.EdgeInsets.symmetric(vertical: 6),
               child: pw.Text(
-                '[gambar tidak ditemukan: ${block.path}]',
+                l10n.markdownPdfImageMissing(block.path),
                 style: const pw.TextStyle(fontSize: 9.5, color: PdfColors.grey600),
               ),
             ),

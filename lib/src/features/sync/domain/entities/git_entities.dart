@@ -1,4 +1,5 @@
 import 'package:meta/meta.dart';
+import '../../../../core/l10n.dart';
 
 /// How a remote is authenticated.
 enum GitTransport {
@@ -60,11 +61,11 @@ class GitChange {
   bool get isDeleted => status.contains('D');
 
   String get label => switch (status.trim()) {
-    '??' => 'baru',
-    'A' || 'AM' => 'ditambah',
-    'M' || 'MM' => 'diubah',
-    'D' => 'dihapus',
-    'R' => 'dipindah',
+    '??' => l10n.syncChangeNew,
+    'A' || 'AM' => l10n.syncChangeAdded,
+    'M' || 'MM' => l10n.syncChangeModified,
+    'D' => l10n.syncChangeDeleted,
+    'R' => l10n.syncChangeRenamed,
     _ => status.trim(),
   };
 }
@@ -123,12 +124,12 @@ class GitRepoStatus {
   bool get isClean => exists && !isDirty && ahead == 0 && behind == 0;
 
   String get summary {
-    if (!exists) return 'Belum di-clone';
+    if (!exists) return l10n.syncStatusNotCloned;
     final parts = <String>[];
-    if (isDirty) parts.add('${changes.length} perubahan lokal');
-    if (ahead > 0) parts.add('$ahead commit belum di-push');
-    if (behind > 0) parts.add('$behind commit baru di remote');
-    return parts.isEmpty ? 'Sinkron' : parts.join(' · ');
+    if (isDirty) parts.add(l10n.syncStatusLocalChanges(changes.length));
+    if (ahead > 0) parts.add(l10n.syncStatusAhead(ahead));
+    if (behind > 0) parts.add(l10n.syncStatusBehind(behind));
+    return parts.isEmpty ? l10n.syncStatusInSync : parts.join(' · ');
   }
 }
 

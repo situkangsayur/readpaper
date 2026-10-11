@@ -1,0 +1,701 @@
+{
+  "libraryAddToLibraryTooltip": "Tambahkan berkas atau folder ke library",
+  "libraryAddFiles": "Tambahkan berkas…",
+  "libraryAddFolderAsCollection": "Tambahkan folder (jadi koleksi)…",
+  "libraryNewPaperCollection": "Koleksi paper baru",
+  "libraryUnfiled": "Tanpa koleksi",
+  "libraryNotesRoot": "Catatan",
+  "libraryNewNoteCollection": "Koleksi catatan baru",
+  "libraryItemsAndCollections": "{items} item · {collections} koleksi",
+  "@libraryItemsAndCollections": {
+    "placeholders": {
+      "items": {
+        "type": "int"
+      },
+      "collections": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryIncludeSubOn": "Sertakan item sub-koleksi: aktif",
+  "libraryIncludeSubOff": "Sertakan item sub-koleksi: nonaktif",
+  "libraryCollapseAll": "Tutup semua",
+  "libraryExpandAll": "Buka semua",
+  "libraryNoNoteCollections": "Belum ada koleksi catatan. Catatan disimpan di folder tersendiri di dalam repositori, terpisah dari paper.",
+  "libraryNewSubcollectionHere": "Sub-koleksi baru di sini",
+  "libraryCollectionMenu": "Ubah nama, pindahkan, atau hapus",
+  "libraryNewPaperSubcollection": "Sub-koleksi paper baru",
+  "libraryNewCollectionHint": "Ditulis ke collections.json, ikut tersinkron ke GitHub",
+  "libraryCreateCollectionFailed": "Gagal membuat koleksi",
+  "libraryNewNoteSubcollection": "Sub-koleksi catatan baru",
+  "libraryAddFilesHere": "Tambahkan berkas ke sini…",
+  "libraryAnyTypeOrDrag": "jenis apa pun, beberapa sekaligus; atau seret dari pengelola berkas",
+  "libraryAnyTypeSeveral": "jenis apa pun, beberapa sekaligus",
+  "libraryAddFolderHere": "Tambahkan folder ke sini…",
+  "librarySubfoldersBecomeSub": "subfolder jadi sub-koleksi",
+  "libraryNewSubcollection": "Sub-koleksi baru",
+  "libraryRename": "Ubah nama",
+  "libraryMoveTo": "Pindahkan ke…",
+  "libraryTransferToRepo": "Pindahkan atau salin ke repositori lain…",
+  "libraryWithSubsAndPapers": "beserta sub-koleksi dan paper-nya",
+  "libraryExportBibtex": "Ekspor ke BibTeX (.bib)",
+  "libraryExportBibtexHint": "untuk naskah LaTeX; sub-koleksi ikut",
+  "libraryDeleteCollection": "Hapus koleksi",
+  "libraryPapersKept": "Paper di dalamnya tidak ikut terhapus",
+  "libraryChangeCollectionFailed": "Gagal mengubah koleksi",
+  "libraryRenameCollection": "Ubah nama koleksi",
+  "libraryRenameCollectionHint": "Paper di dalamnya tetap; jalur sub-koleksinya ikut berubah",
+  "libraryCollectionRenamed": "Koleksi diubah namanya jadi \"{name}\"",
+  "@libraryCollectionRenamed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryRoot": "akar",
+  "libraryCollectionMoved": "Koleksi dipindah ke {parent}",
+  "@libraryCollectionMoved": {
+    "placeholders": {
+      "parent": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryTransferWhatCollection": "Koleksi {path}, beserta sub-koleksi dan paper-nya",
+  "@libraryTransferWhatCollection": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryCollectionMovedToRepo": "Koleksi \"{name}\" dipindahkan ke {repo}",
+  "@libraryCollectionMovedToRepo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "repo": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryCollectionCopiedToRepo": "Koleksi \"{name}\" disalin ke {repo}",
+  "@libraryCollectionCopiedToRepo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "repo": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryConfirmDeleteCollection": "Yakin hapus koleksi \"{name}\"?",
+  "@libraryConfirmDeleteCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryDeleteKeepsPapers": "{count} paper di dalamnya tidak ikut terhapus — hanya dilepas dari koleksi ini, sama seperti di Zotero.",
+  "@libraryDeleteKeepsPapers": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryDeleteHasChildren": "Koleksi ini punya {count} sub-koleksi. Ikut dihapus, atau naik satu tingkat?",
+  "@libraryDeleteHasChildren": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryCollectionEmpty": "Koleksinya kosong.",
+  "libraryCancel": "Batal",
+  "librarySubsMoveUp": "Sub-koleksi naik",
+  "libraryYesDeleteAll": "Ya, hapus semuanya",
+  "libraryYesDelete": "Ya, hapus",
+  "libraryCollectionDeleted": "Koleksi \"{name}\" dihapus; paper-nya tetap ada",
+  "@libraryCollectionDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMoveNameTo": "Pindahkan \"{name}\" ke…",
+  "@libraryMoveNameTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryLibraryRoot": "Akar library",
+  "libraryNoParent": "tanpa induk",
+  "libraryWithSubsAndNotes": "beserta sub-koleksi dan catatannya",
+  "libraryNotesKept": "Catatannya tidak ikut terhapus",
+  "libraryTransferWhatNoteCollection": "Koleksi catatan \"{name}\", beserta sub-koleksi dan catatannya",
+  "@libraryTransferWhatNoteCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryNoteCollectionMovedToRepo": "Koleksi catatan \"{name}\" dipindahkan ke {repo}",
+  "@libraryNoteCollectionMovedToRepo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "repo": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryNoteCollectionCopiedToRepo": "Koleksi catatan \"{name}\" disalin ke {repo}",
+  "@libraryNoteCollectionCopiedToRepo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "repo": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryConfirmDeleteNoteCollection": "Hapus koleksi catatan \"{name}\"?",
+  "@libraryConfirmDeleteNoteCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryNoteCollectionHolds": "Berisi {count} catatan. Catatannya tidak ikut terhapus — pindah ke \"Tanpa koleksi\" bila tidak ada di koleksi lain.",
+  "@libraryNoteCollectionHolds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "librarySubsDeletedToo": "{count} sub-koleksi di dalamnya ikut terhapus.",
+  "@librarySubsDeletedToo": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryName": "Nama",
+  "librarySave": "Simpan",
+  "libraryNoItems": "Tidak ada item.",
+  "librarySearchHelpTitle": "Mempersempit pencarian",
+  "librarySearchHelpIntro": "Kata biasa dicari di judul, pengarang, jurnal, tag, koleksi, DOI, dan abstrak. Beberapa kata berarti semuanya harus cocok.",
+  "librarySearchOpAuthor": "hanya di nama pengarang",
+  "librarySearchOpTitle": "frasa utuh di judul",
+  "librarySearchOpYear": "tahun persis",
+  "librarySearchOpTag": "hanya di tag",
+  "librarySearchOpType": "jenis item Zotero",
+  "librarySearchOpJournal": "nama publikasi",
+  "librarySearchOpAbstract": "hanya di abstrak",
+  "librarySearchOpCollection": "nama koleksi",
+  "librarySearchOpExclude": "kecualikan yang mengandungnya",
+  "librarySearchHelpEnglish": "Nama bidang boleh bahasa Inggris juga: author, title, year, type, journal, abstract, collection.",
+  "libraryClose": "Tutup",
+  "librarySearchHint": "Cari judul, pengarang, abstrak, DOI…",
+  "librarySearchHelpTooltip": "Cara mempersempit pencarian",
+  "libraryOpenAnyFile": "Buka berkas dari perangkat ini (tanpa memasukkannya ke library)",
+  "libraryPickFileToOpen": "Pilih berkas untuk dibuka",
+  "libraryFindDuplicates": "Cari item yang masuk lebih dari sekali",
+  "libraryPossibleDuplicates": "{count} kemungkinan duplikat",
+  "@libraryPossibleDuplicates": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryStats": "Statistik library",
+  "libraryBrowseByAuthor": "Telusuri berdasarkan pengarang",
+  "librarySortBy": "Urutkan: {label}",
+  "@librarySortBy": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryItemCount": "{count} item",
+  "@libraryItemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryHasFile": "berkas",
+  "libraryNoFile": "tidak ada berkas",
+  "libraryPickPaper": "Pilih satu paper untuk melihat detailnya.",
+  "libraryAbstract": "Abstrak",
+  "libraryAnnotationsCount": "Anotasi ({count})",
+  "@libraryAnnotationsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryNotesCount": "Catatan ({count})",
+  "@libraryNotesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryCopyBibtex": "Salin BibTeX",
+  "libraryDeleteDocument": "Hapus dokumen ini dari library",
+  "libraryBackToList": "Kembali ke daftar",
+  "libraryNoAttachments": "Tidak ada lampiran.",
+  "libraryAnnotationCount": "{count} anotasi",
+  "@libraryAnnotationCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryOnGithubNotDownloaded": "ada di GitHub, belum diunduh",
+  "libraryFileNotDownloaded": "berkas belum diunduh",
+  "libraryLfsPointer": "pointer Git LFS — jalankan LFS pull",
+  "libraryCannotOpenFormat": "format belum bisa dibuka di perangkat ini",
+  "libraryRead": "Baca",
+  "libraryOpen": "Buka",
+  "libraryDownload": "Unduh",
+  "libraryFieldAuthors": "Pengarang",
+  "libraryFieldPublication": "Publikasi",
+  "libraryFieldDate": "Tanggal",
+  "libraryFieldPublisher": "Penerbit",
+  "libraryFieldTags": "Tag",
+  "libraryFieldCollections": "Koleksi",
+  "libraryFieldAdded": "Ditambahkan",
+  "libraryDetails": "Detail",
+  "libraryAnnotationPage": "hal. {page} · {type}",
+  "@libraryAnnotationPage": {
+    "placeholders": {
+      "page": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMovingTo": "Memindah ke {target}…",
+  "@libraryMovingTo": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryCopyingTo": "Menyalin ke {target}…",
+  "@libraryCopyingTo": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMovedTo": "Dipindahkan ke {where}",
+  "@libraryMovedTo": {
+    "placeholders": {
+      "where": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryCopiedTo": "Disalin ke {where}",
+  "@libraryCopiedTo": {
+    "placeholders": {
+      "where": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryConfirmDeleteDocument": "Hapus dokumen ini?",
+  "libraryConfirmDeleteDocumentBody": "Berkas item, lampirannya, dan catatannya dihapus dari library, lalu perubahannya di-commit.\n\n\"{title}\"\n\nKoleksi dan dokumen lain tidak tersentuh.",
+  "@libraryConfirmDeleteDocumentBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryDelete": "Hapus",
+  "libraryDocumentDeleted": "Dokumen dihapus",
+  "libraryDeleteFailed": "Gagal menghapus",
+  "libraryRecentlyRead": "Terakhir dibaca",
+  "libraryClearHistory": "Bersihkan",
+  "libraryPageN": "halaman {page}",
+  "@libraryPageN": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryRemoveFromHistory": "Hapus dari riwayat",
+  "libraryAuthorsCount": "Pengarang ({count})",
+  "@libraryAuthorsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryMostWorks": "Terbanyak",
+  "libraryFilterNames": "Saring nama",
+  "libraryNoLibraryRead": "Belum ada library yang terbaca.",
+  "libraryNoMatchingNames": "Tidak ada nama yang cocok.",
+  "libraryDuplicatesTitle": "Kemungkinan duplikat",
+  "libraryDuplicatesNone": "{count} item diperiksa, tidak ada yang mencurigakan.",
+  "@libraryDuplicatesNone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryDuplicatesSummary": "{groups} kelompok · {copies} salinan dari {items} item",
+  "@libraryDuplicatesSummary": {
+    "placeholders": {
+      "groups": {
+        "type": "int"
+      },
+      "copies": {
+        "type": "int"
+      },
+      "items": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryDuplicatesRisky": " · {count} perlu hati-hati",
+  "@libraryDuplicatesRisky": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryNothingDuplicated": "Tidak ada yang tampak ganda.",
+  "libraryDuplicatesHow": "Dicocokkan lewat DOI, lalu ISBN, lalu judul bersama tahun dan nama pengarang pertama.",
+  "libraryDuplicatesFooter": "Tidak ada yang dihapus dari sini. Penggabungan dikerjakan di Zotero, tempat riwayat dan lampirannya ikut dipindahkan — daftar ini gunanya menunjukkan mana yang perlu dilihat.",
+  "libraryCopiesCount": "{count} salinan",
+  "@libraryCopiesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryAnnotationsOnSeveral": "Anotasi ada di lebih dari satu salinan — menggabungkan bisa menghilangkan sebagiannya.",
+  "libraryHasFileFact": "ada berkas",
+  "libraryStatsEmpty": "Belum ada item untuk dihitung.",
+  "libraryStatsByYear": "Per tahun terbit",
+  "libraryStatsWithoutYear": "{count} item tanpa tahun tidak ikut dihitung di sini.",
+  "@libraryStatsWithoutYear": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryStatsByType": "Per jenis",
+  "libraryStatsTopAuthors": "Pengarang tersering",
+  "libraryStatsTopTags": "Tag tersering",
+  "libraryStatsItems": "Item",
+  "libraryStatsWithFile": "Berkasnya ada",
+  "libraryStatsWithAnnotations": "Ada anotasi",
+  "libraryStatsYearSpan": "Rentang tahun",
+  "libraryStatsUntitled": "Tanpa judul",
+  "librarySortTitle": "Judul",
+  "librarySortYear": "Tahun",
+  "librarySortCreator": "Pengarang",
+  "librarySortDateAdded": "Ditambahkan",
+  "librarySortAnnotations": "Anotasi",
+  "libraryPickFolderFor": "Pilih folder untuk {name}",
+  "@libraryPickFolderFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryPickFilesFor": "Pilih berkas untuk {name}",
+  "@libraryPickFilesFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryFilesAdded": "{count} berkas masuk ke {name}",
+  "@libraryFilesAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryFilesAddedPartly": "{added} dari {total} berkas masuk ke {name}. Gagal: {failed}. ",
+  "@libraryFilesAddedPartly": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      },
+      "name": {
+        "type": "String"
+      },
+      "failed": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMovingInto": "Memindahkan ke {name}…",
+  "@libraryMovingInto": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMovedInto": "Pindah ke {name}",
+  "@libraryMovedInto": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryMoveFailed": "Gagal memindahkan",
+  "libraryAddingInto": "Memasukkan ke {name}…",
+  "@libraryAddingInto": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryAddFileFailed": "Gagal memasukkan berkas",
+  "libraryAddedInto": "Masuk ke {name}",
+  "@libraryAddedInto": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryPapersStayInLibrary": "Paper tinggal di akar paper: item Zotero punya rujukan dan bibliografi yang dijaga plugin sinkronisasi, dan folder catatan tidak mengenalnya. Yang bisa dipindahkan ke sini adalah catatan.",
+  "libraryMoveNoteFailed": "Gagal memindahkan catatan",
+  "librarySaveNoteFailed": "Gagal menyimpan catatan",
+  "libraryFolderEmpty": "Folder {name} tidak berisi berkas.",
+  "@libraryFolderEmpty": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryImportFolderQuestion": "Impor folder \"{folder}\" ke {name}?",
+  "@libraryImportFolderQuestion": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryFolderSummary": "{files} berkas dalam {folders} folder ({size}).",
+  "@libraryFolderSummary": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "folders": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryFolderToNotes": "Folder ini jadi koleksi catatan, subfoldernya jadi sub-koleksi, dan setiap berkas jadi catatan.",
+  "libraryFolderToLibrary": "Folder ini jadi koleksi, subfoldernya jadi sub-koleksi, dan setiap berkas jadi item Zotero dengan lampirannya — terlihat juga di Zotero.",
+  "libraryFolderReuses": "Koleksi yang namanya sudah ada di tempat yang sama dipakai, bukan digandakan.",
+  "libraryFolderLarge": "Ukurannya besar. Semua berkas ini masuk repositori git dan ikut terkirim ke GitHub.",
+  "libraryImport": "Impor",
+  "libraryImporting": "Mengimpor {name}…",
+  "@libraryImporting": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryProgress": "{done} dari {total} berkas",
+  "@libraryProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryImportFailed": "Impor folder gagal",
+  "libraryImportDone": "{added} berkas masuk, {collections} koleksi baru.",
+  "@libraryImportDone": {
+    "placeholders": {
+      "added": {
+        "type": "int"
+      },
+      "collections": {
+        "type": "int"
+      }
+    }
+  },
+  "libraryImportFailedSome": "Gagal ({count}): {names}",
+  "@libraryImportFailedSome": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryAddToTooltip": "Tambahkan berkas atau folder ke {name}",
+  "@libraryAddToTooltip": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryAnyTypeMany": "jenis apa pun, bisa beberapa sekaligus",
+  "libraryAddFolder": "Tambahkan folder…",
+  "libraryAddFolderHint": "jadi koleksi di {name}, subfolder jadi sub-koleksi",
+  "@libraryAddFolderHint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryTypeJournalArticle": "Artikel jurnal",
+  "libraryTypeConferencePaper": "Makalah konferensi",
+  "libraryTypeBook": "Buku",
+  "libraryTypeBookSection": "Bab buku",
+  "libraryTypeThesis": "Tesis / disertasi",
+  "libraryTypeReport": "Laporan",
+  "libraryTypePreprint": "Pracetak",
+  "libraryTypeWebpage": "Halaman web",
+  "libraryTypeManuscript": "Naskah",
+  "libraryTypeDocument": "Dokumen",
+  "libraryTypePresentation": "Presentasi",
+  "libraryTypeDataset": "Data",
+  "libraryTypeStandard": "Standar",
+  "libraryTypePatent": "Paten",
+  "libraryTypeMagazineArticle": "Artikel majalah",
+  "libraryTypeNewspaperArticle": "Artikel koran",
+  "libraryTypeEncyclopediaArticle": "Artikel ensiklopedia",
+  "libraryTypeBlogPost": "Tulisan blog",
+  "libraryTypeComputerProgram": "Perangkat lunak",
+  "libraryTypeAttachment": "Lampiran",
+  "libraryTypeNote": "Catatan",
+  "libraryReasonDoi": "DOI-nya sama",
+  "libraryReasonIsbn": "ISBN-nya sama",
+  "libraryReasonTitleYearAuthor": "Judul, tahun, dan pengarangnya sama",
+  "libraryErrItemNotFound": "Berkas item tidak ditemukan",
+  "libraryErrLibraryDirMissing": "Direktori library tidak ada",
+  "libraryErrItemInvalid": "Berkas item tidak valid",
+  "libraryErrAttachmentsMissing": "{count} lampiran belum ada di perangkat ini (belum diunduh, atau masih penunjuk Git LFS): {names}",
+  "@libraryErrAttachmentsMissing": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryErrItemNoKey": "Berkas item tidak punya kunci Zotero",
+  "libraryErrItemExistsInTarget": "Item ini sudah ada di repositori tujuan (kunci {itemKey}). Tidak disalin dua kali.",
+  "@libraryErrItemExistsInTarget": {
+    "placeholders": {
+      "itemKey": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryErrCollectionGone": "Koleksi tidak ada lagi",
+  "libraryErrTargetCollectionMissing": "Koleksi tujuan tidak ada",
+  "libraryErrTargetHasCollection": "Di tempat tujuan sudah ada koleksi bernama \"{name}\". Ganti namanya dulu.",
+  "@libraryErrTargetHasCollection": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryErrItemTitleExists": "Item {title} sudah ada di repositori tujuan.",
+  "@libraryErrItemTitleExists": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryErrCollectionsNotList": "collections.json tidak berisi daftar koleksi",
+  "libraryErrRefuseDeleteNotItem": "Menolak menghapus: berkas ini bukan item di dalam items/",
+  "libraryErrCollectionNameEmpty": "Nama koleksi tidak boleh kosong",
+  "libraryErrCollectionNameSlash": "Nama koleksi tidak boleh memuat garis miring",
+  "libraryErrCollectionsNotListRefuse": "collections.json tidak berisi daftar koleksi — menolak menulisinya",
+  "libraryErrCollectionsBadEntry": "Ada entri di collections.json yang bukan koleksi — menolak menulisinya",
+  "libraryErrParentMissing": "Koleksi induk tidak ada",
+  "libraryErrCollectionExists": "Sudah ada koleksi bernama \"{name}\" di tempat yang sama",
+  "@libraryErrCollectionExists": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "libraryErrCollectionKey": "Gagal membuat kunci koleksi baru",
+  "libraryErrMoveIntoSelf": "Koleksi tidak bisa dipindah ke dalam dirinya sendiri",
+  "libraryErrCollectionsMissing": "collections.json tidak ada",
+  "libraryErrItemNoZotero": "Berkas item tidak punya bagian zotero",
+  "libraryErrFileNotFound": "Berkas tidak ditemukan"
+}

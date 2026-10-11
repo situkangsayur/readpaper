@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../controllers/citation_server_controller.dart';
+import '../../../../core/l10n.dart';
 
 /// Kartu "Sitasi di Word & OnlyOffice" di layar pengaturan.
 ///
@@ -33,15 +34,15 @@ class _CitationServerCardState extends ConsumerState<CitationServerCard> {
       CitationServerStatus(running: true) => (
         Icons.check_circle_outline,
         scheme.primary,
-        'Berjalan di ${status.address}',
+        context.l10n.citationRunningAt(status.address),
       ),
       CitationServerStatus(error: final String error) => (Icons.error_outline, scheme.error, error),
       CitationServerStatus(enabled: false) => (
         Icons.pause_circle_outline,
         scheme.outline,
-        'Mati. Add-in Word dan OnlyOffice tidak bisa tersambung.',
+        context.l10n.citationOff,
       ),
-      _ => (Icons.hourglass_empty, scheme.outline, 'Menyalakan…'),
+      _ => (Icons.hourglass_empty, scheme.outline, context.l10n.citationStarting),
     };
 
     final token = status.token;
@@ -59,8 +60,8 @@ class _CitationServerCardState extends ConsumerState<CitationServerCard> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               secondary: const Icon(Icons.format_quote_outlined),
-              title: const Text('Sitasi di Word & OnlyOffice'),
-              subtitle: const Text('Server lokal yang dipakai add-in untuk mencari dan menyitasi.'),
+              title: Text(context.l10n.citationTitle),
+              subtitle: Text(context.l10n.citationSubtitle),
               value: status.enabled,
               onChanged: controller.setEnabled,
             ),
@@ -72,18 +73,18 @@ class _CitationServerCardState extends ConsumerState<CitationServerCard> {
                   child: Text(line, style: theme.textTheme.bodySmall?.copyWith(color: color)),
                 ),
                 if (status.enabled && !status.running && status.error != null)
-                  TextButton(onPressed: controller.retry, child: const Text('Coba lagi')),
+                  TextButton(onPressed: controller.retry, child: Text(context.l10n.citationRetry)),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: <Widget>[
-                const SizedBox(width: 64, child: Text('Alamat')),
+                SizedBox(width: 64, child: Text(context.l10n.citationAddress)),
                 Expanded(child: SelectableText(status.address)),
                 IconButton(
-                  tooltip: 'Salin alamat',
+                  tooltip: context.l10n.citationCopyAddress,
                   icon: const Icon(Icons.copy, size: 18),
-                  onPressed: () => _copy(status.address, 'Alamat disalin.'),
+                  onPressed: () => _copy(status.address, context.l10n.citationAddressCopied),
                 ),
               ],
             ),
@@ -92,13 +93,15 @@ class _CitationServerCardState extends ConsumerState<CitationServerCard> {
                 const SizedBox(width: 64, child: Text('Token')),
                 Expanded(
                   child: token == null
-                      ? Text('Belum ada', style: small)
+                      ? Text(context.l10n.citationNoToken, style: small)
                       : _showToken
                       ? SelectableText(token, style: const TextStyle(fontFamily: 'monospace'))
                       : Text('•' * 16, style: const TextStyle(fontFamily: 'monospace')),
                 ),
                 IconButton(
-                  tooltip: _showToken ? 'Sembunyikan token' : 'Tampilkan token',
+                  tooltip: _showToken
+                      ? context.l10n.citationHideToken
+                      : context.l10n.citationShowToken,
                   icon: Icon(
                     _showToken ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                     size: 18,
@@ -106,23 +109,21 @@ class _CitationServerCardState extends ConsumerState<CitationServerCard> {
                   onPressed: token == null ? null : () => setState(() => _showToken = !_showToken),
                 ),
                 IconButton(
-                  tooltip: 'Salin token',
+                  tooltip: context.l10n.citationCopyToken,
                   icon: const Icon(Icons.copy, size: 18),
-                  onPressed: token == null ? null : () => _copy(token, 'Token disalin.'),
+                  onPressed: token == null
+                      ? null
+                      : () => _copy(token, context.l10n.citationTokenCopied),
                 ),
                 IconButton(
-                  tooltip: 'Buat token baru',
+                  tooltip: context.l10n.citationNewToken,
                   icon: const Icon(Icons.refresh, size: 18),
                   onPressed: token == null ? null : () => _confirmRegenerate(controller),
                 ),
               ],
             ),
             const SizedBox(height: 4),
-            Text(
-              'Tempel alamat dan token ini di add-in. Panduannya: docs/api-sitasi.md '
-              'di repositori ReadPaper.',
-              style: small,
-            ),
+            Text(context.l10n.citationPasteHint, style: small),
           ],
         ),
       ),
@@ -141,16 +142,16 @@ class _CitationServerCardState extends ConsumerState<CitationServerCard> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Buat token baru?'),
-        content: const Text(
-          'Token lama langsung tidak berlaku. Add-in Word dan OnlyOffice yang '
-          'sudah tersambung harus diberi token baru.',
-        ),
+        title: Text(context.l10n.citationNewTokenTitle),
+        content: Text(context.l10n.citationNewTokenBody),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.filesCancel),
+          ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Buat baru'),
+            child: Text(context.l10n.citationCreateNew),
           ),
         ],
       ),

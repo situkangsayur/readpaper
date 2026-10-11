@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/page_image_export.dart';
+import '../../../../core/l10n.dart';
 
 /// What the user chose in the export sheet.
 class ExportImageChoice {
@@ -43,17 +44,17 @@ class _ExportSheetState extends State<_ExportSheet> {
   double _scale = 2;
   bool _whole = false;
 
-  static const List<({double scale, String label})> _scales = <({double scale, String label})>[
-    (scale: 1, label: 'Layar (72 dpi)'),
-    (scale: 2, label: 'Baik (144 dpi)'),
-    (scale: 4, label: 'Cetak (288 dpi)'),
+  List<({double scale, String label})> get _scales => <({double scale, String label})>[
+    (scale: 1, label: context.l10n.readerDpiScreen),
+    (scale: 2, label: context.l10n.readerDpiGood),
+    (scale: 4, label: context.l10n.readerDpiPrint),
   ];
 
   String get _subtitle {
-    if (!_whole) return 'Hanya halaman ${widget.currentPage}';
+    if (!_whole) return context.l10n.readerOnlyPage(widget.currentPage);
     return _format == PageImageFormat.pdf
-        ? 'Satu PDF berisi ${widget.pageCount} halaman'
-        : '${widget.pageCount} berkas, satu per halaman';
+        ? context.l10n.readerOnePdfPages(widget.pageCount)
+        : context.l10n.readerFilesOnePerPage(widget.pageCount);
   }
 
   @override
@@ -66,16 +67,12 @@ class _ExportSheetState extends State<_ExportSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Simpan salinan beranotasi', style: text.titleMedium),
+            Text(context.l10n.readerSaveAnnotatedCopy, style: text.titleMedium),
             const SizedBox(height: 4),
-            Text(
-              'Stabilo, garis bawah, dan coretan ikut tergambar. '
-              'Berkas aslinya tidak disentuh.',
-              style: text.bodySmall,
-            ),
+            Text(context.l10n.readerExportExplain, style: text.bodySmall),
             const SizedBox(height: 16),
 
-            Text('Format', style: text.labelLarge),
+            Text(context.l10n.readerFormat, style: text.labelLarge),
             const SizedBox(height: 6),
             SegmentedButton<PageImageFormat>(
               segments: <ButtonSegment<PageImageFormat>>[
@@ -87,7 +84,7 @@ class _ExportSheetState extends State<_ExportSheet> {
             ),
             const SizedBox(height: 16),
 
-            Text('Kerapatan', style: text.labelLarge),
+            Text(context.l10n.readerDensity, style: text.labelLarge),
             const SizedBox(height: 6),
             SegmentedButton<double>(
               segments: <ButtonSegment<double>>[
@@ -104,26 +101,21 @@ class _ExportSheetState extends State<_ExportSheet> {
               contentPadding: EdgeInsets.zero,
               value: _whole,
               onChanged: widget.pageCount > 1 ? (v) => setState(() => _whole = v) : null,
-              title: const Text('Seluruh dokumen'),
+              title: Text(context.l10n.readerWholeDocument),
               subtitle: Text(_subtitle),
             ),
 
             if (_format == PageImageFormat.pdf)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  'Halaman disimpan sebagai gambar di dalam PDF, jadi teksnya '
-                  'tidak bisa dicari atau disalin lagi di salinan itu.',
-                  style: text.bodySmall,
-                ),
+                child: Text(context.l10n.readerExportPdfImages, style: text.bodySmall),
               ),
 
             if (_whole && widget.pageCount > 40)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  '${widget.pageCount} halaman pada kerapatan ini akan makan waktu dan '
-                  'ruang penyimpanan yang tidak sedikit.',
+                  context.l10n.readerExportLarge(widget.pageCount),
                   style: text.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error),
                 ),
               ),
@@ -134,14 +126,14 @@ class _ExportSheetState extends State<_ExportSheet> {
               children: <Widget>[
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Batal'),
+                  child: Text(context.l10n.readerCancel),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
                   onPressed: () => Navigator.of(
                     context,
                   ).pop(ExportImageChoice(format: _format, scale: _scale, wholeDocument: _whole)),
-                  child: const Text('Simpan'),
+                  child: Text(context.l10n.readerSave),
                 ),
               ],
             ),

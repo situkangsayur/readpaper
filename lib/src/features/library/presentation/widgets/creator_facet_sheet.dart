@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
+import '../../../../core/l10n.dart';
 
 /// Every author in the library, with how many items each one has.
 ///
@@ -61,11 +62,16 @@ class _CreatorFacetSheetState extends ConsumerState<_CreatorFacetSheet> {
               padding: const EdgeInsets.fromLTRB(20, 0, 12, 8),
               child: Row(
                 children: <Widget>[
-                  Expanded(child: Text('Pengarang (${all.length})', style: text.titleMedium)),
+                  Expanded(
+                    child: Text(
+                      context.l10n.libraryAuthorsCount(all.length),
+                      style: text.titleMedium,
+                    ),
+                  ),
                   TextButton.icon(
                     onPressed: () => setState(() => _byCount = !_byCount),
                     icon: Icon(_byCount ? Icons.sort : Icons.sort_by_alpha, size: 18),
-                    label: Text(_byCount ? 'Terbanyak' : 'A–Z'),
+                    label: Text(_byCount ? context.l10n.libraryMostWorks : 'A–Z'),
                   ),
                 ],
               ),
@@ -74,11 +80,11 @@ class _CreatorFacetSheetState extends ConsumerState<_CreatorFacetSheet> {
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
               child: TextField(
                 controller: _filter,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   isDense: true,
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.search, size: 18),
-                  hintText: 'Saring nama',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.search, size: 18),
+                  hintText: context.l10n.libraryFilterNames,
                 ),
                 onChanged: (_) => setState(() {}),
               ),
@@ -90,8 +96,8 @@ class _CreatorFacetSheetState extends ConsumerState<_CreatorFacetSheet> {
                       padding: const EdgeInsets.all(24),
                       child: Text(
                         all.isEmpty
-                            ? 'Belum ada library yang terbaca.'
-                            : 'Tidak ada nama yang cocok.',
+                            ? context.l10n.libraryNoLibraryRead
+                            : context.l10n.libraryNoMatchingNames,
                         style: text.bodySmall,
                       ),
                     )

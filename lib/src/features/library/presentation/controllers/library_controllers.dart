@@ -6,18 +6,24 @@ import '../../domain/entities/library_index.dart';
 import '../../domain/entities/search_query.dart';
 import '../../domain/entities/zotero_item.dart';
 import '../../domain/library_stats.dart';
+import '../../../../core/l10n.dart';
 
 /// How the item list is ordered.
 enum ItemSort {
-  title('Judul'),
-  year('Tahun'),
-  creator('Pengarang'),
-  dateAdded('Ditambahkan'),
-  annotations('Anotasi');
+  title,
+  year,
+  creator,
+  dateAdded,
+  annotations;
 
-  const ItemSort(this.label);
-
-  final String label;
+  /// Nama urutan dalam bahasa antarmuka yang aktif.
+  String get label => switch (this) {
+    ItemSort.title => l10n.librarySortTitle,
+    ItemSort.year => l10n.librarySortYear,
+    ItemSort.creator => l10n.librarySortCreator,
+    ItemSort.dateAdded => l10n.librarySortDateAdded,
+    ItemSort.annotations => l10n.librarySortAnnotations,
+  };
 }
 
 /// Which collection (or pseudo-collection) is selected in the sidebar.

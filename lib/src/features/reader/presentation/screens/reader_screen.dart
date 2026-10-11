@@ -53,6 +53,7 @@ import '../widgets/navigation_sheet.dart';
 import '../widgets/page_tint.dart';
 import '../widgets/signature_pad.dart';
 import '../widgets/selection_action_bar.dart';
+import '../../../../core/l10n.dart';
 
 /// Reads one PDF attachment: text selection, coloured markers and comments,
 /// each of which is written straight back into the Zotero item file and
@@ -341,11 +342,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   void _setStylusOnly(bool value) {
     setState(() => _stylusOnly = value);
     ref.read(workspaceControllerProvider.notifier).setStylusOnly(value);
-    _say(
-      value
-          ? 'Stylus saja: tangan yang bertumpu tidak akan menggambar.'
-          : 'Jari dan stylus dua-duanya boleh menggambar.',
-    );
+    _say(value ? context.l10n.readerStylusOnlyOn : context.l10n.readerStylusOnlyOff);
   }
 
   /// Tint applied over the page while reading.
@@ -444,7 +441,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Gagal membaca anotasi: $e';
+        _error = context.l10n.readerLoadAnnotationsFailed('$e');
         _loading = false;
       });
     }
@@ -462,7 +459,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           if (entry is Map) ZoteroAnnotation.fromJson(entry.cast<String, dynamic>()),
       ];
     } on Object catch (e) {
-      _say('Anotasi catatan ini tidak terbaca: $e');
+      _say(l10n.readerNoteAnnotationsUnreadable('$e'));
       return <ZoteroAnnotation>[];
     }
   }
@@ -545,7 +542,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   Future<void> _copySelection() async {
     final delegate = _controller.textSelectionDelegate;
     if (!delegate.isCopyAllowed) {
-      _say('Dokumen ini tidak mengizinkan penyalinan');
+      _say(context.l10n.readerCopyNotAllowed);
       return;
     }
 
@@ -559,7 +556,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (text.trim().isEmpty) {
       // Reachable in practice: a long-press that lands between two words
       // selects the space, and copying a space looks exactly like a failure.
-      _say('Tidak ada teks terpilih — tekan lama tepat di atas sebuah kata');
+      _say(l10n.readerNothingSelected);
       return;
     }
 
@@ -567,7 +564,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     await delegate.clearTextSelection();
     // The character count is not decoration: an empty clipboard used to look
     // exactly like a successful copy.
-    _say('${text.characters.length} karakter disalin');
+    _say(l10n.readerCharactersCopied(text.characters.length));
   }
 
   // ---------------------------------------------------------------- ink
@@ -625,7 +622,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   void _toggleEraser() {
     setState(() => _erasing = !_erasing);
-    _say(_erasing ? 'Penghapus aktif — sapukan di atas coretan' : 'Kembali menulis');
+    _say(_erasing ? context.l10n.readerEraserOn : context.l10n.readerBackToWriting);
   }
 
   /// Berlabel, bukan ikon saja: tidak ada ikon penghapus yang dikenal di
@@ -633,17 +630,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// sebagai penghapus — di tablet, saat menyajikan, ia dicari dan tidak
   /// ditemukan padahal ada.
   Widget _eraserButton() => Tooltip(
-    message: _erasing ? 'Kembali menulis' : 'Penghapus — sapukan di atas coretan yang salah',
+    message: _erasing ? context.l10n.readerBackToWriting : context.l10n.readerEraserTooltip,
     child: _erasing
         ? FilledButton.tonalIcon(
             onPressed: _toggleEraser,
             icon: const Icon(Icons.auto_fix_off, size: 18),
-            label: const Text('Penghapus'),
+            label: Text(context.l10n.readerEraser),
           )
         : TextButton.icon(
             onPressed: _toggleEraser,
             icon: const Icon(Icons.auto_fix_normal, size: 18),
-            label: const Text('Penghapus'),
+            label: Text(context.l10n.readerEraser),
           ),
   );
 
@@ -659,7 +656,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   Widget _whiteInkButton() {
     final on = _color == AnnotationPalette.white;
     return IconButton(
-      tooltip: on ? 'Kembali ke warna sebelumnya' : 'Tinta putih — menutup coretan',
+      tooltip: on ? context.l10n.readerBackToPreviousColor : context.l10n.readerWhiteInk,
       isSelected: on,
       onPressed: () {
         if (on) {
@@ -715,15 +712,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       if (kept.length == annotation.paths.length) continue;
       removed += annotation.paths.length - kept.length;
       if (kept.isEmpty) {
-        _recordChange('menghapus coretan', before: annotation, after: null);
+        _recordChange(context.l10n.readerUndoEraseInk, before: annotation, after: null);
         await _removeAnnotation(annotation);
       } else {
         final trimmed = annotation.copyWith(paths: kept, dateModified: DateTime.now());
-        _recordChange('menghapus goresan', before: annotation, after: trimmed);
+        _recordChange(context.l10n.readerUndoEraseStroke, before: annotation, after: trimmed);
         await _persist(trimmed, isNew: false, recordUndo: false);
       }
     }
-    if (removed == 0) _say('Tidak ada coretan yang tersentuh penghapus');
+    if (removed == 0) _say(l10n.readerEraserMissed);
   }
 
   /// Goresan tertunda yang baru diurungkan, untuk diulangi.
@@ -745,8 +742,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _redoStrokes.isNotEmpty ? _redoStroke : (_redoSteps.isEmpty ? null : _redoLast);
 
   String get _redoTooltip => _redoStrokes.isNotEmpty
-      ? 'Ulangi goresan'
-      : (_redoSteps.isEmpty ? 'Tidak ada yang bisa diulangi' : 'Ulangi: ${_redoSteps.last.label}');
+      ? context.l10n.readerRedoStroke
+      : (_redoSteps.isEmpty
+            ? context.l10n.readerNothingToRedo
+            : context.l10n.readerRedoStep(_redoSteps.last.label));
 
   void _discardInk() {
     setState(() {
@@ -930,8 +929,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     setState(() => _tint = next);
     _say(
       next == PageTint.invert
-          ? 'Warna halaman: ${next.label} — warna penanda ikut terbalik'
-          : 'Warna halaman: ${next.label}',
+          ? context.l10n.readerPageColorInverted(next.label)
+          : context.l10n.readerPageColor(next.label),
     );
   }
 
@@ -952,7 +951,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         previous.lastPage > 1 &&
         previous.lastPage <= _controller.pages.length) {
       await _controller.goToPage(pageNumber: previous.lastPage);
-      if (mounted) _say('Dilanjutkan di halaman ${previous.lastPage}');
+      if (mounted) _say(context.l10n.readerResumedAtPage(previous.lastPage));
     }
 
     _recordVisit(profileId);
@@ -1019,7 +1018,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _penMode = false;
       _textMode = false;
     });
-    _say('Ketuk halaman di tempat tanda tangannya ditaruh');
+    _say(context.l10n.readerTapToPlaceSignature);
   }
 
   Future<void> _placeSignatureAt({
@@ -1107,7 +1106,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final step = _undoSteps.removeLast();
     setState(() => _redoSteps.add(step));
     await _applyState(step.key, step.before);
-    if (mounted) _say('Diurungkan: ${step.label}');
+    if (mounted) _say(context.l10n.readerUndone(step.label));
   }
 
   Future<void> _redoLast() async {
@@ -1115,7 +1114,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final step = _redoSteps.removeLast();
     setState(() => _undoSteps.add(step));
     await _applyState(step.key, step.after);
-    if (mounted) _say('Diulangi: ${step.label}');
+    if (mounted) _say(context.l10n.readerRedone(step.label));
   }
 
   /// Membuat anotasi [key] menjadi [target]: dihapus bila null, ditambahkan
@@ -1181,7 +1180,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final folders = <SaveFolder>[
       if (_canWriteInPlace)
         SaveFolder(
-          label: 'Folder berkas aslinya (${p.basename(p.dirname(widget.filePath))})',
+          label: context.l10n.readerOriginalFolder(p.basename(p.dirname(widget.filePath))),
           path: p.dirname(widget.filePath),
         ),
       for (final folder in work) SaveFolder(label: WorkFolder.label(folder), path: folder.path),
@@ -1210,10 +1209,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     // Lampiran library tidak pernah ditimpa: anotasinya akan muncul dua kali
     // di Zotero, sekali di halaman dan sekali sebagai anotasi.
     if (overSource && !widget.isStandalone) {
-      _say('Lampiran library tidak bisa ditimpa — pilih nama lain');
+      _say(context.l10n.readerCannotOverwriteAttachment);
       return false;
     }
-    _say('Menyiapkan PDF…');
+    _say(context.l10n.readerPreparingPdf);
     try {
       final bytes = await _annotatedPdf();
       await File(path).writeAsBytes(bytes, flush: true);
@@ -1236,12 +1235,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         ..showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 5),
-            content: Text('Tersimpan: ${p.basename(path)} (${_size(bytes.length)})'),
+            content: Text(context.l10n.readerSavedFile(p.basename(path), _size(bytes.length))),
           ),
         );
       return true;
     } on Object catch (e) {
-      _say('Gagal menyimpan: $e');
+      _say(context.l10n.readerSaveFailed('$e'));
       return false;
     }
   }
@@ -1250,7 +1249,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// aplikasi. Jalurnya tidak bisa ditulis ulang nanti (di Android hanya
   /// berupa URI), jadi Simpan berikutnya menanyakan lagi.
   Future<bool> _savePdfThroughDialog(String fileName) async {
-    _say('Menyiapkan PDF…');
+    _say(context.l10n.readerPreparingPdf);
     try {
       final bytes = await _annotatedPdf();
       if (!mounted) return false;
@@ -1258,17 +1257,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         fileName: fileName,
         bytes: bytes,
         mimeType: 'application/pdf',
-        dialogTitle: 'Simpan PDF',
+        dialogTitle: context.l10n.readerSavePdf,
       );
       if (uri == null) {
-        _say('Tidak jadi disimpan');
+        _say(l10n.readerNotSaved);
         return false;
       }
       setState(() => _unsaved = false);
-      _say('PDF disimpan (${_size(bytes.length)})');
+      _say(l10n.readerPdfSaved(_size(bytes.length)));
       return true;
     } catch (e) {
-      _say('Gagal menyimpan: $e');
+      _say(l10n.readerSaveFailed('$e'));
       return false;
     }
   }
@@ -1281,12 +1280,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   Future<void> _addToCollection() async {
     final index = ref.read(workspaceControllerProvider).index;
     if (index == null) {
-      _say('Belum ada library yang terbuka di aplikasi ini.');
+      _say(context.l10n.readerNoLibraryOpen);
       return;
     }
 
     if (_unsaved) {
-      _say('Anotasi yang belum disimpan tidak ikut. Simpan PDF dulu bila perlu.');
+      _say(context.l10n.readerUnsavedNotIncluded);
     }
 
     final chosen = await showModalBottomSheet<_CollectionChoice>(
@@ -1300,18 +1299,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             shrinkWrap: true,
             children: <Widget>[
-              Text('Tambahkan ke koleksi', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                context.l10n.readerAddToCollectionTitle,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 4),
               Text(
-                'Berkasnya disalin ke dalam library, dibuatkan item Zotero, '
-                'lalu di-commit — jadi ikut tersinkron ke GitHub.',
+                context.l10n.readerAddToCollectionExplain,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
               ListTile(
                 leading: const Icon(Icons.folder_off_outlined),
-                title: const Text('Tanpa koleksi'),
-                subtitle: const Text('masuk library, tidak masuk koleksi mana pun'),
+                title: Text(context.l10n.readerNoCollection),
+                subtitle: Text(context.l10n.readerNoCollectionHint),
                 onTap: () => Navigator.of(context).pop(const _CollectionChoice(null)),
               ),
               // Koleksi yang dicari sering belum ada — dokumen kuliah hari ini
@@ -1319,8 +1320,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               // kehilangan apa yang sedang dikerjakan.
               ListTile(
                 leading: const Icon(Icons.create_new_folder_outlined),
-                title: const Text('Koleksi baru…'),
-                subtitle: const Text('dibuat lalu langsung dipakai'),
+                title: Text(context.l10n.readerNewCollectionEllipsis),
+                subtitle: Text(context.l10n.readerNewCollectionHint),
                 onTap: () => Navigator.of(context).pop(const _CollectionChoice.create(null)),
               ),
               const Divider(),
@@ -1330,7 +1331,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   title: Text(collection.name),
                   subtitle: collection.path == collection.name ? null : Text(collection.path),
                   trailing: IconButton(
-                    tooltip: 'Sub-koleksi baru di dalam ${collection.name}',
+                    tooltip: context.l10n.readerNewSubcollectionIn(collection.name),
                     icon: const Icon(Icons.create_new_folder_outlined),
                     onPressed: () =>
                         Navigator.of(context).pop(_CollectionChoice.create(collection.key)),
@@ -1354,7 +1355,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       collectionKey = await _workspace.createCollection(name: name.trim(), parentKey: chosen.key);
       if (!mounted) return;
       if (collectionKey == null) {
-        _say(ref.read(workspaceControllerProvider).error ?? 'Gagal membuat koleksi');
+        _say(
+          ref.read(workspaceControllerProvider).error ?? context.l10n.readerCreateCollectionFailed,
+        );
         return;
       }
     }
@@ -1364,7 +1367,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       builder: (context) {
         final controller = TextEditingController(text: widget.title);
         return AlertDialog(
-          title: const Text('Judul dokumen'),
+          title: Text(context.l10n.readerDocumentTitle),
           content: TextField(
             controller: controller,
             autofocus: true,
@@ -1372,10 +1375,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             onSubmitted: (value) => Navigator.of(context).pop(value),
           ),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(context.l10n.readerCancel),
+            ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(controller.text),
-              child: const Text('Tambahkan'),
+              child: Text(context.l10n.readerAdd),
             ),
           ],
         );
@@ -1383,7 +1389,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
     if (title == null || title.trim().isEmpty || !mounted) return;
 
-    _say('Menambahkan ke library…');
+    _say(context.l10n.readerAddingToLibrary);
     final created = await _workspace.addPdfToLibrary(
       pdfPath: _path,
       title: title.trim(),
@@ -1391,7 +1397,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
     if (!mounted) return;
     if (created == null) {
-      _say(ref.read(workspaceControllerProvider).error ?? 'Gagal menambahkan');
+      _say(ref.read(workspaceControllerProvider).error ?? context.l10n.readerAddFailed);
       return;
     }
 
@@ -1412,16 +1418,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           if (ok) copied++;
         }
       } on Object catch (e) {
-        if (mounted) _say('Masuk library, tetapi anotasinya gagal disalin: $e');
+        if (mounted) _say(context.l10n.readerAddedButAnnotationsFailed('$e'));
         return;
       }
     }
     if (!mounted) return;
     _say(
       carried.isEmpty
-          ? 'Masuk library sebagai ${created.itemKey}'
-          : 'Masuk library sebagai ${created.itemKey} beserta $copied anotasi — '
-                'terbaca juga di Zotero setelah dikirim',
+          ? context.l10n.readerAddedAs(created.itemKey)
+          : context.l10n.readerAddedWithAnnotations(created.itemKey, copied),
     );
   }
 
@@ -1432,9 +1437,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// membagikan PDF-nya. Berkas aslinya tidak disentuh.
   Future<void> _convertToNotebook() async {
     if (_unsaved) {
-      _say('Anotasi yang belum disimpan tidak ikut. Simpan PDF dulu bila perlu.');
+      _say(context.l10n.readerUnsavedNotIncluded);
     }
-    _say('Menyiapkan buku catatan dari ${widget.title}…');
+    _say(context.l10n.readerPreparingNotebook(widget.title));
     try {
       final folder = await WorkFolder.dir();
       final notePath = await PdfToNotebook.convert(
@@ -1449,7 +1454,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         ),
       );
     } on Object catch (e) {
-      if (mounted) _say('Gagal membuat buku catatan: $e');
+      if (mounted) _say(context.l10n.readerNotebookFailed('$e'));
     }
   }
 
@@ -1458,22 +1463,29 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     builder: (context) {
       final controller = TextEditingController();
       return AlertDialog(
-        title: Text(parentName == null ? 'Koleksi baru' : 'Sub-koleksi di $parentName'),
+        title: Text(
+          parentName == null
+              ? context.l10n.readerNewCollection
+              : context.l10n.readerSubcollectionIn(parentName),
+        ),
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             border: OutlineInputBorder(),
-            hintText: 'Nama koleksi',
-            helperText: 'Ditulis ke collections.json, ikut tersinkron ke GitHub',
+            hintText: context.l10n.readerCollectionName,
+            helperText: context.l10n.readerCollectionNameHelper,
           ),
           onSubmitted: (value) => Navigator.of(context).pop(value),
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(context.l10n.readerCancel),
+          ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(controller.text),
-            child: const Text('Buat'),
+            child: Text(context.l10n.readerCreate),
           ),
         ],
       );
@@ -1500,7 +1512,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final messenger = ScaffoldMessenger.of(context);
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Membaca teks halaman…')));
+      ..showSnackBar(SnackBar(content: Text(context.l10n.readerReadingPageText)));
     try {
       final markdown = await PdfToMarkdown.fromFile(widget.filePath, title: widget.title);
       final base = await getApplicationDocumentsDirectory();
@@ -1521,13 +1533,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         // PDF hasil pindaian tidak punya lapisan teks sama sekali. Mengatakan
         // "berhasil" untuk berkas yang isinya kosong hanya menunda kecewanya.
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text(
-              'PDF ini tidak punya lapisan teks — kemungkinan hasil pindaian. '
-              'Yang keluar hanya judulnya.',
-            ),
-            duration: Duration(seconds: 6),
-          ),
+          SnackBar(content: Text(context.l10n.readerNoTextLayer), duration: Duration(seconds: 6)),
         );
       }
       await Navigator.of(context).push(
@@ -1539,7 +1545,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       if (!mounted) return;
       messenger
         ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(content: Text('Gagal mengubah ke Markdown: $e')));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.readerMarkdownFailed('$e'))));
     }
   }
 
@@ -1548,19 +1554,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       final lanjut = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Cetak tanpa anotasi terbaru?'),
-          content: const Text(
-            'Ada anotasi yang belum menyatu dengan halaman, jadi belum akan '
-            'ikut tercetak. Simpan PDF dulu kalau anotasinya perlu ikut.',
-          ),
+          title: Text(context.l10n.readerPrintWithoutLatest),
+          content: Text(context.l10n.readerPrintExplain),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Batal'),
+              child: Text(context.l10n.readerCancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Cetak apa adanya'),
+              child: Text(context.l10n.readerPrintAsIs),
             ),
           ],
         ),
@@ -1575,7 +1578,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         name: p.basenameWithoutExtension(_path),
       );
     } on Object catch (e) {
-      if (mounted) _say('Gagal mencetak: $e');
+      if (mounted) _say(context.l10n.readerPrintFailed('$e'));
     }
   }
 
@@ -1592,25 +1595,22 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final pilihan = await showDialog<({int count, bool here})>(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text('Tambah halaman kosong'),
+        title: Text(context.l10n.readerAddBlankPages),
         children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.fromLTRB(24, 0, 24, 12),
-            child: Text(
-              'Seukuran halaman pertamanya. Berkas aslinya tidak disentuh — '
-              'yang berubah adalah salinan kerja, sampai Anda menyimpannya.',
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+            child: Text(context.l10n.readerBlankPagesExplain),
           ),
           for (final n in <int>[1, 2, 5])
             SimpleDialogOption(
               onPressed: () => Navigator.of(context).pop((count: n, here: true)),
-              child: Text('$n halaman setelah halaman $_currentPage'),
+              child: Text(context.l10n.readerPagesAfter(n, _currentPage)),
             ),
           const Divider(height: 8),
           for (final n in <int>[1, 5])
             SimpleDialogOption(
               onPressed: () => Navigator.of(context).pop((count: n, here: false)),
-              child: Text('$n halaman di akhir dokumen'),
+              child: Text(context.l10n.readerPagesAtEnd(n)),
             ),
         ],
       ),
@@ -1636,8 +1636,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       });
       _say(
         at == null
-            ? '$count halaman kosong ditambahkan di akhir — simpan lewat menu bagikan'
-            : '$count halaman kosong disisipkan setelah halaman $at — simpan lewat menu bagikan',
+            ? context.l10n.readerBlankPagesAdded(count)
+            : context.l10n.readerBlankPagesInserted(count, at),
       );
       // Langsung ke halaman kosong pertamanya: yang menambahkannya hendak
       // menulis di sana sekarang, bukan mencarinya dulu.
@@ -1650,7 +1650,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         );
       }
     } on Object catch (e) {
-      if (mounted) _say('Gagal menambah halaman: $e');
+      if (mounted) _say(context.l10n.readerAddPagesFailed('$e'));
     }
   }
 
@@ -1670,7 +1670,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         pictures: _pictureBytes,
       );
     } on Object {
-      _say('PDF ini tidak bisa ditulisi langsung; halamannya disimpan sebagai gambar.');
+      _say(l10n.readerPdfSavedAsImages);
       return exportPagesAsPdf(
         pages: _controller.pages,
         annotationsFor: _onPage,
@@ -1681,7 +1681,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   Future<void> _shareAnnotated() async {
-    _say('Menyiapkan berkas…');
+    _say(context.l10n.readerPreparingFile);
     try {
       final bytes = await _annotatedPdf();
       if (!mounted) return;
@@ -1696,7 +1696,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       );
       if (failure != null) _say(failure);
     } catch (e) {
-      _say('Gagal membagikan: $e');
+      _say(l10n.readerShareFailed('$e'));
     }
   }
 
@@ -1739,7 +1739,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           fileName: '$base$suffix.${choice.format.extension}',
           bytes: bytes,
           mimeType: choice.format.mimeType,
-          dialogTitle: 'Simpan halaman $pageNumber',
+          dialogTitle: context.l10n.readerSavePage(pageNumber),
         );
         // Cancelling one page cancels the rest; carrying on would mean a save
         // dialog per page with no way out.
@@ -1747,11 +1747,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         saved++;
       }
     } catch (e) {
-      _say('Gagal menyimpan gambar: $e');
+      _say(l10n.readerSaveImageError('$e'));
       return;
     }
 
-    _say(saved == 0 ? 'Tidak ada yang disimpan' : '$saved berkas disimpan');
+    _say(saved == 0 ? l10n.readerNothingSaved : l10n.readerFilesSaved(saved));
   }
 
   /// Writes the chosen pages into one annotated PDF.
@@ -1760,7 +1760,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     required String base,
     required double scale,
   }) async {
-    _say(pages.length == 1 ? 'Menyiapkan PDF…' : 'Menyiapkan PDF ${pages.length} halaman…');
+    _say(
+      pages.length == 1
+          ? context.l10n.readerPreparingPdf
+          : context.l10n.readerPreparingPdfPages(pages.length),
+    );
     try {
       final bytes = await exportPagesAsPdf(
         pages: <PdfPage>[for (final n in pages) _controller.pages[n - 1]],
@@ -1773,11 +1777,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         fileName: '$base-beranotasi.pdf',
         bytes: bytes,
         mimeType: 'application/pdf',
-        dialogTitle: 'Simpan salinan beranotasi',
+        dialogTitle: context.l10n.readerSaveAnnotatedCopy,
       );
-      _say(uri == null ? 'Tidak jadi disimpan' : 'PDF disimpan (${_size(bytes.length)})');
+      _say(uri == null ? l10n.readerNotSaved : l10n.readerPdfSaved(_size(bytes.length)));
     } catch (e) {
-      _say('Gagal membuat PDF: $e');
+      _say(l10n.readerPdfFailed('$e'));
     }
   }
 
@@ -1830,22 +1834,28 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       context: context,
       builder: (context) => AlertDialog(
         icon: const Icon(Icons.save_outlined),
-        title: const Text('Simpan perubahan dulu?'),
+        title: Text(context.l10n.readerSaveChangesFirst),
         content: Text(
           standalone
-              ? 'Coretan dan anotasi di ${widget.title} belum disimpan ke berkas. '
-                    'Kalau keluar sekarang, semuanya hilang.'
-              : 'Ada goresan yang belum disimpan. Kalau keluar sekarang, goresan itu hilang.',
+              ? context.l10n.readerUnsavedStandalone(widget.title)
+              : context.l10n.readerUnsavedStrokes,
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(context.l10n.readerCancel),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop('buang'),
-            child: const Text('Keluar tanpa menyimpan'),
+            child: Text(context.l10n.readerLeaveWithoutSaving),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop('simpan'),
-            child: Text(standalone && _savedAs == null ? 'Simpan…' : 'Simpan'),
+            child: Text(
+              standalone && _savedAs == null
+                  ? context.l10n.readerSaveEllipsis
+                  : context.l10n.readerSave,
+            ),
           ),
         ],
       ),
@@ -1890,13 +1900,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
             }
           }),
           icon: Icon(_markerMode ? Icons.border_color : Icons.border_color_outlined, size: 18),
-          label: Text(_markerMode ? 'Menandai' : 'Tandai'),
+          label: Text(_markerMode ? context.l10n.readerMarking : context.l10n.readerMark),
         ),
       ),
       IconButton(
-        tooltip: _noteMode
-            ? 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)'
-            : 'Tempel catatan di halaman',
+        tooltip: _noteMode ? context.l10n.readerTapToPlaceNote : context.l10n.readerPlaceNote,
         isSelected: _noteMode,
         selectedIcon: const Icon(Icons.sticky_note_2),
         icon: const Icon(Icons.sticky_note_2_outlined),
@@ -1909,7 +1917,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         }),
       ),
       IconButton(
-        tooltip: _penMode ? 'Selesai menggambar' : 'Tulis atau gambar di halaman',
+        tooltip: _penMode ? context.l10n.readerDoneDrawing : context.l10n.readerDrawOnPage,
         isSelected: _penMode,
         selectedIcon: const Icon(Icons.draw),
         icon: const Icon(Icons.draw_outlined),
@@ -1920,9 +1928,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         onSelected: (value) => _switchPen(color: value),
       ),
       IconButton(
-        tooltip: _textMode
-            ? 'Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)'
-            : 'Isi teks di halaman — untuk mengisi formulir',
+        tooltip: _textMode ? context.l10n.readerTapToPlaceText : context.l10n.readerFillText,
         isSelected: _textMode,
         selectedIcon: const Icon(Icons.text_fields),
         icon: const Icon(Icons.text_fields_outlined),
@@ -1938,8 +1944,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       ),
       IconButton(
         tooltip: _keepScreenOn
-            ? 'Layar tetap menyala — tekan untuk mematikan'
-            : 'Biarkan layar menyala selama membaca',
+            ? context.l10n.readerKeepScreenOnActive
+            : context.l10n.readerKeepScreenOn,
         isSelected: _keepScreenOn,
         selectedIcon: const Icon(Icons.lightbulb),
         icon: const Icon(Icons.lightbulb_outline),
@@ -1950,39 +1956,39 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           // sekali biasanya menginginkannya selalu.
           await _workspace.setKeepScreenOn(value);
           if (mounted) {
-            _say(value ? 'Layar akan tetap menyala selama membaca' : 'Layar kembali mati sendiri');
+            _say(value ? l10n.readerKeepScreenOnEnabled : l10n.readerKeepScreenOnDisabled);
           }
         },
       ),
       IconButton(
-        tooltip: 'Sajikan — satu halaman penuh layar',
+        tooltip: context.l10n.readerPresent,
         icon: const Icon(Icons.slideshow_outlined),
         onPressed: _togglePresent,
       ),
       IconButton(
         tooltip: _undoSteps.isEmpty
-            ? 'Belum ada yang bisa diurungkan'
-            : 'Urungkan: ${_undoSteps.last.label}',
+            ? context.l10n.readerNothingToUndo
+            : context.l10n.readerUndoStep(_undoSteps.last.label),
         icon: const Icon(Icons.undo),
         onPressed: _undoSteps.isEmpty ? null : _undoLast,
       ),
       IconButton(
         tooltip: _redoSteps.isEmpty
-            ? 'Belum ada yang bisa diulangi'
-            : 'Ulangi: ${_redoSteps.last.label}',
+            ? context.l10n.readerNothingToRedoYet
+            : context.l10n.readerRedoStep(_redoSteps.last.label),
         icon: const Icon(Icons.redo),
         onPressed: _redoSteps.isEmpty ? null : _redoLast,
       ),
       _pictureButton(),
       IconButton(
-        tooltip: 'Tanda tangan',
+        tooltip: context.l10n.readerSignature,
         isSelected: _pendingSignature != null,
         selectedIcon: const Icon(Icons.draw),
         icon: const Icon(Icons.gesture),
         onPressed: _loading ? null : _drawSignature,
       ),
       PopupMenuButton<String>(
-        tooltip: 'Simpan dan bagikan',
+        tooltip: context.l10n.readerSaveAndShare,
         icon: const Icon(Icons.ios_share),
         onSelected: (choice) => switch (choice) {
           'simpan' => _savePdf(),
@@ -1997,54 +2003,54 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         },
         itemBuilder: (_) => <PopupMenuEntry<String>>[
           if (widget.isStandalone)
-            const PopupMenuItem<String>(
+            PopupMenuItem<String>(
               value: 'ke-koleksi',
               child: ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(Icons.library_add_outlined),
-                title: Text('Tambahkan ke koleksi…'),
-                subtitle: Text('masuk library dan ikut tersinkron'),
+                title: Text(context.l10n.readerAddToCollectionMenu),
+                subtitle: Text(context.l10n.readerAddToCollectionMenuHint),
               ),
             ),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'cetak',
             child: ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.print_outlined),
-              title: Text('Cetak…'),
-              subtitle: Text('ke pencetak, atau simpan sebagai PDF'),
+              title: Text(context.l10n.readerPrintMenu),
+              subtitle: Text(context.l10n.readerPrintMenuHint),
             ),
           ),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'ke-markdown',
             child: ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.notes_outlined),
-              title: Text('Ubah ke Markdown'),
-              subtitle: Text('teksnya jadi dokumen yang bisa disunting'),
+              title: Text(context.l10n.readerToMarkdown),
+              subtitle: Text(context.l10n.readerToMarkdownHint),
             ),
           ),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'ke-catatan',
             child: ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.auto_stories_outlined),
-              title: Text('Jadikan buku catatan'),
-              subtitle: Text('halamannya jadi alas, bisa disunting lagi'),
+              title: Text(context.l10n.readerToNotebook),
+              subtitle: Text(context.l10n.readerToNotebookHint),
             ),
           ),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'halaman-kosong',
             child: ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.note_add_outlined),
-              title: Text('Tambah halaman kosong'),
-              subtitle: Text('papan tulis di akhir dokumen'),
+              title: Text(context.l10n.readerAddBlankPages),
+              subtitle: Text(context.l10n.readerBlankPagesMenuHint),
             ),
           ),
           const PopupMenuDivider(),
@@ -2054,42 +2060,44 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.save_outlined),
-              title: Text(_savedAs == null ? 'Simpan…' : 'Simpan'),
+              title: Text(
+                _savedAs == null ? context.l10n.readerSaveEllipsis : context.l10n.readerSave,
+              ),
               subtitle: Text(
                 _savedAs == null
-                    ? 'pilih nama dan tempat; yang asli aman'
-                    : 'ke ${p.basename(_savedAs!)}',
+                    ? context.l10n.readerSaveMenuHintNew
+                    : context.l10n.readerSaveMenuHintTo(p.basename(_savedAs!)),
               ),
             ),
           ),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'simpan-sebagai',
             child: ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.save_as_outlined),
-              title: Text('Simpan sebagai…'),
-              subtitle: Text('nama atau tempat lain'),
+              title: Text(context.l10n.readerSaveAsMenu),
+              subtitle: Text(context.l10n.readerSaveAsMenuHint),
             ),
           ),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'ekspor',
             child: ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.image_outlined),
-              title: Text('Ekspor halaman…'),
-              subtitle: Text('PDF, PNG, atau JPG'),
+              title: Text(context.l10n.readerExportPagesMenu),
+              subtitle: Text(context.l10n.readerExportPagesMenuHint),
             ),
           ),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'bagikan',
             child: ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.share_outlined),
-              title: Text('Bagikan'),
-              subtitle: Text('chat, surel, atau aplikasi lain'),
+              title: Text(context.l10n.readerShare),
+              subtitle: Text(context.l10n.readerShareHint),
             ),
           ),
         ],
@@ -2099,8 +2107,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         // dengan stylus dulu meninggalkan garisnya sendiri, dan itu cukup untuk
         // membuat orang berhenti memakai penanya.
         tooltip: _stylusOnly
-            ? 'Stylus saja — sentuhan tangan tidak menggambar'
-            : 'Jari + stylus boleh menggambar — ketuk untuk stylus saja',
+            ? context.l10n.readerStylusOnlyTooltip
+            : context.l10n.readerFingerAndStylusTooltip,
         isSelected: _stylusOnly,
         selectedIcon: const Icon(Icons.do_not_touch_outlined),
         icon: const Icon(Icons.touch_app_outlined),
@@ -2110,37 +2118,37 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         // Dulu hanya ada di dalam menu simpan, dan di situ tidak ada yang
         // mencarinya: yang mau menambah lembar catatan tidak sedang berpikir
         // tentang menyimpan.
-        tooltip: 'Tambah lembar kosong',
+        tooltip: context.l10n.readerAddBlankSheet,
         icon: const Icon(Icons.note_add_outlined),
         onPressed: _loading ? null : _addBlankPages,
       ),
       IconButton(
-        tooltip: 'Warna halaman: ${_tint.label}',
+        tooltip: context.l10n.readerPageColor(_tint.label),
         icon: Icon(_tint.icon),
         onPressed: _cycleTint,
       ),
       IconButton(
-        tooltip: 'Mode baca — sembunyikan semua bilah',
+        tooltip: context.l10n.readerReadMode,
         icon: const Icon(Icons.fullscreen),
         onPressed: _loading ? null : _toggleReadingMode,
       ),
       IconButton(
-        tooltip: 'Simpan salinan beranotasi (PNG, JPG, PDF)',
+        tooltip: context.l10n.readerSaveAnnotatedCopyFormats,
         icon: const Icon(Icons.image_outlined),
         onPressed: _loading ? null : _exportImages,
       ),
       IconButton(
-        tooltip: 'Perkecil',
+        tooltip: context.l10n.readerZoomOut,
         icon: const Icon(Icons.zoom_out),
         onPressed: () => _controller.zoomDown(),
       ),
       IconButton(
-        tooltip: 'Perbesar',
+        tooltip: context.l10n.readerZoomIn,
         icon: const Icon(Icons.zoom_in),
         onPressed: () => _controller.zoomUp(),
       ),
       IconButton(
-        tooltip: 'Panel anotasi',
+        tooltip: context.l10n.readerAnnotationPanel,
         icon: Badge(
           isLabelVisible: !isWide && _annotations.isNotEmpty,
           label: Text('${_annotations.length}'),
@@ -2221,8 +2229,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                               children: <Widget>[
                                 Text(
                                   '${_unsaved ? '• ' : ''}'
-                                  '${_annotations.length} anotasi · halaman $_currentPage'
-                                  '${_controller.isReady ? ' dari ${_controller.pages.length}' : ''}',
+                                  '${_controller.isReady ? context.l10n.readerStatusOf(_annotations.length, _currentPage, _controller.pages.length) : context.l10n.readerStatus(_annotations.length, _currentPage)}',
                                   style: Theme.of(context).textTheme.labelSmall,
                                 ),
                                 const SizedBox(width: 3),
@@ -2290,11 +2297,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    'Untuk menandai: tekan "Tandai", pilih warna, lalu sapukan jari '
-                                    'di atas teks — begitu jari diangkat teks langsung berwarna. '
-                                    'Untuk menyalin: biarkan "Tandai" mati, tekan lama di teks, '
-                                    'lalu pilih Salin. Untuk catatan: tekan ikon catatan, lalu '
-                                    'ketuk halaman.',
+                                    context.l10n.readerCoachMark,
                                     style: TextStyle(
                                       color: scheme.onSurfaceVariant,
                                       fontSize: 12.5,
@@ -2303,7 +2306,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 ),
                                 IconButton(
                                   iconSize: 18,
-                                  tooltip: 'Mengerti',
+                                  tooltip: context.l10n.readerGotIt,
                                   icon: const Icon(Icons.close),
                                   onPressed: () => setState(() => _showCoach = false),
                                 ),
@@ -2326,11 +2329,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    '${isTouchPlatform ? 'Sapukan jari' : 'Seret mouse'} di atas teks — '
-                                    '${isTouchPlatform ? 'lepas jari' : 'lepas tombolnya'}, langsung ditandai '
-                                    '${AnnotationPalette.names[_color] ?? _color.toLowerCase()}. '
-                                    'Geser halaman dan salin teks nonaktif; tekan Selesai untuk '
-                                    'kembali.',
+                                    isTouchPlatform
+                                        ? context.l10n.readerMarkingBannerTouch(
+                                            AnnotationPalette.names[_color] ?? _color.toLowerCase(),
+                                          )
+                                        : context.l10n.readerMarkingBannerMouse(
+                                            AnnotationPalette.names[_color] ?? _color.toLowerCase(),
+                                          ),
                                     style: TextStyle(
                                       color: scheme.onTertiaryContainer,
                                       fontSize: 13,
@@ -2343,7 +2348,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 ),
                                 TextButton(
                                   onPressed: () => setState(() => _markerMode = false),
-                                  child: const Text('Selesai'),
+                                  child: Text(context.l10n.readerDone),
                                 ),
                               ],
                             ),
@@ -2365,12 +2370,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 Expanded(
                                   child: Text(
                                     _erasing
-                                        ? 'Penghapus: sapukan di atas coretan yang salah — '
-                                              'goresan yang tersentuh dibuang utuh.'
+                                        ? context.l10n.readerEraserBanner
                                         : _pendingInk.isEmpty
-                                        ? 'Gambar bebas di halaman dengan jari atau stylus.'
-                                        : '${_pendingInk.length} goresan di halaman $_inkPage — '
-                                              'disimpan saat menekan Selesai.',
+                                        ? context.l10n.readerPenBanner
+                                        : context.l10n.readerPenPending(
+                                            _pendingInk.length,
+                                            _inkPage ?? 1,
+                                          ),
                                     style: TextStyle(
                                       color: scheme.onPrimaryContainer,
                                       fontSize: 13,
@@ -2395,7 +2401,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 _eraserButton(),
                                 _pictureButton(),
                                 IconButton(
-                                  tooltip: 'Urungkan goresan terakhir',
+                                  tooltip: context.l10n.readerUndoLastStroke,
                                   iconSize: 20,
                                   icon: const Icon(Icons.undo),
                                   onPressed: _pendingInk.isEmpty ? null : _undoStroke,
@@ -2407,12 +2413,15 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                   onPressed: _redoAction,
                                 ),
                                 IconButton(
-                                  tooltip: 'Buang semua goresan yang belum disimpan',
+                                  tooltip: context.l10n.readerDiscardStrokes,
                                   iconSize: 20,
                                   icon: const Icon(Icons.delete_outline),
                                   onPressed: _pendingInk.isEmpty ? null : _discardInk,
                                 ),
-                                TextButton(onPressed: _togglePen, child: const Text('Selesai')),
+                                TextButton(
+                                  onPressed: _togglePen,
+                                  child: Text(context.l10n.readerDone),
+                                ),
                               ],
                             ),
                           ),
@@ -2432,7 +2441,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
-                                    'Ketuk tempat di halaman untuk menaruh catatan.',
+                                    context.l10n.readerTapWhereNote,
                                     style: TextStyle(
                                       color: scheme.onSecondaryContainer,
                                       fontSize: 13,
@@ -2441,7 +2450,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                                 ),
                                 TextButton(
                                   onPressed: () => setState(() => _noteMode = false),
-                                  child: const Text('Batal'),
+                                  child: Text(context.l10n.readerCancel),
                                 ),
                               ],
                             ),
@@ -2704,7 +2713,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     IconButton(
-                      tooltip: 'Halaman sebelumnya',
+                      tooltip: context.l10n.readerPreviousPage,
                       icon: const Icon(Icons.chevron_left),
                       onPressed: () => _stepPage(-1),
                     ),
@@ -2713,7 +2722,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     IconButton(
-                      tooltip: 'Halaman berikutnya',
+                      tooltip: context.l10n.readerNextPage,
                       icon: const Icon(Icons.chevron_right),
                       onPressed: () => _stepPage(1),
                     ),
@@ -2737,7 +2746,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       _eraserButton(),
                       _pictureButton(),
                       IconButton(
-                        tooltip: 'Urungkan goresan terakhir',
+                        tooltip: context.l10n.readerUndoLastStroke,
                         icon: const Icon(Icons.undo),
                         onPressed: _pendingInk.isNotEmpty
                             ? _undoStroke
@@ -2749,42 +2758,47 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         onPressed: _redoAction,
                       ),
                       IconButton(
-                        tooltip: 'Buang semua goresan yang belum disimpan',
+                        tooltip: context.l10n.readerDiscardStrokes,
                         icon: const Icon(Icons.delete_outline),
                         onPressed: _pendingInk.isEmpty ? null : _discardInk,
                       ),
                       IconButton(
                         tooltip: _stylusOnly
-                            ? 'Stylus saja — sentuhan tangan tidak menggambar'
-                            : 'Jari + stylus — ketuk untuk stylus saja',
+                            ? context.l10n.readerStylusOnlyTooltip
+                            : context.l10n.readerFingerAndStylusShort,
                         isSelected: _stylusOnly,
                         selectedIcon: const Icon(Icons.do_not_touch_outlined),
                         icon: const Icon(Icons.touch_app_outlined),
                         onPressed: () => _setStylusOnly(!_stylusOnly),
                       ),
                       const SizedBox(width: 4),
-                      FilledButton.tonal(onPressed: _togglePen, child: const Text('Selesai')),
+                      FilledButton.tonal(
+                        onPressed: _togglePen,
+                        child: Text(context.l10n.readerDone),
+                      ),
                       const SizedBox(width: 4),
                     ] else ...<Widget>[
                       const VerticalDivider(width: 10, indent: 8, endIndent: 8),
                       IconButton(
-                        tooltip: 'Perkecil',
+                        tooltip: context.l10n.readerZoomOut,
                         icon: const Icon(Icons.zoom_out),
                         onPressed: () => _controller.zoomDown(),
                       ),
                       IconButton(
-                        tooltip: 'Perbesar',
+                        tooltip: context.l10n.readerZoomIn,
                         icon: const Icon(Icons.zoom_in),
                         onPressed: () => _controller.zoomUp(),
                       ),
                       IconButton(
-                        tooltip: 'Pas satu halaman ke layar',
+                        tooltip: context.l10n.readerFitPage,
                         icon: const Icon(Icons.fit_screen_outlined),
                         onPressed: _fitCurrentPage,
                       ),
                       const VerticalDivider(width: 10, indent: 8, endIndent: 8),
                       IconButton(
-                        tooltip: _penMode ? 'Selesai menggambar' : 'Coret-coret di halaman',
+                        tooltip: _penMode
+                            ? context.l10n.readerDoneDrawing
+                            : context.l10n.readerScribble,
                         isSelected: _penMode,
                         selectedIcon: const Icon(Icons.draw),
                         icon: const Icon(Icons.draw_outlined),
@@ -2798,7 +2812,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         // terakhir** — bukan seluruh gambar. Garis nyasar dari
                         // telapak tangan harus bisa dibuang sendiri, tanpa
                         // membuang semua yang sudah ditulis di halaman itu.
-                        tooltip: _pendingInk.isNotEmpty ? 'Urungkan goresan terakhir' : 'Urungkan',
+                        tooltip: _pendingInk.isNotEmpty
+                            ? context.l10n.readerUndoLastStroke
+                            : context.l10n.readerUndo,
                         icon: const Icon(Icons.undo),
                         onPressed: _pendingInk.isNotEmpty
                             ? _undoStroke
@@ -2811,8 +2827,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       ),
                       IconButton(
                         tooltip: _stylusOnly
-                            ? 'Stylus saja — sentuhan tangan tidak menggambar'
-                            : 'Jari + stylus — ketuk untuk stylus saja',
+                            ? context.l10n.readerStylusOnlyTooltip
+                            : context.l10n.readerFingerAndStylusShort,
                         isSelected: _stylusOnly,
                         selectedIcon: const Icon(Icons.do_not_touch_outlined),
                         icon: const Icon(Icons.touch_app_outlined),
@@ -2824,18 +2840,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         // berharga, dan sebelumnya harus keluar dulu untuk
                         // menyimpannya — kalau ingat.
                         tooltip: _savedAs == null
-                            ? 'Simpan… (pilih nama dan tempat)'
-                            : 'Simpan ke ${p.basename(_savedAs!)}',
+                            ? context.l10n.readerSaveChooseTooltip
+                            : context.l10n.readerSaveTo(p.basename(_savedAs!)),
                         icon: const Icon(Icons.save_outlined),
                         onPressed: _savePdf,
                       ),
                       IconButton(
-                        tooltip: 'Tambah lembar kosong untuk dicoreti',
+                        tooltip: context.l10n.readerAddScribbleSheet,
                         icon: const Icon(Icons.note_add_outlined),
                         onPressed: _addBlankPages,
                       ),
                       IconButton(
-                        tooltip: 'Keluar dari mode menyajikan',
+                        tooltip: context.l10n.readerExitPresent,
                         icon: const Icon(Icons.close_fullscreen),
                         onPressed: _togglePresent,
                       ),
@@ -2861,19 +2877,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               children: <Widget>[
                 _ReadingChip(
                   icon: _tint.icon,
-                  tooltip: 'Warna halaman: ${_tint.label}',
+                  tooltip: context.l10n.readerPageColor(_tint.label),
                   onTap: _cycleTint,
                 ),
                 const SizedBox(width: 8),
                 _ReadingChip(
                   icon: Icons.unfold_more,
-                  tooltip: 'Halaman $_currentPage',
+                  tooltip: context.l10n.readerPageNumber(_currentPage),
                   onTap: _navigate,
                 ),
                 const SizedBox(width: 8),
                 _ReadingChip(
                   icon: Icons.fullscreen_exit,
-                  tooltip: 'Keluar dari mode baca',
+                  tooltip: context.l10n.readerExitReadMode,
                   onTap: _toggleReadingMode,
                 ),
               ],
@@ -3201,7 +3217,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final text = annotation.text.trim().isNotEmpty ? annotation.text : annotation.comment;
     unawaited(
       Clipboard.setData(
-        ClipboardData(text: text.trim().isNotEmpty ? text : 'Anotasi ReadPaper'),
+        ClipboardData(text: text.trim().isNotEmpty ? text : context.l10n.readerClipboardFallback),
       ).catchError((Object _) {}),
     );
   }
@@ -3219,7 +3235,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       await _pasteAnnotation();
       return;
     }
-    _say('Papan klip tidak berisi gambar atau anotasi');
+    _say(context.l10n.readerClipboardEmpty);
   }
 
   Future<void> _pasteClipboardPicture() async {
@@ -3228,8 +3244,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (bytes == null) {
       _say(
         Platform.isIOS || Platform.isMacOS
-            ? 'Menempel gambar belum bisa di perangkat ini — pakai "Pilih berkas gambar"'
-            : 'Papan klip tidak berisi gambar. Di peramban: klik kanan gambar → Salin gambar.',
+            ? context.l10n.readerPasteImageUnsupported
+            : context.l10n.readerClipboardNoImage,
       );
       return;
     }
@@ -3240,7 +3256,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final picked = await pickFilesOrTell(
       context,
       type: FileType.image,
-      title: 'Pilih gambar',
+      title: context.l10n.readerChooseImage,
       multiple: false,
     );
     final path = picked.firstOrNull;
@@ -3254,11 +3270,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// supaya bisa digeser dan diubah ukurannya.
   Future<void> _insertPicture(Uint8List raw) async {
     if (!_controller.isReady) return;
-    _say('Menyiapkan gambar…');
+    _say(context.l10n.readerPreparingImage);
     final prepared = await Isolate.run(() => PagePicture.prepare(raw));
     if (!mounted) return;
     if (prepared == null) {
-      _say('Isi papan klip atau berkasnya bukan gambar yang bisa dibaca');
+      _say(context.l10n.readerNotAnImage);
       return;
     }
     // Pena dimatikan dulu, goresannya disimpan: pegangan ubah ukuran hanya
@@ -3294,9 +3310,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       file: file,
       pageHeight: page.height,
     );
-    _recordChange('menempel gambar', before: null, after: annotation);
+    _recordChange(context.l10n.readerUndoPasteImage, before: null, after: annotation);
     await _persist(annotation, isNew: true, recordUndo: false);
-    _say('Gambar ditempel di halaman $pageNumber — seret sudutnya untuk mengubah ukuran');
+    _say(l10n.readerImagePasted(pageNumber));
   }
 
   /// Tengah bagian halaman [pageNumber] yang sedang terlihat, dalam
@@ -3317,19 +3333,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   /// Tombol gambar: tempel dari papan klip atau pilih berkas.
   Widget _pictureButton({double? iconSize}) => PopupMenuButton<String>(
-    tooltip: 'Sisipkan gambar',
+    tooltip: context.l10n.readerInsertImage,
     iconSize: iconSize,
     icon: const Icon(Icons.add_photo_alternate_outlined),
     onSelected: (choice) => choice == 'tempel' ? _pasteClipboardPicture() : _pickPictureFile(),
-    itemBuilder: (_) => const <PopupMenuEntry<String>>[
+    itemBuilder: (_) => <PopupMenuEntry<String>>[
       PopupMenuItem<String>(
         value: 'tempel',
         child: ListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
           leading: Icon(Icons.content_paste),
-          title: Text('Tempel gambar dari papan klip'),
-          subtitle: Text('mis. "Salin gambar" di peramban — Ctrl+V'),
+          title: Text(context.l10n.readerPasteImage),
+          subtitle: Text(context.l10n.readerPasteImageHint),
         ),
       ),
       PopupMenuItem<String>(
@@ -3338,7 +3354,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           dense: true,
           contentPadding: EdgeInsets.zero,
           leading: Icon(Icons.image_outlined),
-          title: Text('Pilih berkas gambar…'),
+          title: Text(context.l10n.readerChooseImageFile),
         ),
       ),
     ],
@@ -3359,7 +3375,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (annotation == null) return;
     setState(() => _clipboard = annotation);
     _claimSystemClipboard(annotation);
-    _say('Anotasi disalin — buka halaman tujuan, lalu Tempel');
+    _say(context.l10n.readerAnnotationCopied);
   }
 
   /// Memotong = menyalin lalu menghapus, sebagai satu langkah yang bisa
@@ -3370,9 +3386,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (annotation == null) return;
     setState(() => _clipboard = annotation);
     _claimSystemClipboard(annotation);
-    _recordChange('memotong anotasi', before: annotation, after: null);
+    _recordChange(context.l10n.readerUndoCut, before: annotation, after: null);
     await _removeAnnotation(annotation);
-    _say('Anotasi dipotong — buka halaman tujuan, lalu Tempel');
+    _say(l10n.readerAnnotationCut);
   }
 
   /// Menempel isi papan klip di halaman yang sedang dibuka, di posisi yang
@@ -3416,9 +3432,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       step++;
     } while (step < 20 && onPage.any((a) => _sameSpot(a, placed)));
 
-    _recordChange('menempel anotasi', before: null, after: placed);
+    _recordChange(context.l10n.readerUndoPaste, before: null, after: placed);
     await _persist(placed, isNew: true, recordUndo: false);
-    _say('Ditempel di halaman $pageNumber — seret untuk memindahkannya');
+    _say(l10n.readerPastedOnPage(pageNumber));
   }
 
   static bool _sameSpot(ZoteroAnnotation a, ZoteroAnnotation b) {
@@ -3439,18 +3455,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       builder: (context) {
         void submit() => Navigator.of(context).pop(int.tryParse(field.text.trim()));
         return AlertDialog(
-          title: const Text('Pindahkan ke halaman'),
+          title: Text(context.l10n.readerMoveToPage),
           content: TextField(
             controller: field,
             autofocus: true,
             keyboardType: TextInputType.number,
             inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(helperText: 'Halaman 1 sampai $count'),
+            decoration: InputDecoration(helperText: context.l10n.readerPageRange(count)),
             onSubmitted: (_) => submit(),
           ),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
-            FilledButton(onPressed: submit, child: const Text('Pindahkan')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(context.l10n.readerCancel),
+            ),
+            FilledButton(onPressed: submit, child: Text(context.l10n.readerMove)),
           ],
         );
       },
@@ -3458,7 +3477,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     field.dispose();
     if (number == null || number == annotation.pageNumber) return;
     if (number < 1 || number > count) {
-      _say('Tidak ada halaman $number — dokumen ini $count halaman');
+      _say(l10n.readerNoSuchPage(number, count));
       return;
     }
     final moved = await _moveAnnotationToPage(annotation, page: _controller.pages[number - 1]);
@@ -3481,12 +3500,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       pageHeight: page.height,
     );
     _recordChange(
-      'memindahkan anotasi ke halaman ${page.pageNumber}',
+      context.l10n.readerUndoMoveToPage(page.pageNumber),
       before: annotation,
       after: moved,
     );
     await _persist(moved, isNew: false, recordUndo: false);
-    _say('Dipindah ke halaman ${page.pageNumber}');
+    _say(l10n.readerMovedToPage(page.pageNumber));
     return moved;
   }
 
@@ -3510,20 +3529,24 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             if (selected != null) ...<Widget>[
-              action(Icons.content_copy, 'Salin', _copyAnnotation),
-              action(Icons.content_cut, 'Potong', _cutAnnotation),
-              action(Icons.move_down, 'Ke halaman…', () => _askMoveToPage(selected)),
+              action(Icons.content_copy, context.l10n.readerCopy, _copyAnnotation),
+              action(Icons.content_cut, context.l10n.readerCut, _cutAnnotation),
+              action(Icons.move_down, context.l10n.readerToPage, () => _askMoveToPage(selected)),
             ],
             if (clip != null) ...<Widget>[
               const SizedBox(width: 4),
               FilledButton.tonalIcon(
                 onPressed: _pasteAnnotation,
                 icon: const Icon(Icons.content_paste, size: 20),
-                label: Text(compact ? 'Tempel' : 'Tempel di halaman $_currentPage'),
+                label: Text(
+                  compact ? context.l10n.readerPaste : context.l10n.readerPasteOnPage(_currentPage),
+                ),
               ),
             ],
             IconButton(
-              tooltip: selected != null ? 'Batal pilih' : 'Kosongkan papan klip',
+              tooltip: selected != null
+                  ? context.l10n.readerDeselect
+                  : context.l10n.readerClearClipboard,
               icon: const Icon(Icons.close),
               onPressed: () => setState(() {
                 if (selected != null) {
@@ -3640,7 +3663,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         ? null
         : _controller.getPdfPageHitTestResult(document, useDocumentLayoutCoordinates: true);
     if (hit == null) {
-      _say('Lepaskan di atas halaman untuk memindahkannya');
+      _say(context.l10n.readerDropOnPage);
       return;
     }
     // Perpindahan titik pegang, dalam koordinat PDF halaman masing-masing.
@@ -3691,7 +3714,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   child: Text(
-                    target == null ? 'Di luar halaman' : 'Halaman $target',
+                    target == null
+                        ? context.l10n.readerOutsidePage
+                        : context.l10n.readerPageNumber(target),
                     style: TextStyle(
                       color: target == null ? scheme.onError : scheme.onPrimary,
                       fontSize: 12,
@@ -3728,7 +3753,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
     if (identical(changed, annotation)) return;
 
-    _recordChange('mengubah bentuk anotasi', before: annotation, after: changed);
+    _recordChange(context.l10n.readerUndoReshape, before: annotation, after: changed);
     await _persist(changed, isNew: false, recordUndo: false);
   }
 
@@ -3749,7 +3774,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     );
     if (identical(moved, annotation)) return;
 
-    _recordChange('memindahkan anotasi', before: annotation, after: moved);
+    _recordChange(context.l10n.readerUndoMove, before: annotation, after: moved);
     await _persist(moved, isNew: false, recordUndo: false);
   }
 
@@ -3832,21 +3857,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     final items = <ContextMenuButtonItem>[
       ContextMenuButtonItem(
-        label: 'Stabilo',
+        label: context.l10n.readerHighlight,
         onPressed: () {
           params.dismissContextMenu();
           _createFromSelection(delegate, AnnotationType.highlight);
         },
       ),
       ContextMenuButtonItem(
-        label: 'Stabilo + komentar',
+        label: context.l10n.readerHighlightComment,
         onPressed: () {
           params.dismissContextMenu();
           _createFromSelection(delegate, AnnotationType.highlight, withComment: true);
         },
       ),
       ContextMenuButtonItem(
-        label: 'Garis bawah',
+        label: context.l10n.readerUnderline,
         onPressed: () {
           params.dismissContextMenu();
           _createFromSelection(delegate, AnnotationType.underline);
@@ -3854,7 +3879,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       ),
       if (delegate.isCopyAllowed)
         ContextMenuButtonItem(
-          label: 'Salin',
+          label: context.l10n.readerCopy,
           onPressed: () {
             params.dismissContextMenu();
             delegate.copyTextSelection();
@@ -3902,7 +3927,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         context,
         initialColor: _color,
         quotedText: text,
-        title: 'Stabilo + komentar',
+        title: context.l10n.readerHighlightComment,
       );
       if (result == null || result.action != AnnotationEditorAction.save) return;
       comment = result.comment;
@@ -3950,10 +3975,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       context,
       initialColor: asText ? AnnotationPalette.ink : _color,
       title: asText
-          ? 'Isi teks di halaman ${page.pageNumber}'
-          : 'Catatan di halaman ${page.pageNumber}',
-      fieldLabel: asText ? 'Teks' : 'Komentar',
-      fieldHint: asText ? 'Yang ditulis di halaman…' : 'Catatan untuk bagian ini…',
+          ? context.l10n.readerTextOnPage(page.pageNumber)
+          : context.l10n.readerNoteOnPage(page.pageNumber),
+      fieldLabel: asText ? context.l10n.readerText : context.l10n.readerComment,
+      fieldHint: asText ? context.l10n.readerTextHint : context.l10n.readerCommentHint,
     );
     if (result == null || result.action != AnnotationEditorAction.save) return;
     if (result.comment.trim().isEmpty) return;
@@ -3999,7 +4024,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       initialColor: annotation.color,
       initialComment: annotation.comment,
       quotedText: annotation.text,
-      title: 'Anotasi halaman ${annotation.pageLabel}',
+      title: context.l10n.readerAnnotationOnPage(annotation.pageLabel),
       allowDelete: true,
     );
     if (result == null) return;
@@ -4015,7 +4040,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       color: result.color,
       dateModified: DateTime.now(),
     );
-    _recordChange('mengubah anotasi', before: annotation, after: edited);
+    _recordChange(l10n.readerUndoEdit, before: annotation, after: edited);
     await _persist(edited, isNew: false, recordUndo: false);
   }
 
@@ -4030,17 +4055,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus anotasi?'),
+        title: Text(context.l10n.readerDeleteAnnotationQuestion),
         content: Text(
           annotation.text.isNotEmpty ? annotation.text : annotation.comment,
           maxLines: 5,
           overflow: TextOverflow.ellipsis,
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.readerCancel),
+          ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Hapus'),
+            child: Text(context.l10n.readerDelete),
           ),
         ],
       ),
@@ -4049,7 +4077,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     // `recordUndo: false`: mengembalikannya bukan langkah baru yang perlu
     // diurungkan lagi.
-    _recordChange('menghapus anotasi', before: annotation, after: null);
+    _recordChange(l10n.readerUndoDelete, before: annotation, after: null);
     await _removeAnnotation(annotation);
   }
 
@@ -4066,7 +4094,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       });
       if (_autoSaves && !PagePicture.isPicture(annotation)) {
         await _writeAnnotationsFile('Hapus anotasi: ${widget.title}');
-        _say('Anotasi dihapus');
+        _say(l10n.readerAnnotationDeleted);
       }
       return;
     }
@@ -4094,7 +4122,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         ..showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 5),
-            content: Text(ref.read(workspaceControllerProvider).error ?? 'Gagal menghapus anotasi'),
+            content: Text(
+              ref.read(workspaceControllerProvider).error ?? context.l10n.readerDeleteFailed,
+            ),
           ),
         );
     }
@@ -4109,7 +4139,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     bool recordUndo = true,
   }) async {
     if (isNew && recordUndo) {
-      _recordChange('menambah ${annotation.type.wire}', before: null, after: annotation);
+      _recordChange(
+        context.l10n.readerUndoAdd(annotation.type.wire),
+        before: null,
+        after: annotation,
+      );
     }
     if (!widget.isStandalone && PagePicture.isPicture(annotation)) {
       final saved = await _workspace.savePagePicture(
@@ -4120,7 +4154,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         bytes: _pictureBytes[PagePicture.fileOf(annotation)],
       );
       if (!mounted) return;
-      if (!saved) _say(ref.read(workspaceControllerProvider).error ?? 'Gagal menyimpan gambar');
+      if (!saved) {
+        _say(ref.read(workspaceControllerProvider).error ?? context.l10n.readerSaveImageFailed);
+      }
       setState(() => _selectedAnnotationKey = annotation.key);
       await _load();
       return;
@@ -4138,10 +4174,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       });
       if (autoSave) {
         await _writeAnnotationsFile('${isNew ? 'Anotasi baru' : 'Ubah anotasi'}: ${widget.title}');
-        _say(isNew ? 'Tersimpan' : 'Perubahan tersimpan');
+        _say(isNew ? l10n.readerSaved : l10n.readerChangesSaved);
         return;
       }
-      _say(undoable ? 'Ditambahkan — belum disimpan ke berkas' : 'Ditambahkan');
+      _say(undoable ? context.l10n.readerAddedNotSaved : context.l10n.readerAdded);
       return;
     }
 
@@ -4178,15 +4214,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           duration: Duration(seconds: saved ? (undoable ? 4 : 1) : 5),
           content: Text(
             saved
-                ? (isNew ? 'Tersimpan' : 'Perubahan tersimpan')
-                : ref.read(workspaceControllerProvider).error ?? 'Gagal menyimpan anotasi',
+                ? (isNew ? context.l10n.readerSaved : context.l10n.readerChangesSaved)
+                : ref.read(workspaceControllerProvider).error ??
+                      context.l10n.readerSaveAnnotationFailed,
           ),
           // A sweep that grabbed the wrong line should cost one tap to undo,
           // not a trip through the sidebar.
           action: saved && undoable
               // Lewat tumpukan yang sama dengan tombol Urungkan, supaya
               // keduanya tidak pernah berbeda pendapat.
-              ? SnackBarAction(label: 'Urungkan', onPressed: _undoLast)
+              ? SnackBarAction(label: context.l10n.readerUndo, onPressed: _undoLast)
               : null,
         ),
       );
@@ -4246,19 +4283,19 @@ class _NoteBubble extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    'Catatan · hal. ${note.pageLabel}',
+                    context.l10n.readerNoteBubbleTitle(note.pageLabel),
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Sunting catatan',
+                  tooltip: context.l10n.readerEditNote,
                   visualDensity: VisualDensity.compact,
                   iconSize: 18,
                   icon: const Icon(Icons.edit_outlined),
                   onPressed: onEdit,
                 ),
                 IconButton(
-                  tooltip: 'Tutup catatan',
+                  tooltip: context.l10n.readerCloseNote,
                   visualDensity: VisualDensity.compact,
                   iconSize: 18,
                   icon: const Icon(Icons.close),
@@ -4295,7 +4332,7 @@ class _ColorButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<String>(
-    tooltip: 'Warna stabilo: ${AnnotationPalette.names[color] ?? color}',
+    tooltip: context.l10n.readerHighlightColor(AnnotationPalette.names[color] ?? color),
     onSelected: onSelected,
     itemBuilder: (_) => <PopupMenuEntry<String>>[
       for (final hex in colors)
@@ -4351,7 +4388,7 @@ class _WidthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<double>(
-    tooltip: 'Tebal goresan: ${width.toStringAsFixed(0)}',
+    tooltip: context.l10n.readerStrokeWidth(width.toStringAsFixed(0)),
     onSelected: onSelected,
     itemBuilder: (_) => <PopupMenuEntry<double>>[
       for (final choice in _choices)

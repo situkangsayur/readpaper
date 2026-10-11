@@ -18,6 +18,7 @@ import '../../../notes/presentation/controllers/notes_controller.dart';
 import '../../../files/presentation/open_any_file.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/library_index.dart';
+import '../../../../core/l10n.dart';
 
 /// The middle pane: every item of the selected collection, with search + sort.
 class ItemListPane extends ConsumerWidget {
@@ -76,9 +77,9 @@ class ItemListPane extends ConsumerWidget {
                     },
                   ),
                 if (items.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(32),
-                    child: Center(child: Text('Tidak ada item.')),
+                  Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Center(child: Text(context.l10n.libraryNoItems)),
                   )
                 else
                   for (var i = 0; i < items.length; i++) ...<Widget>[
@@ -122,28 +123,25 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Mempersempit pencarian'),
+        title: Text(context.l10n.librarySearchHelpTitle),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Text(
-                'Kata biasa dicari di judul, pengarang, jurnal, tag, koleksi, '
-                'DOI, dan abstrak. Beberapa kata berarti semuanya harus cocok.',
-              ),
+              Text(context.l10n.librarySearchHelpIntro),
               const SizedBox(height: 14),
-              for (final row in const <(String, String)>[
-                ('pengarang:hendri', 'hanya di nama pengarang'),
-                ('judul:"deep learning"', 'frasa utuh di judul'),
-                ('tahun:2024', 'tahun persis'),
-                ('tag:radiologi', 'hanya di tag'),
-                ('jenis:book', 'jenis item Zotero'),
-                ('jurnal:nature', 'nama publikasi'),
-                ('abstrak:segmentasi', 'hanya di abstrak'),
-                ('koleksi:tesis', 'nama koleksi'),
+              for (final row in <(String, String)>[
+                ('pengarang:hendri', context.l10n.librarySearchOpAuthor),
+                ('judul:"deep learning"', context.l10n.librarySearchOpTitle),
+                ('tahun:2024', context.l10n.librarySearchOpYear),
+                ('tag:radiologi', context.l10n.librarySearchOpTag),
+                ('jenis:book', context.l10n.librarySearchOpType),
+                ('jurnal:nature', context.l10n.librarySearchOpJournal),
+                ('abstrak:segmentasi', context.l10n.librarySearchOpAbstract),
+                ('koleksi:tesis', context.l10n.librarySearchOpCollection),
                 ('doi:10.1000', 'DOI'),
-                ('-astrofisika', 'kecualikan yang mengandungnya'),
+                ('-astrofisika', context.l10n.librarySearchOpExclude),
               ])
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
@@ -163,15 +161,17 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
                 ),
               const SizedBox(height: 8),
               Text(
-                'Nama bidang boleh bahasa Inggris juga: author, title, year, '
-                'type, journal, abstract, collection.',
+                context.l10n.librarySearchHelpEnglish,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
           ),
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Tutup')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(context.l10n.libraryClose),
+          ),
         ],
       ),
     );
@@ -188,7 +188,7 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
             child: TextField(
               controller: _controller,
               decoration: InputDecoration(
-                hintText: 'Cari judul, pengarang, abstrak, DOI…',
+                hintText: context.l10n.librarySearchHint,
                 prefixIcon: const Icon(Icons.search, size: 18),
                 suffixIcon: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -203,7 +203,7 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
                         },
                       ),
                     IconButton(
-                      tooltip: 'Cara mempersempit pencarian',
+                      tooltip: context.l10n.librarySearchHelpTooltip,
                       icon: const Icon(Icons.help_outline, size: 16),
                       onPressed: () => _showSearchHelp(context),
                     ),
@@ -238,7 +238,7 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
             },
           ),
           IconButton(
-            tooltip: 'Buka berkas dari perangkat ini (tanpa memasukkannya ke library)',
+            tooltip: context.l10n.libraryOpenAnyFile,
             icon: const Icon(Icons.file_open_outlined, size: 18),
             onPressed: () async {
               // Berkas apa pun, bukan hanya milik library: menandatangani
@@ -246,7 +246,7 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
               // yang sama. PDF dibuka di pembaca, CSV/Excel sebagai tabel.
               final picked = await pickFilesOrTell(
                 context,
-                title: 'Pilih berkas untuk dibuka',
+                title: context.l10n.libraryPickFileToOpen,
                 multiple: false,
               );
               final path = picked.firstOrNull;
@@ -262,8 +262,8 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
               final groups = ref.watch(duplicateGroupsProvider);
               return IconButton(
                 tooltip: groups.isEmpty
-                    ? 'Cari item yang masuk lebih dari sekali'
-                    : '${groups.length} kemungkinan duplikat',
+                    ? context.l10n.libraryFindDuplicates
+                    : context.l10n.libraryPossibleDuplicates(groups.length),
                 icon: Badge(
                   isLabelVisible: groups.isNotEmpty,
                   label: Text('${groups.length}'),
@@ -276,14 +276,14 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
             },
           ),
           IconButton(
-            tooltip: 'Statistik library',
+            tooltip: context.l10n.libraryStats,
             icon: const Icon(Icons.insights_outlined, size: 18),
             onPressed: () => Navigator.of(
               context,
             ).push(MaterialPageRoute<void>(builder: (_) => const LibraryStatsScreen())),
           ),
           IconButton(
-            tooltip: 'Telusuri berdasarkan pengarang',
+            tooltip: context.l10n.libraryBrowseByAuthor,
             icon: const Icon(Icons.people_alt_outlined, size: 18),
             onPressed: () async {
               final query = await showCreatorFacetSheet(context);
@@ -294,7 +294,7 @@ class _ListHeaderState extends ConsumerState<_ListHeader> {
             },
           ),
           PopupMenuButton<ItemSort>(
-            tooltip: 'Urutkan: ${sort.label}',
+            tooltip: context.l10n.librarySortBy(sort.label),
             icon: const Icon(Icons.sort, size: 18),
             initialValue: sort,
             onSelected: ref.read(itemSortProvider.notifier).set,
@@ -322,7 +322,10 @@ class _ListFooter extends StatelessWidget {
     decoration: BoxDecoration(
       border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
     ),
-    child: Text('$count item', style: Theme.of(context).textTheme.labelSmall),
+    child: Text(
+      context.l10n.libraryItemCount(count),
+      style: Theme.of(context).textTheme.labelSmall,
+    ),
   );
 }
 
@@ -415,7 +418,9 @@ class _ItemTile extends StatelessWidget {
                               : attachment.isEpub
                               ? Icons.menu_book_outlined
                               : Icons.attach_file,
-                          label: attachment.isAvailable ? 'berkas' : 'tidak ada berkas',
+                          label: attachment.isAvailable
+                              ? context.l10n.libraryHasFile
+                              : context.l10n.libraryNoFile,
                           muted: !attachment.isAvailable,
                         ),
                       if (item.annotationCount > 0) ...<Widget>[

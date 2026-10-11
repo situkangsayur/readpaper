@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import '../../../../core/l10n.dart';
 
 /// Mencari biner git yang bisa dipakai.
 ///
@@ -94,12 +95,8 @@ class GitLocator {
   /// Cara memasang git, untuk pesan galat.
   static String installHint([String? operatingSystem]) =>
       switch (operatingSystem ?? Platform.operatingSystem) {
-        'windows' =>
-          'Git for Windows tidak ditemukan. Pasang dari git-scm.com, atau di PowerShell: '
-              'winget install --id Git.Git -e — lalu tekan Coba lagi.',
-        'macos' => 'git tidak ditemukan. Jalankan di Terminal: xcode-select --install.',
-        _ =>
-          'git tidak ditemukan. Pasang git dan git-lfs — CachyOS/Arch: '
-              'sudo pacman -S git git-lfs; Debian/Ubuntu: sudo apt install git git-lfs.',
+        'windows' => l10n.syncInstallGitWindows,
+        'macos' => l10n.syncInstallGitMac,
+        _ => l10n.syncInstallGitLinux,
       };
 }

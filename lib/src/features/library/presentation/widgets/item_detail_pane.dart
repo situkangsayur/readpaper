@@ -17,6 +17,7 @@ import '../../domain/entities/zotero_item.dart';
 import '../controllers/library_controllers.dart';
 import 'item_list_pane.dart' show itemTypeIcon;
 import '../../../files/presentation/open_any_file.dart';
+import '../../../../core/l10n.dart';
 
 /// The right pane: metadata, attachments, notes and the annotation list of the
 /// selected item.
@@ -27,10 +28,10 @@ class ItemDetailPane extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final item = ref.watch(selectedItemProvider);
     if (item == null) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('Pilih satu paper untuk melihat detailnya.'),
+          padding: const EdgeInsets.all(24),
+          child: Text(context.l10n.libraryPickPaper),
         ),
       );
     }
@@ -53,19 +54,19 @@ class ItemDetailPane extends ConsumerWidget {
             _MetadataSection(item: item),
             if (item.abstractNote.isNotEmpty) ...<Widget>[
               const SizedBox(height: 20),
-              _SectionTitle('Abstrak'),
+              _SectionTitle(context.l10n.libraryAbstract),
               const SizedBox(height: 6),
               SelectableText(item.abstractNote, style: Theme.of(context).textTheme.bodySmall),
             ],
             if (annotations.isNotEmpty) ...<Widget>[
               const SizedBox(height: 20),
-              _SectionTitle('Anotasi (${annotations.length})'),
+              _SectionTitle(context.l10n.libraryAnnotationsCount(annotations.length)),
               const SizedBox(height: 6),
               for (final annotation in annotations) _AnnotationRow(annotation: annotation),
             ],
             if (item.notes.isNotEmpty) ...<Widget>[
               const SizedBox(height: 20),
-              _SectionTitle('Catatan (${item.notes.length})'),
+              _SectionTitle(context.l10n.libraryNotesCount(item.notes.length)),
               const SizedBox(height: 6),
               for (final note in item.notes)
                 Padding(
@@ -87,7 +88,7 @@ class ItemDetailPane extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 icon: const Icon(Icons.functions, size: 18),
-                label: const Text('Salin BibTeX'),
+                label: Text(context.l10n.libraryCopyBibtex),
                 onPressed: () => copyBibTex(context, item),
               ),
             ),
@@ -95,7 +96,7 @@ class ItemDetailPane extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: TextButton.icon(
                 icon: const Icon(Icons.drive_file_move_outline, size: 18),
-                label: const Text('Pindahkan atau salin ke repositori lain…'),
+                label: Text(context.l10n.libraryTransferToRepo),
                 onPressed: () => _transferToRepo(context, ref, item),
               ),
             ),
@@ -104,7 +105,7 @@ class ItemDetailPane extends ConsumerWidget {
               child: TextButton.icon(
                 style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
                 icon: const Icon(Icons.delete_outline, size: 18),
-                label: const Text('Hapus dokumen ini dari library'),
+                label: Text(context.l10n.libraryDeleteDocument),
                 onPressed: () => _confirmDelete(context, ref, item),
               ),
             ),
@@ -127,7 +128,7 @@ class _Title extends ConsumerWidget {
       if (LayoutSize.of(context).isCompact)
         IconButton(
           icon: const Icon(Icons.arrow_back),
-          tooltip: 'Kembali ke daftar',
+          tooltip: context.l10n.libraryBackToList,
           onPressed: () => ref.read(selectedItemKeyProvider.notifier).select(null),
         ),
       Expanded(
@@ -163,7 +164,7 @@ class _AttachmentSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (item.attachments.isEmpty) {
-      return Text('Tidak ada lampiran.', style: Theme.of(context).textTheme.bodySmall);
+      return Text(context.l10n.libraryNoAttachments, style: Theme.of(context).textTheme.bodySmall);
     }
     final repository = ref.watch(libraryRepositoryProvider);
 
@@ -231,12 +232,13 @@ class _AttachmentCard extends ConsumerWidget {
         subtitle: Text(
           <String>[
             if (attachment.sizeLabel.isNotEmpty) attachment.sizeLabel,
-            if (attachment.annotationCount > 0) '${attachment.annotationCount} anotasi',
-            if (file == null && expected != null) 'ada di GitHub, belum diunduh',
-            if (file == null && expected == null) 'berkas belum diunduh',
-            if (isPointer) 'pointer Git LFS — jalankan LFS pull',
+            if (attachment.annotationCount > 0)
+              context.l10n.libraryAnnotationCount(attachment.annotationCount),
+            if (file == null && expected != null) context.l10n.libraryOnGithubNotDownloaded,
+            if (file == null && expected == null) context.l10n.libraryFileNotDownloaded,
+            if (isPointer) context.l10n.libraryLfsPointer,
             if (file != null && !canRead && !canOpen && !isPointer)
-              'format belum bisa dibuka di perangkat ini',
+              context.l10n.libraryCannotOpenFormat,
           ].join(' · '),
           style: Theme.of(context).textTheme.labelSmall,
         ),
@@ -262,7 +264,7 @@ class _AttachmentCard extends ConsumerWidget {
                   ),
                 ),
                 icon: const Icon(Icons.chrome_reader_mode_outlined, size: 18),
-                label: const Text('Baca'),
+                label: Text(context.l10n.libraryRead),
               )
             : canOpen
             ? FilledButton.tonalIcon(
@@ -271,7 +273,7 @@ class _AttachmentCard extends ConsumerWidget {
                   canOpenInApp(file!.path) ? Icons.visibility_outlined : Icons.open_in_new,
                   size: 18,
                 ),
-                label: const Text('Buka'),
+                label: Text(context.l10n.libraryOpen),
               )
             : isPointer
             ? TextButton(
@@ -286,7 +288,7 @@ class _AttachmentCard extends ConsumerWidget {
                           .read(workspaceControllerProvider.notifier)
                           .downloadAttachment(expected.path),
                 icon: const Icon(Icons.download_outlined, size: 18),
-                label: const Text('Unduh'),
+                label: Text(context.l10n.libraryDownload),
               )
             : null,
       ),
@@ -303,19 +305,28 @@ class _MetadataSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = <MapEntry<String, String>>[
       if (item.creatorDetails.isNotEmpty)
-        MapEntry<String, String>('Pengarang', item.creatorDetails.map((c) => c.display).join('; '))
+        MapEntry<String, String>(
+          context.l10n.libraryFieldAuthors,
+          item.creatorDetails.map((c) => c.display).join('; '),
+        )
       else if (item.creators.isNotEmpty)
-        MapEntry<String, String>('Pengarang', item.creators.join('; ')),
-      if (item.publication.isNotEmpty) MapEntry<String, String>('Publikasi', item.publication),
-      if (item.date.isNotEmpty) MapEntry<String, String>('Tanggal', item.date),
-      if (item.publisher.isNotEmpty) MapEntry<String, String>('Penerbit', item.publisher),
+        MapEntry<String, String>(context.l10n.libraryFieldAuthors, item.creators.join('; ')),
+      if (item.publication.isNotEmpty)
+        MapEntry<String, String>(context.l10n.libraryFieldPublication, item.publication),
+      if (item.date.isNotEmpty) MapEntry<String, String>(context.l10n.libraryFieldDate, item.date),
+      if (item.publisher.isNotEmpty)
+        MapEntry<String, String>(context.l10n.libraryFieldPublisher, item.publisher),
       if (item.doi.isNotEmpty) MapEntry<String, String>('DOI', item.doi),
       if (item.url.isNotEmpty) MapEntry<String, String>('URL', item.url),
-      if (item.tags.isNotEmpty) MapEntry<String, String>('Tag', item.tags.join(', ')),
+      if (item.tags.isNotEmpty)
+        MapEntry<String, String>(context.l10n.libraryFieldTags, item.tags.join(', ')),
       if (item.collectionPaths.isNotEmpty)
-        MapEntry<String, String>('Koleksi', item.collectionPaths.join(' · ')),
+        MapEntry<String, String>(
+          context.l10n.libraryFieldCollections,
+          item.collectionPaths.join(' · '),
+        ),
       if (item.dateAdded != null)
-        MapEntry<String, String>('Ditambahkan', noteTimestamp(item.dateAdded!)),
+        MapEntry<String, String>(context.l10n.libraryFieldAdded, noteTimestamp(item.dateAdded!)),
       MapEntry<String, String>('Zotero key', item.key),
       for (final entry in item.extraFields.entries)
         if (entry.value is String || entry.value is num)
@@ -325,7 +336,7 @@ class _MetadataSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        _SectionTitle('Detail'),
+        _SectionTitle(context.l10n.libraryDetails),
         const SizedBox(height: 6),
         for (final row in rows)
           Padding(
@@ -402,8 +413,12 @@ class _AnnotationRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
-                  'hal. ${annotation.pageLabel.isEmpty ? annotation.pageNumber : annotation.pageLabel}'
-                  ' · ${annotation.type.wire}',
+                  context.l10n.libraryAnnotationPage(
+                    annotation.pageLabel.isEmpty
+                        ? '${annotation.pageNumber}'
+                        : annotation.pageLabel,
+                    annotation.type.wire,
+                  ),
                   style: Theme.of(context).textTheme.labelSmall,
                 ),
                 if (annotation.text.isNotEmpty)
@@ -454,7 +469,13 @@ Future<void> _transferToRepo(BuildContext context, WidgetRef ref, ZoteroItem ite
   if (choice == null || !context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
   messenger.showSnackBar(
-    SnackBar(content: Text('${choice.move ? 'Memindah' : 'Menyalin'} ke ${choice.target.name}…')),
+    SnackBar(
+      content: Text(
+        choice.move
+            ? context.l10n.libraryMovingTo(choice.target.name)
+            : context.l10n.libraryCopyingTo(choice.target.name),
+      ),
+    ),
   );
   final failure = await ref
       .read(workspaceControllerProvider.notifier)
@@ -473,7 +494,9 @@ Future<void> _transferToRepo(BuildContext context, WidgetRef ref, ZoteroItem ite
     ..showSnackBar(
       SnackBar(
         duration: Duration(seconds: failure == null ? 4 : 8),
-        content: Text(failure ?? '${choice.move ? 'Dipindahkan' : 'Disalin'} ke $where'),
+        content: Text(
+          failure ?? (choice.move ? l10n.libraryMovedTo(where) : l10n.libraryCopiedTo(where)),
+        ),
       ),
     );
 }
@@ -482,19 +505,17 @@ Future<void> _confirmDelete(BuildContext context, WidgetRef ref, ZoteroItem item
   final yakin = await showDialog<bool>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('Hapus dokumen ini?'),
-      content: Text(
-        'Berkas item, lampirannya, dan catatannya dihapus dari library, lalu '
-        'perubahannya di-commit.\n\n'
-        '"${item.title}"\n\n'
-        'Koleksi dan dokumen lain tidak tersentuh.',
-      ),
+      title: Text(context.l10n.libraryConfirmDeleteDocument),
+      content: Text(context.l10n.libraryConfirmDeleteDocumentBody(item.title)),
       actions: <Widget>[
-        TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Batal')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(context.l10n.libraryCancel),
+        ),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
           onPressed: () => Navigator.of(context).pop(true),
-          child: const Text('Hapus'),
+          child: Text(context.l10n.libraryDelete),
         ),
       ],
     ),
@@ -508,7 +529,9 @@ Future<void> _confirmDelete(BuildContext context, WidgetRef ref, ZoteroItem item
     ..showSnackBar(
       SnackBar(
         content: Text(
-          ok ? 'Dokumen dihapus' : ref.read(workspaceControllerProvider).error ?? 'Gagal menghapus',
+          ok
+              ? context.l10n.libraryDocumentDeleted
+              : ref.read(workspaceControllerProvider).error ?? context.l10n.libraryDeleteFailed,
         ),
       ),
     );

@@ -11,6 +11,7 @@ import '../../domain/entities/zotero_annotation.dart';
 import '../../domain/entities/zotero_collection.dart';
 import 'zotero_fs_datasource.dart';
 import 'zotero_json.dart';
+import '../../../../core/l10n.dart';
 
 /// Writes annotations back into the Zotero export.
 ///
@@ -76,10 +77,7 @@ class ZoteroWriter {
     final itemsRoot = p.normalize(p.join(libraryDir, 'items'));
     final target = p.normalize(itemFilePath);
     if (!p.isWithin(itemsRoot, target) || p.extension(target) != '.json') {
-      throw LibraryFailure(
-        'Menolak menghapus: berkas ini bukan item di dalam items/',
-        details: itemFilePath,
-      );
+      throw LibraryFailure(l10n.libraryErrRefuseDeleteNotItem, details: itemFilePath);
     }
 
     final json = await _readItem(itemFilePath);
@@ -150,12 +148,12 @@ class ZoteroWriter {
   }) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
-      throw const LibraryFailure('Nama koleksi tidak boleh kosong');
+      throw LibraryFailure(l10n.libraryErrCollectionNameEmpty);
     }
     if (trimmed.contains('/')) {
       // Garis miring adalah pemisah jalur koleksi di berkas ini; nama yang
       // memuatnya akan membuat jalurnya tidak bisa dibaca kembali.
-      throw const LibraryFailure('Nama koleksi tidak boleh memuat garis miring');
+      throw LibraryFailure(l10n.libraryErrCollectionNameSlash);
     }
 
     final file = File(p.join(libraryDir, 'collections.json'));
@@ -163,17 +161,11 @@ class ZoteroWriter {
     if (file.existsSync()) {
       final decoded = jsonDecode(await file.readAsString());
       if (decoded is! List) {
-        throw LibraryFailure(
-          'collections.json tidak berisi daftar koleksi — menolak menulisinya',
-          details: file.path,
-        );
+        throw LibraryFailure(l10n.libraryErrCollectionsNotListRefuse, details: file.path);
       }
       for (final entry in decoded) {
         if (entry is! Map) {
-          throw LibraryFailure(
-            'Ada entri di collections.json yang bukan koleksi — menolak menulisinya',
-            details: file.path,
-          );
+          throw LibraryFailure(l10n.libraryErrCollectionsBadEntry, details: file.path);
         }
         existing.add(entry.cast<String, dynamic>());
       }
@@ -183,7 +175,7 @@ class ZoteroWriter {
     if (parentKey != null) {
       final parent = existing.where((e) => e['key'] == parentKey).firstOrNull;
       if (parent == null) {
-        throw LibraryFailure('Koleksi induk tidak ada', details: parentKey);
+        throw LibraryFailure(l10n.libraryErrParentMissing, details: parentKey);
       }
       parentPath = (parent['path'] as String?) ?? (parent['name'] as String? ?? '');
     }
@@ -194,7 +186,7 @@ class ZoteroWriter {
           ((e['name'] as String?) ?? '').toLowerCase() == trimmed.toLowerCase(),
     );
     if (kembar) {
-      throw LibraryFailure('Sudah ada koleksi bernama "$trimmed" di tempat yang sama');
+      throw LibraryFailure(l10n.libraryErrCollectionExists(trimmed));
     }
 
     final keys = <String>{for (final e in existing) (e['key'] as String?) ?? ''};
@@ -203,7 +195,7 @@ class ZoteroWriter {
       key = ZoteroKey.generate();
     }
     if (keys.contains(key)) {
-      throw const LibraryFailure('Gagal membuat kunci koleksi baru');
+      throw LibraryFailure(l10n.libraryErrCollectionKey);
     }
 
     final created = ZoteroCollection(
@@ -265,7 +257,7 @@ class ZoteroWriter {
       // Koleksi tidak boleh masuk ke keturunannya sendiri: pohonnya jadi
       // lingkaran, dan Zotero menolak mengimpornya.
       if (_descendants(collections, key).contains(newParentKey) || newParentKey == key) {
-        throw const LibraryFailure('Koleksi tidak bisa dipindah ke dalam dirinya sendiri');
+        throw LibraryFailure(l10n.libraryErrMoveIntoSelf);
       }
     }
     _rejectTwin(
@@ -320,16 +312,16 @@ class ZoteroWriter {
 
   static String _checkName(String name) {
     final trimmed = name.trim();
-    if (trimmed.isEmpty) throw const LibraryFailure('Nama koleksi tidak boleh kosong');
+    if (trimmed.isEmpty) throw LibraryFailure(l10n.libraryErrCollectionNameEmpty);
     if (trimmed.contains('/')) {
-      throw const LibraryFailure('Nama koleksi tidak boleh memuat garis miring');
+      throw LibraryFailure(l10n.libraryErrCollectionNameSlash);
     }
     return trimmed;
   }
 
   Future<List<Map<String, dynamic>>> _readCollections(String libraryDir) async {
     final file = File(p.join(libraryDir, 'collections.json'));
-    if (!file.existsSync()) throw const LibraryFailure('collections.json tidak ada');
+    if (!file.existsSync()) throw LibraryFailure(l10n.libraryErrCollectionsMissing);
     final decoded = jsonDecode(await file.readAsString());
     if (decoded is! List || decoded.any((e) => e is! Map)) {
       throw LibraryFailure(
@@ -342,7 +334,7 @@ class ZoteroWriter {
 
   static Map<String, dynamic> _find(List<Map<String, dynamic>> collections, String key) =>
       collections.where((c) => c['key'] == key).firstOrNull ??
-      (throw LibraryFailure('Koleksi tidak ada lagi', details: key));
+      (throw LibraryFailure(l10n.libraryErrCollectionGone, details: key));
 
   static void _rejectTwin(
     List<Map<String, dynamic>> collections, {
@@ -356,7 +348,7 @@ class ZoteroWriter {
           (c['parentKey'] as String?) == parentKey &&
           ((c['name'] as String?) ?? '').toLowerCase() == name.toLowerCase(),
     );
-    if (twin) throw LibraryFailure('Sudah ada koleksi bernama "$name" di tempat yang sama');
+    if (twin) throw LibraryFailure(l10n.libraryErrCollectionExists(name));
   }
 
   static Set<String> _descendants(List<Map<String, dynamic>> collections, String key) {
@@ -477,7 +469,7 @@ class ZoteroWriter {
 
     final zotero = (json['zotero'] as Map?)?.cast<String, dynamic>();
     if (zotero == null) {
-      throw LibraryFailure('Berkas item tidak punya bagian zotero', details: itemFilePath);
+      throw LibraryFailure(l10n.libraryErrItemNoZotero, details: itemFilePath);
     }
     zotero['collections'] = <dynamic>[...collectionKeys];
     zotero['dateModified'] = _stamp(DateTime.now());
@@ -491,7 +483,7 @@ class ZoteroWriter {
   Future<Map<String, dynamic>> _readItem(String itemFilePath) async {
     final file = File(itemFilePath);
     if (!file.existsSync()) {
-      throw LibraryFailure('Berkas item tidak ditemukan', details: itemFilePath);
+      throw LibraryFailure(l10n.libraryErrItemNotFound, details: itemFilePath);
     }
     return ZoteroJson.decodeObject(await file.readAsString());
   }
@@ -628,7 +620,7 @@ class ZoteroWriter {
     final pdfPath = filePath;
     final source = File(pdfPath);
     if (!source.existsSync()) {
-      throw LibraryFailure('Berkas tidak ditemukan', details: pdfPath);
+      throw LibraryFailure(l10n.libraryErrFileNotFound, details: pdfPath);
     }
     final contentType = contentTypeOf(pdfPath);
     final attachmentTitle = attachmentTitleOf(pdfPath);

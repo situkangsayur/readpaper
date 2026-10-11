@@ -8,6 +8,7 @@ import '../../data/notes_store.dart';
 import '../../domain/note_entities.dart';
 import 'package:path/path.dart' as p;
 import '../../../files/domain/folder_scan.dart';
+import '../../../../core/l10n.dart';
 
 /// Folder catatan repositori yang sedang aktif, kalau ada.
 final notesStoreProvider = Provider<NotesStore?>((ref) {
@@ -160,9 +161,9 @@ class NotesController extends AsyncNotifier<NotesIndex> {
   }) async {
     final store = _store;
     final source = ref.read(workspaceControllerProvider).profile;
-    if (store == null || source == null) return 'Belum ada repositori aktif.';
+    if (store == null || source == null) return l10n.notesNoActiveRepo;
     final item = (await store.read()).items.where((i) => i.key == itemKey).firstOrNull;
-    if (item == null) return 'Catatannya tidak ada lagi.';
+    if (item == null) return l10n.notesNoteGone;
     final workspace = ref.read(workspaceControllerProvider.notifier);
     try {
       await store.copyItemTo(
@@ -194,11 +195,11 @@ class NotesController extends AsyncNotifier<NotesIndex> {
   }) async {
     final store = _store;
     final source = ref.read(workspaceControllerProvider).profile;
-    if (store == null || source == null) return 'Belum ada repositori aktif.';
+    if (store == null || source == null) return l10n.notesNoActiveRepo;
     final collection = (await store.read()).collections
         .where((c) => c.key == collectionKey)
         .firstOrNull;
-    if (collection == null) return 'Koleksinya tidak ada lagi.';
+    if (collection == null) return l10n.notesCollectionGone;
     final workspace = ref.read(workspaceControllerProvider.notifier);
     try {
       final result = await store.copyCollectionTo(
@@ -234,7 +235,7 @@ class NotesController extends AsyncNotifier<NotesIndex> {
   Future<String?> _guard(String message, Future<String> Function(NotesStore store) action) async {
     final store = _store;
     if (store == null) {
-      _fail('Belum ada repositori aktif untuk menyimpan catatan.');
+      _fail(l10n.notesNoRepoToSave);
       return null;
     }
     try {

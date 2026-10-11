@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:meta/meta.dart';
+import '../../../core/l10n.dart';
 
 /// Satu goresan di papan tulis.
 ///
@@ -55,12 +56,10 @@ class BoardStroke {
 /// depan orang butuh kertas mendatar — di kertas tegak, gambarnya mentok di
 /// tepi kanan sebelum ceritanya selesai.
 enum BoardOrientation {
-  tegak('Tegak'),
-  mendatar('Mendatar');
+  tegak,
+  mendatar;
 
-  const BoardOrientation(this.label);
-
-  final String label;
+  String get label => this == tegak ? l10n.whiteboardPortrait : l10n.whiteboardLandscape;
 
   BoardOrientation get lain => this == tegak ? mendatar : tegak;
 
@@ -162,12 +161,12 @@ class BoardBackgrounds {
   static const Color cream = Color(0xFFF6EFE2);
   static const Color navy = Color(0xFF10233F);
 
-  static const List<({String name, Color color})> all = <({String name, Color color})>[
-    (name: 'Putih', color: white),
-    (name: 'Hitam', color: black),
-    (name: 'Hijau papan', color: green),
-    (name: 'Krem', color: cream),
-    (name: 'Biru malam', color: navy),
+  static List<({String name, Color color})> get all => <({String name, Color color})>[
+    (name: l10n.whiteboardBgWhite, color: white),
+    (name: l10n.whiteboardBgBlack, color: black),
+    (name: l10n.whiteboardBgGreen, color: green),
+    (name: l10n.whiteboardBgCream, color: cream),
+    (name: l10n.whiteboardBgNavy, color: navy),
   ];
 
   /// Warna pena yang terbaca di atas latar tertentu.

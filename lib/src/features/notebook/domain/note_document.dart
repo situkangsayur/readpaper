@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:meta/meta.dart';
 
 import '../../../core/utils/shape_geometry.dart';
+import '../../../core/l10n.dart';
 
 /// Ukuran kertas yang ditawarkan, dalam titik PDF.
 ///
@@ -54,12 +55,10 @@ enum NotePaper {
 
 /// Arah kertas lembar catatan.
 enum NoteOrientation {
-  tegak('Tegak'),
-  mendatar('Mendatar');
+  tegak,
+  mendatar;
 
-  const NoteOrientation(this.label);
-
-  final String label;
+  String get label => this == tegak ? l10n.whiteboardPortrait : l10n.whiteboardLandscape;
 
   NoteOrientation get lain => this == tegak ? mendatar : tegak;
 

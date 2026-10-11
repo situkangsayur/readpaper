@@ -1,4 +1,5 @@
 import 'entities/zotero_item.dart';
+import '../../../core/l10n.dart';
 
 /// Satu baris hitungan: label beserta berapa banyaknya.
 typedef StatTally = ({String label, int count});
@@ -61,28 +62,28 @@ class LibraryStats {
   ///
   /// Ditulis di sini, bukan di layar, karena nama jenis juga dipakai saat
   /// hasilnya disalin atau diekspor.
-  static const Map<String, String> typeLabels = <String, String>{
-    'journalArticle': 'Artikel jurnal',
-    'conferencePaper': 'Makalah konferensi',
-    'book': 'Buku',
-    'bookSection': 'Bab buku',
-    'thesis': 'Tesis / disertasi',
-    'report': 'Laporan',
-    'preprint': 'Pracetak',
-    'webpage': 'Halaman web',
-    'manuscript': 'Naskah',
-    'document': 'Dokumen',
-    'presentation': 'Presentasi',
-    'dataset': 'Data',
-    'standard': 'Standar',
-    'patent': 'Paten',
-    'magazineArticle': 'Artikel majalah',
-    'newspaperArticle': 'Artikel koran',
-    'encyclopediaArticle': 'Artikel ensiklopedia',
-    'blogPost': 'Tulisan blog',
-    'computerProgram': 'Perangkat lunak',
-    'attachment': 'Lampiran',
-    'note': 'Catatan',
+  static Map<String, String> get typeLabels => <String, String>{
+    'journalArticle': l10n.libraryTypeJournalArticle,
+    'conferencePaper': l10n.libraryTypeConferencePaper,
+    'book': l10n.libraryTypeBook,
+    'bookSection': l10n.libraryTypeBookSection,
+    'thesis': l10n.libraryTypeThesis,
+    'report': l10n.libraryTypeReport,
+    'preprint': l10n.libraryTypePreprint,
+    'webpage': l10n.libraryTypeWebpage,
+    'manuscript': l10n.libraryTypeManuscript,
+    'document': l10n.libraryTypeDocument,
+    'presentation': l10n.libraryTypePresentation,
+    'dataset': l10n.libraryTypeDataset,
+    'standard': l10n.libraryTypeStandard,
+    'patent': l10n.libraryTypePatent,
+    'magazineArticle': l10n.libraryTypeMagazineArticle,
+    'newspaperArticle': l10n.libraryTypeNewspaperArticle,
+    'encyclopediaArticle': l10n.libraryTypeEncyclopediaArticle,
+    'blogPost': l10n.libraryTypeBlogPost,
+    'computerProgram': l10n.libraryTypeComputerProgram,
+    'attachment': l10n.libraryTypeAttachment,
+    'note': l10n.libraryTypeNote,
   };
 
   static String labelForType(String itemType) => typeLabels[itemType] ?? itemType;

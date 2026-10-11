@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/utils/share_file.dart';
+import '../../../../core/l10n.dart';
 
 /// Melihat satu gambar: hasil pindaian, tangkapan layar, foto papan tulis.
 ///
@@ -38,7 +39,7 @@ class ImageViewerScreen extends StatelessWidget {
           // sendiri — bukan seluruh layar — sebagai titik itu.
           Builder(
             builder: (buttonContext) => IconButton(
-              tooltip: 'Bagikan',
+              tooltip: context.l10n.notesShare,
               icon: const Icon(Icons.share_outlined),
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(buttonContext);
@@ -60,7 +61,7 @@ class ImageViewerScreen extends StatelessWidget {
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('Berkas gambarnya tidak ada lagi:\n$path', textAlign: TextAlign.center),
+                child: Text(context.l10n.notesImageMissing(path), textAlign: TextAlign.center),
               ),
             )
           // Dua jari memperbesar: gambar pindaian sering perlu diperbesar untuk

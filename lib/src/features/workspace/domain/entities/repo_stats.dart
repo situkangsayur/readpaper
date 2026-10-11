@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:path/path.dart' as p;
+import '../../../../core/l10n.dart';
 
 /// Seberapa besar sebuah repositori, untuk memilih di antara beberapa.
 class RepoStats {
@@ -37,14 +38,14 @@ class RepoStats {
 
   /// Ringkasan satu baris: "1.741 item · 61 koleksi · 412 MB · 3 belum terkirim".
   String get summary {
-    if (!cloned) return 'belum diambil ke perangkat ini';
+    if (!cloned) return l10n.workspaceStatsNotFetched;
     return <String>[
-      '${_thousands(items)} item',
-      '${_thousands(collections)} koleksi',
+      l10n.workspaceStatsItems(_thousands(items)),
+      l10n.workspaceStatsCollections(_thousands(collections)),
       formatBytes(diskBytes),
-      if (attachmentBytes > 0) 'lampiran ${formatBytes(attachmentBytes)}',
-      if (unsent > 0) '$unsent belum terkirim',
-      if (behind > 0) '$behind baru di GitHub',
+      if (attachmentBytes > 0) l10n.workspaceStatsAttachments(formatBytes(attachmentBytes)),
+      if (unsent > 0) l10n.workspaceStatsUnsent(unsent),
+      if (behind > 0) l10n.workspaceStatsBehind(behind),
     ].join(' · ');
   }
 

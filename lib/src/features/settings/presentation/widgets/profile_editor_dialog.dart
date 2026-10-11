@@ -11,6 +11,7 @@ import '../../../../shared/providers/app_providers.dart';
 import '../../../sync/domain/entities/git_entities.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/repo_profile.dart';
+import '../../../../core/l10n.dart';
 
 /// Result of the editor: the profile plus the token to store separately.
 class ProfileEditorResult {
@@ -146,7 +147,11 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
     final canChooseFolder = !Platform.isAndroid && !Platform.isIOS;
 
     return AlertDialog(
-      title: Text(widget.existing == null ? 'Tambah repositori' : 'Ubah repositori'),
+      title: Text(
+        widget.existing == null
+            ? context.l10n.settingsAddRepository
+            : context.l10n.settingsEditRepository,
+      ),
       content: SizedBox(
         width: 560,
         child: SingleChildScrollView(
@@ -158,12 +163,12 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
               children: <Widget>[
                 TextFormField(
                   controller: _remote,
-                  decoration: const InputDecoration(
-                    labelText: 'URL repositori',
+                  decoration: InputDecoration(
+                    labelText: context.l10n.settingsRepoUrl,
                     hintText: 'git@github.com:situkangsayur/zotero-hendri.git',
                   ),
                   validator: (value) =>
-                      (value ?? '').trim().isEmpty ? 'URL tidak boleh kosong' : null,
+                      (value ?? '').trim().isEmpty ? context.l10n.settingsUrlRequired : null,
                 ),
                 const SizedBox(height: 12),
                 if (supported.length > 1)
@@ -187,8 +192,7 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Perangkat ini menyinkronkan lewat GitHub API, jadi aksesnya '
-                      'memakai token HTTPS.',
+                      context.l10n.settingsApiTokenNote,
                       style: Theme.of(context).textTheme.labelSmall,
                     ),
                   ),
@@ -196,24 +200,24 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
                 TextFormField(
                   controller: _name,
                   onChanged: (_) => _nameEdited = true,
-                  decoration: const InputDecoration(labelText: 'Nama tampilan'),
+                  decoration: InputDecoration(labelText: context.l10n.settingsDisplayName),
                   validator: (value) =>
-                      (value ?? '').trim().isEmpty ? 'Nama tidak boleh kosong' : null,
+                      (value ?? '').trim().isEmpty ? context.l10n.settingsNameRequired : null,
                 ),
                 const SizedBox(height: 12),
                 if (isSsh)
                   _PathField(
                     controller: _sshKey,
-                    label: 'Kunci privat SSH (opsional)',
+                    label: context.l10n.settingsSshKeyOptional,
                     hint: '${Platform.environment['HOME']}/.ssh/id_ed25519',
-                    helper: 'Kosongkan untuk memakai ssh-agent atau kunci bawaan.',
+                    helper: context.l10n.settingsSshKeyHelper,
                     onPick: _pickSshKey,
                   )
                 else ...<Widget>[
                   TextFormField(
                     controller: _httpsUser,
-                    decoration: const InputDecoration(
-                      labelText: 'Username GitHub',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.settingsGithubUsername,
                       hintText: 'situkangsayur',
                     ),
                   ),
@@ -221,9 +225,9 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
                   TextFormField(
                     controller: _token,
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Personal access token',
-                      helperText: 'Disimpan terpisah di credentials.json (izin 600).',
+                    decoration: InputDecoration(
+                      labelText: context.l10n.settingsAccessToken,
+                      helperText: context.l10n.settingsTokenHelper,
                     ),
                   ),
                 ],
@@ -242,7 +246,7 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
                         flex: 2,
                         child: _PathField(
                           controller: _localPath,
-                          label: 'Folder clone lokal',
+                          label: context.l10n.settingsLocalCloneFolder,
                           hint: '',
                           onChanged: () => _localPathEdited = true,
                           onPick: _pickDirectory,
@@ -253,22 +257,25 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
                 else
                   TextFormField(
                     controller: _branch,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Branch',
-                      helperText: 'Data disimpan di penyimpanan privat aplikasi.',
+                      helperText: context.l10n.settingsPrivateStorage,
                     ),
                   ),
                 const SizedBox(height: 16),
-                Text('Identitas commit', style: Theme.of(context).textTheme.labelLarge),
+                Text(
+                  context.l10n.settingsCommitIdentity,
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
                 const SizedBox(height: 8),
                 Row(
                   children: <Widget>[
                     Expanded(
                       child: TextFormField(
                         controller: _authorName,
-                        decoration: const InputDecoration(
-                          labelText: 'Nama',
-                          hintText: 'kosong = pakai konfigurasi git',
+                        decoration: InputDecoration(
+                          labelText: context.l10n.settingsNameLabel,
+                          hintText: context.l10n.settingsAuthorHint,
                         ),
                       ),
                     ),
@@ -285,12 +292,8 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _lazyAttachments,
-                  title: const Text('Unduh PDF hanya saat dibuka'),
-                  subtitle: const Text(
-                    'Ambil metadata library dulu (puluhan MB); berkas PDF menyusul '
-                    'satu per satu. Matikan kalau ingin semua PDF diunduh sekaligus '
-                    'sesudah ambil dan pull, supaya bisa dibaca offline.',
-                  ),
+                  title: Text(context.l10n.settingsLazyPdfTitle),
+                  subtitle: Text(context.l10n.settingsLazyPdfSubtitle),
                   // Di Android juga: mirror-nya mengunduh semua PDF sesudah
                   // ambil dan pull bila pilihan ini dimatikan.
                   onChanged: (value) => setState(() => _lazyAttachments = value),
@@ -298,8 +301,8 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _autoPush,
-                  title: const Text('Push otomatis setelah menyimpan anotasi'),
-                  subtitle: const Text('Setiap highlight/komentar langsung dikirim ke GitHub.'),
+                  title: Text(context.l10n.settingsAutoPushTitle),
+                  subtitle: Text(context.l10n.settingsAutoPushSubtitle),
                   onChanged: (value) => setState(() => _autoPush = value),
                 ),
               ],
@@ -308,20 +311,27 @@ class _ProfileEditorDialogState extends ConsumerState<ProfileEditorDialog> {
         ),
       ),
       actions: <Widget>[
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
-        FilledButton(onPressed: _submit, child: const Text('Simpan')),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.filesCancel),
+        ),
+        FilledButton(onPressed: _submit, child: Text(context.l10n.filesSave)),
       ],
     );
   }
 
   Future<void> _pickSshKey() async {
-    final files = await pickFilesOrTell(context, title: 'Pilih kunci privat SSH', multiple: false);
+    final files = await pickFilesOrTell(
+      context,
+      title: context.l10n.settingsPickSshKey,
+      multiple: false,
+    );
     final path = files.firstOrNull;
     if (path != null && mounted) setState(() => _sshKey.text = path);
   }
 
   Future<void> _pickDirectory() async {
-    final path = await pickDirectoryOrTell(context, title: 'Pilih folder clone');
+    final path = await pickDirectoryOrTell(context, title: context.l10n.settingsPickCloneFolder);
     if (path != null && mounted) {
       setState(() {
         _localPath.text = path;

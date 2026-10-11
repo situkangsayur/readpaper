@@ -13,6 +13,7 @@ import '../../files/domain/folder_scan.dart';
 import '../../notes/domain/note_target.dart';
 import '../../notes/presentation/controllers/notes_controller.dart';
 import '../../workspace/presentation/controllers/workspace_controller.dart';
+import '../../../core/l10n.dart';
 
 /// Memasukkan berkas dan folder ke library atau catatan — satu jalur untuk
 /// semua tombol dan semua tempat lepas: menu koleksi, akar pohon, daftar
@@ -45,7 +46,7 @@ Future<void> pickFolderInto(
   required String? key,
   required String name,
 }) async {
-  final path = await pickDirectoryOrTell(host.context, title: 'Pilih folder untuk $name');
+  final path = await pickDirectoryOrTell(host.context, title: l10n.libraryPickFolderFor(name));
   if (path == null || !host.context.mounted) return;
   await importFolderInto(host, path, notes: notes, key: key, name: name);
 }
@@ -56,7 +57,7 @@ Future<void> pickFilesIntoNotes(
   required String? key,
   required String name,
 }) async {
-  final paths = await pickFilesOrTell(host.context, title: 'Pilih berkas untuk $name');
+  final paths = await pickFilesOrTell(host.context, title: l10n.libraryPickFilesFor(name));
   for (final path in paths) {
     if (!host.context.mounted) return;
     await dropIntoNotes(host, FileDrag(path: path, label: p.basename(path)), key, name);
@@ -67,7 +68,7 @@ Future<void> pickFilesIntoNotes(
 /// (null: library tanpa koleksi), satu per satu lewat jalur yang sama dengan
 /// menyeret berkas ke pohon.
 Future<void> pickFilesIntoPapers(ImportHost host, String? key, String name) async {
-  final paths = await pickFilesOrTell(host.context, title: 'Pilih berkas untuk $name');
+  final paths = await pickFilesOrTell(host.context, title: l10n.libraryPickFilesFor(name));
   final failed = <String>[];
   for (final path in paths) {
     if (!host.context.mounted) return;
@@ -85,9 +86,9 @@ Future<void> pickFilesIntoPapers(ImportHost host, String? key, String name) asyn
           duration: Duration(seconds: failed.isEmpty ? 4 : 10),
           content: Text(
             failed.isEmpty
-                ? '$added berkas masuk ke $name'
-                : '$added dari ${paths.length} berkas masuk ke $name. Gagal: ${failed.join(', ')}. '
-                      '${host.container.read(workspaceControllerProvider).error ?? ''}',
+                ? l10n.libraryFilesAdded(added, name)
+                : l10n.libraryFilesAddedPartly(added, paths.length, name, failed.join(', ')) +
+                      (host.container.read(workspaceControllerProvider).error ?? ''),
           ),
         ),
       );
@@ -125,15 +126,15 @@ Future<bool> dropIntoPapers(
     case ItemDrag():
       final item = host.container.read(workspaceControllerProvider).index?.items[drag.itemKey];
       if (item == null) return false;
-      _say(host, 'Memindahkan ke $collectionName…');
+      _say(host, l10n.libraryMovingInto(collectionName));
       final ok = await host.container
           .read(workspaceControllerProvider.notifier)
           .moveItemToCollection(item: item, collectionKey: collectionKey);
       _say(
         host,
         ok
-            ? 'Pindah ke $collectionName'
-            : (host.container.read(workspaceControllerProvider).error ?? 'Gagal memindahkan'),
+            ? l10n.libraryMovedInto(collectionName)
+            : (host.container.read(workspaceControllerProvider).error ?? l10n.libraryMoveFailed),
       );
       return ok;
 
@@ -150,7 +151,7 @@ Future<bool> dropIntoPapers(
       }
       // Berkas apa pun boleh: Zotero menyimpan lampiran jenis apa saja dan
       // membuka yang bukan PDF dengan aplikasi bawaan sistemnya.
-      _say(host, 'Memasukkan ke $collectionName…');
+      _say(host, l10n.libraryAddingInto(collectionName));
       final created = await host.container
           .read(workspaceControllerProvider.notifier)
           .addFileToLibrary(
@@ -161,8 +162,8 @@ Future<bool> dropIntoPapers(
       _say(
         host,
         created == null
-            ? (host.container.read(workspaceControllerProvider).error ?? 'Gagal memasukkan berkas')
-            : 'Masuk ke $collectionName',
+            ? (host.container.read(workspaceControllerProvider).error ?? l10n.libraryAddFileFailed)
+            : l10n.libraryAddedInto(collectionName),
       );
       return created != null;
   }
@@ -182,13 +183,7 @@ Future<void> dropIntoNotes(
 ) async {
   switch (drag) {
     case ItemDrag():
-      _say(
-        host,
-        'Paper tinggal di akar paper: item Zotero punya rujukan dan '
-        'bibliografi yang dijaga plugin sinkronisasi, dan folder catatan tidak '
-        'mengenalnya. Yang bisa dipindahkan ke sini adalah catatan.',
-        panjang: true,
-      );
+      _say(host, l10n.libraryPapersStayInLibrary, panjang: true);
 
     case NoteDrag():
       final moved = await host.container
@@ -197,8 +192,8 @@ Future<void> dropIntoNotes(
       _say(
         host,
         moved == null
-            ? (host.container.read(notesErrorProvider) ?? 'Gagal memindahkan catatan')
-            : 'Pindah ke $collectionName',
+            ? (host.container.read(notesErrorProvider) ?? l10n.libraryMoveNoteFailed)
+            : l10n.libraryMovedInto(collectionName),
       );
 
     case FileDrag():
@@ -212,7 +207,7 @@ Future<void> dropIntoNotes(
         );
         return;
       }
-      _say(host, 'Memasukkan ke $collectionName…');
+      _say(host, l10n.libraryAddingInto(collectionName));
       final key = await host.container
           .read(notesControllerProvider.notifier)
           .addFile(
@@ -223,8 +218,8 @@ Future<void> dropIntoNotes(
       _say(
         host,
         key == null
-            ? (host.container.read(notesErrorProvider) ?? 'Gagal menyimpan catatan')
-            : 'Masuk ke $collectionName',
+            ? (host.container.read(notesErrorProvider) ?? l10n.librarySaveNoteFailed)
+            : l10n.libraryAddedInto(collectionName),
       );
   }
 }
@@ -243,32 +238,35 @@ Future<bool> importFolderInto(
   final bytes = await Isolate.run(() => folder.totalBytes);
   if (!host.context.mounted) return false;
   if (folder.fileCount == 0) {
-    _say(host, 'Folder ${folder.name} tidak berisi berkas.');
+    _say(host, l10n.libraryFolderEmpty(folder.name));
     return false;
   }
   final mb = bytes / (1024 * 1024);
   final ok = await showDialog<bool>(
     context: host.context,
     builder: (dialog) => AlertDialog(
-      title: Text('Impor folder "${folder.name}" ke $name?'),
+      title: Text(l10n.libraryImportFolderQuestion(folder.name, name)),
       content: Text(
         <String>[
-          '${folder.fileCount} berkas dalam ${folder.folderCount} folder '
-              '(${mb < 1 ? '${(bytes / 1024).ceil()} kB' : '${mb.toStringAsFixed(1)} MB'}).',
-          notes
-              ? 'Folder ini jadi koleksi catatan, subfoldernya jadi sub-koleksi, dan '
-                    'setiap berkas jadi catatan.'
-              : 'Folder ini jadi koleksi, subfoldernya jadi sub-koleksi, dan setiap berkas '
-                    'jadi item Zotero dengan lampirannya — terlihat juga di Zotero.',
-          'Koleksi yang namanya sudah ada di tempat yang sama dipakai, bukan digandakan.',
-          if (mb > 100)
-            'Ukurannya besar. Semua berkas ini masuk repositori git dan ikut terkirim ke '
-                'GitHub.',
+          l10n.libraryFolderSummary(
+            folder.fileCount,
+            folder.folderCount,
+            mb < 1 ? '${(bytes / 1024).ceil()} kB' : '${mb.toStringAsFixed(1)} MB',
+          ),
+          notes ? l10n.libraryFolderToNotes : l10n.libraryFolderToLibrary,
+          l10n.libraryFolderReuses,
+          if (mb > 100) l10n.libraryFolderLarge,
         ].join('\n\n'),
       ),
       actions: <Widget>[
-        TextButton(onPressed: () => Navigator.of(dialog).pop(false), child: const Text('Batal')),
-        FilledButton(onPressed: () => Navigator.of(dialog).pop(true), child: const Text('Impor')),
+        TextButton(
+          onPressed: () => Navigator.of(dialog).pop(false),
+          child: Text(l10n.libraryCancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialog).pop(true),
+          child: Text(l10n.libraryImport),
+        ),
       ],
     ),
   );
@@ -284,7 +282,7 @@ Future<bool> importFolderInto(
       builder: (_) => PopScope(
         canPop: false,
         child: AlertDialog(
-          title: Text('Mengimpor ${folder.name}…'),
+          title: Text(l10n.libraryImporting(folder.name)),
           content: ValueListenableBuilder<(int, int)>(
             valueListenable: progress,
             builder: (_, value, _) => Column(
@@ -292,7 +290,7 @@ Future<bool> importFolderInto(
               children: <Widget>[
                 LinearProgressIndicator(value: value.$2 == 0 ? null : value.$1 / value.$2),
                 const SizedBox(height: 8),
-                Text('${value.$1} dari ${value.$2} berkas'),
+                Text(l10n.libraryProgress(value.$1, value.$2)),
               ],
             ),
           ),
@@ -320,12 +318,14 @@ Future<bool> importFolderInto(
         duration: Duration(seconds: result == null || result.failed.isNotEmpty ? 10 : 5),
         content: Text(
           result == null
-              ? (error ?? 'Impor folder gagal')
+              ? (error ?? l10n.libraryImportFailed)
               : <String>[
-                  '${result.added} berkas masuk, ${result.collections} koleksi baru.',
+                  l10n.libraryImportDone(result.added, result.collections),
                   if (result.failed.isNotEmpty)
-                    'Gagal (${result.failed.length}): ${result.failed.take(3).join('; ')}'
-                        '${result.failed.length > 3 ? '…' : ''}',
+                    l10n.libraryImportFailedSome(
+                      result.failed.length,
+                      result.failed.take(3).join('; ') + (result.failed.length > 3 ? '…' : ''),
+                    ),
                 ].join(' '),
         ),
       ),
@@ -352,7 +352,7 @@ class AddFilesButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => PopupMenuButton<String>(
-    tooltip: 'Tambahkan berkas atau folder ke $collectionName',
+    tooltip: context.l10n.libraryAddToTooltip(collectionName),
     iconSize: iconSize,
     padding: EdgeInsets.zero,
     icon: const Icon(Icons.note_add_outlined),
@@ -374,8 +374,8 @@ class AddFilesButton extends StatelessWidget {
           dense: true,
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.note_add_outlined),
-          title: const Text('Tambahkan berkas…'),
-          subtitle: const Text('jenis apa pun, bisa beberapa sekaligus'),
+          title: Text(context.l10n.libraryAddFiles),
+          subtitle: Text(context.l10n.libraryAnyTypeMany),
         ),
       ),
       if (FileDropZone.supported)
@@ -385,8 +385,8 @@ class AddFilesButton extends StatelessWidget {
             dense: true,
             contentPadding: EdgeInsets.zero,
             leading: const Icon(Icons.drive_folder_upload_outlined),
-            title: const Text('Tambahkan folder…'),
-            subtitle: Text('jadi koleksi di $collectionName, subfolder jadi sub-koleksi'),
+            title: Text(context.l10n.libraryAddFolder),
+            subtitle: Text(context.l10n.libraryAddFolderHint(collectionName)),
           ),
         ),
     ],

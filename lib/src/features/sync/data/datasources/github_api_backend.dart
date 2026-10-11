@@ -12,6 +12,7 @@ import '../../domain/repositories/git_backend.dart';
 import 'github_api_client.dart';
 import 'github_sync_state.dart';
 import '../../domain/json_merge.dart';
+import '../../../../core/l10n.dart';
 
 /// Sync backend for platforms without a `git` binary — notably Android.
 ///
@@ -36,7 +37,7 @@ class GitHubApiBackend implements GitBackend {
   static const List<String> attachmentDirs = <String>['attachments', 'attachments-lfs'];
 
   @override
-  String get label => 'GitHub API';
+  String get label => l10n.syncGitHubApiLabel;
 
   @override
   Set<GitTransport> get supportedTransports => <GitTransport>{GitTransport.https};
@@ -51,10 +52,10 @@ class GitHubApiBackend implements GitBackend {
   Future<GitResult> checkConnection({required GitAuth auth, String? repoPath}) async {
     final remote = auth.remoteUrl == null ? null : GitHubRepoRef.parse(auth.remoteUrl!);
     if (remote == null) {
-      return const GitResult(ok: false, exitCode: 1, message: 'URL repositori tidak dikenali.');
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncErrRepoUrlUnknown);
     }
     if (!auth.hasHttpsCredentials) {
-      return const GitResult(ok: false, exitCode: 1, message: 'Token GitHub belum diisi.');
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncErrTokenMissing);
     }
     final client = clientFactory(remote, auth.httpsToken);
     try {
@@ -63,14 +64,19 @@ class GitHubApiBackend implements GitBackend {
       return GitResult(
         ok: true,
         exitCode: 0,
-        message:
-            'Terhubung sebagai $login · ${remote.slug} pada ${head.substring(0, 7)}'
-            '${client.rateLimitRemaining != null ? ' · sisa kuota ${client.rateLimitRemaining}' : ''}',
+        message: l10n.syncConnectedAs(
+          login,
+          remote.slug,
+          head.substring(0, 7),
+          client.rateLimitRemaining != null
+              ? l10n.syncQuotaLeft('${client.rateLimitRemaining}')
+              : '',
+        ),
       );
     } on Failure catch (e) {
       return GitResult(ok: false, exitCode: 1, message: e.message, stderr: e.details ?? '');
     } on SocketException {
-      return const GitResult(ok: false, exitCode: 1, message: 'Jaringan tidak tersedia.');
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncErrNoNetwork);
     } finally {
       client.close();
     }
@@ -90,35 +96,23 @@ class GitHubApiBackend implements GitBackend {
   }) async {
     final ref = GitHubRepoRef.parse(remoteUrl);
     if (ref == null) {
-      return const GitResult(
-        ok: false,
-        exitCode: 1,
-        message: 'URL repositori tidak dikenali sebagai repositori GitHub.',
-      );
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncErrNotGitHubUrl);
     }
     if (!auth.hasHttpsCredentials) {
-      return const GitResult(
-        ok: false,
-        exitCode: 1,
-        message: 'Di Android sinkronisasi memakai token GitHub. Isi token pada profil repositori.',
-      );
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncErrAndroidNeedsToken);
     }
 
     final target = Directory(targetPath);
     final resuming = GitHubSyncState.existsIn(targetPath);
     if (!resuming && target.existsSync() && target.listSync().isNotEmpty) {
-      return const GitResult(
-        ok: false,
-        exitCode: 1,
-        message: 'Direktori tujuan sudah berisi berkas. Hapus atau pilih lokasi lain.',
-      );
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncTargetNotEmpty);
     }
 
     final client = clientFactory(ref, auth.httpsToken);
     try {
       await target.create(recursive: true);
       final targetBranch = (branch ?? '').isNotEmpty ? branch! : await client.defaultBranch();
-      onProgress?.call(SyncProgress.message('Membaca branch $targetBranch di ${ref.slug}…'));
+      onProgress?.call(SyncProgress.message(l10n.syncReadingBranch(targetBranch, ref.slug)));
 
       final head = await client.headSha(targetBranch);
       final entries = await client.tree(head);
@@ -143,9 +137,7 @@ class GitHubApiBackend implements GitBackend {
       return GitResult(
         ok: true,
         exitCode: 0,
-        message:
-            'Mirror siap: ${state.files.length} berkas metadata, '
-            '${state.attachments.length} lampiran menunggu diunduh saat dibuka',
+        message: l10n.syncMirrorReady(state.files.length, state.attachments.length),
       );
     } on Failure catch (e) {
       // What is already downloaded stays put, together with its bookkeeping:
@@ -155,9 +147,7 @@ class GitHubApiBackend implements GitBackend {
       return GitResult(
         ok: false,
         exitCode: 1,
-        message: done > 0
-            ? '${e.message} $done berkas sudah tersimpan — tekan "Lanjutkan" untuk meneruskan.'
-            : e.message,
+        message: done > 0 ? l10n.syncPartialSaved(e.message, done) : e.message,
         stderr: e.details ?? '',
       );
     } finally {
@@ -289,15 +279,11 @@ class GitHubApiBackend implements GitBackend {
       if (head == state.commitSha) {
         state.behind = 0;
         await state.save(repoPath);
-        return const GitResult(ok: true, exitCode: 0, message: 'Sudah paling baru');
+        return GitResult(ok: true, exitCode: 0, message: l10n.syncUpToDate);
       }
       state.behind = await client.commitsAhead(branch: state.branch, sinceSha: state.commitSha);
       await state.save(repoPath);
-      return GitResult(
-        ok: true,
-        exitCode: 0,
-        message: '${state.behind} commit baru menunggu di GitHub',
-      );
+      return GitResult(ok: true, exitCode: 0, message: l10n.syncBehindWaiting(state.behind));
     });
   }
 
@@ -315,10 +301,10 @@ class GitHubApiBackend implements GitBackend {
       if (head == state.commitSha) {
         state.behind = 0;
         await state.save(repoPath);
-        return const GitResult(ok: true, exitCode: 0, message: 'Sudah paling baru');
+        return GitResult(ok: true, exitCode: 0, message: l10n.syncUpToDate);
       }
 
-      onProgress?.call(SyncProgress.message('Membandingkan dengan commit $head…'));
+      onProgress?.call(SyncProgress.message(l10n.syncComparing(head)));
       final entries = await client.tree(head);
       final merges = <String>[];
       final downloaded = await _mirror(
@@ -337,9 +323,7 @@ class GitHubApiBackend implements GitBackend {
         ok: true,
         exitCode: 0,
         message: <String>[
-          downloaded == 0
-              ? 'Tidak ada perubahan metadata'
-              : 'Pull selesai: $downloaded berkas diperbarui',
+          downloaded == 0 ? l10n.syncNoMetadataChanges : l10n.syncPullUpdated(downloaded),
           ...merges,
         ].join('. '),
       );
@@ -351,11 +335,7 @@ class GitHubApiBackend implements GitBackend {
     required String repoPath,
     required GitAuth auth,
     void Function(SyncProgress progress)? onProgress,
-  }) async => const GitResult(
-    ok: false,
-    exitCode: 1,
-    message: 'Berkas Git LFS belum didukung pada sinkronisasi Android.',
-  );
+  }) async => GitResult(ok: false, exitCode: 1, message: l10n.syncLfsUnsupportedAndroid);
 
   // ------------------------------------------------------------ commit / push
 
@@ -406,8 +386,8 @@ class GitHubApiBackend implements GitBackend {
         ok: true,
         exitCode: 0,
         message: dropped.isEmpty
-            ? 'Tidak ada perubahan untuk di-commit'
-            : '${dropped.length} lampiran dilewati; tidak ada perubahan lain untuk dikirim',
+            ? l10n.syncNothingToCommit
+            : l10n.syncAttachmentsSkippedOnly(dropped.length),
       );
     }
 
@@ -422,9 +402,8 @@ class GitHubApiBackend implements GitBackend {
       ok: true,
       exitCode: 0,
       message: dropped.isEmpty
-          ? '${pendingPaths.length} berkas siap dikirim'
-          : '${pendingPaths.length} berkas siap dikirim; '
-                '${dropped.length} lampiran dilewati (kirim lewat git di komputer)',
+          ? l10n.syncReadyToSend(pendingPaths.length)
+          : l10n.syncReadyToSendSkipped(pendingPaths.length, dropped.length),
     );
   }
 
@@ -437,17 +416,13 @@ class GitHubApiBackend implements GitBackend {
     final state = GitHubSyncState.load(repoPath);
     if (state == null) return _notMirrored;
     if (state.pending.isEmpty) {
-      return const GitResult(ok: true, exitCode: 0, message: 'Tidak ada yang perlu dikirim');
+      return GitResult(ok: true, exitCode: 0, message: l10n.syncNothingToSendShort);
     }
 
     return _withClient(repoPath, auth, (client, ref) async {
       final head = await client.headSha(state.branch);
       if (head != state.commitSha) {
-        return const GitResult(
-          ok: false,
-          exitCode: 1,
-          message: 'GitHub sudah punya commit lebih baru. Tarik perubahan dulu, lalu kirim ulang.',
-        );
+        return GitResult(ok: false, exitCode: 1, message: l10n.syncErrRemoteNewer);
       }
 
       final pending = state.pending.first;
@@ -460,11 +435,7 @@ class GitHubApiBackend implements GitBackend {
       if (sendable.isEmpty) {
         state.pending.clear();
         await state.save(repoPath);
-        return const GitResult(
-          ok: true,
-          exitCode: 0,
-          message: 'Antrean hanya berisi lampiran; tidak ada yang bisa dikirim lewat jalur ini.',
-        );
+        return GitResult(ok: true, exitCode: 0, message: l10n.syncErrQueueOnlyAttachments);
       }
 
       // Berkas yang ditolak GitHub — terlalu besar, atau ditolak dengan 422 —
@@ -508,7 +479,7 @@ class GitHubApiBackend implements GitBackend {
         }
         onProgress?.call(
           SyncProgress(
-            message: 'Mengunggah berkas',
+            message: l10n.syncUploading,
             fraction: index / sendable.length,
             current: index,
             total: sendable.length,
@@ -550,7 +521,7 @@ class GitHubApiBackend implements GitBackend {
           ..addAll(rejectedNow);
         await state.save(repoPath);
         if (rejectedNow.isEmpty) {
-          return const GitResult(ok: true, exitCode: 0, message: 'Tidak ada yang perlu dikirim');
+          return GitResult(ok: true, exitCode: 0, message: l10n.syncNothingToSendShort);
         }
         return GitResult(
           ok: false,
@@ -610,7 +581,7 @@ class GitHubApiBackend implements GitBackend {
           stderr: _rejectionDetails(rejectedNow),
         );
       }
-      return GitResult(ok: true, exitCode: 0, message: 'Terkirim: ${sent.length} berkas');
+      return GitResult(ok: true, exitCode: 0, message: l10n.syncSentCount(sent.length));
     });
   }
 
@@ -629,20 +600,16 @@ class GitHubApiBackend implements GitBackend {
     final relative = _repoRelative(absoluteFilePath, repoPath);
     final known = state.attachments[relative];
     if (known == null) {
-      return GitResult(
-        ok: false,
-        exitCode: 1,
-        message: 'Lampiran tidak ada di repositori: $relative',
-      );
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncErrAttachmentNotInRepo(relative));
     }
 
     return _withClient(repoPath, auth, (client, ref) async {
-      onProgress?.call(SyncProgress.message('Mengunduh ${p.basename(relative)}…'));
+      onProgress?.call(SyncProgress.message(l10n.syncDownloadingFile(p.basename(relative))));
       final bytes = await client.blob(known.sha);
       final file = File(absoluteFilePath);
       await file.parent.create(recursive: true);
       await file.writeAsBytes(bytes, flush: true);
-      return const GitResult(ok: true, exitCode: 0, message: 'Berkas selesai diunduh');
+      return GitResult(ok: true, exitCode: 0, message: l10n.syncFileDownloaded);
     });
   }
 
@@ -668,9 +635,7 @@ class GitHubApiBackend implements GitBackend {
       return GitResult(
         ok: true,
         exitCode: 0,
-        message: lfs == 0
-            ? 'Semua PDF sudah ada di perangkat'
-            : 'Semua PDF sudah ada; $lfs lampiran LFS diambil dari komputer',
+        message: lfs == 0 ? l10n.syncAllPdfsPresent : l10n.syncAllPdfsPresentLfs(lfs),
       );
     }
     return _withClient(repoPath, auth, (client, ref) async {
@@ -678,7 +643,7 @@ class GitHubApiBackend implements GitBackend {
       for (final entry in missing) {
         onProgress?.call(
           SyncProgress.message(
-            'Mengunduh PDF ${done + 1} dari ${missing.length}: ${p.basename(entry.key)}',
+            l10n.syncDownloadingPdfOf(done + 1, missing.length, p.basename(entry.key)),
           ),
         );
         final bytes = await client.blob(entry.value.sha);
@@ -687,7 +652,7 @@ class GitHubApiBackend implements GitBackend {
         await file.writeAsBytes(bytes, flush: true);
         done++;
       }
-      return GitResult(ok: true, exitCode: 0, message: '$done PDF diunduh untuk dibaca offline');
+      return GitResult(ok: true, exitCode: 0, message: l10n.syncPdfsDownloadedOffline(done));
     });
   }
 
@@ -696,7 +661,7 @@ class GitHubApiBackend implements GitBackend {
   @override
   Future<GitResult> setRemote({required String repoPath, required String remoteUrl}) async {
     // The remote lives in the profile; nothing is stored inside the mirror.
-    return const GitResult(ok: true, exitCode: 0, message: 'Remote diperbarui');
+    return GitResult(ok: true, exitCode: 0, message: l10n.syncRemoteUpdated);
   }
 
   @override
@@ -707,7 +672,7 @@ class GitHubApiBackend implements GitBackend {
       GitCommitInfo(
         hash: state.commitSha,
         subject: state.lastCommitSubject.isEmpty
-            ? 'Mirror pada commit ${state.commitSha.substring(0, 7)}'
+            ? l10n.syncMirrorAtCommit(state.commitSha.substring(0, 7))
             : state.lastCommitSubject,
         author: '',
         date: state.lastCommitDate ?? DateTime.now(),
@@ -717,11 +682,9 @@ class GitHubApiBackend implements GitBackend {
 
   // --------------------------------------------------------------- internals
 
-  static const GitResult _notMirrored = GitResult(
-    ok: false,
-    exitCode: 1,
-    message: 'Repositori belum di-mirror di perangkat ini.',
-  );
+  // Getter, bukan konstanta: pesannya mengikuti bahasa yang sedang aktif.
+  static GitResult get _notMirrored =>
+      GitResult(ok: false, exitCode: 1, message: l10n.syncErrNotMirrored);
 
   /// True for paths inside `attachments/` or `attachments-lfs/`.
   /// GitHub menolak isi berkas ini sendiri — bukan jaringan, bukan token.
@@ -734,11 +697,10 @@ class GitHubApiBackend implements GitBackend {
   static String _rejectionMessage(Map<String, RejectedFile> rejected, {required int sentCount}) {
     final names = rejected.keys.map(p.basename).toList();
     final shown = names.take(3).join(', ');
-    final more = names.length > 3 ? ' dan ${names.length - 3} lainnya' : '';
+    final more = names.length > 3 ? l10n.syncRejectedMore(names.length - 3) : '';
     final reason = rejected.values.first.reason;
-    final head = sentCount == 0 ? 'Tidak ada yang terkirim' : '$sentCount berkas terkirim';
-    return '$head; ${names.length} berkas ditolak GitHub dan tetap menunggu: '
-        '$shown$more. $reason';
+    final head = sentCount == 0 ? l10n.syncNothingSent : l10n.syncSentFiles(sentCount);
+    return l10n.syncRejectedSummary(head, names.length, shown, more, reason);
   }
 
   static String _rejectionDetails(Map<String, RejectedFile> rejected) => <String>[
@@ -800,7 +762,7 @@ class GitHubApiBackend implements GitBackend {
     final alreadyHave = state.files.length;
     onProgress?.call(
       SyncProgress(
-        message: alreadyHave > 0 ? 'Melanjutkan unduhan metadata' : 'Mengunduh metadata',
+        message: alreadyHave > 0 ? l10n.syncResumingMetadata : l10n.syncDownloadingMetadata,
         fraction: 0,
         current: 0,
         total: total,
@@ -816,8 +778,7 @@ class GitHubApiBackend implements GitBackend {
         // downloaded but is broken.
         if (gitBlobSha(bytes) != entry.sha) {
           throw GitFailure(
-            'Berkas rusak saat diunduh: ${p.basename(entry.path)}. '
-            'Jalankan lagi untuk mengunduh ulang bagian yang gagal.',
+            l10n.syncErrCorruptDownload(p.basename(entry.path)),
             details: entry.path,
           );
         }
@@ -865,7 +826,7 @@ class GitHubApiBackend implements GitBackend {
         if (done % 10 == 0 || done == total) {
           onProgress?.call(
             SyncProgress(
-              message: 'Mengunduh metadata',
+              message: l10n.syncDownloadingMetadata,
               fraction: done / total,
               current: done,
               total: total,
@@ -918,7 +879,7 @@ class GitHubApiBackend implements GitBackend {
     );
     if (merged != null) {
       await file.writeAsString(merged, flush: true);
-      return 'Digabung otomatis: ${p.basename(path)}';
+      return l10n.syncAutoMerged(p.basename(path));
     }
     if (p.split(path).first == 'zotero') {
       await file.writeAsBytes(remote, flush: true);
@@ -930,7 +891,7 @@ class GitHubApiBackend implements GitBackend {
       '${p.basenameWithoutExtension(path)} (versi GitHub $day)${p.extension(path)}',
     );
     await File(copy).writeAsBytes(remote, flush: true);
-    return 'Versi GitHub disimpan sebagai ${p.basename(copy)}';
+    return l10n.syncGitHubCopies(p.basename(copy));
   }
 
   Future<GitResult> _withClient(
@@ -940,18 +901,10 @@ class GitHubApiBackend implements GitBackend {
   ) async {
     final remote = _remoteFor(repoPath, auth);
     if (remote == null) {
-      return const GitResult(
-        ok: false,
-        exitCode: 1,
-        message: 'URL repositori GitHub tidak dikenali.',
-      );
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncErrGitHubUrlUnknown);
     }
     if (!auth.hasHttpsCredentials) {
-      return const GitResult(
-        ok: false,
-        exitCode: 1,
-        message: 'Token GitHub belum diisi pada profil repositori.',
-      );
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncErrTokenMissingProfile);
     }
     final client = clientFactory(remote, auth.httpsToken);
     try {
@@ -959,7 +912,7 @@ class GitHubApiBackend implements GitBackend {
     } on Failure catch (e) {
       return GitResult(ok: false, exitCode: 1, message: e.message, stderr: e.details ?? '');
     } on SocketException {
-      return const GitResult(ok: false, exitCode: 1, message: 'Jaringan tidak tersedia.');
+      return GitResult(ok: false, exitCode: 1, message: l10n.syncErrNoNetwork);
     } finally {
       client.close();
     }

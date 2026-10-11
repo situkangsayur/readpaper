@@ -8,6 +8,7 @@ import '../../../markdown/presentation/widgets/mermaid_view.dart';
 import '../../data/note_export.dart';
 import '../../domain/note_document.dart';
 import '../../../../core/utils/shape_geometry.dart';
+import '../../../../core/l10n.dart';
 
 /// Menggambar satu lembar catatan beserta seluruh komponennya.
 ///
@@ -295,7 +296,7 @@ class _Picture extends StatelessWidget {
         decoration: BoxDecoration(border: Border.all(color: Theme.of(context).colorScheme.outline)),
         child: Center(
           child: Text(
-            'gambar hilang',
+            context.l10n.notebookImageMissing,
             style: Theme.of(context).textTheme.labelSmall,
             textAlign: TextAlign.center,
           ),

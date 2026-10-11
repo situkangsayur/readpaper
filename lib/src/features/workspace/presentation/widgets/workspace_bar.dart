@@ -8,6 +8,7 @@ import '../../../settings/presentation/screens/profiles_screen.dart';
 import 'repo_transfer_sheet.dart';
 import 'sync_detail_sheet.dart';
 import '../../domain/entities/workspace_state.dart';
+import '../../../../core/l10n.dart';
 
 /// Full-width bar under the app bar: which repository and library are open,
 /// what the sync is doing, and the sync actions.
@@ -80,8 +81,8 @@ class _RepoPicker extends ConsumerWidget {
       // menambah yang kedua tersembunyi di pengaturan.
       enabled: !state.isBusy,
       tooltip: profiles.length > 1
-          ? 'Ganti repositori (${profiles.length} tersedia)'
-          : '${active.shortRemote} — tambah repositori lain',
+          ? context.l10n.workspaceSwitchRepoCount(profiles.length)
+          : context.l10n.workspaceAddAnotherRepo(active.shortRemote),
       maxWidth: narrow ? 200 : 280,
       onSelected: () async {
         final chosen = await showMenu<String>(
@@ -117,13 +118,13 @@ class _RepoPicker extends ConsumerWidget {
                 ),
               ),
             const PopupMenuDivider(),
-            const PopupMenuItem<String>(
+            PopupMenuItem<String>(
               value: '__kelola__',
               child: Row(
                 children: <Widget>[
-                  Icon(Icons.settings_outlined, size: 16),
-                  SizedBox(width: 8),
-                  Text('Kelola repositori…'),
+                  const Icon(Icons.settings_outlined, size: 16),
+                  const SizedBox(width: 8),
+                  Text(context.l10n.workspaceManageRepos),
                 ],
               ),
             ),
@@ -157,7 +158,7 @@ class _LibraryPicker extends ConsumerWidget {
       icon: Icons.local_library_outlined,
       label: active.name,
       enabled: !state.isBusy,
-      tooltip: 'Ganti library',
+      tooltip: context.l10n.workspaceSwitchLibrary,
       maxWidth: 220,
       onSelected: () async {
         final chosen = await showMenu<String>(
@@ -203,7 +204,9 @@ class _SyncActions extends ConsumerWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : const Icon(Icons.download_outlined, size: 20),
-        label: Text(busy ? 'Mengambil…' : 'Ambil library'),
+        label: Text(
+          busy ? context.l10n.workspaceFetchingLibrary : context.l10n.workspaceFetchLibrary,
+        ),
       );
     }
 
@@ -227,7 +230,9 @@ class _SyncActions extends ConsumerWidget {
         if (narrow)
           IconButton(
             iconSize: 20,
-            tooltip: status.behind > 0 ? 'Tarik ${status.behind} commit baru' : 'Tarik perubahan',
+            tooltip: status.behind > 0
+                ? context.l10n.syncPullCount(status.behind)
+                : context.l10n.syncPull,
             icon: Badge(
               isLabelVisible: status.behind > 0,
               label: Text('${status.behind}'),
@@ -243,7 +248,7 @@ class _SyncActions extends ConsumerWidget {
           ),
         if (narrow)
           PopupMenuButton<String>(
-            tooltip: 'Sinkronisasi',
+            tooltip: context.l10n.syncMenu,
             icon: Badge(
               isLabelVisible: !busy && !status.isClean,
               child: Icon(busy ? Icons.sync : Icons.cloud_sync_outlined, size: 20),
@@ -257,28 +262,32 @@ class _SyncActions extends ConsumerWidget {
               },
             ),
             itemBuilder: (_) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(value: 'fetch', child: Text('Periksa perubahan')),
+              PopupMenuItem<String>(value: 'fetch', child: Text(context.l10n.syncCheck)),
               PopupMenuItem<String>(
                 value: 'pull',
                 child: Text(
-                  status.behind > 0 ? 'Tarik ${status.behind} commit baru' : 'Tarik perubahan',
+                  status.behind > 0
+                      ? context.l10n.syncPullCount(status.behind)
+                      : context.l10n.syncPull,
                 ),
               ),
-              const PopupMenuItem<String>(value: 'push', child: Text('Kirim perubahan')),
+              PopupMenuItem<String>(value: 'push', child: Text(context.l10n.syncSend)),
               const PopupMenuDivider(),
-              const PopupMenuItem<String>(value: 'detail', child: Text('Detail sinkronisasi')),
+              PopupMenuItem<String>(value: 'detail', child: Text(context.l10n.syncDetails)),
             ],
           )
         else ...<Widget>[
           IconButton(
             iconSize: 20,
-            tooltip: 'Periksa perubahan di remote',
+            tooltip: context.l10n.syncCheckRemote,
             icon: const Icon(Icons.sync_outlined),
             onPressed: () => guard(controller.fetch),
           ),
           IconButton(
             iconSize: 20,
-            tooltip: status.behind > 0 ? 'Tarik ${status.behind} commit baru' : 'Tarik perubahan',
+            tooltip: status.behind > 0
+                ? context.l10n.syncPullCount(status.behind)
+                : context.l10n.syncPull,
             icon: Badge(
               isLabelVisible: status.behind > 0,
               label: Text('${status.behind}'),
@@ -288,7 +297,7 @@ class _SyncActions extends ConsumerWidget {
           ),
           IconButton(
             iconSize: 20,
-            tooltip: 'Kirim perubahan ke GitHub',
+            tooltip: context.l10n.syncSendToGitHub,
             icon: Badge(
               isLabelVisible: status.isDirty || status.ahead > 0,
               label: Text('${status.changes.length + status.ahead}'),
@@ -298,7 +307,7 @@ class _SyncActions extends ConsumerWidget {
           ),
           IconButton(
             iconSize: 20,
-            tooltip: 'Detail sinkronisasi',
+            tooltip: context.l10n.syncDetails,
             icon: const Icon(Icons.history_outlined),
             onPressed: () => showSyncDetailSheet(context),
           ),
@@ -315,8 +324,8 @@ class _SyncActions extends ConsumerWidget {
           duration: const Duration(seconds: 2),
           content: Text(
             phaseLabel.isEmpty
-                ? 'Sinkronisasi sedang berjalan, tunggu sampai selesai.'
-                : '$phaseLabel Tunggu sampai selesai.',
+                ? context.l10n.syncBusyWait
+                : context.l10n.syncBusyPhaseWait(phaseLabel),
           ),
         ),
       );
@@ -333,7 +342,7 @@ class _SyncActions extends ConsumerWidget {
     if (status != null && !status.isDirty && status.ahead == 0) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(content: Text('Tidak ada perubahan untuk dikirim.')));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.syncNothingToSend)));
       return;
     }
 
@@ -374,9 +383,10 @@ class _StatusChip extends ConsumerWidget {
       message: <String>[
         // Teks chip bisa terpotong di layar sempit; ringkasan lengkapnya di sini.
         status.summary,
-        'Branch: ${status.branch}',
-        if (status.lastCommitSubject.isNotEmpty) 'Commit terakhir: ${status.lastCommitSubject}',
-        if (lastSync != null) 'Sinkron terakhir: ${_clock(lastSync)}',
+        context.l10n.syncTooltipBranch(status.branch),
+        if (status.lastCommitSubject.isNotEmpty)
+          context.l10n.syncTooltipLastCommit(status.lastCommitSubject),
+        if (lastSync != null) context.l10n.syncTooltipLastSync(_clock(lastSync)),
       ].join('\n'),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -445,7 +455,7 @@ class _ProgressRow extends ConsumerWidget {
     final progress = state.progress;
     final text = state.isBusy
         ? (state.progressLabel.isNotEmpty ? state.progressLabel : state.phaseLabel)
-        : 'Membaca library dari berkas…';
+        : context.l10n.workspaceReadingLibrary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
@@ -565,22 +575,25 @@ class _CommitDialogState extends State<CommitDialog> {
 
   @override
   Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Kirim perubahan'),
+    title: Text(context.l10n.syncSend),
     content: SizedBox(
       width: 420,
       child: TextField(
         controller: _controller,
         autofocus: true,
         maxLines: 3,
-        decoration: const InputDecoration(labelText: 'Pesan commit'),
+        decoration: InputDecoration(labelText: context.l10n.syncCommitMessage),
         onSubmitted: (value) => Navigator.of(context).pop(value),
       ),
     ),
     actions: <Widget>[
-      TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Batal')),
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(context.l10n.workspaceCancel),
+      ),
       FilledButton(
         onPressed: () => Navigator.of(context).pop(_controller.text),
-        child: const Text('Commit & kirim'),
+        child: Text(context.l10n.syncCommitAndSend),
       ),
     ],
   );

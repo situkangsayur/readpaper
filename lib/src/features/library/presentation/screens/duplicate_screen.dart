@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/library_controllers.dart';
 import '../../domain/duplicate_finder.dart';
 import '../../domain/entities/zotero_item.dart';
+import '../../../../core/l10n.dart';
 
 /// Memperlihatkan item yang tampaknya karya yang sama, masuk lebih dari sekali.
 ///
@@ -29,7 +30,7 @@ class DuplicateScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kemungkinan duplikat'),
+        title: Text(context.l10n.libraryDuplicatesTitle),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28),
           child: Padding(
@@ -38,10 +39,9 @@ class DuplicateScreen extends ConsumerWidget {
               alignment: Alignment.centerLeft,
               child: Text(
                 groups.isEmpty
-                    ? '$itemCount item diperiksa, tidak ada yang mencurigakan.'
-                    : '${groups.length} kelompok · $copies salinan '
-                          'dari $itemCount item'
-                          '${risky == 0 ? '' : ' · $risky perlu hati-hati'}',
+                    ? context.l10n.libraryDuplicatesNone(itemCount)
+                    : context.l10n.libraryDuplicatesSummary(groups.length, copies, itemCount) +
+                          (risky == 0 ? '' : context.l10n.libraryDuplicatesRisky(risky)),
                 style: Theme.of(context).textTheme.labelMedium,
               ),
             ),
@@ -74,11 +74,10 @@ class _Empty extends StatelessWidget {
         children: <Widget>[
           Icon(Icons.verified_outlined, size: 40, color: Theme.of(context).colorScheme.primary),
           const SizedBox(height: 12),
-          const Text('Tidak ada yang tampak ganda.', textAlign: TextAlign.center),
+          Text(context.l10n.libraryNothingDuplicated, textAlign: TextAlign.center),
           const SizedBox(height: 8),
           Text(
-            'Dicocokkan lewat DOI, lalu ISBN, lalu judul bersama tahun dan '
-            'nama pengarang pertama.',
+            context.l10n.libraryDuplicatesHow,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall,
           ),
@@ -94,12 +93,7 @@ class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(4, 16, 4, 0),
-    child: Text(
-      'Tidak ada yang dihapus dari sini. Penggabungan dikerjakan di Zotero, '
-      'tempat riwayat dan lampirannya ikut dipindahkan — daftar ini gunanya '
-      'menunjukkan mana yang perlu dilihat.',
-      style: Theme.of(context).textTheme.bodySmall,
-    ),
+    child: Text(context.l10n.libraryDuplicatesFooter, style: Theme.of(context).textTheme.bodySmall),
   );
 }
 
@@ -129,15 +123,13 @@ class _GroupCard extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '${group.items.length} salinan',
+                  context.l10n.libraryCopiesCount(group.items.length),
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
                 const Spacer(),
                 if (group.annotationsOnMoreThanOne)
                   Tooltip(
-                    message:
-                        'Anotasi ada di lebih dari satu salinan — '
-                        'menggabungkan bisa menghilangkan sebagiannya.',
+                    message: context.l10n.libraryAnnotationsOnSeveral,
                     child: Icon(Icons.warning_amber_outlined, size: 18, color: scheme.error),
                   ),
               ],
@@ -167,8 +159,8 @@ class _CopyRow extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final facts = <String>[
       if (item.year.isNotEmpty) item.year,
-      if (item.annotationCount > 0) '${item.annotationCount} anotasi',
-      if (item.hasReadableFile) 'ada berkas',
+      if (item.annotationCount > 0) context.l10n.libraryAnnotationCount(item.annotationCount),
+      if (item.hasReadableFile) context.l10n.libraryHasFileFact,
       if (item.collectionPaths.isNotEmpty) item.collectionPaths.join(' · '),
     ];
 

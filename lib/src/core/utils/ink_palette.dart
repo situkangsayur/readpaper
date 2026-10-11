@@ -1,4 +1,5 @@
 import 'dart:ui';
+import '../l10n.dart';
 
 /// Warna tinta yang ditawarkan, dengan namanya.
 ///
@@ -26,4 +27,24 @@ class InkPalette {
     (name: 'Cokelat', color: Color(0xFF6D4C41)),
     (name: 'Biru malam', color: Color(0xFF283593)),
   ];
+
+  /// Nama warna [name] (nama Indonesia dari [all]) dalam bahasa antarmuka
+  /// yang aktif. [all] tetap konstan karena dipakai sebagai `static const`.
+  static String label(String name) => switch (name) {
+    'Hitam' => l10n.commonColorBlack,
+    'Abu' => l10n.commonColorGrayShort,
+    'Putih' => l10n.commonColorWhite,
+    'Merah' => l10n.commonColorRed,
+    'Jingga' => l10n.commonColorOrangeInk,
+    'Kuning' => l10n.commonColorYellow,
+    'Hijau' => l10n.commonColorGreen,
+    'Hijau muda' => l10n.commonColorLightGreen,
+    'Biru' => l10n.commonColorBlue,
+    'Biru langit' => l10n.commonColorSkyBlue,
+    'Ungu' => l10n.commonColorPurple,
+    'Merah muda' => l10n.commonColorPink,
+    'Cokelat' => l10n.commonColorBrown,
+    'Biru malam' => l10n.commonColorNavyBlue,
+    _ => name,
+  };
 }

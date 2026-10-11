@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../domain/mermaid_graph.dart';
+import '../../../../core/l10n.dart';
 
 /// Menggambar diagram Mermaid di layar.
 ///
@@ -32,7 +33,7 @@ class MermaidView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              graph.problem ?? 'Diagram ini belum bisa digambar.',
+              graph.problem ?? context.l10n.markdownMermaidCannotDraw,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(color: scheme.outline),
             ),
             const SizedBox(height: 8),

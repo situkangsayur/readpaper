@@ -1,4 +1,5 @@
 import 'package:meta/meta.dart';
+import '../../../../core/l10n.dart';
 
 /// A progress report from a running sync operation.
 ///
@@ -55,17 +56,17 @@ class GitProgressParser {
   );
 
   /// Human readable names for the phases git reports.
-  static const Map<String, String> _phases = <String, String>{
-    'counting objects': 'Menghitung objek',
-    'compressing objects': 'Memampatkan objek',
-    'receiving objects': 'Mengunduh objek',
-    'resolving deltas': 'Menyusun delta',
-    'updating files': 'Menulis berkas',
-    'checking out files': 'Menulis berkas',
-    'filtering content': 'Mengunduh berkas besar',
-    'downloading lfs objects': 'Mengunduh berkas LFS',
-    'writing objects': 'Mengirim objek',
-    'enumerating objects': 'Mendata objek',
+  static String? _phase(String phase) => switch (phase) {
+    'counting objects' => l10n.syncPhaseCounting,
+    'compressing objects' => l10n.syncPhaseCompressing,
+    'receiving objects' => l10n.syncPhaseReceiving,
+    'resolving deltas' => l10n.syncPhaseResolving,
+    'updating files' || 'checking out files' => l10n.syncPhaseWritingFiles,
+    'filtering content' => l10n.syncPhaseFiltering,
+    'downloading lfs objects' => l10n.syncPhaseLfs,
+    'writing objects' => l10n.syncPhaseSending,
+    'enumerating objects' => l10n.syncPhaseEnumerating,
+    _ => null,
   };
 
   /// Parses one output line; returns a plain message when it has no percentage.
@@ -82,7 +83,7 @@ class GitProgressParser {
     if (detail != null && (detail.isEmpty || detail == 'done')) detail = null;
 
     return SyncProgress(
-      message: _phases[phase] ?? match.group(1)!.trim(),
+      message: _phase(phase) ?? match.group(1)!.trim(),
       fraction: (percent / 100).clamp(0.0, 1.0),
       current: current,
       total: total,

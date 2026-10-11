@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
+import '../../../core/l10n.dart';
 
 /// Arah aliran diagram.
 enum MermaidDirection {
@@ -115,7 +116,7 @@ class MermaidGraph {
       for (final raw in source.split('\n'))
         if (raw.trim().isNotEmpty && !raw.trim().startsWith('%%')) raw.trim(),
     ];
-    if (lines.isEmpty) return unsupported('Diagram kosong.');
+    if (lines.isEmpty) return unsupported(l10n.markdownMermaidEmpty);
 
     final header = RegExp(
       r'^(graph|flowchart)\s+([A-Za-z]{2})?',
@@ -123,10 +124,7 @@ class MermaidGraph {
     ).firstMatch(lines.first);
     if (header == null) {
       final kind = lines.first.split(RegExp(r'\s')).first;
-      return unsupported(
-        'Jenis diagram "$kind" belum digambar — yang sudah: graph dan flowchart. '
-        'Sumbernya tetap ditampilkan apa adanya.',
-      );
+      return unsupported(l10n.markdownMermaidUnsupported(kind));
     }
 
     final direction = MermaidDirection.parse(header.group(2) ?? 'TD');
@@ -190,7 +188,7 @@ class MermaidGraph {
     }
 
     if (nodes.isEmpty) {
-      return unsupported('Tidak ada simpul yang bisa dibaca dari diagram ini.');
+      return unsupported(l10n.markdownMermaidNoNodes);
     }
     return MermaidGraph(
       direction: direction,

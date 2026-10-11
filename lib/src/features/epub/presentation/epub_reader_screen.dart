@@ -8,16 +8,21 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../core/utils/share_file.dart';
 import '../data/epub_book.dart';
+import '../../../core/l10n.dart';
 
 /// Warna halaman pembaca EPUB.
 enum EpubTheme {
-  terang('Terang', Color(0xFFFFFFFF), Color(0xFF1F1F1F)),
-  sepia('Sepia', Color(0xFFF4ECD8), Color(0xFF3B2F22)),
-  gelap('Gelap', Color(0xFF121212), Color(0xFFE2E2E2));
+  terang(Color(0xFFFFFFFF), Color(0xFF1F1F1F)),
+  sepia(Color(0xFFF4ECD8), Color(0xFF3B2F22)),
+  gelap(Color(0xFF121212), Color(0xFFE2E2E2));
 
-  const EpubTheme(this.label, this.background, this.foreground);
+  const EpubTheme(this.background, this.foreground);
 
-  final String label;
+  String get label => switch (this) {
+    EpubTheme.terang => l10n.epubThemeLight,
+    EpubTheme.sepia => l10n.epubThemeSepia,
+    EpubTheme.gelap => l10n.epubThemeDark,
+  };
   final Color background;
   final Color foreground;
 }
@@ -84,7 +89,7 @@ class _EpubReaderScreenState extends State<EpubReaderScreen> {
         });
       }
     } on Object catch (e) {
-      if (mounted) setState(() => _error = 'EPUB ini tidak bisa dibaca: $e');
+      if (mounted) setState(() => _error = context.l10n.epubUnreadable('$e'));
     }
   }
 
@@ -141,24 +146,24 @@ class _EpubReaderScreenState extends State<EpubReaderScreen> {
         title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: <Widget>[
           IconButton(
-            tooltip: 'Perkecil huruf',
+            tooltip: context.l10n.epubSmallerText,
             icon: const Icon(Icons.text_decrease),
             onPressed: () => setState(() => _fontSize = (_fontSize - 2).clamp(12, 34)),
           ),
           IconButton(
-            tooltip: 'Perbesar huruf',
+            tooltip: context.l10n.epubLargerText,
             icon: const Icon(Icons.text_increase),
             onPressed: () => setState(() => _fontSize = (_fontSize + 2).clamp(12, 34)),
           ),
           IconButton(
-            tooltip: 'Warna halaman: ${_theme.label}',
+            tooltip: context.l10n.epubPageColor(_theme.label),
             icon: const Icon(Icons.contrast),
             onPressed: () => setState(
               () => _theme = EpubTheme.values[(_theme.index + 1) % EpubTheme.values.length],
             ),
           ),
           IconButton(
-            tooltip: 'Bagikan',
+            tooltip: context.l10n.notesShare,
             icon: const Icon(Icons.share_outlined),
             onPressed: () async {
               final failure = await shareFile(context, widget.path, title: title);
@@ -168,7 +173,7 @@ class _EpubReaderScreenState extends State<EpubReaderScreen> {
             },
           ),
           IconButton(
-            tooltip: 'Daftar isi',
+            tooltip: context.l10n.epubContents,
             icon: const Icon(Icons.toc),
             onPressed: book == null ? null : () => _scaffold.currentState?.openEndDrawer(),
           ),
@@ -182,7 +187,7 @@ class _EpubReaderScreenState extends State<EpubReaderScreen> {
           : book == null
           ? const Center(child: CircularProgressIndicator())
           : book.chapters.isEmpty
-          ? const Center(child: Text('EPUB ini tidak punya bab yang bisa dibaca.'))
+          ? Center(child: Text(context.l10n.epubNoChapters))
           : _chapterView(book),
     );
   }
@@ -234,13 +239,13 @@ class _EpubReaderScreenState extends State<EpubReaderScreen> {
             child: Row(
               children: <Widget>[
                 IconButton(
-                  tooltip: 'Bab sebelumnya',
+                  tooltip: context.l10n.epubPrevChapter,
                   icon: Icon(Icons.chevron_left, color: _theme.foreground),
                   onPressed: _chapter > 0 ? () => _goTo(_chapter - 1) : null,
                 ),
                 Expanded(
                   child: Text(
-                    '${chapter.title ?? 'Bab ${_chapter + 1}'} · ${_chapter + 1}/${book.chapters.length}',
+                    '${chapter.title ?? context.l10n.epubChapterN(_chapter + 1)} · ${_chapter + 1}/${book.chapters.length}',
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -248,7 +253,7 @@ class _EpubReaderScreenState extends State<EpubReaderScreen> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Bab berikutnya',
+                  tooltip: context.l10n.epubNextChapter,
                   icon: Icon(Icons.chevron_right, color: _theme.foreground),
                   onPressed: _chapter < book.chapters.length - 1 ? () => _goTo(_chapter + 1) : null,
                 ),
@@ -268,7 +273,7 @@ class _EpubReaderScreenState extends State<EpubReaderScreen> {
             ListTile(
               dense: true,
               selected: i == _chapter,
-              title: Text(book.chapters[i].title ?? 'Bab ${i + 1}'),
+              title: Text(book.chapters[i].title ?? context.l10n.epubChapterN(i + 1)),
               onTap: () {
                 Navigator.of(context).pop();
                 _goTo(i);
@@ -280,7 +285,7 @@ class _EpubReaderScreenState extends State<EpubReaderScreen> {
     return ListView(
       children: <Widget>[
         ListTile(
-          title: Text(book.title.isEmpty ? 'Daftar isi' : book.title),
+          title: Text(book.title.isEmpty ? context.l10n.epubContents : book.title),
           subtitle: book.author.isEmpty ? null : Text(book.author),
         ),
         const Divider(height: 1),

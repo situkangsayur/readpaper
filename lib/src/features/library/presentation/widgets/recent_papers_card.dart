@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/utils/formatting.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
+import '../../../../core/l10n.dart';
 
 /// The papers opened before, newest first.
 ///
@@ -45,11 +46,14 @@ class RecentPapersCard extends ConsumerWidget {
               children: <Widget>[
                 Icon(Icons.history, size: 18, color: scheme.onSurfaceVariant),
                 const SizedBox(width: 8),
-                Text('Terakhir dibaca', style: Theme.of(context).textTheme.titleSmall),
+                Text(
+                  context.l10n.libraryRecentlyRead,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
                 const Spacer(),
                 TextButton(
                   onPressed: () => ref.read(workspaceControllerProvider.notifier).forgetRecent(),
-                  child: const Text('Bersihkan'),
+                  child: Text(context.l10n.libraryClearHistory),
                 ),
               ],
             ),
@@ -62,7 +66,7 @@ class RecentPapersCard extends ConsumerWidget {
               subtitle: Text(
                 <String>[
                   if (entry.subtitle.isNotEmpty) entry.subtitle,
-                  if (entry.lastPage > 1) 'halaman ${entry.lastPage}',
+                  if (entry.lastPage > 1) context.l10n.libraryPageN(entry.lastPage),
                   relativeTime(entry.openedAt),
                 ].join(' · '),
                 maxLines: 1,
@@ -70,7 +74,7 @@ class RecentPapersCard extends ConsumerWidget {
               ),
               trailing: IconButton(
                 iconSize: 18,
-                tooltip: 'Hapus dari riwayat',
+                tooltip: context.l10n.libraryRemoveFromHistory,
                 icon: const Icon(Icons.close),
                 onPressed: () =>
                     ref.read(workspaceControllerProvider.notifier).forgetRecent(entry: entry),

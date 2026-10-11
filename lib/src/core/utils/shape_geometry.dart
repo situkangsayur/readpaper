@@ -1,18 +1,27 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
+import '../l10n.dart';
+
 /// Bangun dua dimensi yang bisa disisipkan ke lembar catatan atau papan tulis.
 enum ShapeKind {
-  kotak('Kotak'),
-  bulat('Bulat'),
-  belahKetupat('Belah ketupat'),
-  segitiga('Segitiga'),
-  garis('Garis'),
-  panah('Panah');
+  kotak,
+  bulat,
+  belahKetupat,
+  segitiga,
+  garis,
+  panah;
 
-  const ShapeKind(this.label);
-
-  final String label;
+  /// Nama bangun dalam bahasa antarmuka yang aktif. Nama enum-nya sendiri
+  /// (kotak, bulat, …) tersimpan di berkas dan tidak boleh berubah.
+  String get label => switch (this) {
+    ShapeKind.kotak => l10n.commonShapeRectangle,
+    ShapeKind.bulat => l10n.commonShapeEllipse,
+    ShapeKind.belahKetupat => l10n.commonShapeDiamond,
+    ShapeKind.segitiga => l10n.commonShapeTriangle,
+    ShapeKind.garis => l10n.commonShapeLine,
+    ShapeKind.panah => l10n.commonShapeArrow,
+  };
 
   static ShapeKind parse(String name) =>
       values.firstWhere((k) => k.name == name, orElse: () => ShapeKind.kotak);

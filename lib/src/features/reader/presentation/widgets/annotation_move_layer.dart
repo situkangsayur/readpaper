@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/l10n.dart';
 
 /// Kotak yang bisa diseret di atas anotasi yang sedang dipilih.
 ///
@@ -184,14 +185,14 @@ class _AnnotationMoveLayerState extends State<AnnotationMoveLayer> {
             // Empat pegangan: geser, hapus, ubah ukuran, putar. Di sudut yang
             // berbeda supaya jari tidak pernah harus memilih dua hal yang
             // bertumpuk.
-            const Positioned(
+            Positioned(
               left: 0,
               top: 0,
               child: _Chip(
                 icon: Icons.open_with,
                 color: null,
                 onTap: null,
-                tooltip: 'Seret untuk memindahkan',
+                tooltip: context.l10n.readerDragToMove,
               ),
             ),
             if (canTransform) ...<Widget>[
@@ -201,7 +202,7 @@ class _AnnotationMoveLayerState extends State<AnnotationMoveLayer> {
                 child: _Handle(
                   icon: Icons.open_in_full,
                   color: scheme.primary,
-                  tooltip: 'Seret untuk mengubah ukuran',
+                  tooltip: context.l10n.readerDragToResize,
                   onStart: () => setState(() => _transforming = true),
                   onUpdate: (delta) {
                     // Jarak dari titik tengah menentukan skalanya: menyeret
@@ -222,7 +223,7 @@ class _AnnotationMoveLayerState extends State<AnnotationMoveLayer> {
                   child: _Handle(
                     icon: Icons.rotate_right,
                     color: scheme.primary,
-                    tooltip: 'Seret untuk memutar',
+                    tooltip: context.l10n.readerDragToRotate,
                     onStart: () => setState(() => _transforming = true),
                     onUpdate: (delta) => setState(() {
                       // Satu layar penuh ke samping memutar setengah lingkaran:
@@ -240,7 +241,7 @@ class _AnnotationMoveLayerState extends State<AnnotationMoveLayer> {
                 icon: Icons.delete_outline,
                 color: scheme.error,
                 onTap: widget.onDelete,
-                tooltip: 'Hapus',
+                tooltip: context.l10n.readerDelete,
               ),
             ),
           ],
