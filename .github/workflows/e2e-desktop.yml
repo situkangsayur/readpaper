@@ -31,8 +31,15 @@ jobs:
 
       - run: flutter pub get
 
+      # Satu berkas per langkah: di Windows, aplikasi dari berkas sebelumnya
+      # masih memegang .exe-nya, dan berkas berikutnya gagal dengan "Unable
+      # to start the app on the device".
       - name: Tandai, komentar, catatan, sitasi
-        run: flutter test integration_test -d windows --reporter expanded
+        run: flutter test integration_test/desktop_annotate_cite_test.dart -d windows --reporter expanded
+
+      - name: Fitur desktop (koleksi, catatan, pembaca, panel berkas, kirim/tarik)
+        if: always()
+        run: flutter test integration_test/desktop_features_test.dart -d windows --reporter expanded
 
       - name: Tangkapan layar uji
         if: always()
