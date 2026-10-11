@@ -21,8 +21,12 @@ jobs:
 
       # Same three commands the contributing guide asks for locally, so a PR
       # cannot be red here and green on someone's machine.
+      # Berkas l10n hasil `flutter gen-l10n` disimpan apa adanya (lihat
+      # l10n.yaml), jadi tidak ikut diperiksa.
       - name: Format
-        run: dart format --line-length 100 --set-exit-if-changed .
+        run: |
+          git ls-files '*.dart' | grep -v '^lib/l10n/app_localizations' \
+            | xargs dart format --line-length 100 --set-exit-if-changed
 
       - name: Analyze
         run: flutter analyze
