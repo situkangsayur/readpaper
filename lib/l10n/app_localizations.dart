@@ -62,7 +62,8 @@ import 'app_localizations_id.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -70,7 +71,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -91,7 +93,10 @@ abstract class AppLocalizations {
       ];
 
   /// A list of this localizations delegate's supported locales.
-  static const List<Locale> supportedLocales = <Locale>[Locale('en'), Locale('id')];
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('id'),
+  ];
 
   /// No description provided for @appTitle.
   ///
@@ -2209,7 +2214,12 @@ abstract class AppLocalizations {
   ///
   /// In id, this message translates to:
   /// **'{added} dari {total} berkas masuk ke {name}. Gagal: {failed}. '**
-  String libraryFilesAddedPartly(int added, int total, String name, String failed);
+  String libraryFilesAddedPartly(
+    int added,
+    int total,
+    String name,
+    String failed,
+  );
 
   /// No description provided for @libraryMovingInto.
   ///
@@ -3703,7 +3713,13 @@ abstract class AppLocalizations {
   ///
   /// In id, this message translates to:
   /// **'Lembar {page} dari {count} · {paper} {orientation} · alat: {tool}'**
-  String notebookStatus(int page, int count, String paper, String orientation, String tool);
+  String notebookStatus(
+    int page,
+    int count,
+    String paper,
+    String orientation,
+    String tool,
+  );
 
   /// No description provided for @notebookUnsavedSuffix.
   ///
@@ -6997,7 +7013,13 @@ abstract class AppLocalizations {
   ///
   /// In id, this message translates to:
   /// **'{head}; {count} berkas ditolak GitHub dan tetap menunggu: {names}{more}. {reason}'**
-  String syncRejectedSummary(String head, int count, String names, String more, String reason);
+  String syncRejectedSummary(
+    String head,
+    int count,
+    String names,
+    String more,
+    String reason,
+  );
 
   /// No description provided for @syncResumingMetadata.
   ///
@@ -7048,7 +7070,8 @@ abstract class AppLocalizations {
   String get syncInstallGitLinux;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -7057,7 +7080,8 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'id'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'id'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;

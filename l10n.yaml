@@ -6,3 +6,6 @@ template-arb-file: app_id.arb
 output-localization-file: app_localizations.dart
 output-class: AppLocalizations
 nullable-getter: false
+# Berkas lib/l10n/app_localizations*.dart adalah keluaran generator: jangan
+# dirapikan dengan dart format (lebar barisnya berbeda dan setiap build akan
+# membuatnya ulang).

@@ -80,7 +80,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get filesCannotDeleteRoot => 'Folder kerja itu sendiri tidak bisa dihapus dari sini.';
+  String get filesCannotDeleteRoot =>
+      'Folder kerja itu sendiri tidak bisa dihapus dari sini.';
 
   @override
   String get filesDeleteFolderTitle => 'Hapus folder ini?';
@@ -97,7 +98,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get filesLibraryCopiesUntouched => 'Salinan yang sudah masuk library tidak tersentuh.';
+  String get filesLibraryCopiesUntouched =>
+      'Salinan yang sudah masuk library tidak tersentuh.';
 
   @override
   String filesDeleteCount(int count) {
@@ -172,7 +174,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get filesFolder => 'Folder';
 
   @override
-  String get filesCopyInTooltip => 'Salin berkas atau folder ke sini — dari mana pun di perangkat';
+  String get filesCopyInTooltip =>
+      'Salin berkas atau folder ke sini — dari mana pun di perangkat';
 
   @override
   String get filesPickFolderToCopy => 'Pilih folder untuk disalin ke sini';
@@ -217,7 +220,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get filesNoAppForThis => 'Tidak ada aplikasi di sistem ini yang membuka berkas ini.';
+  String get filesNoAppForThis =>
+      'Tidak ada aplikasi di sistem ini yang membuka berkas ini.';
 
   @override
   String get filesOpenWithOtherApp => 'Buka dengan aplikasi lain';
@@ -293,7 +297,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsSshKeyOptional => 'Kunci privat SSH (opsional)';
 
   @override
-  String get settingsSshKeyHelper => 'Kosongkan untuk memakai ssh-agent atau kunci bawaan.';
+  String get settingsSshKeyHelper =>
+      'Kosongkan untuk memakai ssh-agent atau kunci bawaan.';
 
   @override
   String get settingsGithubUsername => 'Username GitHub';
@@ -302,13 +307,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsAccessToken => 'Personal access token';
 
   @override
-  String get settingsTokenHelper => 'Disimpan terpisah di credentials.json (izin 600).';
+  String get settingsTokenHelper =>
+      'Disimpan terpisah di credentials.json (izin 600).';
 
   @override
   String get settingsLocalCloneFolder => 'Folder clone lokal';
 
   @override
-  String get settingsPrivateStorage => 'Data disimpan di penyimpanan privat aplikasi.';
+  String get settingsPrivateStorage =>
+      'Data disimpan di penyimpanan privat aplikasi.';
 
   @override
   String get settingsCommitIdentity => 'Identitas commit';
@@ -330,7 +337,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsAutoPushTitle => 'Push otomatis setelah menyimpan anotasi';
 
   @override
-  String get settingsAutoPushSubtitle => 'Setiap highlight/komentar langsung dikirim ke GitHub.';
+  String get settingsAutoPushSubtitle =>
+      'Setiap highlight/komentar langsung dikirim ke GitHub.';
 
   @override
   String get settingsPickSshKey => 'Pilih kunci privat SSH';
@@ -344,7 +352,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get citationOff => 'Mati. Add-in Word dan OnlyOffice tidak bisa tersambung.';
+  String get citationOff =>
+      'Mati. Add-in Word dan OnlyOffice tidak bisa tersambung.';
 
   @override
   String get citationStarting => 'Menyalakan…';
@@ -353,7 +362,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get citationTitle => 'Sitasi di Word & OnlyOffice';
 
   @override
-  String get citationSubtitle => 'Server lokal yang dipakai add-in untuk mencari dan menyitasi.';
+  String get citationSubtitle =>
+      'Server lokal yang dipakai add-in untuk mencari dan menyitasi.';
 
   @override
   String get citationRetry => 'Coba lagi';
@@ -626,7 +636,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get githubLoginCreate => 'Buat repositori';
 
   @override
-  String get githubLoginExpired => 'Kodenya kedaluwarsa sebelum disetujui. Coba lagi.';
+  String get githubLoginExpired =>
+      'Kodenya kedaluwarsa sebelum disetujui. Coba lagi.';
 
   @override
   String get githubLoginDenied => 'Akses ditolak di GitHub.';
@@ -662,7 +673,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get githubLoginOtherAccount => 'Masuk dengan akun lain';
 
   @override
-  String get libraryAddToLibraryTooltip => 'Tambahkan berkas atau folder ke library';
+  String get libraryAddToLibraryTooltip =>
+      'Tambahkan berkas atau folder ke library';
 
   @override
   String get libraryAddFiles => 'Tambahkan berkas…';
@@ -713,7 +725,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get libraryNewPaperSubcollection => 'Sub-koleksi paper baru';
 
   @override
-  String get libraryNewCollectionHint => 'Ditulis ke collections.json, ikut tersinkron ke GitHub';
+  String get libraryNewCollectionHint =>
+      'Ditulis ke collections.json, ikut tersinkron ke GitHub';
 
   @override
   String get libraryCreateCollectionFailed => 'Gagal membuat koleksi';
@@ -747,7 +760,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get libraryMoveTo => 'Pindahkan ke…';
 
   @override
-  String get libraryTransferToRepo => 'Pindahkan atau salin ke repositori lain…';
+  String get libraryTransferToRepo =>
+      'Pindahkan atau salin ke repositori lain…';
 
   @override
   String get libraryWithSubsAndPapers => 'beserta sub-koleksi dan paper-nya';
@@ -1020,7 +1034,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get libraryLfsPointer => 'pointer Git LFS — jalankan LFS pull';
 
   @override
-  String get libraryCannotOpenFormat => 'format belum bisa dibuka di perangkat ini';
+  String get libraryCannotOpenFormat =>
+      'format belum bisa dibuka di perangkat ini';
 
   @override
   String get libraryRead => 'Baca';
@@ -1235,7 +1250,12 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String libraryFilesAddedPartly(int added, int total, String name, String failed) {
+  String libraryFilesAddedPartly(
+    int added,
+    int total,
+    String name,
+    String failed,
+  ) {
     return '$added dari $total berkas masuk ke $name. Gagal: $failed. ';
   }
 
@@ -1418,7 +1438,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get libraryReasonIsbn => 'ISBN-nya sama';
 
   @override
-  String get libraryReasonTitleYearAuthor => 'Judul, tahun, dan pengarangnya sama';
+  String get libraryReasonTitleYearAuthor =>
+      'Judul, tahun, dan pengarangnya sama';
 
   @override
   String get libraryErrItemNotFound => 'Berkas item tidak ditemukan';
@@ -1459,7 +1480,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get libraryErrCollectionsNotList => 'collections.json tidak berisi daftar koleksi';
+  String get libraryErrCollectionsNotList =>
+      'collections.json tidak berisi daftar koleksi';
 
   @override
   String get libraryErrRefuseDeleteNotItem =>
@@ -1469,7 +1491,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get libraryErrCollectionNameEmpty => 'Nama koleksi tidak boleh kosong';
 
   @override
-  String get libraryErrCollectionNameSlash => 'Nama koleksi tidak boleh memuat garis miring';
+  String get libraryErrCollectionNameSlash =>
+      'Nama koleksi tidak boleh memuat garis miring';
 
   @override
   String get libraryErrCollectionsNotListRefuse =>
@@ -1491,7 +1514,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get libraryErrCollectionKey => 'Gagal membuat kunci koleksi baru';
 
   @override
-  String get libraryErrMoveIntoSelf => 'Koleksi tidak bisa dipindah ke dalam dirinya sendiri';
+  String get libraryErrMoveIntoSelf =>
+      'Koleksi tidak bisa dipindah ke dalam dirinya sendiri';
 
   @override
   String get libraryErrCollectionsMissing => 'collections.json tidak ada';
@@ -1616,10 +1640,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get notesCollectionGone => 'Koleksinya tidak ada lagi.';
 
   @override
-  String get notesNoRepoToSave => 'Belum ada repositori aktif untuk menyimpan catatan.';
+  String get notesNoRepoToSave =>
+      'Belum ada repositori aktif untuk menyimpan catatan.';
 
   @override
-  String get notesErrEmptyCollectionName => 'Nama koleksi catatan tidak boleh kosong';
+  String get notesErrEmptyCollectionName =>
+      'Nama koleksi catatan tidak boleh kosong';
 
   @override
   String get notesErrParentMissing => 'Koleksi induk tidak ada';
@@ -1637,13 +1663,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get notesErrEmptyTitle => 'Judul catatan tidak boleh kosong';
 
   @override
-  String get notesErrTargetCollectionMissing => 'Koleksi catatan tujuan tidak ada';
+  String get notesErrTargetCollectionMissing =>
+      'Koleksi catatan tujuan tidak ada';
 
   @override
   String get notesErrFileOutside => 'Berkas catatan ada di luar folder catatan';
 
   @override
-  String get notesErrFileNotOnDevice => 'Berkas catatan tidak ada di perangkat ini';
+  String get notesErrFileNotOnDevice =>
+      'Berkas catatan tidak ada di perangkat ini';
 
   @override
   String notesErrTargetNameTaken(String name) {
@@ -1710,7 +1738,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get epubErrNoContainer => 'Bukan EPUB: META-INF/container.xml tidak ada.';
+  String get epubErrNoContainer =>
+      'Bukan EPUB: META-INF/container.xml tidak ada.';
 
   @override
   String get epubErrNoOpf => 'Bukan EPUB: berkas OPF tidak ditemukan.';
@@ -1817,7 +1846,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get markdownTable => 'Tabel';
 
   @override
-  String get markdownTableTemplate => '| Kolom | Nilai |\n| --- | --- |\n|  |  |\n';
+  String get markdownTableTemplate =>
+      '| Kolom | Nilai |\n| --- | --- |\n|  |  |\n';
 
   @override
   String get markdownMermaid => 'Diagram mermaid';
@@ -1831,7 +1861,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get markdownMermaidNoNodes => 'Tidak ada simpul yang bisa dibaca dari diagram ini.';
+  String get markdownMermaidNoNodes =>
+      'Tidak ada simpul yang bisa dibaca dari diagram ini.';
 
   @override
   String get markdownMermaidCannotDraw => 'Diagram ini belum bisa digambar.';
@@ -1904,7 +1935,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get whiteboardLeaveTitle => 'Tinggalkan papan ini?';
 
   @override
-  String get whiteboardLeaveBody => 'Coretannya belum disimpan, dan tidak bisa dikembalikan.';
+  String get whiteboardLeaveBody =>
+      'Coretannya belum disimpan, dan tidak bisa dikembalikan.';
 
   @override
   String get whiteboardKeepDrawing => 'Kembali menggambar';
@@ -1929,10 +1961,12 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get whiteboardFingerOn => 'Jari + stylus boleh menggambar — ketuk untuk hanya stylus';
+  String get whiteboardFingerOn =>
+      'Jari + stylus boleh menggambar — ketuk untuk hanya stylus';
 
   @override
-  String get whiteboardStylusOnly => 'Stylus saja — sentuhan tangan tidak menggambar apa pun';
+  String get whiteboardStylusOnly =>
+      'Stylus saja — sentuhan tangan tidak menggambar apa pun';
 
   @override
   String get whiteboardBackToWriting => 'Kembali menulis';
@@ -1944,10 +1978,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get whiteboardEraser => 'Penghapus';
 
   @override
-  String get whiteboardPortraitTurn => 'Kertas tegak — ketuk untuk memutar jadi mendatar';
+  String get whiteboardPortraitTurn =>
+      'Kertas tegak — ketuk untuk memutar jadi mendatar';
 
   @override
-  String get whiteboardLandscapeTurn => 'Kertas mendatar — ketuk untuk memutar jadi tegak';
+  String get whiteboardLandscapeTurn =>
+      'Kertas mendatar — ketuk untuk memutar jadi tegak';
 
   @override
   String get notesUndo => 'Urungkan';
@@ -2056,7 +2092,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get notebookPdfNoPages => 'PDF itu tidak punya halaman yang bisa dibaca.';
+  String get notebookPdfNoPages =>
+      'PDF itu tidak punya halaman yang bisa dibaca.';
 
   @override
   String notebookSheetsInserted(int count, String name) {
@@ -2094,7 +2131,13 @@ class AppLocalizationsId extends AppLocalizations {
   String get notebookDiscard => 'Buang';
 
   @override
-  String notebookStatus(int page, int count, String paper, String orientation, String tool) {
+  String notebookStatus(
+    int page,
+    int count,
+    String paper,
+    String orientation,
+    String tool,
+  ) {
     return 'Lembar $page dari $count · $paper $orientation · alat: $tool';
   }
 
@@ -2137,7 +2180,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get notebookTapFirstThenSecond => 'Ketuk benda pertama, lalu benda kedua.';
+  String get notebookTapFirstThenSecond =>
+      'Ketuk benda pertama, lalu benda kedua.';
 
   @override
   String notebookPickedCount(int count) {
@@ -2261,10 +2305,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get whiteboardErrPixels => 'Piksel gagal dibaca';
 
   @override
-  String get readerStylusOnlyOn => 'Stylus saja: tangan yang bertumpu tidak akan menggambar.';
+  String get readerStylusOnlyOn =>
+      'Stylus saja: tangan yang bertumpu tidak akan menggambar.';
 
   @override
-  String get readerStylusOnlyOff => 'Jari dan stylus dua-duanya boleh menggambar.';
+  String get readerStylusOnlyOff =>
+      'Jari dan stylus dua-duanya boleh menggambar.';
 
   @override
   String get readerCopyNotAllowed => 'Dokumen ini tidak mengizinkan penyalinan';
@@ -2280,7 +2326,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerBackToWriting => 'Kembali menulis';
 
   @override
-  String get readerEraserTooltip => 'Penghapus — sapukan di atas coretan yang salah';
+  String get readerEraserTooltip =>
+      'Penghapus — sapukan di atas coretan yang salah';
 
   @override
   String get readerEraser => 'Penghapus';
@@ -2307,7 +2354,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerNothingToRedo => 'Tidak ada yang bisa diulangi';
 
   @override
-  String get readerTapToPlaceSignature => 'Ketuk halaman di tempat tanda tangannya ditaruh';
+  String get readerTapToPlaceSignature =>
+      'Ketuk halaman di tempat tanda tangannya ditaruh';
 
   @override
   String get readerCannotOverwriteAttachment =>
@@ -2323,7 +2371,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerNotSaved => 'Tidak jadi disimpan';
 
   @override
-  String get readerNoLibraryOpen => 'Belum ada library yang terbuka di aplikasi ini.';
+  String get readerNoLibraryOpen =>
+      'Belum ada library yang terbuka di aplikasi ini.';
 
   @override
   String get readerUnsavedNotIncluded =>
@@ -2336,7 +2385,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerNoCollection => 'Tanpa koleksi';
 
   @override
-  String get readerNoCollectionHint => 'masuk library, tidak masuk koleksi mana pun';
+  String get readerNoCollectionHint =>
+      'masuk library, tidak masuk koleksi mana pun';
 
   @override
   String get readerNewCollectionEllipsis => 'Koleksi baru…';
@@ -2369,7 +2419,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerCollectionName => 'Nama koleksi';
 
   @override
-  String get readerCollectionNameHelper => 'Ditulis ke collections.json, ikut tersinkron ke GitHub';
+  String get readerCollectionNameHelper =>
+      'Ditulis ke collections.json, ikut tersinkron ke GitHub';
 
   @override
   String get readerCreate => 'Buat';
@@ -2422,7 +2473,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerMark => 'Tandai';
 
   @override
-  String get readerTapToPlaceNote => 'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)';
+  String get readerTapToPlaceNote =>
+      'Ketuk halaman untuk menaruh catatan (ketuk lagi untuk batal)';
 
   @override
   String get readerPlaceNote => 'Tempel catatan di halaman';
@@ -2434,19 +2486,22 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerDrawOnPage => 'Tulis atau gambar di halaman';
 
   @override
-  String get readerTapToPlaceText => 'Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)';
+  String get readerTapToPlaceText =>
+      'Ketuk halaman untuk menaruh teks (ketuk lagi untuk batal)';
 
   @override
   String get readerFillText => 'Isi teks di halaman — untuk mengisi formulir';
 
   @override
-  String get readerKeepScreenOnActive => 'Layar tetap menyala — tekan untuk mematikan';
+  String get readerKeepScreenOnActive =>
+      'Layar tetap menyala — tekan untuk mematikan';
 
   @override
   String get readerKeepScreenOn => 'Biarkan layar menyala selama membaca';
 
   @override
-  String get readerKeepScreenOnEnabled => 'Layar akan tetap menyala selama membaca';
+  String get readerKeepScreenOnEnabled =>
+      'Layar akan tetap menyala selama membaca';
 
   @override
   String get readerKeepScreenOnDisabled => 'Layar kembali mati sendiri';
@@ -2470,7 +2525,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerAddToCollectionMenu => 'Tambahkan ke koleksi…';
 
   @override
-  String get readerAddToCollectionMenuHint => 'masuk library dan ikut tersinkron';
+  String get readerAddToCollectionMenuHint =>
+      'masuk library dan ikut tersinkron';
 
   @override
   String get readerPrintMenu => 'Cetak…';
@@ -2488,7 +2544,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerToNotebook => 'Jadikan buku catatan';
 
   @override
-  String get readerToNotebookHint => 'halamannya jadi alas, bisa disunting lagi';
+  String get readerToNotebookHint =>
+      'halamannya jadi alas, bisa disunting lagi';
 
   @override
   String get readerBlankPagesMenuHint => 'papan tulis di akhir dokumen';
@@ -2515,7 +2572,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerShareHint => 'chat, surel, atau aplikasi lain';
 
   @override
-  String get readerStylusOnlyTooltip => 'Stylus saja — sentuhan tangan tidak menggambar';
+  String get readerStylusOnlyTooltip =>
+      'Stylus saja — sentuhan tangan tidak menggambar';
 
   @override
   String get readerFingerAndStylusTooltip =>
@@ -2528,7 +2586,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerReadMode => 'Mode baca — sembunyikan semua bilah';
 
   @override
-  String get readerSaveAnnotatedCopyFormats => 'Simpan salinan beranotasi (PNG, JPG, PDF)';
+  String get readerSaveAnnotatedCopyFormats =>
+      'Simpan salinan beranotasi (PNG, JPG, PDF)';
 
   @override
   String get readerZoomOut => 'Perkecil';
@@ -2552,7 +2611,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerDiscardStrokes => 'Buang semua goresan yang belum disimpan';
 
   @override
-  String get readerTapWhereNote => 'Ketuk tempat di halaman untuk menaruh catatan.';
+  String get readerTapWhereNote =>
+      'Ketuk tempat di halaman untuk menaruh catatan.';
 
   @override
   String get readerPreviousPage => 'Halaman sebelumnya';
@@ -2561,7 +2621,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerNextPage => 'Halaman berikutnya';
 
   @override
-  String get readerFingerAndStylusShort => 'Jari + stylus — ketuk untuk stylus saja';
+  String get readerFingerAndStylusShort =>
+      'Jari + stylus — ketuk untuk stylus saja';
 
   @override
   String get readerFitPage => 'Pas satu halaman ke layar';
@@ -2588,7 +2649,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerClipboardFallback => 'Anotasi ReadPaper';
 
   @override
-  String get readerClipboardEmpty => 'Papan klip tidak berisi gambar atau anotasi';
+  String get readerClipboardEmpty =>
+      'Papan klip tidak berisi gambar atau anotasi';
 
   @override
   String get readerPasteImageUnsupported =>
@@ -2605,7 +2667,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerPreparingImage => 'Menyiapkan gambar…';
 
   @override
-  String get readerNotAnImage => 'Isi papan klip atau berkasnya bukan gambar yang bisa dibaca';
+  String get readerNotAnImage =>
+      'Isi papan klip atau berkasnya bukan gambar yang bisa dibaca';
 
   @override
   String get readerUndoPasteImage => 'menempel gambar';
@@ -2617,19 +2680,22 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerPasteImage => 'Tempel gambar dari papan klip';
 
   @override
-  String get readerPasteImageHint => 'mis. \"Salin gambar\" di peramban — Ctrl+V';
+  String get readerPasteImageHint =>
+      'mis. \"Salin gambar\" di peramban — Ctrl+V';
 
   @override
   String get readerChooseImageFile => 'Pilih berkas gambar…';
 
   @override
-  String get readerAnnotationCopied => 'Anotasi disalin — buka halaman tujuan, lalu Tempel';
+  String get readerAnnotationCopied =>
+      'Anotasi disalin — buka halaman tujuan, lalu Tempel';
 
   @override
   String get readerUndoCut => 'memotong anotasi';
 
   @override
-  String get readerAnnotationCut => 'Anotasi dipotong — buka halaman tujuan, lalu Tempel';
+  String get readerAnnotationCut =>
+      'Anotasi dipotong — buka halaman tujuan, lalu Tempel';
 
   @override
   String get readerUndoPaste => 'menempel anotasi';
@@ -2659,7 +2725,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerClearClipboard => 'Kosongkan papan klip';
 
   @override
-  String get readerDropOnPage => 'Lepaskan di atas halaman untuk memindahkannya';
+  String get readerDropOnPage =>
+      'Lepaskan di atas halaman untuk memindahkannya';
 
   @override
   String get readerOutsidePage => 'Di luar halaman';
@@ -2824,7 +2891,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get readerClearSelection => 'Batalkan pilihan';
 
   @override
-  String get readerSignatureHint => 'Tulis di sini, lalu ketuk halaman untuk menaruhnya.';
+  String get readerSignatureHint =>
+      'Tulis di sini, lalu ketuk halaman untuk menaruhnya.';
 
   @override
   String get readerClear => 'Bersihkan';
@@ -3090,7 +3158,8 @@ class AppLocalizationsId extends AppLocalizations {
       'Penghapus: sapukan di atas coretan yang salah — goresan yang tersentuh dibuang utuh.';
 
   @override
-  String get readerPenBanner => 'Gambar bebas di halaman dengan jari atau stylus.';
+  String get readerPenBanner =>
+      'Gambar bebas di halaman dengan jari atau stylus.';
 
   @override
   String readerPenPending(int count, int page) {
@@ -3307,7 +3376,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get syncSendToGitHub => 'Kirim perubahan ke GitHub';
 
   @override
-  String get syncBusyWait => 'Sinkronisasi sedang berjalan, tunggu sampai selesai.';
+  String get syncBusyWait =>
+      'Sinkronisasi sedang berjalan, tunggu sampai selesai.';
 
   @override
   String syncBusyPhaseWait(String phase) {
@@ -3422,7 +3492,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get workspaceRepository => 'Repositori';
 
   @override
-  String get syncLfsMissing => 'git-lfs tidak terpasang; lampiran besar tetap berupa pointer';
+  String get syncLfsMissing =>
+      'git-lfs tidak terpasang; lampiran besar tetap berupa pointer';
 
   @override
   String get syncLfsPullAll => 'Unduh semua berkas LFS';
@@ -3510,7 +3581,8 @@ class AppLocalizationsId extends AppLocalizations {
       'Dihapus dari repositori ini setelah salinannya utuh di tujuan.';
 
   @override
-  String get workspaceTransferCopyNote => 'Yang di sini tetap; tujuan mendapat salinannya.';
+  String get workspaceTransferCopyNote =>
+      'Yang di sini tetap; tujuan mendapat salinannya.';
 
   @override
   String get workspaceTransferNotesRoot => 'Akar Catatan';
@@ -3643,7 +3715,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrNoRemoteUrl => 'URL remote belum diisi untuk profil ini.';
+  String get workspaceErrNoRemoteUrl =>
+      'URL remote belum diisi untuk profil ini.';
 
   @override
   String get workspaceErrUnsentBeforeReclone =>
@@ -3677,7 +3750,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrPictureNoRepo => 'Gambar tidak tersimpan: tidak ada repositori aktif.';
+  String get workspaceErrPictureNoRepo =>
+      'Gambar tidak tersimpan: tidak ada repositori aktif.';
 
   @override
   String workspaceErrPictureSave(String error) {
@@ -3690,7 +3764,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrNoLibraryForFile => 'Tidak ada library aktif untuk menampung berkas ini.';
+  String get workspaceErrNoLibraryForFile =>
+      'Tidak ada library aktif untuk menampung berkas ini.';
 
   @override
   String workspaceErrAddToLibrary(String error) {
@@ -3741,7 +3816,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get workspaceErrTargetCollectionGone => 'Koleksi tujuan tidak ada lagi.';
+  String get workspaceErrTargetCollectionGone =>
+      'Koleksi tujuan tidak ada lagi.';
 
   @override
   String workspaceErrMove(String error) {
@@ -3803,7 +3879,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get syncMetadataReady => 'Metadata siap';
 
   @override
-  String get syncRepoReadyLazy => 'Repositori siap. Lampiran diunduh saat papernya dibuka.';
+  String get syncRepoReadyLazy =>
+      'Repositori siap. Lampiran diunduh saat papernya dibuka.';
 
   @override
   String get syncFetchDone => 'Fetch selesai';
@@ -3827,7 +3904,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get syncRebasedOnGitHub => 'Perubahan lokal dipasang di atas versi GitHub';
+  String get syncRebasedOnGitHub =>
+      'Perubahan lokal dipasang di atas versi GitHub';
 
   @override
   String syncAutoMerged(String files) {
@@ -3867,10 +3945,12 @@ class AppLocalizationsId extends AppLocalizations {
       'SSH ditolak: kunci tidak diterima GitHub. Periksa path kunci di profil.';
 
   @override
-  String get syncErrHttpsAuth => 'Autentikasi HTTPS gagal: token kosong atau tidak berlaku.';
+  String get syncErrHttpsAuth =>
+      'Autentikasi HTTPS gagal: token kosong atau tidak berlaku.';
 
   @override
-  String get syncErrRepoNotFound => 'Repositori tidak ditemukan atau tidak punya akses.';
+  String get syncErrRepoNotFound =>
+      'Repositori tidak ditemukan atau tidak punya akses.';
 
   @override
   String get syncErrMergeConflict =>
@@ -3902,7 +3982,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get syncErrTokenRejected => 'Token GitHub ditolak. Periksa token di profil repositori.';
+  String get syncErrTokenRejected =>
+      'Token GitHub ditolak. Periksa token di profil repositori.';
 
   @override
   String get syncErrQuota =>
@@ -3963,7 +4044,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get syncErrNotGitHubUrl => 'URL repositori tidak dikenali sebagai repositori GitHub.';
+  String get syncErrNotGitHubUrl =>
+      'URL repositori tidak dikenali sebagai repositori GitHub.';
 
   @override
   String get syncErrAndroidNeedsToken =>
@@ -4072,7 +4154,8 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String get syncErrNotMirrored => 'Repositori belum di-mirror di perangkat ini.';
+  String get syncErrNotMirrored =>
+      'Repositori belum di-mirror di perangkat ini.';
 
   @override
   String syncRejectedMore(int count) {
@@ -4088,7 +4171,13 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
-  String syncRejectedSummary(String head, int count, String names, String more, String reason) {
+  String syncRejectedSummary(
+    String head,
+    int count,
+    String names,
+    String more,
+    String reason,
+  ) {
     return '$head; $count berkas ditolak GitHub dan tetap menunggu: $names$more. $reason';
   }
 
@@ -4107,7 +4196,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get syncErrGitHubUrlUnknown => 'URL repositori GitHub tidak dikenali.';
 
   @override
-  String get syncErrTokenMissingProfile => 'Token GitHub belum diisi pada profil repositori.';
+  String get syncErrTokenMissingProfile =>
+      'Token GitHub belum diisi pada profil repositori.';
 
   @override
   String get syncInstallGitWindows =>
