@@ -333,6 +333,36 @@ void main() {
     );
     await tester.tap(find.text('Menandai'));
     await pumpFor(tester, const Duration(milliseconds: 500));
+
+    // Supaya terbaca di Zotero: PDF catatan ditambahkan ke library, dan
+    // anotasinya ikut ke item Zotero barunya.
+    await tester.tap(find.byTooltip('Simpan dan bagikan'));
+    await pumpUntil(tester, find.text('Tambahkan ke koleksi…'));
+    await pumpFor(tester, const Duration(milliseconds: 400));
+    await tester.tap(find.text('Tambahkan ke koleksi…'));
+    await pumpUntil(tester, find.text('Tanpa koleksi'));
+    await tester.tap(find.text('Tanpa koleksi').last);
+    await typeAndConfirm(tester, 'Catatan ke Zotero', 'Tambahkan');
+    Map<String, dynamic>? toZotero() =>
+        fx.items().where((i) => (i['zotero'] as Map)['title'] == 'Catatan ke Zotero').firstOrNull;
+    await pumpUntilTrue(
+      tester,
+      () =>
+          toZotero() != null &&
+          (toZotero()!['children'] as List).any(
+            (c) => (c as Map)['itemType'] == 'annotation' && c['annotationType'] == 'highlight',
+          ),
+      'catatan-ke-zotero',
+    );
+    final created = toZotero()!;
+    final attachment = (created['children'] as List).cast<Map<String, dynamic>>().firstWhere(
+      (c) => c['itemType'] == 'attachment',
+    );
+    final carried = (created['children'] as List).cast<Map<String, dynamic>>().firstWhere(
+      (c) => c['itemType'] == 'annotation',
+    );
+    expect(carried['parentItem'], attachment['key'], reason: 'anotasi menempel di lampiran baru');
+    diag('PDF catatan ke library: anotasinya ikut ke item Zotero');
     await back(tester);
     await pumpFor(tester, const Duration(seconds: 1));
     expect(

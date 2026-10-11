@@ -1390,10 +1390,38 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       collectionKey: collectionKey,
     );
     if (!mounted) return;
+    if (created == null) {
+      _say(ref.read(workspaceControllerProvider).error ?? 'Gagal menambahkan');
+      return;
+    }
+
+    // Anotasinya ikut, dalam format Zotero di item barunya: catatan (PDF di
+    // Catatan) bukan item Zotero, dan inilah jalan anotasinya terbaca di
+    // Zotero. Gambar tempelan tidak ikut — isinya hanya ada di memori.
+    final carried = _annotations.where((a) => !PagePicture.isPicture(a)).toList();
+    var copied = 0;
+    if (carried.isNotEmpty) {
+      try {
+        final detail = await ref.read(libraryRepositoryProvider).loadItem(created.itemFilePath);
+        for (final annotation in carried) {
+          final ok = await _workspace.saveAnnotation(
+            item: detail.item,
+            annotation: annotation.copyWith(parentItemKey: created.attachmentKey),
+            isNew: true,
+          );
+          if (ok) copied++;
+        }
+      } on Object catch (e) {
+        if (mounted) _say('Masuk library, tetapi anotasinya gagal disalin: $e');
+        return;
+      }
+    }
+    if (!mounted) return;
     _say(
-      created == null
-          ? (ref.read(workspaceControllerProvider).error ?? 'Gagal menambahkan')
-          : 'Masuk library sebagai ${created.itemKey}',
+      carried.isEmpty
+          ? 'Masuk library sebagai ${created.itemKey}'
+          : 'Masuk library sebagai ${created.itemKey} beserta $copied anotasi — '
+                'terbaca juga di Zotero setelah dikirim',
     );
   }
 
