@@ -7,6 +7,8 @@ name: Uji ujung ke ujung (desktop)
 on:
   push:
     tags: ['v*']
+    # Cabang uji: dicoba di Windows sebelum dirilis.
+    branches: ['uji/**']
   workflow_dispatch:
 
 jobs:
