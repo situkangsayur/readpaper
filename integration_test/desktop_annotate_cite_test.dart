@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +47,26 @@ void main() {
     }
     fail('Tidak muncul dalam $seconds detik: $finder');
   }
+
+  // Tangkapan layar aplikasi per langkah, diunggah CI sebagai artefak:
+  // tanpa ini kegagalan di runner Windows tidak bisa dilihat.
+  Future<void> shot(WidgetTester tester, String name) async {
+    try {
+      final image = await captureImage(find.byType(Scaffold).last.evaluate().first);
+      final bytes = await tester.runAsync(() async {
+        final data = await image.toByteData(format: ui.ImageByteFormat.png);
+        return data!.buffer.asUint8List();
+      });
+      final dir = Directory(p.join('build', 'e2e-shots'))..createSync(recursive: true);
+      File(p.join(dir.path, '$name.png')).writeAsBytesSync(bytes!);
+    } on Object catch (e) {
+      // ignore: avoid_print
+      print('[diag] tangkapan $name gagal: $e');
+    }
+  }
+
+  // ignore: avoid_print
+  void diag(String m) => print('[diag] $m');
 
   List<Map<String, dynamic>> annotations() {
     final item = jsonDecode(File(itemFile).readAsStringSync()) as Map<String, dynamic>;
@@ -210,6 +231,9 @@ void main() {
     await pumpFor(tester, const Duration(seconds: 4)); // halaman dan teksnya dimuat
 
     final viewer = tester.getRect(find.byType(PdfViewer));
+    final view = tester.view;
+    diag('jendela ${view.physicalSize} dpr=${view.devicePixelRatio} viewer=$viewer');
+    await shot(tester, '1-pembaca');
     final line = Offset(viewer.center.dx, viewer.top + viewer.height * 0.25);
 
     // 1) Tandai: tekan tombolnya, seret mouse di atas teks.
@@ -223,8 +247,19 @@ void main() {
       await drag.moveTo(Offset(viewer.left + viewer.width * (0.2 + 0.03 * i), line.dy));
       await tester.pump(const Duration(milliseconds: 30));
     }
+    await tester.pump(const Duration(milliseconds: 300));
+    await shot(tester, '2-sedang-menyeret');
+    diag(
+      'saat menyeret: Stabilo=${find.text('Stabilo').evaluate().length} '
+      'Salin=${find.text('Salin').evaluate().length}',
+    );
     await drag.up();
     await pumpFor(tester, const Duration(seconds: 3));
+    await shot(tester, '3-sesudah-seret');
+    diag(
+      'sesudah seret: anotasi=${annotations().length} '
+      'Tersimpan=${find.text('Tersimpan').evaluate().length}',
+    );
 
     var notes = annotations();
     final highlight = notes.where((a) => a['annotationType'] == 'highlight').toList();
