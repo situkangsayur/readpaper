@@ -13,7 +13,7 @@ Legenda: `[x]` selesai · `[~]` sebagian · `[ ]` belum.
 Dicatat 2026-10-11. Urutan = prioritas. Semua harus berjalan di Windows,
 Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
 
-### Sedang dikerjakan (rilis 0.25.5)
+### Selesai di 0.25.5 (dirilis 2026-10-11)
 
 - [x] Tambah berkas/folder tidak diam-diam gagal saat dialog mengubah ukuran
   jendela (GNOME + Forge, tiling WM).
@@ -33,8 +33,8 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
   terpotong).
 - [x] Uji ujung ke ujung di Windows sungguhan (CI): tandai, komentar, catatan,
   format Zotero, sitasi Office (APA/IEEE).
-- [ ] Uji fitur desktop lengkap hijau di Linux dan Windows.
-- [ ] Rilis 0.25.5: Windows, Linux (deb, tar.gz, Arch), APK, iOS; 8899.
+- [x] Uji fitur desktop lengkap hijau di Linux dan Windows.
+- [x] Rilis 0.25.5: Windows, Linux (deb, tar.gz, Arch), APK, iOS; 8899.
 
 ### Berikutnya — anotasi (didahulukan)
 
