@@ -14,6 +14,7 @@ class AnnotationMoveLayer extends StatefulWidget {
     this.limit,
     this.onTransformed,
     this.onDragStart,
+    this.onTap,
     this.canRotate = true,
     super.key,
   });
@@ -44,6 +45,11 @@ class AnnotationMoveLayer extends StatefulWidget {
   /// jadi memindah ke halaman lain hanya bisa diurus dari atas penampil.
   /// [onMoved] tidak dipanggil dalam hal ini.
   final ValueChanged<Offset>? onDragStart;
+
+  /// Ketukan pada anotasi yang sedang terpilih. Bingkai geser menutupi
+  /// anotasinya, jadi tanpa ini ketukan itu hilang — catatan yang terpilih
+  /// tidak bisa dibuka lagi dengan mengetuknya.
+  final VoidCallback? onTap;
 
   /// Dipanggil sekali saat gerakan mengubah ukuran atau memutar selesai.
   ///
@@ -115,15 +121,20 @@ class _AnnotationMoveLayerState extends State<AnnotationMoveLayer> {
       height: box.height,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        // Seretan yang dimulai di pegangan putar atau ukuran milik pegangan
+        // itu; bingkainya tidak ikut bergeser.
         onPanStart: (d) {
+          if (_transforming) return;
           setState(() => _dragging = true);
           widget.onDragStart?.call(d.globalPosition);
         },
         onPanUpdate: (d) {
-          if (widget.onDragStart != null) return;
+          if (_transforming || widget.onDragStart != null) return;
           setState(() => _drag += d.delta);
         },
         onPanEnd: (_) {
+          if (_transforming) return;
           final moved = _drag;
           setState(() {
             _dragging = false;
@@ -285,13 +296,17 @@ class _Handle extends StatelessWidget {
   final ValueChanged<Offset> onUpdate;
   final VoidCallback onEnd;
 
+  /// Pointer mentah, bukan pengenal gestur: pegangan ini duduk di dalam
+  /// bingkai yang juga mengenali seretan (untuk menggeser), dan di arena
+  /// gestur seretan bingkai itulah yang menang — pegangan putar dan ukuran
+  /// langsung dibatalkan sebelum sempat bergerak.
   @override
-  Widget build(BuildContext context) => GestureDetector(
+  Widget build(BuildContext context) => Listener(
     behavior: HitTestBehavior.opaque,
-    onPanStart: (_) => onStart(),
-    onPanUpdate: (d) => onUpdate(d.delta),
-    onPanEnd: (_) => onEnd(),
-    onPanCancel: onEnd,
+    onPointerDown: (_) => onStart(),
+    onPointerMove: (e) => onUpdate(e.delta),
+    onPointerUp: (_) => onEnd(),
+    onPointerCancel: (_) => onEnd(),
     child: Tooltip(
       message: tooltip,
       child: Material(

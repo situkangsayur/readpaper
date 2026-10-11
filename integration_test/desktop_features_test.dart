@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -103,6 +104,15 @@ void main() {
       await tester.tap(chevron.first);
       await pumpFor(tester, const Duration(milliseconds: 500));
     }
+  }
+
+  /// Kembali, setelah animasi masuk halamannya selesai: menekan Kembali di
+  /// tengah transisi memicu asersi Hero Flutter (mode debug), dan manusia
+  /// memang tidak secepat itu.
+  Future<void> back(WidgetTester tester) async {
+    await pumpFor(tester, const Duration(milliseconds: 600));
+    await tester.tap(find.byType(BackButton).last);
+    await pumpFor(tester, const Duration(milliseconds: 600));
   }
 
   Future<void> typeAndConfirm(WidgetTester tester, String text, String confirm) async {
@@ -281,7 +291,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.byTooltip('Simpan'));
     await pumpFor(tester, const Duration(seconds: 2));
-    await tester.tap(find.byType(BackButton));
+    await back(tester);
     await pumpUntil(tester, find.text('MD E2E'));
     await pumpUntilTrue(
       tester,
@@ -323,7 +333,7 @@ void main() {
     );
     await tester.tap(find.text('Menandai'));
     await pumpFor(tester, const Duration(milliseconds: 500));
-    await tester.tap(find.byType(BackButton).first);
+    await back(tester);
     await pumpFor(tester, const Duration(seconds: 1));
     expect(
       find.text('Simpan perubahan dulu?'),
@@ -333,7 +343,7 @@ void main() {
     await pumpUntil(tester, find.text('tambahan'));
     await tester.tap(find.text('tambahan').first);
     await pumpUntil(tester, find.textContaining('1 anotasi'));
-    await tester.tap(find.byType(BackButton).first);
+    await back(tester);
     await pumpUntil(tester, find.text('tambahan'));
     diag('anotasi PDF catatan tersimpan dan terbaca lagi');
 
@@ -364,7 +374,7 @@ void main() {
     await tester.tap(find.byTooltip('Statistik library'));
     await pumpFor(tester, const Duration(seconds: 2));
     await shot(tester, 'f1-statistik');
-    await tester.tap(find.byType(BackButton).last);
+    await back(tester);
     await pumpFor(tester, const Duration(seconds: 1));
     diag('statistik terbuka');
 
@@ -467,9 +477,79 @@ void main() {
     await tester.tap(find.byTooltip('Warna halaman: Normal'));
     await pumpUntil(tester, find.byTooltip('Warna halaman: Sepia'));
     diag('warna halaman berganti');
+
+    // Catatan gaya Zotero: penanda kecil; balonnya terbuka saat dibuat,
+    // ditutup, lalu dibuka lagi dengan mengetuk penandanya.
+    await tester.tap(find.byTooltip('Tempel catatan di halaman'));
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    viewer = tester.getRect(find.byType(PdfViewer));
+    final notePoint = Offset(viewer.left + viewer.width * 0.6, viewer.top + viewer.height * 0.3);
+    await tester.tapAt(notePoint, kind: PointerDeviceKind.mouse);
+    await pumpUntil(tester, find.text('Simpan'));
+    await tester.enterText(find.byType(TextField).last, 'Catatan uji Zotero');
+    await tester.tap(find.text('Simpan'));
+    await pumpUntilTrue(
+      tester,
+      () => annotations().any(
+        (a) => a['annotationType'] == 'note' && a['annotationComment'] == 'Catatan uji Zotero',
+      ),
+      'catatan-zotero',
+    );
+    final noteJson = annotations().singleWhere((a) => a['annotationType'] == 'note');
+    expect(noteJson['annotationPosition'], contains('"rects"'));
+    await pumpUntil(tester, find.byTooltip('Tutup catatan'));
+    await shot(tester, 'f3a-catatan-terbuka');
+    await tester.tap(find.byTooltip('Tutup catatan'));
+    await pumpFor(tester, const Duration(milliseconds: 500));
+    expect(find.byTooltip('Tutup catatan'), findsNothing, reason: 'balon tertutup');
+    // Tengah ikonnya, dihitung dari bingkai pilihannya sekarang: halamannya
+    // sudah bergeser sejak catatan dibuat (bilah petunjuk mode catatan hilang).
+    // Ikon ada 26 px di dalam pojok kiri atas bingkai, selebar ~22 pt.
+    final frame = tester.getTopLeft(find.byTooltip('Seret untuk memindahkan'));
+    await tester.tapAt(frame + const Offset(26 + 16, 26 + 16), kind: PointerDeviceKind.mouse);
+    await pumpUntil(tester, find.byTooltip('Tutup catatan'));
+    await tester.tap(find.byTooltip('Tutup catatan'));
+    await pumpFor(tester, const Duration(milliseconds: 500));
+    diag('catatan gaya Zotero: dibuat, ditutup, dibuka lagi');
+
+    // Teks di halaman (Tt): diputar dan diperbesar lewat pegangannya.
+    await tester.tap(find.byTooltip('Isi teks di halaman — untuk mengisi formulir'));
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    final textPoint = Offset(viewer.left + viewer.width * 0.3, viewer.top + viewer.height * 0.55);
+    await tester.tapAt(textPoint, kind: PointerDeviceKind.mouse);
+    await pumpUntil(tester, find.text('Simpan'));
+    await tester.enterText(find.byType(TextField).last, 'Teks diputar');
+    await tester.tap(find.text('Simpan'));
+    Map<String, dynamic>? textJson() => annotations()
+        .where((a) => a['annotationType'] == 'text' && a['annotationComment'] == 'Teks diputar')
+        .firstOrNull;
+    await pumpUntilTrue(tester, () => textJson() != null, 'teks-dibuat');
+    // Mengetuknya memilihnya (dan membuka penyunting, yang dibatalkan).
+    await tester.tapAt(textPoint + const Offset(8, 6), kind: PointerDeviceKind.mouse);
+    await pumpUntil(tester, find.text('Batal'));
+    await tester.tap(find.text('Batal'));
+    await pumpUntil(tester, find.byTooltip('Seret untuk memutar'));
+    await tester.drag(find.byTooltip('Seret untuk memutar'), const Offset(80, 0));
+
+    await pumpUntilTrue(
+      tester,
+      () => (jsonDecode(textJson()!['annotationPosition'] as String)['rotation'] as num) != 0,
+      'teks-diputar',
+    );
+    await pumpUntil(tester, find.byTooltip('Seret untuk mengubah ukuran'));
+    await tester.drag(find.byTooltip('Seret untuk mengubah ukuran'), const Offset(40, 40));
+    await pumpUntilTrue(
+      tester,
+      () => (jsonDecode(textJson()!['annotationPosition'] as String)['fontSize'] as num) > 12,
+      'teks-diperbesar',
+    );
+    final turned = jsonDecode(textJson()!['annotationPosition'] as String) as Map;
+    expect(turned['rotation'], isNot(0), reason: 'memperbesar tidak boleh menghapus sudutnya');
+    await shot(tester, 'f3b-teks-diputar');
+    diag('teks di halaman: diputar dan diperbesar ${textJson()!['annotationPosition']}');
     await shot(tester, 'f3-pembaca');
 
-    await tester.tap(find.byType(BackButton).first);
+    await back(tester);
     await pumpFor(tester, const Duration(seconds: 1));
     if (find.text('Keluar tanpa menyimpan').evaluate().isNotEmpty) {
       fail('Paper library tidak boleh meminta simpan: anotasinya sudah tersimpan');
@@ -484,7 +564,7 @@ void main() {
     await pumpUntil(tester, recent);
     await tester.tap(recent.first);
     await pumpUntil(tester, find.textContaining('1 anotasi'));
-    await tester.tap(find.byType(BackButton).first);
+    await back(tester);
     await pumpUntil(tester, find.text('Migrasi kriptografi pascakuantum'));
     diag('PDF catatan dari Terakhir dibaca: anotasinya terbaca');
 
@@ -503,7 +583,7 @@ void main() {
     await tester.tap(find.text('Berkas Markdown'));
     await typeAndConfirm(tester, 'berkas-e2e', 'Buat');
     await pumpUntil(tester, find.byType(BackButton));
-    await tester.tap(find.byType(BackButton).last);
+    await back(tester);
     await pumpFor(tester, const Duration(seconds: 1));
     final work = (await tester.runAsync(WorkFolder.dir))!.path;
     expect(File(p.join(work, 'berkas-e2e.md')).existsSync(), isTrue);
@@ -606,8 +686,12 @@ void main() {
     diag(
       'remote setelah mesin lain: ${await tester.runAsync(() => fx.commitCount(fx.remote))} commit',
     );
-    await tester.tap(find.byTooltip('Periksa perubahan di remote'));
-    await pumpFor(tester, const Duration(seconds: 5));
+    // Bila sinkronisasi lain masih berjalan, aplikasi menolak dengan "tunggu
+    // sampai selesai" — seperti pengguna, uji ini mencoba lagi.
+    for (var i = 0; i < 5 && tooltipStarting('Tarik 1 commit baru').evaluate().isEmpty; i++) {
+      await tester.tap(find.byTooltip('Periksa perubahan di remote'));
+      await pumpFor(tester, const Duration(seconds: 5));
+    }
     diag(
       'tombol tarik: ${tooltipStarting('Tarik').evaluate().map((e) => (e.widget as Tooltip).message).toList()} | ${snackText()}',
     );

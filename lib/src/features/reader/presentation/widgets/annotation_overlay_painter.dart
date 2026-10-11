@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -59,7 +60,13 @@ class AnnotationOverlayPainter extends CustomPainter {
               paint,
             );
           }
-        case AnnotationType.note || AnnotationType.text:
+        case AnnotationType.note:
+          // Catatan gaya Zotero: penanda kecil di halaman. Isinya dibuka
+          // dengan mengetuknya (balon catatan digambar sebagai widget).
+          for (final rect in annotation.rects) {
+            _drawNoteIcon(canvas, _toLocal(rect, scaleX, scaleY), color, isSelected);
+          }
+        case AnnotationType.text:
           for (final rect in annotation.rects) {
             final local = _toLocal(rect, scaleX, scaleY);
             final content = annotation.comment.trim();
@@ -67,7 +74,7 @@ class AnnotationOverlayPainter extends CustomPainter {
             // A `text` annotation carrying words is someone filling in a form
             // or labelling a figure, so the words are drawn. An empty one is
             // a sticky note, and stays a coloured marker.
-            if (annotation.type == AnnotationType.text && content.isNotEmpty) {
+            if (content.isNotEmpty) {
               _drawText(canvas, content, local, annotation, color, scaleX, scaleY, isSelected);
               continue;
             }
@@ -135,7 +142,10 @@ class AnnotationOverlayPainter extends CustomPainter {
           }
       }
 
-      if (isSelected && annotation.rects.isNotEmpty) {
+      final drawsOwnOutline =
+          annotation.type == AnnotationType.note ||
+          (annotation.type == AnnotationType.text && annotation.hasComment);
+      if (isSelected && annotation.rects.isNotEmpty && !drawsOwnOutline) {
         final bounds = _boundsOf(annotation, scaleX, scaleY);
         if (bounds != null) {
           canvas.drawRRect(
@@ -180,7 +190,17 @@ class AnnotationOverlayPainter extends CustomPainter {
     double scaleY,
     bool isSelected,
   ) {
-    final fontSize = ((annotation.rawPosition?['fontSize'] as num?)?.toDouble() ?? 12) * scaleY;
+    final fontSize = annotation.fontSize * scaleY;
+
+    // Diputar di sekitar titik tengah kotaknya. Sudutnya berlawanan jarum jam
+    // di koordinat PDF, yang di layar (sumbu y ke bawah) berarti negatif.
+    canvas.save();
+    if (annotation.rotation != 0) {
+      canvas
+        ..translate(local.center.dx, local.center.dy)
+        ..rotate(-annotation.rotation * math.pi / 180)
+        ..translate(-local.center.dx, -local.center.dy);
+    }
 
     // Only a hint of a box: a form that has been filled in should read as
     // filled in, not as covered in stickers.
@@ -204,6 +224,54 @@ class AnnotationOverlayPainter extends CustomPainter {
     )..layout(maxWidth: local.width <= 1 ? double.infinity : local.width);
 
     painter.paint(canvas, Offset(local.left, local.top));
+    canvas.restore();
+  }
+
+  /// Ikon catatan tempel: kertas berwarna dengan sudut terlipat dan tiga
+  /// garis tulisan, seperti penanda catatan di Zotero.
+  void _drawNoteIcon(Canvas canvas, Rect local, Color color, bool isSelected) {
+    final r = local.shortestSide * 0.12;
+    final fold = local.shortestSide * 0.32;
+    final body = Path()
+      ..moveTo(local.left + r, local.top)
+      ..lineTo(local.right - fold, local.top)
+      ..lineTo(local.right, local.top + fold)
+      ..lineTo(local.right, local.bottom - r)
+      ..quadraticBezierTo(local.right, local.bottom, local.right - r, local.bottom)
+      ..lineTo(local.left + r, local.bottom)
+      ..quadraticBezierTo(local.left, local.bottom, local.left, local.bottom - r)
+      ..lineTo(local.left, local.top + r)
+      ..quadraticBezierTo(local.left, local.top, local.left + r, local.top)
+      ..close();
+    canvas.drawShadow(body, Colors.black, 1.5, false);
+    canvas.drawPath(body, Paint()..color = color);
+    // Lipatan sudut.
+    canvas.drawPath(
+      Path()
+        ..moveTo(local.right - fold, local.top)
+        ..lineTo(local.right - fold, local.top + fold)
+        ..lineTo(local.right, local.top + fold)
+        ..close(),
+      Paint()..color = Colors.black.withValues(alpha: 0.22),
+    );
+    final line = Paint()
+      ..color = Colors.black.withValues(alpha: 0.45)
+      ..strokeWidth = math.max(1, local.height * 0.06)
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 3; i++) {
+      final y = local.top + local.height * (0.42 + i * 0.17);
+      final right = i == 2 ? local.left + local.width * 0.55 : local.right - local.width * 0.2;
+      canvas.drawLine(Offset(local.left + local.width * 0.2, y), Offset(right, y), line);
+    }
+    if (isSelected) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(local.inflate(3), Radius.circular(r + 3)),
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+    }
   }
 
   @override

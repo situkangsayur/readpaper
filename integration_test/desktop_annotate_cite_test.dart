@@ -299,9 +299,13 @@ void main() {
     // Format Zotero, persis seperti yang ditulis plugin sinkronisasi.
     notes = annotations();
     final h = notes.singleWhere((a) => a['annotationType'] == 'highlight');
-    final t = notes.singleWhere((a) => a['annotationType'] == 'text');
+    // Catatan tempel adalah catatan gaya Zotero: tipe `note`, kotak 22 x 22.
+    final t = notes.singleWhere((a) => a['annotationType'] == 'note');
     expect(h['annotationComment'], 'komentar uji windows');
     expect(t['annotationComment'], 'catatan uji windows');
+    final noteBox = (jsonDecode(t['annotationPosition'] as String)['rects'] as List).single as List;
+    expect((noteBox[2] as num) - (noteBox[0] as num), closeTo(22, 0.01));
+    expect((noteBox[3] as num) - (noteBox[1] as num), closeTo(22, 0.01));
     for (final a in <Map<String, dynamic>>[h, t]) {
       expect(a['itemType'], 'annotation');
       expect(a['parentItem'], 'ATTACH01');

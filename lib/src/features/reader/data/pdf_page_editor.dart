@@ -425,7 +425,15 @@ class PdfPageEditor {
     String content,
     (int, int, int) color,
   ) {
-    final size = (annotation.rawPosition?['fontSize'] as num?)?.toDouble() ?? 12;
+    final size = annotation.fontSize;
+    // Teks yang diputar (derajat, berlawanan jarum jam) berputar di sekitar
+    // titik tengah kotaknya, sama seperti di layar.
+    final box = annotation.rects.first;
+    final cx = (box.left + box.right) / 2;
+    final cy = (box.bottom + box.top) / 2;
+    final rad = annotation.rotation * math.pi / 180;
+    final cos = math.cos(rad);
+    final sin = math.sin(rad);
     var left = annotation.rects.first.left;
     var top = annotation.rects.first.top;
     var width = annotation.rects.first.width;
@@ -447,7 +455,17 @@ class PdfPageEditor {
         lib.FPDFText_SetText(text, wide.cast());
         calloc.free(wide);
         lib.FPDFPageObj_SetFillColor(text, color.$1, color.$2, color.$3, 255);
-        lib.FPDFPageObj_Transform(text, 1, 0, 0, 1, left, top - size * (1 + i * 1.15));
+        final x = left;
+        final y = top - size * (1 + i * 1.15);
+        lib.FPDFPageObj_Transform(
+          text,
+          cos,
+          sin,
+          -sin,
+          cos,
+          cx + (x - cx) * cos - (y - cy) * sin,
+          cy + (x - cx) * sin + (y - cy) * cos,
+        );
         lib.FPDFPage_InsertObject(page, text);
       }
     } finally {

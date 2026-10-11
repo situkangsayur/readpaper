@@ -16,6 +16,13 @@ class AnnotationMove {
   ///
   /// For ink there are none stored, so one is derived from the strokes.
   static List<AnnotationRect> rectsOf(ZoteroAnnotation annotation) {
+    // Teks yang diputar menempati kotak di sekeliling kotak putarnya: itu
+    // yang dikenai ketukan dan dibingkai pegangan.
+    if (annotation.type == AnnotationType.text &&
+        annotation.rotation != 0 &&
+        annotation.rects.length == 1) {
+      return <AnnotationRect>[rotatedBounds(annotation.rects.single, annotation.rotation)];
+    }
     if (annotation.rects.isNotEmpty) return annotation.rects;
     final bounds = boundsOfPaths(annotation.paths, padding: annotation.inkWidth);
     return bounds == null ? const <AnnotationRect>[] : <AnnotationRect>[bounds];
@@ -170,6 +177,15 @@ class AnnotationMove {
     required double pageWidth,
     required double pageHeight,
   }) {
+    if (annotation.type == AnnotationType.text && annotation.rects.length == 1) {
+      return _transformText(
+        annotation,
+        scale: scale,
+        rotation: rotation,
+        pageWidth: pageWidth,
+        pageHeight: pageHeight,
+      );
+    }
     if (annotation.paths.isEmpty) {
       return annotation.type == AnnotationType.image && annotation.rects.length == 1
           ? _scaleBox(annotation, scale: scale, pageWidth: pageWidth, pageHeight: pageHeight)
@@ -219,6 +235,69 @@ class AnnotationMove {
     if (after.top + dy > pageHeight) dy = pageHeight - after.top;
 
     return shift(moved, dx: dx, dy: dy, pageWidth: pageWidth, pageHeight: pageHeight);
+  }
+
+  /// Kotak sejajar sumbu di sekeliling [box] yang diputar [degrees] derajat
+  /// (berlawanan jarum jam) di sekitar titik tengahnya.
+  static AnnotationRect rotatedBounds(AnnotationRect box, double degrees) {
+    final rad = degrees * math.pi / 180;
+    final cx = (box.left + box.right) / 2;
+    final cy = (box.bottom + box.top) / 2;
+    final halfW = box.width / 2;
+    final halfH = box.height / 2;
+    final c = math.cos(rad).abs();
+    final s = math.sin(rad).abs();
+    final w = halfW * c + halfH * s;
+    final h = halfW * s + halfH * c;
+    return AnnotationRect(cx - w, cy - h, cx + w, cy + h);
+  }
+
+  /// Teks di halaman: diperbesar bersama huruf-hurufnya, dan sudutnya
+  /// disimpan sebagai `rotation` (derajat) — format Zotero untuk teks bebas.
+  /// Kotaknya tetap kotak yang belum diputar, diskalakan dari titik tengah.
+  static ZoteroAnnotation _transformText(
+    ZoteroAnnotation annotation, {
+    required double scale,
+    required double rotation,
+    required double pageWidth,
+    required double pageHeight,
+  }) {
+    if (scale == 1 && rotation == 0) return annotation;
+    final box = annotation.rects.single;
+    final cx = (box.left + box.right) / 2;
+    final cy = (box.bottom + box.top) / 2;
+    final fontSize = (annotation.fontSize * scale).clamp(4.0, 200.0);
+    final s = fontSize / annotation.fontSize;
+    final halfW = box.width * s / 2;
+    final halfH = box.height * s / 2;
+    var degrees = (annotation.rotation + rotation * 180 / math.pi) % 360;
+    if (degrees < 0) degrees += 360;
+    // Sudut yang nyaris lurus dibulatkan: memutar kembali ke tegak dengan
+    // tangan hampir tidak pernah tepat nol.
+    for (final snap in const <double>[0, 90, 180, 270, 360]) {
+      if ((degrees - snap).abs() < 2) degrees = snap % 360;
+    }
+    final changed = annotation.copyWith(
+      rects: <AnnotationRect>[AnnotationRect(cx - halfW, cy - halfH, cx + halfW, cy + halfH)],
+      rawPosition: <String, dynamic>{
+        ...?annotation.rawPosition,
+        'fontSize': double.parse(fontSize.toStringAsFixed(2)),
+        'rotation': double.parse(degrees.toStringAsFixed(2)),
+      },
+    );
+    // Tetap di dalam halaman.
+    final after = rectsOf(changed).single;
+    var dx = 0.0;
+    var dy = 0.0;
+    if (after.left < 0) dx = -after.left;
+    if (after.right + dx > pageWidth) dx = pageWidth - after.right;
+    if (after.bottom < 0) dy = -after.bottom;
+    if (after.top + dy > pageHeight) dy = pageHeight - after.top;
+    if (dx == 0 && dy == 0) return changed;
+    final b = changed.rects.single;
+    return changed.copyWith(
+      rects: <AnnotationRect>[AnnotationRect(b.left + dx, b.bottom + dy, b.right + dx, b.top + dy)],
+    );
   }
 
   /// Gambar tempelan diperbesar atau diperkecil dari titik tengahnya, rasio

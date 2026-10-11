@@ -121,6 +121,11 @@ void main() {
                 comment: 'Nama: Hendri',
                 raw: <String, dynamic>{'fontSize': 11},
               ),
+              a(
+                AnnotationType.text,
+                comment: 'Diputar 90',
+                raw: <String, dynamic>{'fontSize': 11, 'rotation': 90},
+              ),
             ]
           : const <ZoteroAnnotation>[],
     );
@@ -128,6 +133,7 @@ void main() {
     final result = inspect(bytes);
     expect(result.text, contains('Quantum anomaly detection'), reason: 'teks asli tetap teks');
     expect(result.text, contains('Nama: Hendri'), reason: 'isian Tt jadi teks PDF');
+    expect(result.text, contains('Diputar 90'), reason: 'teks yang diputar tetap teks PDF');
     expect(result.images, 0, reason: 'tidak ada halaman yang jadi gambar');
     expect(result.paths, greaterThanOrEqualTo(2), reason: 'stabilo dan coretan jadi vektor');
     expect(result.annots, 1, reason: 'komentar stabilo jadi catatan tempel PDF');

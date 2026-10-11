@@ -273,4 +273,86 @@ void main() {
       expect(copy.pageIndex, 0);
     });
   });
+
+  group('teks di halaman dan catatan gaya Zotero', () {
+    ZoteroAnnotation text({double rotation = 0}) => ZoteroAnnotation(
+      key: 'TEKS0001',
+      parentItemKey: 'PARENT01',
+      type: AnnotationType.text,
+      color: '#000000',
+      pageIndex: 0,
+      rects: <AnnotationRect>[const AnnotationRect(100, 300, 200, 320)],
+      comment: 'Nama: Hendri',
+      sortIndex: '00000|000000|00000',
+      authorName: '',
+      rawPosition: <String, dynamic>{'fontSize': 12, 'rotation': rotation},
+      dateAdded: DateTime(2026),
+      dateModified: DateTime(2026),
+    );
+
+    test('diperbesar: huruf dan kotaknya ikut, dari titik tengah', () {
+      final big = AnnotationMove.transform(text(), scale: 2, pageWidth: 600, pageHeight: 800);
+      expect(big.fontSize, 24);
+      final box = big.rects.single;
+      expect(box.width, closeTo(200, 0.01));
+      expect(box.height, closeTo(40, 0.01));
+      expect((box.left + box.right) / 2, closeTo(150, 0.01));
+      expect((box.bottom + box.top) / 2, closeTo(310, 0.01));
+    });
+
+    test('diputar: sudut tersimpan dalam derajat, kotak aslinya tetap', () {
+      final turned = AnnotationMove.transform(
+        text(),
+        rotation: math.pi / 6,
+        pageWidth: 600,
+        pageHeight: 800,
+      );
+      expect(turned.rotation, closeTo(30, 0.01));
+      expect(turned.rects.single.width, closeTo(100, 0.01));
+      expect(turned.toJson()['annotationPosition'], contains('"rotation":30'));
+    });
+
+    test('nyaris tegak dibulatkan ke nol', () {
+      final back = AnnotationMove.transform(
+        text(rotation: 30),
+        rotation: -29.5 * math.pi / 180,
+        pageWidth: 600,
+        pageHeight: 800,
+      );
+      expect(back.rotation, 0);
+    });
+
+    test('teks yang diputar dikenai ketukan di kotak putarnya', () {
+      final standing = text(rotation: 90);
+      // Diputar 90 derajat: 100 x 20 jadi 20 x 100 di sekitar (150, 310).
+      final bounds = AnnotationMove.rectsOf(standing).single;
+      expect(bounds.width, closeTo(20, 0.01));
+      expect(bounds.height, closeTo(100, 0.01));
+      expect(AnnotationGeometry.hitTest(annotation: standing, point: PdfPoint(150, 355)), isTrue);
+      expect(AnnotationGeometry.hitTest(annotation: standing, point: PdfPoint(190, 310)), isFalse);
+    });
+
+    test('catatan gaya Zotero: kotak 22 x 22 dan tipe note di JSON', () {
+      final note = ZoteroAnnotation(
+        key: 'CTTN0001',
+        parentItemKey: 'PARENT01',
+        type: AnnotationType.note,
+        color: '#ffd400',
+        pageIndex: 2,
+        rects: <AnnotationRect>[const AnnotationRect(300, 500, 322, 522)],
+        comment: 'Bandingkan dengan bab 3',
+        sortIndex: '00002|000000|00270',
+        authorName: '',
+        dateAdded: DateTime(2026),
+        dateModified: DateTime(2026),
+      );
+      final json = note.toJson();
+      expect(json['annotationType'], 'note');
+      expect(json['annotationComment'], 'Bandingkan dengan bab 3');
+      expect(json['annotationPosition'], '{"pageIndex":2,"rects":[[300,500,322,522]]}');
+      final back = ZoteroAnnotation.fromJson(json);
+      expect(back.type, AnnotationType.note);
+      expect(back.rects.single.width, 22);
+    });
+  });
 }

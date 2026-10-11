@@ -130,6 +130,24 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   List<ZoteroAnnotation> _annotations = const <ZoteroAnnotation>[];
   String? _selectedAnnotationKey;
 
+  /// Catatan gaya Zotero yang balonnya sedang terbuka. Mengetuk ikonnya
+  /// membuka dan menutupnya, seperti di Zotero.
+  final Set<String> _openNotes = <String>{};
+  DateTime _lastNoteToggle = DateTime(0);
+
+  /// Membuka atau menutup balon catatan [key]. Satu ketukan bisa sampai dua
+  /// kali — di bingkai pilihan dan di penampil PDF di bawahnya — dan tanpa
+  /// penahan ini balonnya terbuka lalu langsung tertutup lagi.
+  void _toggleNote(String key) {
+    final now = DateTime.now();
+    if (now.difference(_lastNoteToggle) < const Duration(milliseconds: 350)) return;
+    _lastNoteToggle = now;
+    setState(() {
+      _selectedAnnotationKey = key;
+      if (!_openNotes.remove(key)) _openNotes.add(key);
+    });
+  }
+
   /// Isi gambar tempelan per nama berkas: yang tersandi (untuk disimpan dan
   /// dilebur ke PDF) dan yang sudah dibaca (untuk digambar).
   final Map<String, Uint8List> _pictureBytes = <String, Uint8List>{};
@@ -2967,6 +2985,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           // lain yang aktif — dua hal yang menerima seretan di tempat yang sama
           // akan saling merebut.
           if (!_penMode && !_markerMode) ..._moveLayersFor(page: page, pageRect: pageRect),
+          ..._noteBubblesFor(page: page, pageRect: pageRect),
           if (_penMode)
             Positioned.fill(
               child: InkCaptureLayer(
@@ -3011,6 +3030,40 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     ),
   );
 
+  /// Balon catatan yang sedang terbuka di halaman ini: isi catatannya di
+  /// samping ikonnya, dengan tombol sunting dan tutup.
+  List<Widget> _noteBubblesFor({required PdfPage page, required Rect pageRect}) {
+    if (_openNotes.isEmpty) return const <Widget>[];
+    final scaleX = pageRect.width / page.width;
+    final scaleY = pageRect.height / page.height;
+    final widgets = <Widget>[];
+    for (final note in _onPage(page.pageNumber)) {
+      if (note.type != AnnotationType.note || !_openNotes.contains(note.key)) continue;
+      if (note.rects.isEmpty) continue;
+      final r = note.rects.first;
+      final iconRight = r.right * scaleX;
+      final iconTop = (page.height - r.top) * scaleY;
+      const width = 240.0;
+      // Di kanan ikon bila muat, kalau tidak di kirinya.
+      final left = iconRight + 6 + width <= pageRect.width
+          ? iconRight + 6
+          : math.max(0.0, r.left * scaleX - 6 - width);
+      widgets.add(
+        Positioned(
+          left: left,
+          top: math.max(0.0, iconTop),
+          width: width,
+          child: _NoteBubble(
+            note: note,
+            onEdit: () => _editAnnotation(note),
+            onClose: () => setState(() => _openNotes.remove(note.key)),
+          ),
+        ),
+      );
+    }
+    return widgets;
+  }
+
   /// Kotak geser untuk anotasi terpilih yang ada di halaman ini.
   List<Widget> _moveLayersFor({required PdfPage page, required Rect pageRect}) {
     final key = _selectedAnnotationKey;
@@ -3044,10 +3097,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         // menerima sentuhan, dan anotasi memang sering menempel di tepi.
         limit: pageRect.size,
         onDelete: () => _deleteAnnotation(annotation),
-        // Hanya tinta yang bisa diubah ukuran dan diputar; stabilo disimpan
-        // Zotero sebagai kotak sejajar sumbu.
-        canRotate: !PagePicture.isPicture(annotation),
-        onTransformed: annotation.paths.isEmpty && !PagePicture.isPicture(annotation)
+        // Mengetuk anotasi yang sudah terpilih: catatan dibuka atau ditutup,
+        // yang lain disunting — sama seperti mengetuknya sebelum terpilih.
+        onTap: () {
+          if (annotation.type == AnnotationType.note) {
+            _toggleNote(annotation.key);
+          } else if (!PagePicture.isPicture(annotation)) {
+            _editAnnotation(annotation);
+          }
+        },
+        // Tinta dan teks di halaman bisa diubah ukuran dan diputar; gambar
+        // hanya diubah ukurannya. Stabilo disimpan Zotero sebagai kotak
+        // sejajar sumbu, dan catatan adalah penanda berukuran tetap.
+        canRotate: !PagePicture.isPicture(annotation) && annotation.type != AnnotationType.note,
+        onTransformed:
+            annotation.paths.isEmpty &&
+                !PagePicture.isPicture(annotation) &&
+                annotation.type != AnnotationType.text
             ? null
             : ({double scale = 1, double rotation = 0}) =>
                   _transformAnnotation(annotation, page: page, scale: scale, rotation: rotation),
@@ -3684,6 +3750,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final onPage = _onPage(hit.page.pageNumber);
     for (final annotation in onPage) {
       if (AnnotationGeometry.hitTest(annotation: annotation, point: hit.offset)) {
+        if (annotation.type == AnnotationType.note && details.type == PdfViewerGeneralTapType.tap) {
+          // Catatan: ketuk membuka balonnya, ketuk lagi menutupnya.
+          _toggleNote(annotation.key);
+          return true;
+        }
         setState(() => _selectedAnnotationKey = annotation.key);
         // Gambar tidak punya komentar untuk disunting; mengetuknya cukup
         // memilihnya supaya bisa digeser dan diubah ukurannya.
@@ -3864,14 +3935,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     const fontSize = 12.0;
     final lines = result.comment.split('\n');
     final longest = lines.fold<int>(0, (m, l) => l.length > m ? l.length : m);
-    final noteWidth = asText ? (longest * fontSize * 0.52).clamp(40.0, page.width) : 150.0;
-    final noteHeight = asText ? lines.length * fontSize * 1.18 : 16.0;
+    // Catatan tempel adalah catatan gaya Zotero: penanda 22 x 22 pt yang
+    // dibuka dengan mengetuknya. Teks di halaman (Tt) ditulis langsung.
+    final noteWidth = asText ? (longest * fontSize * 0.52).clamp(40.0, page.width) : 22.0;
+    final noteHeight = asText ? lines.length * fontSize * 1.18 : 22.0;
     final rect = AnnotationRect(point.x, point.y - noteHeight, point.x + noteWidth, point.y);
 
     final annotation = ZoteroAnnotation(
       key: ZoteroKey.generate(),
       parentItemKey: widget.attachmentKey,
-      type: AnnotationType.text,
+      type: asText ? AnnotationType.text : AnnotationType.note,
       color: result.color ?? _color,
       pageIndex: page.pageNumber - 1,
       rects: <AnnotationRect>[rect],
@@ -3882,10 +3955,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         textOffset: 0,
         topFromPageTop: page.height - rect.top,
       ),
-      rawPosition: const <String, dynamic>{'fontSize': fontSize, 'rotation': 0},
+      rawPosition: asText ? const <String, dynamic>{'fontSize': fontSize, 'rotation': 0} : null,
       dateAdded: DateTime.now(),
       dateModified: DateTime.now(),
     );
+    // Catatan baru langsung terbuka, supaya yang baru ditulis terlihat.
+    if (!asText) _openNotes.add(annotation.key);
     await _persist(annotation, isNew: true);
   }
 
@@ -4048,6 +4123,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     // (di library besar bisa beberapa detik), dan selama itu panel anotasi
     // kosong dan Urungkan tidak menemukan apa-apa. Pemuatan ulang sesudahnya
     // menyamakan daftar dengan isi berkas — termasuk bila simpannya gagal.
+    // Pemuatan yang masih berjalan membawa isi berkas sebelum perubahan ini;
+    // hasilnya dibuang, supaya tidak menimpa perubahan ini dan suntingan
+    // berikutnya tidak dihitung dari versi lama (memperbesar teks yang baru
+    // diputar dulu mengembalikan sudutnya ke nol).
+    _loadGeneration++;
     setState(() {
       _annotations = <ZoteroAnnotation>[
         for (final a in _annotations)
@@ -4088,7 +4168,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   }
 
   Future<void> _goToAnnotation(ZoteroAnnotation annotation) async {
-    setState(() => _selectedAnnotationKey = annotation.key);
+    setState(() {
+      _selectedAnnotationKey = annotation.key;
+      // Catatan yang dipilih dari panel langsung terbuka di halamannya.
+      if (annotation.type == AnnotationType.note) _openNotes.add(annotation.key);
+    });
     // Lewat AnnotationMove: tinta tidak menyimpan kotak, batasnya dihitung
     // dari goresannya — tanpa itu yang terbuka hanya puncak halamannya.
     final bounds = AnnotationGeometry.boundsOf(AnnotationMove.rectsOf(annotation));
@@ -4099,6 +4183,71 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     await _controller.goToRectInsidePage(
       pageNumber: annotation.pageNumber,
       rect: AnnotationGeometry.toPdfRect(bounds),
+    );
+  }
+}
+
+/// Balon isi catatan gaya Zotero: warna catatannya di tepi, isinya bisa
+/// digulir bila panjang, dan dua tombol kecil.
+class _NoteBubble extends StatelessWidget {
+  const _NoteBubble({required this.note, required this.onEdit, required this.onClose});
+
+  final ZoteroAnnotation note;
+  final VoidCallback onEdit;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = colorFromHex(note.color);
+    final theme = Theme.of(context);
+    return Material(
+      elevation: 6,
+      borderRadius: BorderRadius.circular(8),
+      color: Color.alphaBlend(color.withValues(alpha: 0.18), theme.colorScheme.surface),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border(left: BorderSide(color: color, width: 4)),
+        ),
+        padding: const EdgeInsets.fromLTRB(10, 4, 2, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    'Catatan · hal. ${note.pageLabel}',
+                    style: theme.textTheme.labelSmall,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Sunting catatan',
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 18,
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: onEdit,
+                ),
+                IconButton(
+                  tooltip: 'Tutup catatan',
+                  visualDensity: VisualDensity.compact,
+                  iconSize: 18,
+                  icon: const Icon(Icons.close),
+                  onPressed: onClose,
+                ),
+              ],
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 220),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(right: 8),
+                child: SelectableText(note.comment, style: theme.textTheme.bodyMedium),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

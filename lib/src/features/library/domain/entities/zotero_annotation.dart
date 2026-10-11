@@ -195,6 +195,14 @@ class ZoteroAnnotation {
 
   bool get hasComment => comment.trim().isNotEmpty;
 
+  /// Ukuran huruf teks di halaman (`annotationType: text`), dalam poin PDF.
+  double get fontSize => (rawPosition?['fontSize'] as num?)?.toDouble() ?? 12;
+
+  /// Sudut teks di halaman, dalam derajat, berlawanan arah jarum jam —
+  /// arah sudut di koordinat PDF. Diputar di sekitar titik tengah kotaknya;
+  /// kotak di `rects` sendiri tetap kotak yang belum diputar.
+  double get rotation => (rawPosition?['rotation'] as num?)?.toDouble() ?? 0;
+
   ZoteroAnnotation copyWith({
     String? key,
     String? parentItemKey,
@@ -211,6 +219,7 @@ class ZoteroAnnotation {
     List<InkPath>? paths,
     double? inkWidth,
     String? sortIndex,
+    Map<String, dynamic>? rawPosition,
   }) => ZoteroAnnotation(
     key: key ?? this.key,
     parentItemKey: parentItemKey ?? this.parentItemKey,
@@ -228,7 +237,7 @@ class ZoteroAnnotation {
     tags: tags ?? this.tags,
     dateAdded: dateAdded ?? this.dateAdded,
     dateModified: dateModified ?? DateTime.now(),
-    rawPosition: rawPosition,
+    rawPosition: rawPosition ?? this.rawPosition,
   );
 
   /// Serialises back into the exact shape the Zotero GitHub export uses.
