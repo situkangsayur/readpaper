@@ -53,7 +53,12 @@ void main() {
   /// Tombol ⋮ di baris pohon yang memuat [name].
   Finder rowMenu(String name) => find
       .descendant(
-        of: find.ancestor(of: find.text(name), matching: find.byType(Row)).first,
+        of: find
+            .ancestor(
+              of: find.descendant(of: find.byType(CollectionTreePane), matching: find.text(name)),
+              matching: find.byType(Row),
+            )
+            .first,
         matching: find.byTooltip('Ubah nama, pindahkan, atau hapus'),
       )
       .first;
@@ -61,7 +66,8 @@ void main() {
   /// Menggulir pohon koleksi sampai baris [name] terbangun dan terlihat:
   /// pohonnya daftar malas, baris di luar layar belum ada.
   Future<void> revealInTree(WidgetTester tester, String name) async {
-    for (var i = 0; i < 25 && find.text(name).hitTestable().evaluate().isEmpty; i++) {
+    tester.state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger).first).clearSnackBars();
+    for (var i = 0; i < 25 && find.text(name).evaluate().isEmpty; i++) {
       final tree = find.descendant(
         of: find.byType(CollectionTreePane),
         matching: find.byType(Scrollable),
@@ -69,6 +75,12 @@ void main() {
       final up = i < 12; // turun dulu, lalu naik lagi bila belum ketemu
       await tester.drag(tree.first, Offset(0, up ? -60 : 60));
       await pumpFor(tester, const Duration(milliseconds: 200));
+    }
+    // Terbangun belum berarti bisa diketuk: di jendela pendek barisnya bisa
+    // tepat di tepi bawah, di balik kepala panel berkas.
+    if (find.text(name).evaluate().isNotEmpty) {
+      await tester.ensureVisible(find.text(name).first);
+      await pumpFor(tester, const Duration(milliseconds: 300));
     }
   }
 
@@ -102,6 +114,15 @@ void main() {
   }
 
   testWidgets('fitur desktop ujung ke ujung', (tester) async {
+    // RP_E2E_WINDOW=1028x681 meniru jendela runner Windows (tata letak
+    // menengah, pohon di laci) di mesin lain.
+    final size = Platform.environment['RP_E2E_WINDOW'];
+    if (size != null) {
+      final wh = size.split('x').map(double.parse).toList();
+      tester.view.physicalSize = Size(wh[0], wh[1]);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+    }
     app.main(const <String>[]);
     await pumpUntil(tester, find.text('Migrasi kriptografi pascakuantum'));
     diag('jendela ${tester.view.physicalSize} dpr=${tester.view.devicePixelRatio}');
@@ -234,7 +255,11 @@ void main() {
     );
     await showTree(tester);
     await revealInTree(tester, 'Catatan E2E');
-    await tester.tap(find.text('Catatan E2E').first);
+    await tester.tap(
+      find
+          .descendant(of: find.byType(CollectionTreePane), matching: find.text('Catatan E2E'))
+          .first,
+    );
     await pumpFor(tester, const Duration(seconds: 1));
     await closeDrawer(tester);
 
