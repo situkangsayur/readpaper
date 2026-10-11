@@ -56,7 +56,7 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
 6. **Masuk GitHub tanpa token**: login lewat browser (OAuth device flow);
    bila repo belum ada, minta izin lalu buatkan; bila sudah ada, pilih/ketik
    nama repo.
-7. **MCP / API untuk LLM**: menambah dokumen ke koleksi tertentu, beserta
+7. **MCP / API untuk LLM** — *ditunda (permintaan 2026-10-11)*: menambah dokumen ke koleksi tertentu, beserta
    dokumentasi untuk LLM-nya.
 
 ### Selesai di luar kode
