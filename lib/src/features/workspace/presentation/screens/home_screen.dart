@@ -108,7 +108,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // On anything narrower than a tablet in landscape the collection tree
       // costs more width than it is worth, so it moves into a drawer.
       drawer: layout.treeInDrawer && state.hasLibrary
-          ? const Drawer(child: SafeArea(child: _TreeAndFiles()))
+          ? const Drawer(child: SafeArea(child: _TreeAndFiles(filesOpen: false)))
           : null,
       body: Column(
         children: <Widget>[
@@ -259,7 +259,12 @@ class _Banner extends ConsumerWidget {
 /// di perangkat yang belum masuk. Berkas diseret dari bawah ke atas untuk
 /// memasukkannya.
 class _TreeAndFiles extends StatefulWidget {
-  const _TreeAndFiles();
+  const _TreeAndFiles({this.filesOpen = true});
+
+  /// Panel berkas terbuka saat pertama tampil. Di laci menu ia terlipat: di
+  /// layar sempit library dan catatan yang dicari, dan panel berkas yang
+  /// terbuka mendesak pohonnya sampai tinggal beberapa baris.
+  final bool filesOpen;
 
   @override
   State<_TreeAndFiles> createState() => _TreeAndFilesState();
@@ -268,10 +273,10 @@ class _TreeAndFiles extends StatefulWidget {
 class _TreeAndFilesState extends State<_TreeAndFiles> {
   /// Panel berkas terbuka atau terlipat ke bawah.
   ///
-  /// Terbuka secara bawaan karena di situlah berkas masuk ke koleksi, tetapi
-  /// bisa dilipat: saat sedang menelusuri koleksi, panel berkas hanya
+  /// Terbuka secara bawaan di samping (di situlah berkas masuk ke koleksi),
+  /// tetapi bisa dilipat: saat sedang menelusuri koleksi, panel berkas hanya
   /// mempersempit pohonnya.
-  bool _filesOpen = true;
+  late bool _filesOpen = widget.filesOpen;
 
   @override
   Widget build(BuildContext context) => Column(

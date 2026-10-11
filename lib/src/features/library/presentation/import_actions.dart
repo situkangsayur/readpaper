@@ -19,61 +19,66 @@ import '../../workspace/presentation/controllers/workspace_controller.dart';
 /// paper, daftar catatan, dan seretan dari pengelola berkas. Sebelumnya tiap
 /// tombol punya versinya sendiri, dan yang tertinggal tetap khusus PDF.
 
+/// Tempat aksi impor berpegangan selama dialog pemilih berkas terbuka.
+///
+/// Bukan `context` dan `ref` milik tombolnya: di desktop, dialog itu bisa
+/// mengubah ukuran jendela — pengelola jendela tiling seperti Forge di GNOME
+/// menata dialog sebagai ubin dan menyempitkan ReadPaper — sehingga tata
+/// letaknya berganti dan tombol pemanggilnya dibongkar. Sesudah dialog
+/// tertutup, `context.mounted` bernilai false dan berkas yang sudah dipilih
+/// dibuang tanpa pesan. Navigator akar dan ProviderContainer tetap hidup
+/// selama aplikasi berjalan.
+class ImportHost {
+  ImportHost.of(BuildContext context)
+    : context = Navigator.of(context, rootNavigator: true).context,
+      container = ProviderScope.containerOf(context, listen: false);
+
+  final BuildContext context;
+  final ProviderContainer container;
+}
+
 /// Memilih folder lalu mengimpornya ke koleksi paper ([notes] false) atau
 /// koleksi catatan [key] (null: di akar).
 Future<void> pickFolderInto(
-  BuildContext context,
-  WidgetRef ref, {
+  ImportHost host, {
   required bool notes,
   required String? key,
   required String name,
 }) async {
-  final path = await pickDirectoryOrTell(context, title: 'Pilih folder untuk $name');
-  if (path == null || !context.mounted) return;
-  await importFolderInto(context, ref, path, notes: notes, key: key, name: name);
+  final path = await pickDirectoryOrTell(host.context, title: 'Pilih folder untuk $name');
+  if (path == null || !host.context.mounted) return;
+  await importFolderInto(host, path, notes: notes, key: key, name: name);
 }
 
 /// Memilih berkas apa pun lalu memasukkannya ke koleksi catatan [key].
 Future<void> pickFilesIntoNotes(
-  BuildContext context,
-  WidgetRef ref, {
+  ImportHost host, {
   required String? key,
   required String name,
 }) async {
-  final paths = await pickFilesOrTell(context, title: 'Pilih berkas untuk $name');
+  final paths = await pickFilesOrTell(host.context, title: 'Pilih berkas untuk $name');
   for (final path in paths) {
-    if (!context.mounted) return;
-    await dropIntoNotes(context, ref, FileDrag(path: path, label: p.basename(path)), key, name);
+    if (!host.context.mounted) return;
+    await dropIntoNotes(host, FileDrag(path: path, label: p.basename(path)), key, name);
   }
 }
 
-/// Memilih satu atau beberapa PDF lalu memasukkannya ke koleksi [key]
+/// Memilih satu atau beberapa berkas lalu memasukkannya ke koleksi [key]
 /// (null: library tanpa koleksi), satu per satu lewat jalur yang sama dengan
 /// menyeret berkas ke pohon.
-Future<void> pickFilesIntoPapers(
-  BuildContext context,
-  WidgetRef ref,
-  String? key,
-  String name,
-) async {
-  final paths = await pickFilesOrTell(context, title: 'Pilih berkas untuk $name');
+Future<void> pickFilesIntoPapers(ImportHost host, String? key, String name) async {
+  final paths = await pickFilesOrTell(host.context, title: 'Pilih berkas untuk $name');
   final failed = <String>[];
   for (final path in paths) {
-    if (!context.mounted) return;
-    final ok = await dropIntoPapers(
-      context,
-      ref,
-      FileDrag(path: path, label: p.basename(path)),
-      key,
-      name,
-    );
+    if (!host.context.mounted) return;
+    final ok = await dropIntoPapers(host, FileDrag(path: path, label: p.basename(path)), key, name);
     if (!ok) failed.add(p.basename(path));
   }
   // Satu berkas sudah dilaporkan oleh pesannya sendiri; beberapa berkas
   // dirangkum, dan yang gagal disebut namanya.
-  if (paths.length > 1 && context.mounted) {
+  if (paths.length > 1 && host.context.mounted) {
     final added = paths.length - failed.length;
-    ScaffoldMessenger.of(context)
+    ScaffoldMessenger.of(host.context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
@@ -82,11 +87,23 @@ Future<void> pickFilesIntoPapers(
             failed.isEmpty
                 ? '$added berkas masuk ke $name'
                 : '$added dari ${paths.length} berkas masuk ke $name. Gagal: ${failed.join(', ')}. '
-                      '${ref.read(workspaceControllerProvider).error ?? ''}',
+                      '${host.container.read(workspaceControllerProvider).error ?? ''}',
           ),
         ),
       );
   }
+}
+
+void _say(ImportHost host, String message, {bool panjang = false}) {
+  if (!host.context.mounted) return;
+  ScaffoldMessenger.of(host.context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: panjang ? 6 : 3),
+      ),
+    );
 }
 
 /// Menerima lepasan di akar paper: berkas baru, atau item yang dipindahkan.
@@ -95,40 +112,28 @@ Future<void> pickFilesIntoPapers(
 /// punya rujukan maupun bibliografi untuk jadi salah satunya — penolakannya
 /// menyebutkan itu, bukan sekadar berkata tidak bisa.
 Future<bool> dropIntoPapers(
-  BuildContext context,
-  WidgetRef ref,
+  ImportHost host,
   TreeDrag drag,
   String? collectionKey,
   String collectionName,
 ) async {
-  final messenger = ScaffoldMessenger.of(context);
-
-  void say(String message, {bool panjang = false}) => messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: Duration(seconds: panjang ? 6 : 3),
-      ),
-    );
-
   switch (drag) {
     case NoteDrag():
-      say(NoteTarget.refusalMessage, panjang: true);
+      _say(host, NoteTarget.refusalMessage, panjang: true);
       return false;
 
     case ItemDrag():
-      final item = ref.read(workspaceControllerProvider).index?.items[drag.itemKey];
+      final item = host.container.read(workspaceControllerProvider).index?.items[drag.itemKey];
       if (item == null) return false;
-      say('Memindahkan ke $collectionName…');
-      final ok = await ref
+      _say(host, 'Memindahkan ke $collectionName…');
+      final ok = await host.container
           .read(workspaceControllerProvider.notifier)
           .moveItemToCollection(item: item, collectionKey: collectionKey);
-      if (!context.mounted) return ok;
-      say(
+      _say(
+        host,
         ok
             ? 'Pindah ke $collectionName'
-            : (ref.read(workspaceControllerProvider).error ?? 'Gagal memindahkan'),
+            : (host.container.read(workspaceControllerProvider).error ?? 'Gagal memindahkan'),
       );
       return ok;
 
@@ -136,8 +141,7 @@ Future<bool> dropIntoPapers(
       // Folder: strukturnya jadi koleksi dan sub-koleksi.
       if (Directory(drag.path).existsSync()) {
         return importFolderInto(
-          context,
-          ref,
+          host,
           drag.path,
           notes: false,
           key: collectionKey,
@@ -146,18 +150,18 @@ Future<bool> dropIntoPapers(
       }
       // Berkas apa pun boleh: Zotero menyimpan lampiran jenis apa saja dan
       // membuka yang bukan PDF dengan aplikasi bawaan sistemnya.
-      say('Memasukkan ke $collectionName…');
-      final created = await ref
+      _say(host, 'Memasukkan ke $collectionName…');
+      final created = await host.container
           .read(workspaceControllerProvider.notifier)
           .addFileToLibrary(
             filePath: drag.path,
             title: p.basenameWithoutExtension(drag.path),
             collectionKey: collectionKey,
           );
-      if (!context.mounted) return created != null;
-      say(
+      _say(
+        host,
         created == null
-            ? (ref.read(workspaceControllerProvider).error ?? 'Gagal memasukkan berkas')
+            ? (host.container.read(workspaceControllerProvider).error ?? 'Gagal memasukkan berkas')
             : 'Masuk ke $collectionName',
       );
       return created != null;
@@ -171,25 +175,15 @@ Future<bool> dropIntoPapers(
 /// markdown, buku catatan, atau gambar pindaian. Yang membedakannya dari paper
 /// bukan formatnya, melainkan tempatnya.
 Future<void> dropIntoNotes(
-  BuildContext context,
-  WidgetRef ref,
+  ImportHost host,
   TreeDrag drag,
   String? collectionKey,
   String collectionName,
 ) async {
-  final messenger = ScaffoldMessenger.of(context);
-  void say(String message, {bool panjang = false}) => messenger
-    ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: Duration(seconds: panjang ? 6 : 3),
-      ),
-    );
-
   switch (drag) {
     case ItemDrag():
-      say(
+      _say(
+        host,
         'Paper tinggal di akar paper: item Zotero punya rujukan dan '
         'bibliografi yang dijaga plugin sinkronisasi, dan folder catatan tidak '
         'mengenalnya. Yang bisa dipindahkan ke sini adalah catatan.',
@@ -197,21 +191,20 @@ Future<void> dropIntoNotes(
       );
 
     case NoteDrag():
-      final moved = await ref
+      final moved = await host.container
           .read(notesControllerProvider.notifier)
           .fileInto(itemKey: drag.noteKey, collectionKey: collectionKey);
-      if (!context.mounted) return;
-      say(
+      _say(
+        host,
         moved == null
-            ? (ref.read(notesErrorProvider) ?? 'Gagal memindahkan catatan')
+            ? (host.container.read(notesErrorProvider) ?? 'Gagal memindahkan catatan')
             : 'Pindah ke $collectionName',
       );
 
     case FileDrag():
       if (Directory(drag.path).existsSync()) {
         await importFolderInto(
-          context,
-          ref,
+          host,
           drag.path,
           notes: true,
           key: collectionKey,
@@ -219,18 +212,18 @@ Future<void> dropIntoNotes(
         );
         return;
       }
-      say('Memasukkan ke $collectionName…');
-      final key = await ref
+      _say(host, 'Memasukkan ke $collectionName…');
+      final key = await host.container
           .read(notesControllerProvider.notifier)
           .addFile(
             sourcePath: drag.path,
             title: p.basenameWithoutExtension(drag.path),
             collectionKey: collectionKey,
           );
-      if (!context.mounted) return;
-      say(
+      _say(
+        host,
         key == null
-            ? (ref.read(notesErrorProvider) ?? 'Gagal menyimpan catatan')
+            ? (host.container.read(notesErrorProvider) ?? 'Gagal menyimpan catatan')
             : 'Masuk ke $collectionName',
       );
   }
@@ -240,8 +233,7 @@ Future<void> dropIntoNotes(
 /// catatan: ditanya dulu dengan jumlah dan ukurannya, lalu dikerjakan dengan
 /// kemajuan yang terlihat. True bila ada yang masuk.
 Future<bool> importFolderInto(
-  BuildContext context,
-  WidgetRef ref,
+  ImportHost host,
   String path, {
   required bool notes,
   required String? key,
@@ -249,16 +241,14 @@ Future<bool> importFolderInto(
 }) async {
   final folder = await Isolate.run(() => FolderScan.scan(path));
   final bytes = await Isolate.run(() => folder.totalBytes);
-  if (!context.mounted) return false;
+  if (!host.context.mounted) return false;
   if (folder.fileCount == 0) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Folder ${folder.name} tidak berisi berkas.')));
+    _say(host, 'Folder ${folder.name} tidak berisi berkas.');
     return false;
   }
   final mb = bytes / (1024 * 1024);
   final ok = await showDialog<bool>(
-    context: context,
+    context: host.context,
     builder: (dialog) => AlertDialog(
       title: Text('Impor folder "${folder.name}" ke $name?'),
       content: Text(
@@ -282,14 +272,14 @@ Future<bool> importFolderInto(
       ],
     ),
   );
-  if (ok != true || !context.mounted) return false;
+  if (ok != true || !host.context.mounted) return false;
 
   final progress = ValueNotifier<(int, int)>((0, folder.fileCount));
-  final navigator = Navigator.of(context);
-  final messenger = ScaffoldMessenger.of(context);
+  final navigator = Navigator.of(host.context);
+  final messenger = ScaffoldMessenger.of(host.context);
   unawaited(
     showDialog<void>(
-      context: context,
+      context: host.context,
       barrierDismissible: false,
       builder: (_) => PopScope(
         canPop: false,
@@ -312,15 +302,17 @@ Future<bool> importFolderInto(
   );
   void onProgress(int done, int total) => progress.value = (done, total);
   final result = notes
-      ? await ref
+      ? await host.container
             .read(notesControllerProvider.notifier)
             .importFolder(folder: folder, parentKey: key, onProgress: onProgress)
-      : await ref
+      : await host.container
             .read(workspaceControllerProvider.notifier)
             .importFolderToLibrary(folder: folder, parentKey: key, onProgress: onProgress);
   navigator.pop();
   progress.dispose();
-  final error = notes ? ref.read(notesErrorProvider) : ref.read(workspaceControllerProvider).error;
+  final error = notes
+      ? host.container.read(notesErrorProvider)
+      : host.container.read(workspaceControllerProvider).error;
   messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(
@@ -344,7 +336,7 @@ Future<bool> importFolderInto(
 /// Tombol "tambah": berkas apa pun (beberapa sekaligus) atau satu folder yang
 /// jadi koleksi beserta sub-koleksinya — ke koleksi paper atau catatan
 /// [collectionKey] (null: akarnya).
-class AddFilesButton extends ConsumerWidget {
+class AddFilesButton extends StatelessWidget {
   const AddFilesButton({
     required this.notes,
     required this.collectionKey,
@@ -359,18 +351,20 @@ class AddFilesButton extends ConsumerWidget {
   final double iconSize;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => PopupMenuButton<String>(
+  Widget build(BuildContext context) => PopupMenuButton<String>(
     tooltip: 'Tambahkan berkas atau folder ke $collectionName',
     iconSize: iconSize,
     padding: EdgeInsets.zero,
     icon: const Icon(Icons.note_add_outlined),
     onSelected: (choice) async {
+      // Diambil sebelum dialog apa pun dibuka; lihat [ImportHost].
+      final host = ImportHost.of(context);
       if (choice == 'folder') {
-        await pickFolderInto(context, ref, notes: notes, key: collectionKey, name: collectionName);
+        await pickFolderInto(host, notes: notes, key: collectionKey, name: collectionName);
       } else if (notes) {
-        await pickFilesIntoNotes(context, ref, key: collectionKey, name: collectionName);
+        await pickFilesIntoNotes(host, key: collectionKey, name: collectionName);
       } else {
-        await pickFilesIntoPapers(context, ref, collectionKey, collectionName);
+        await pickFilesIntoPapers(host, collectionKey, collectionName);
       }
     },
     itemBuilder: (_) => <PopupMenuEntry<String>>[

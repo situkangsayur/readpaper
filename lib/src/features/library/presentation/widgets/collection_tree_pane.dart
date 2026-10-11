@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
-import '../../../../core/utils/file_pick.dart';
 import '../../../../core/utils/layout_size.dart';
 import '../../../../shared/widgets/file_drop_zone.dart';
 import '../import_actions.dart';
@@ -56,7 +55,7 @@ class CollectionTreePane extends ConsumerWidget {
         onToggle: () => expandedController.toggle(paperRootNodeKey),
         onTap: () => selectionController.select(const LibrarySelection.all()),
         // Melepas di sini berarti "masuk library, tanpa koleksi".
-        onDrop: (drag) => dropIntoPapers(context, ref, drag, null, index.library.name),
+        onDrop: (drag) => dropIntoPapers(ImportHost.of(context), drag, null, index.library.name),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -66,20 +65,13 @@ class CollectionTreePane extends ConsumerWidget {
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.note_add_outlined),
               onSelected: (choice) async {
+                // Diambil sebelum dialog dibuka; lihat [ImportHost].
+                final host = ImportHost.of(context);
                 if (choice == 'berkas') {
-                  await pickFilesIntoPapers(context, ref, null, index.library.name);
+                  await pickFilesIntoPapers(host, null, index.library.name);
                   return;
                 }
-                final path = await pickDirectoryOrTell(context, title: 'Pilih folder');
-                if (path == null || !context.mounted) return;
-                await importFolderInto(
-                  context,
-                  ref,
-                  path,
-                  notes: false,
-                  key: null,
-                  name: index.library.name,
-                );
+                await pickFolderInto(host, notes: false, key: null, name: index.library.name);
               },
               itemBuilder: (_) => <PopupMenuEntry<String>>[
                 const PopupMenuItem<String>(value: 'berkas', child: Text('Tambahkan berkas…')),
@@ -134,7 +126,7 @@ class CollectionTreePane extends ConsumerWidget {
             onTap: () => selectionController.select(LibrarySelection.collection(node.key)),
             onAddChild: () => _newPaperCollection(context, ref, parentKey: node.key),
             onMenu: () => _paperCollectionMenu(context, ref, node.key),
-            onDrop: (drag) => dropIntoPapers(context, ref, drag, node.key, node.name),
+            onDrop: (drag) => dropIntoPapers(ImportHost.of(context), drag, node.key, node.name),
           ),
         );
         if (!isExpanded) return;
@@ -162,7 +154,7 @@ class CollectionTreePane extends ConsumerWidget {
         isExpanded: notesOpen,
         onToggle: () => expandedController.toggle(notesRootNodeKey),
         onTap: () => selectionController.select(const LibrarySelection.notes()),
-        onDrop: (drag) => dropIntoNotes(context, ref, drag, null, 'Catatan'),
+        onDrop: (drag) => dropIntoNotes(ImportHost.of(context), drag, null, 'Catatan'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -196,7 +188,7 @@ class CollectionTreePane extends ConsumerWidget {
             depth: 1,
             selected: selection.kind == SelectionKind.notesUnfiled,
             onTap: () => selectionController.select(const LibrarySelection.notesUnfiled()),
-            onDrop: (drag) => dropIntoNotes(context, ref, drag, null, 'Catatan'),
+            onDrop: (drag) => dropIntoNotes(ImportHost.of(context), drag, null, 'Catatan'),
           ),
         );
       }
@@ -221,7 +213,8 @@ class CollectionTreePane extends ConsumerWidget {
                 selectionController.select(LibrarySelection.noteCollection(collection.key)),
             onMenu: () => _noteCollectionMenu(context, ref, collection),
             onAddChild: () => _newNoteCollection(context, ref, parentKey: collection.key),
-            onDrop: (drag) => dropIntoNotes(context, ref, drag, collection.key, collection.name),
+            onDrop: (drag) =>
+                dropIntoNotes(ImportHost.of(context), drag, collection.key, collection.name),
           ),
         );
         if (!isExpanded) return;
@@ -634,14 +627,9 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
 
   switch (action) {
     case 'pdf':
-      await pickFilesIntoPapers(context, ref, key, collection.name);
+      await pickFilesIntoPapers(ImportHost.of(context), key, collection.name);
     case 'folder':
-      final path = await pickDirectoryOrTell(
-        context,
-        title: 'Pilih folder untuk ${collection.name}',
-      );
-      if (path == null || !context.mounted) return;
-      await importFolderInto(context, ref, path, notes: false, key: key, name: collection.name);
+      await pickFolderInto(ImportHost.of(context), notes: false, key: key, name: collection.name);
     case 'baru':
       await _newPaperCollection(context, ref, parentKey: key);
     case 'nama':
@@ -902,27 +890,10 @@ Future<void> _noteCollectionMenu(
       if (name == null || name.trim().isEmpty) return;
       await controller.renameCollection(key: collection.key, name: name);
     case 'berkas':
-      final paths = await pickFilesOrTell(context, title: 'Pilih berkas untuk ${collection.name}');
-      for (final path in paths) {
-        if (!context.mounted) return;
-        await dropIntoNotes(
-          context,
-          ref,
-          FileDrag(path: path, label: p.basename(path)),
-          collection.key,
-          collection.name,
-        );
-      }
+      await pickFilesIntoNotes(ImportHost.of(context), key: collection.key, name: collection.name);
     case 'folder':
-      final path = await pickDirectoryOrTell(
-        context,
-        title: 'Pilih folder untuk ${collection.name}',
-      );
-      if (path == null || !context.mounted) return;
-      await importFolderInto(
-        context,
-        ref,
-        path,
+      await pickFolderInto(
+        ImportHost.of(context),
         notes: true,
         key: collection.key,
         name: collection.name,

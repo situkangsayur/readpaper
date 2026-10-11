@@ -40,8 +40,13 @@ class WorkspaceBar extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Flexible(child: _LibraryPicker()),
                 ],
-                const Spacer(),
-                const _SyncActions(),
+                // Aksi sinkron mendapat sisa lebarnya dan merapat ke kanan;
+                // yang mengalah di layar sempit adalah teks chip statusnya,
+                // bukan tombolnya.
+                const Expanded(
+                  flex: 2,
+                  child: Align(alignment: Alignment.centerRight, child: _SyncActions()),
+                ),
               ],
             ),
           ),
@@ -215,7 +220,7 @@ class _SyncActions extends ConsumerWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        _StatusChip(status: status),
+        Flexible(child: _StatusChip(status: status)),
         const SizedBox(width: 4),
         // Tarik selalu terlihat sebagai tombol sendiri, juga di layar sempit:
         // di dalam menu ia tidak pernah ditemukan.
@@ -367,6 +372,8 @@ class _StatusChip extends ConsumerWidget {
     final lastSync = state.profile?.lastSyncedAt;
     return Tooltip(
       message: <String>[
+        // Teks chip bisa terpotong di layar sempit; ringkasan lengkapnya di sini.
+        status.summary,
         'Branch: ${status.branch}',
         if (status.lastCommitSubject.isNotEmpty) 'Commit terakhir: ${status.lastCommitSubject}',
         if (lastSync != null) 'Sinkron terakhir: ${_clock(lastSync)}',
@@ -393,13 +400,15 @@ class _StatusChip extends ConsumerWidget {
                 color: color,
               ),
             const SizedBox(width: 6),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 240),
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 240),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color),
+                ),
               ),
             ),
             if (!busy && lastSync != null) ...<Widget>[
