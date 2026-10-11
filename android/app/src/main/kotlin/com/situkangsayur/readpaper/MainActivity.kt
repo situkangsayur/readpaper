@@ -20,6 +20,7 @@ import java.io.File
 class MainActivity : FlutterActivity() {
     private var pending: String? = null
     private var channel: MethodChannel? = null
+    private var audience: AudienceDisplay? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -44,6 +45,29 @@ class MainActivity : FlutterActivity() {
                 }
             }
         }
+        // Layar audiens mode presenter di layar eksternal.
+        val display = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AudienceDisplay.CHANNEL)
+        val screen = AudienceDisplay(this, display)
+        audience = screen
+        display.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "open" -> result.success(screen.open())
+                "send" -> {
+                    screen.send(call.arguments as String)
+                    result.success(null)
+                }
+                "close" -> {
+                    screen.close()
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        audience?.close()
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {

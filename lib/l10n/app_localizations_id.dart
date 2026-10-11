@@ -2305,6 +2305,81 @@ class AppLocalizationsId extends AppLocalizations {
   String get whiteboardErrPixels => 'Piksel gagal dibaca';
 
   @override
+  String get presenterAudienceWaiting => 'Menunggu presenter…';
+
+  @override
+  String presenterSlideOf(int page, int total) {
+    return 'Slide $page dari $total';
+  }
+
+  @override
+  String get presenterResetTimer =>
+      'Waktu berjalan — ketuk untuk mengulang dari nol';
+
+  @override
+  String get presenterNextSlide => 'Slide berikutnya';
+
+  @override
+  String get presenterLastSlide => 'Ini slide terakhir';
+
+  @override
+  String get presenterNotes => 'Catatan presenter (hanya terlihat di sini)';
+
+  @override
+  String get presenterNotesHint => 'Tulis catatan untuk slide ini…';
+
+  @override
+  String get presenterBlank => 'Layar hitam';
+
+  @override
+  String get presenterFullSlide => 'Slide penuh';
+
+  @override
+  String get presenterStopAudience => 'Tutup layar audiens';
+
+  @override
+  String get presenterOpenAudience =>
+      'Tampilkan di layar lain (monitor kedua / proyektor)';
+
+  @override
+  String get presenterShowPanel => 'Tampilkan panel presenter';
+
+  @override
+  String get presenterNoExternalDisplay =>
+      'Tidak ada layar eksternal. Sambungkan monitor/proyektor (HDMI, USB-C) atau cast layar, lalu coba lagi.';
+
+  @override
+  String get presenterAudienceOpened =>
+      'Layar audiens terbuka — tekan F11 di jendela itu bila belum layar penuh';
+
+  @override
+  String get presenterAudienceClosed => 'Layar audiens ditutup';
+
+  @override
+  String presenterNotesSaveFailed(String error) {
+    return 'Catatan presenter gagal disimpan: $error';
+  }
+
+  @override
+  String presenterNotesChanged(String title) {
+    return 'Catatan presenter: $title';
+  }
+
+  @override
+  String get presenterPointer => 'Penunjuk';
+
+  @override
+  String get presenterPointerTrail => 'Buntut penunjuk';
+
+  @override
+  String get presenterTrailOff => 'Tanpa buntut';
+
+  @override
+  String presenterTrailSeconds(String seconds) {
+    return '$seconds detik';
+  }
+
+  @override
   String get readerStylusOnlyOn =>
       'Stylus saja: tangan yang bertumpu tidak akan menggambar.';
 

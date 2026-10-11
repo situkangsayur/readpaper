@@ -281,6 +281,9 @@ class NotesStore {
       if (file.existsSync()) await file.delete();
       final annotations = File(annotationsFileFor(file.path));
       if (annotations.existsSync()) await annotations.delete();
+      // Catatan presenter per slide, bila PDF ini pernah disajikan.
+      final presenter = File(p.join(file.parent.path, 'presenter.json'));
+      if (presenter.existsSync()) await presenter.delete();
       final holder = file.parent;
       if (p.isWithin(p.normalize(_filesRoot), p.normalize(holder.path)) &&
           holder.existsSync() &&

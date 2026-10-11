@@ -17,6 +17,7 @@ abstract class SettingsRepository {
     bool? stylusOnly,
     bool? citationServer,
     String? language,
+    int? pointerTrailMs,
   });
 
   /// Records a paper as opened, or moves it back to the front of the history.

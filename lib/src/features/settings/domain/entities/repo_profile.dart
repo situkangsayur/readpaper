@@ -163,6 +163,7 @@ class AppSettings {
     this.stylusOnly = false,
     this.citationServer = true,
     this.language = 'id',
+    this.pointerTrailMs = 600,
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -181,6 +182,7 @@ class AppSettings {
     stylusOnly: json['stylusOnly'] as bool? ?? false,
     citationServer: json['citationServer'] as bool? ?? true,
     language: json['language'] as String? ?? 'id',
+    pointerTrailMs: (json['pointerTrailMs'] as num?)?.toInt() ?? 600,
   );
 
   final List<RepoProfile> profiles;
@@ -218,6 +220,10 @@ class AppSettings {
   /// Bawaannya Indonesia, supaya tidak ada yang berubah bagi pengguna lama.
   final String language;
 
+  /// Lama buntut penunjuk saat menyajikan, dalam milidetik; 0 berarti tanpa
+  /// buntut, hanya titiknya.
+  final int pointerTrailMs;
+
   RepoProfile? get activeProfile {
     if (profiles.isEmpty) return null;
     for (final profile in profiles) {
@@ -236,6 +242,7 @@ class AppSettings {
     'stylusOnly': stylusOnly,
     'citationServer': citationServer,
     'language': language,
+    'pointerTrailMs': pointerTrailMs,
   };
 
   AppSettings copyWith({
@@ -249,6 +256,7 @@ class AppSettings {
     bool? citationServer,
     bool clearActive = false,
     String? language,
+    int? pointerTrailMs,
   }) => AppSettings(
     profiles: profiles ?? this.profiles,
     activeProfileId: clearActive ? null : (activeProfileId ?? this.activeProfileId),
@@ -259,6 +267,7 @@ class AppSettings {
     stylusOnly: stylusOnly ?? this.stylusOnly,
     citationServer: citationServer ?? this.citationServer,
     language: language ?? this.language,
+    pointerTrailMs: pointerTrailMs ?? this.pointerTrailMs,
   );
 
   /// Puts [entry] at the front, replacing any earlier visit to the same file.

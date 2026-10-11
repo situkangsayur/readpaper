@@ -4009,6 +4009,132 @@ abstract class AppLocalizations {
   /// **'Piksel gagal dibaca'**
   String get whiteboardErrPixels;
 
+  /// No description provided for @presenterAudienceWaiting.
+  ///
+  /// In id, this message translates to:
+  /// **'Menunggu presenter…'**
+  String get presenterAudienceWaiting;
+
+  /// No description provided for @presenterSlideOf.
+  ///
+  /// In id, this message translates to:
+  /// **'Slide {page} dari {total}'**
+  String presenterSlideOf(int page, int total);
+
+  /// No description provided for @presenterResetTimer.
+  ///
+  /// In id, this message translates to:
+  /// **'Waktu berjalan — ketuk untuk mengulang dari nol'**
+  String get presenterResetTimer;
+
+  /// No description provided for @presenterNextSlide.
+  ///
+  /// In id, this message translates to:
+  /// **'Slide berikutnya'**
+  String get presenterNextSlide;
+
+  /// No description provided for @presenterLastSlide.
+  ///
+  /// In id, this message translates to:
+  /// **'Ini slide terakhir'**
+  String get presenterLastSlide;
+
+  /// No description provided for @presenterNotes.
+  ///
+  /// In id, this message translates to:
+  /// **'Catatan presenter (hanya terlihat di sini)'**
+  String get presenterNotes;
+
+  /// No description provided for @presenterNotesHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Tulis catatan untuk slide ini…'**
+  String get presenterNotesHint;
+
+  /// No description provided for @presenterBlank.
+  ///
+  /// In id, this message translates to:
+  /// **'Layar hitam'**
+  String get presenterBlank;
+
+  /// No description provided for @presenterFullSlide.
+  ///
+  /// In id, this message translates to:
+  /// **'Slide penuh'**
+  String get presenterFullSlide;
+
+  /// No description provided for @presenterStopAudience.
+  ///
+  /// In id, this message translates to:
+  /// **'Tutup layar audiens'**
+  String get presenterStopAudience;
+
+  /// No description provided for @presenterOpenAudience.
+  ///
+  /// In id, this message translates to:
+  /// **'Tampilkan di layar lain (monitor kedua / proyektor)'**
+  String get presenterOpenAudience;
+
+  /// No description provided for @presenterShowPanel.
+  ///
+  /// In id, this message translates to:
+  /// **'Tampilkan panel presenter'**
+  String get presenterShowPanel;
+
+  /// No description provided for @presenterNoExternalDisplay.
+  ///
+  /// In id, this message translates to:
+  /// **'Tidak ada layar eksternal. Sambungkan monitor/proyektor (HDMI, USB-C) atau cast layar, lalu coba lagi.'**
+  String get presenterNoExternalDisplay;
+
+  /// No description provided for @presenterAudienceOpened.
+  ///
+  /// In id, this message translates to:
+  /// **'Layar audiens terbuka — tekan F11 di jendela itu bila belum layar penuh'**
+  String get presenterAudienceOpened;
+
+  /// No description provided for @presenterAudienceClosed.
+  ///
+  /// In id, this message translates to:
+  /// **'Layar audiens ditutup'**
+  String get presenterAudienceClosed;
+
+  /// No description provided for @presenterNotesSaveFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Catatan presenter gagal disimpan: {error}'**
+  String presenterNotesSaveFailed(String error);
+
+  /// No description provided for @presenterNotesChanged.
+  ///
+  /// In id, this message translates to:
+  /// **'Catatan presenter: {title}'**
+  String presenterNotesChanged(String title);
+
+  /// No description provided for @presenterPointer.
+  ///
+  /// In id, this message translates to:
+  /// **'Penunjuk'**
+  String get presenterPointer;
+
+  /// No description provided for @presenterPointerTrail.
+  ///
+  /// In id, this message translates to:
+  /// **'Buntut penunjuk'**
+  String get presenterPointerTrail;
+
+  /// No description provided for @presenterTrailOff.
+  ///
+  /// In id, this message translates to:
+  /// **'Tanpa buntut'**
+  String get presenterTrailOff;
+
+  /// No description provided for @presenterTrailSeconds.
+  ///
+  /// In id, this message translates to:
+  /// **'{seconds} detik'**
+  String presenterTrailSeconds(String seconds);
+
   /// No description provided for @readerStylusOnlyOn.
   ///
   /// In id, this message translates to:

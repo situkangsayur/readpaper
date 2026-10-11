@@ -1,0 +1,54 @@
+{
+  "presenterAudienceWaiting": "Menunggu presenter…",
+  "presenterSlideOf": "Slide {page} dari {total}",
+  "presenterResetTimer": "Waktu berjalan — ketuk untuk mengulang dari nol",
+  "presenterNextSlide": "Slide berikutnya",
+  "presenterLastSlide": "Ini slide terakhir",
+  "presenterNotes": "Catatan presenter (hanya terlihat di sini)",
+  "presenterNotesHint": "Tulis catatan untuk slide ini…",
+  "presenterBlank": "Layar hitam",
+  "presenterFullSlide": "Slide penuh",
+  "presenterStopAudience": "Tutup layar audiens",
+  "presenterOpenAudience": "Tampilkan di layar lain (monitor kedua / proyektor)",
+  "presenterShowPanel": "Tampilkan panel presenter",
+  "presenterNoExternalDisplay": "Tidak ada layar eksternal. Sambungkan monitor/proyektor (HDMI, USB-C) atau cast layar, lalu coba lagi.",
+  "presenterAudienceOpened": "Layar audiens terbuka — tekan F11 di jendela itu bila belum layar penuh",
+  "presenterAudienceClosed": "Layar audiens ditutup",
+  "presenterNotesSaveFailed": "Catatan presenter gagal disimpan: {error}",
+  "presenterNotesChanged": "Catatan presenter: {title}",
+  "presenterPointer": "Penunjuk",
+  "presenterPointerTrail": "Buntut penunjuk",
+  "presenterTrailOff": "Tanpa buntut",
+  "presenterTrailSeconds": "{seconds} detik",
+  "@presenterSlideOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "@presenterNotesSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "@presenterNotesChanged": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "@presenterTrailSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "String"
+      }
+    }
+  }
+}

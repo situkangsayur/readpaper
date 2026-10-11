@@ -1,0 +1,23 @@
+{
+  "presenterAudienceWaiting": "Waiting for the presenter…",
+  "presenterSlideOf": "Slide {page} of {total}",
+  "presenterResetTimer": "Elapsed time — tap to restart from zero",
+  "presenterNextSlide": "Next slide",
+  "presenterLastSlide": "This is the last slide",
+  "presenterNotes": "Presenter notes (visible only here)",
+  "presenterNotesHint": "Write notes for this slide…",
+  "presenterBlank": "Black screen",
+  "presenterFullSlide": "Full slide",
+  "presenterStopAudience": "Close audience screen",
+  "presenterOpenAudience": "Show on another screen (second monitor / projector)",
+  "presenterShowPanel": "Show presenter panel",
+  "presenterNoExternalDisplay": "No external display. Connect a monitor/projector (HDMI, USB-C) or cast the screen, then try again.",
+  "presenterAudienceOpened": "Audience screen opened — press F11 in that window if it is not full screen yet",
+  "presenterAudienceClosed": "Audience screen closed",
+  "presenterNotesSaveFailed": "Presenter notes could not be saved: {error}",
+  "presenterNotesChanged": "Presenter notes: {title}",
+  "presenterPointer": "Pointer",
+  "presenterPointerTrail": "Pointer trail",
+  "presenterTrailOff": "No trail",
+  "presenterTrailSeconds": "{seconds} s"
+}

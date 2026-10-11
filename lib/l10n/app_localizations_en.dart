@@ -2462,6 +2462,80 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whiteboardErrPixels => 'Could not read the pixels';
 
   @override
+  String get presenterAudienceWaiting => 'Waiting for the presenter…';
+
+  @override
+  String presenterSlideOf(int page, int total) {
+    return 'Slide $page of $total';
+  }
+
+  @override
+  String get presenterResetTimer => 'Elapsed time — tap to restart from zero';
+
+  @override
+  String get presenterNextSlide => 'Next slide';
+
+  @override
+  String get presenterLastSlide => 'This is the last slide';
+
+  @override
+  String get presenterNotes => 'Presenter notes (visible only here)';
+
+  @override
+  String get presenterNotesHint => 'Write notes for this slide…';
+
+  @override
+  String get presenterBlank => 'Black screen';
+
+  @override
+  String get presenterFullSlide => 'Full slide';
+
+  @override
+  String get presenterStopAudience => 'Close audience screen';
+
+  @override
+  String get presenterOpenAudience =>
+      'Show on another screen (second monitor / projector)';
+
+  @override
+  String get presenterShowPanel => 'Show presenter panel';
+
+  @override
+  String get presenterNoExternalDisplay =>
+      'No external display. Connect a monitor/projector (HDMI, USB-C) or cast the screen, then try again.';
+
+  @override
+  String get presenterAudienceOpened =>
+      'Audience screen opened — press F11 in that window if it is not full screen yet';
+
+  @override
+  String get presenterAudienceClosed => 'Audience screen closed';
+
+  @override
+  String presenterNotesSaveFailed(String error) {
+    return 'Presenter notes could not be saved: $error';
+  }
+
+  @override
+  String presenterNotesChanged(String title) {
+    return 'Presenter notes: $title';
+  }
+
+  @override
+  String get presenterPointer => 'Pointer';
+
+  @override
+  String get presenterPointerTrail => 'Pointer trail';
+
+  @override
+  String get presenterTrailOff => 'No trail';
+
+  @override
+  String presenterTrailSeconds(String seconds) {
+    return '$seconds s';
+  }
+
+  @override
   String get readerStylusOnlyOn => 'Stylus only: a resting hand will not draw.';
 
   @override

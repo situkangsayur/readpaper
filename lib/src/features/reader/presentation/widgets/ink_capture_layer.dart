@@ -24,6 +24,7 @@ class InkCaptureLayer extends StatefulWidget {
     this.stylusOnly = false,
     this.liveStroke,
     this.liveRepaint,
+    this.onLiveChanged,
     super.key,
   });
 
@@ -70,6 +71,11 @@ class InkCaptureLayer extends StatefulWidget {
 
   final ValueChanged<InkPath> onStrokeFinished;
 
+  /// Goresan yang sedang ditarik berubah, titik x, y bergantian dalam
+  /// koordinat PDF; kosong saat goresan selesai. Dipakai layar audiens
+  /// presenter, yang ikut melihat goresan selagi ditarik.
+  final ValueChanged<List<double>>? onLiveChanged;
+
   @override
   State<InkCaptureLayer> createState() => _InkCaptureLayerState();
 }
@@ -86,13 +92,10 @@ class _InkCaptureLayerState extends State<InkCaptureLayer> {
     // scribble is still going into someone's git repository.
     if (_live.isNotEmpty && (_live.last - local).distance < 1.5) return;
     setState(() => _live.add(local));
+    widget.onLiveChanged?.call(_pdfPoints());
   }
 
-  void _finish() {
-    if (_live.length < 2 || _size.isEmpty) {
-      setState(_live.clear);
-      return;
-    }
+  List<double> _pdfPoints() {
     final scaleX = _size.width / widget.pageWidth;
     final scaleY = _size.height / widget.pageHeight;
     final points = <double>[];
@@ -101,8 +104,18 @@ class _InkCaptureLayerState extends State<InkCaptureLayer> {
         ..add(p.dx / scaleX)
         ..add(widget.pageHeight - p.dy / scaleY);
     }
-    widget.onStrokeFinished(InkPath(points));
+    return points;
+  }
+
+  void _finish() {
+    if (_live.length < 2 || _size.isEmpty) {
+      setState(_live.clear);
+      widget.onLiveChanged?.call(const <double>[]);
+      return;
+    }
+    widget.onStrokeFinished(InkPath(_pdfPoints()));
     setState(_live.clear);
+    widget.onLiveChanged?.call(const <double>[]);
   }
 
   @override

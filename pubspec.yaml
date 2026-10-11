@@ -36,6 +36,13 @@ dependencies:
   url_launcher: ^6.3.2
   file_picker: ^13.1.0
 
+  # Mode presenter: jendela audiens di monitor kedua (desktop). Tiap jendela
+  # punya mesin Flutter sendiri; window_manager + screen_retriever
+  # memindahkannya ke monitor lain dan membuatnya layar penuh.
+  desktop_multi_window: ^0.3.1
+  window_manager: ^0.5.2
+  screen_retriever: ">=0.2.2 <0.3.0"
+
   # Menulis JPG; dart:ui hanya bisa PNG
   image: ^4.5.4
 

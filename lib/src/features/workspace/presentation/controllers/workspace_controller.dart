@@ -1066,6 +1066,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   /// Menyalakan atau mematikan "hanya stylus yang menggambar".
+  /// Lama buntut penunjuk saat menyajikan.
+  Future<void> setPointerTrail(int milliseconds) async {
+    final settings = await ref
+        .read(settingsRepositoryProvider)
+        .updatePreferences(pointerTrailMs: milliseconds);
+    state = state.copyWith(settings: settings);
+  }
+
   Future<void> setStylusOnly(bool value) async {
     final settings = await ref
         .read(settingsRepositoryProvider)

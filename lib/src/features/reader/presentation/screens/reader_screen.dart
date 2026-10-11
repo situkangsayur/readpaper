@@ -54,6 +54,12 @@ import '../widgets/page_tint.dart';
 import '../widgets/signature_pad.dart';
 import '../widgets/selection_action_bar.dart';
 import '../../../../core/l10n.dart';
+import '../../../presenter/data/audience_link.dart';
+import '../../../presenter/data/presenter_notes_store.dart';
+import '../../../presenter/domain/audience_state.dart';
+import '../../../presenter/presentation/laser_pointer.dart';
+import '../../../presenter/presentation/presenter_keys.dart';
+import '../../../presenter/presentation/presenter_panel.dart';
 
 /// Reads one PDF attachment: text selection, coloured markers and comments,
 /// each of which is written straight back into the Zotero item file and
@@ -240,6 +246,39 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// hati-hati, dan satu ketukan di tepi layar harus berarti satu halaman.
   bool _presentMode = false;
 
+  /// Layar audiens yang tersambung — jendela di monitor kedua, atau layar
+  /// eksternal tablet. Selama ada, semua yang terjadi di slide sekarang
+  /// dikirim ke sana.
+  AudienceLink? _audience;
+  StreamSubscription<void>? _audienceClosed;
+  StreamSubscription<PresenterKey>? _audienceKeys;
+
+  /// Layar audiens dihitamkan sementara (tombol B / titik pada clicker).
+  bool _audienceBlank = false;
+
+  /// Panel presenter (slide berikutnya, catatan) terlihat. Disembunyikan,
+  /// slide sekarang memenuhi layar presenter.
+  bool _presenterPanel = true;
+
+  /// Isi `scene` terakhir yang dikirim; yang sama tidak dikirim ulang.
+  String? _lastScene;
+  final Set<String> _sentPictures = <String>{};
+
+  /// Goresan yang sedang ditarik dikirim paling sering 30 kali sedetik.
+  Timer? _liveTimer;
+  ({int page, List<double> points})? _liveQueued;
+  DateTime _liveSentAt = DateTime(0);
+
+  /// Catatan presenter per slide, dan tempat menyimpannya.
+  PresenterNotesStore? _notesStore;
+  Map<int, String> _presenterNotes = <int, String>{};
+  Timer? _notesSave;
+  bool _notesChangeRecorded = false;
+
+  /// Penunjuk menyala: mouse, jari, atau stylus menunjuk tanpa mencoret.
+  bool _pointerMode = false;
+  late final LaserPointer _pointer;
+
   /// Stylus sedang menggores; selama itu halaman tidak boleh ikut bergeser.
   bool _stylusDrawing = false;
 
@@ -369,6 +408,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   @override
   void dispose() {
+    final audience = _audience;
+    if (audience != null) unawaited(audience.close());
+    _audienceClosed?.cancel();
+    _audienceKeys?.cancel();
+    _liveTimer?.cancel();
+    if (_notesSave?.isActive ?? false) {
+      _notesSave!.cancel();
+      unawaited(_writePresenterNotes());
+    }
+    HardwareKeyboard.instance.removeHandler(_onPresentKey);
+    _pointer.dispose();
     _exitListener.dispose();
     _stylusNearTimer?.cancel();
     _dragScroll?.cancel();
@@ -398,6 +448,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _workspace = ref.read(workspaceControllerProvider.notifier);
     final settings = ref.read(workspaceControllerProvider).settings;
     _color = settings.lastAnnotationColor;
+    _pointer = LaserPointer(trail: Duration(milliseconds: settings.pointerTrailMs));
     if (settings.keepScreenOn) _applyKeepScreenOn(true);
     _load();
   }
@@ -603,6 +654,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (_hasSelection) _controller.textSelectionDelegate.clearTextSelection();
     setState(() {
       _penMode = true;
+      _pointerMode = false;
       _markerMode = false;
       _noteMode = false;
       _hasSelection = false;
@@ -835,24 +887,330 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       _presentMode ? SystemUiMode.immersive : SystemUiMode.edgeToEdge,
     );
     if (_presentMode) {
-      // Dua kali, dan itu bukan kelebihan hati-hati: tata letak mode menyajikan
-      // baru berlaku setelah viewer-nya disusun ulang, dan pemasangan yang
-      // dilakukan sebelum itu memakai tata letak yang lama — halaman pertama
-      // mendarat terlalu ke atas dan terlalu kecil. Yang kedua membetulkannya.
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        // Beberapa kali, makin jarang. Tata letak mode menyajikan baru berlaku
-        // setelah viewer-nya disusun ulang, dan susunan ulang itu tidak
-        // mengabarkan kapan selesainya — pemasangan yang dilakukan terlalu awal
-        // memakai tata letak lama, dan halamannya mendarat terlalu besar dan
-        // terlalu ke bawah. Terbukti di tablet: menekan "pas ke layar" sekali
-        // langsung membetulkannya, jadi yang salah memang waktunya.
-        for (final jeda in const <int>[0, 200, 500, 900]) {
-          if (!mounted || !_presentMode) return;
-          if (jeda > 0) await Future<void>.delayed(Duration(milliseconds: jeda));
-          if (!mounted || !_presentMode) return;
-          await _fitCurrentPage();
+      HardwareKeyboard.instance.addHandler(_onPresentKey);
+    } else {
+      HardwareKeyboard.instance.removeHandler(_onPresentKey);
+      _pointerMode = false;
+      _pointer.hide();
+      unawaited(_closeAudience());
+    }
+    if (_presentMode) _refitSoon();
+  }
+
+  /// Memaskan slide sekarang ke layar beberapa kali, makin jarang.
+  ///
+  /// Tata letak baru (masuk mode menyajikan, panel presenter muncul atau
+  /// hilang) baru berlaku setelah penampilnya disusun ulang, dan susunan ulang
+  /// itu tidak mengabarkan kapan selesainya — pemasangan yang terlalu awal
+  /// memakai ukuran lama, dan halamannya mendarat terlalu besar dan terlalu
+  /// ke bawah. Terbukti di tablet: menekan "pas ke layar" sekali langsung
+  /// membetulkannya, jadi yang salah memang waktunya.
+  ///
+  /// Berhenti begitu presenter berpindah slide: pemasangan yang tertinggal
+  /// memaskan slide lama dan menarik layar kembali ke sana — clicker yang
+  /// ditekan tepat setelah layar audiens dibuka seolah tidak berbuat apa-apa.
+  void _refitSoon() {
+    final step = _stepCount;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      for (final jeda in const <int>[0, 200, 500, 900]) {
+        if (!mounted || !_presentMode || step != _stepCount) return;
+        if (jeda > 0) await Future<void>.delayed(Duration(milliseconds: jeda));
+        if (!mounted || !_presentMode || step != _stepCount) return;
+        await _fitCurrentPage();
+      }
+    });
+  }
+
+  /// Bertambah setiap kali [_stepPage] berpindah slide.
+  int _stepCount = 0;
+
+  // ------------------------------------------------------ layar audiens
+
+  /// Membuka layar audiens, dan masuk mode menyajikan bila belum.
+  Future<void> _openAudience() async {
+    if (_audience != null) return;
+    final link = AudienceLink.forPlatform();
+    if (link == null) return;
+    final l10n = context.l10n;
+    final opened = await link.open();
+    if (!mounted) {
+      if (opened) unawaited(link.close());
+      return;
+    }
+    if (!opened) {
+      _say(l10n.presenterNoExternalDisplay);
+      return;
+    }
+    _audienceClosed = link.closed.listen((_) {
+      if (!mounted) return;
+      _dropAudience();
+      _say(context.l10n.presenterAudienceClosed);
+    });
+    _audienceKeys = link.keys.listen(_onPresenterKey);
+    setState(() {
+      _audience = link;
+      _audienceBlank = false;
+      _presenterPanel = true;
+      _lastScene = null;
+      _sentPictures.clear();
+    });
+    if (!_presentMode) {
+      _togglePresent();
+    } else {
+      _refitSoon();
+    }
+    if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+      _say(l10n.presenterAudienceOpened);
+    }
+    await _loadPresenterNotes();
+    _syncAudience();
+  }
+
+  Future<void> _closeAudience() async {
+    final link = _audience;
+    if (link == null) return;
+    _dropAudience();
+    await link.close();
+  }
+
+  void _dropAudience() {
+    _audienceClosed?.cancel();
+    _audienceKeys?.cancel();
+    _audienceClosed = null;
+    _audienceKeys = null;
+    _liveTimer?.cancel();
+    _liveQueued = null;
+    if (mounted) {
+      setState(() => _audience = null);
+      _refitSoon();
+    } else {
+      _audience = null;
+    }
+  }
+
+  /// Tombol clicker atau keyboard saat menyajikan — dari jendela ini atau
+  /// dari jendela audiens yang sedang fokus.
+  void _onPresenterKey(PresenterKey key) {
+    if (!mounted || !_presentMode) return;
+    switch (key) {
+      case PresenterKey.next:
+        _stepPage(1);
+      case PresenterKey.previous:
+        _stepPage(-1);
+      case PresenterKey.blank:
+        if (_audience != null) setState(() => _audienceBlank = !_audienceBlank);
+      case PresenterKey.exit:
+        if (_pointerMode) {
+          _togglePointer();
+        } else if (!_penMode) {
+          _togglePresent();
         }
-      });
+    }
+  }
+
+  /// Tombol clicker dan papan ketik selama menyajikan, kecuali saat sedang
+  /// mengetik — spasi di catatan presenter bukan "slide berikutnya".
+  ///
+  /// Dipasang di [HardwareKeyboard], bukan di pohon fokus. Terbukti di
+  /// tablet: setelah tombol di layar diketuk, tidak ada widget yang memegang
+  /// fokus, dan Page Down dari clicker Bluetooth hilang begitu saja. Penangan
+  /// global juga mendahului penampil PDF, yang tanpa ini memakai panah dan
+  /// Page Down untuk menggulir setengah halaman.
+  bool _onPresentKey(KeyEvent event) {
+    if (!mounted || !_presentMode || event is KeyUpEvent) return false;
+    // Hanya saat pembaca ini yang terlihat, bukan dialog di atasnya.
+    if (!(ModalRoute.of(context)?.isCurrent ?? true)) return false;
+    final focus = FocusManager.instance.primaryFocus?.context;
+    if (focus != null && focus.findAncestorWidgetOfExactType<EditableText>() != null) {
+      return false;
+    }
+    final keyboard = HardwareKeyboard.instance;
+    if (keyboard.isControlPressed || keyboard.isMetaPressed || keyboard.isAltPressed) {
+      return false;
+    }
+    final key = presenterKeyFor(event.logicalKey);
+    if (key == null) return false;
+    if (event is KeyDownEvent) _onPresenterKey(key);
+    return true;
+  }
+
+  /// Mengirim isi slide sekarang ke layar audiens bila ada yang berubah.
+  ///
+  /// Dipanggil setelah setiap susun ulang: semua yang tampil di slide — ganti
+  /// halaman, anotasi baru, goresan, warna halaman — selalu berakhir dengan
+  /// setState, jadi tidak ada perubahan yang terlewat, dan yang tidak
+  /// berubah tidak dikirim.
+  void _syncAudience() {
+    final link = _audience;
+    if (link == null || !mounted) return;
+    final annotations = _onPage(_currentPage);
+    final missing = <String, Uint8List>{};
+    for (final a in annotations) {
+      final file = PagePicture.fileOf(a);
+      if (file == null || _sentPictures.contains(file)) continue;
+      final bytes = _pictureBytes[file];
+      if (bytes != null) missing[file] = bytes;
+    }
+    if (missing.isNotEmpty) {
+      _sentPictures.addAll(missing.keys);
+      unawaited(link.send(AudienceMessage.pictures(missing)));
+    }
+    final scene = AudienceMessage.scene(
+      AudienceState(
+        path: _path,
+        page: _currentPage,
+        annotations: annotations,
+        pending: _inkPage == _currentPage ? List<InkPath>.of(_pendingInk) : const <InkPath>[],
+        pendingColor: _color,
+        pendingWidth: _inkWidth,
+        tint: _tint.name,
+        blank: _audienceBlank,
+      ),
+    );
+    final encoded = jsonEncode(scene);
+    if (encoded == _lastScene) return;
+    _lastScene = encoded;
+    unawaited(link.send(scene));
+  }
+
+  /// Goresan yang sedang ditarik di [page], titik PDF bergantian x, y.
+  void _sendLive(int page, List<double> points) {
+    if (_audience == null || page != _currentPage) return;
+    _liveQueued = (page: page, points: points);
+    const gap = Duration(milliseconds: 33);
+    final wait = gap - DateTime.now().difference(_liveSentAt);
+    if (points.isEmpty || wait <= Duration.zero) {
+      _flushLive();
+    } else {
+      _liveTimer ??= Timer(wait, _flushLive);
+    }
+  }
+
+  void _flushLive() {
+    _liveTimer?.cancel();
+    _liveTimer = null;
+    final queued = _liveQueued;
+    final link = _audience;
+    if (queued == null || link == null) return;
+    _liveQueued = null;
+    _liveSentAt = DateTime.now();
+    final erasing = _erasing || _stylusErase;
+    unawaited(
+      link.send(
+        AudienceMessage.live(
+          points: queued.points,
+          color: erasing ? '#80808066' : _color,
+          width: erasing ? math.max(12, _inkWidth * 3) : _inkWidth,
+        ),
+      ),
+    );
+  }
+
+  /// Goresan stylus yang ditangkap di atas penampil, untuk layar audiens.
+  void _sendStylusLive() {
+    final page = _stylusPage;
+    if (_audience == null || page == null) return;
+    final rect = _pageRects[page];
+    final size = _pageSizes[page];
+    if (rect == null || size == null || rect.isEmpty || size.isEmpty) return;
+    final sx = rect.width / size.width;
+    final sy = rect.height / size.height;
+    _sendLive(page, <double>[
+      for (final o in _stylusLive) ...<double>[o.dx / sx, size.height - o.dy / sy],
+    ]);
+  }
+
+  void _togglePointer() {
+    if (_penMode) unawaited(_togglePen());
+    // Tanpa SnackBar: ia menutupi bilah menyajikan di bawah selama
+    // beberapa detik, padahal tombol penunjuknya sendiri sudah menyala.
+    // Anotasi terpilih dilepas: gagang geser dan bilah aksinya menutupi
+    // slide yang sedang ditunjuk.
+    setState(() {
+      _pointerMode = !_pointerMode;
+      if (_pointerMode) _selectedAnnotationKey = null;
+    });
+    if (!_pointerMode) _hidePointer();
+  }
+
+  /// Penunjuk pindah ke titik [local] di penampil.
+  void _movePointer(Offset local) {
+    final pages = _controller.isReady
+        ? <int>[_currentPage, for (var i = 1; i <= _controller.pages.length; i++) i]
+        : _pageRects.keys.toList();
+    for (final page in pages) {
+      final rect = _pageRectNow(page);
+      if (rect == null || rect.isEmpty || !rect.contains(local)) continue;
+      _pointer.moveTo(
+        page,
+        Offset((local.dx - rect.left) / rect.width, (local.dy - rect.top) / rect.height),
+      );
+      _sendPointer();
+      return;
+    }
+    _hidePointer();
+  }
+
+  void _hidePointer() {
+    if (_pointer.head == null) return;
+    _pointer.hide();
+    _sendPointer();
+  }
+
+  void _sendPointer() {
+    final link = _audience;
+    if (link != null) unawaited(link.send(_pointer.toMessage()));
+  }
+
+  Future<void> _setPointerTrail(int milliseconds) async {
+    _pointer.trail = Duration(milliseconds: milliseconds);
+    _sendPointer();
+    await ref.read(workspaceControllerProvider.notifier).setPointerTrail(milliseconds);
+  }
+
+  /// Tempat catatan presenter dokumen ini: di repositori untuk paper
+  /// library dan PDF catatan (ikut tersinkron), di perangkat untuk PDF lepas.
+  PresenterNotesStore _presenterNotesStore() {
+    if (!widget.isStandalone) {
+      final root = ref.read(workspaceControllerProvider).settings.activeProfile?.localPath;
+      if (root != null && root.isNotEmpty && widget.attachmentKey.isNotEmpty) {
+        return PresenterNotesStore.forLibrary(repoRoot: root, attachmentKey: widget.attachmentKey);
+      }
+    }
+    final annotationsFile = widget.annotationsFile;
+    if (annotationsFile != null) return PresenterNotesStore.forNote(annotationsFile);
+    return PresenterNotesStore.forLooseFile(widget.filePath);
+  }
+
+  Future<void> _loadPresenterNotes() async {
+    final store = _notesStore ??= _presenterNotesStore();
+    final notes = await store.load();
+    if (mounted) setState(() => _presenterNotes = notes);
+  }
+
+  void _setPresenterNote(String text) {
+    _presenterNotes[_currentPage] = text;
+    _notesSave?.cancel();
+    _notesSave = Timer(const Duration(milliseconds: 800), _writePresenterNotes);
+  }
+
+  Future<void> _writePresenterNotes() async {
+    final store = _notesStore;
+    if (store == null) return;
+    final message = l10n.presenterNotesChanged(widget.title);
+    try {
+      await store.save(_presenterNotes);
+    } on Object catch (e) {
+      if (mounted) _say(l10n.presenterNotesSaveFailed('$e'));
+      return;
+    }
+    // Satu catatan perubahan per pembukaan, bukan satu per ketikan.
+    if (!store.synced || _notesChangeRecorded) return;
+    _notesChangeRecorded = true;
+    if (!widget.isStandalone) {
+      await _workspace.commitChange(message);
+    } else {
+      await widget.onAnnotationsChanged?.call(message);
     }
   }
 
@@ -879,8 +1237,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// `PdfPageAnchor.all` memaksa seluruh halaman masuk — bukan lebarnya saja.
   /// Menyajikan berarti orang melihat dari jauh; halaman yang terpotong di
   /// bawah adalah kalimat yang hilang.
-  Future<void> _fitCurrentPage() async {
+  Future<void> _fitCurrentPage([int? pageNumber]) async {
     if (!_controller.isReady) return;
+    final page = pageNumber ?? _currentPage;
 
     // Lewat `goToArea`, bukan `goToPage`: `goToPage` membatasi zumnya pada zum
     // yang sedang berlaku (`zoomMax: _currentZoom` di dalam pdfrx), jadi
@@ -888,10 +1247,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     // layar. Yang diminta "pas satu halaman ke layar" memang harus boleh
     // memperbesar.
     try {
-      final rect = _controller.layout.pageLayouts[_currentPage - 1];
+      final rect = _controller.layout.pageLayouts[page - 1];
       await _controller.goToArea(rect: rect.inflate(6), anchor: PdfPageAnchor.all);
     } on Object {
-      await _controller.goToPage(pageNumber: _currentPage, anchor: PdfPageAnchor.all);
+      await _controller.goToPage(pageNumber: page, anchor: PdfPageAnchor.all);
     }
   }
 
@@ -900,11 +1259,16 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (!_controller.isReady) return;
     final target = _currentPage + delta;
     if (target < 1 || target > _controller.pages.length) return;
+    _stepCount++;
     await _controller.goToPage(pageNumber: target, anchor: _presentMode ? PdfPageAnchor.all : null);
     // Sekali lagi setelah halamannya berganti: halaman yang ukurannya berbeda
     // dari halaman sebelumnya — lembar kosong mendatar di antara halaman tegak,
     // misalnya — harus ikut dipaskan penuh layar, bukan mewarisi zum lama.
-    if (_presentMode) await _fitCurrentPage();
+    //
+    // Ke halaman tujuan, bukan ke [_currentPage]: penampil baru mengabarkan
+    // halaman barunya sesudah ini, dan memaskan halaman lama membuat
+    // "mundur" melompat kembali ke slide semula.
+    if (_presentMode) await _fitCurrentPage(target);
   }
 
   /// Hides every bar and panel, leaving the page.
@@ -1872,6 +2236,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    if (_audience != null) WidgetsBinding.instance.addPostFrameCallback((_) => _syncAudience());
     // Portrait on a tablet is still ~960dp: wide enough for a docked panel,
     // but the page itself wants that width more, so the panel stays a drawer
     // until the window is genuinely wide.
@@ -2460,6 +2825,29 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         child: Row(
                           children: <Widget>[
                             Expanded(child: _buildViewer(scheme)),
+                            if (_presentMode && _audience != null && _presenterPanel) ...<Widget>[
+                              const VerticalDivider(width: 1),
+                              SizedBox(
+                                width: math.min(380, MediaQuery.sizeOf(context).width * 0.34),
+                                child: PresenterPanel(
+                                  document: _controller.isReady ? _controller.document : null,
+                                  currentPage: _currentPage,
+                                  nextAnnotations: _onPage(_currentPage + 1),
+                                  pictures: _pictureImages,
+                                  notes: _presenterNotes[_currentPage] ?? '',
+                                  onNotesChanged: _setPresenterNote,
+                                  blank: _audienceBlank,
+                                  onToggleBlank: () =>
+                                      setState(() => _audienceBlank = !_audienceBlank),
+                                  onHide: () {
+                                    setState(() => _presenterPanel = false);
+                                    _refitSoon();
+                                  },
+                                  onCloseAudience: _closeAudience,
+                                  onNext: () => _stepPage(1),
+                                ),
+                              ),
+                            ],
                             if (_showSidebar &&
                                 isWide &&
                                 !_readingMode &&
@@ -2578,6 +2966,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (_stylusLive.isNotEmpty && (_stylusLive.last - local).distance < 1.5) return;
     _stylusLive.add(local);
     _stylusTick.value++;
+    _sendStylusLive();
   }
 
   void _stylusFinish(PointerEvent event) {
@@ -2597,6 +2986,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final points = List<Offset>.of(_stylusLive);
     _stylusLive.clear();
     _stylusTick.value++;
+    if (pageNumber != null) _sendLive(pageNumber, const <double>[]);
     setState(() {
       _stylusPage = null;
       _stylusPointer = null;
@@ -2620,56 +3010,87 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // Listener only watches; it never claims the gesture, so the viewer's
       // own drag-to-select still runs underneath.
       Positioned.fill(
-        child: Listener(
-          key: _viewerKey,
-          // Goresan stylus ditangkap di sini, **di atas** penampil dan bukan di
-          // dalam lapisan tinta. Alasannya terbukti di tablet: apa pun yang
-          // menerima pointer di depan penampil membuat jari berhenti sampai ke
-          // sana, jadi dokumennya beku selama pena aktif. `Listener` yang
-          // membungkus penampil hanya menyimak — jari tetap menggeser halaman,
-          // stylus tetap menulis.
-          onPointerDown: (event) {
-            _handDown(event);
-            _stylusDown(event);
+        child: MouseRegion(
+          // Penunjuk menggantikan kursor: dua penanda di satu titik membuat
+          // audiens bertanya mana yang dimaksud.
+          cursor: _pointerMode ? SystemMouseCursors.none : MouseCursor.defer,
+          onExit: (_) {
+            if (_pointerMode) _hidePointer();
           },
-          onPointerMove: (event) {
-            _stylusMove(event);
-            _annotationDragMove(event);
-          },
-          onPointerHover: (event) {
-            if (_penMode && _stylusOnly && _isStylus(event)) _noteStylusNear();
-          },
-          onPointerUp: (event) {
-            _onMarkerPointerUp();
-            _stylusFinish(event);
-            _handUp(event);
-            _annotationDragEnd(event);
-          },
-          onPointerCancel: (event) {
-            _onMarkerPointerUp();
-            _stylusFinish(event);
-            _handUp(event);
-            _annotationDragEnd(event);
-          },
-          child: _tint.filter == null
-              ? _buildPdf(scheme)
-              : ColorFiltered(colorFilter: _tint.filter!, child: _buildPdf(scheme)),
+          child: Listener(
+            key: _viewerKey,
+            // Goresan stylus ditangkap di sini, **di atas** penampil dan bukan di
+            // dalam lapisan tinta. Alasannya terbukti di tablet: apa pun yang
+            // menerima pointer di depan penampil membuat jari berhenti sampai ke
+            // sana, jadi dokumennya beku selama pena aktif. `Listener` yang
+            // membungkus penampil hanya menyimak — jari tetap menggeser halaman,
+            // stylus tetap menulis.
+            onPointerDown: (event) {
+              if (_pointerMode) {
+                _movePointer(event.localPosition);
+                return;
+              }
+              _handDown(event);
+              _stylusDown(event);
+            },
+            onPointerMove: (event) {
+              if (_pointerMode) {
+                _movePointer(event.localPosition);
+                return;
+              }
+              _stylusMove(event);
+              _annotationDragMove(event);
+            },
+            onPointerHover: (event) {
+              if (_pointerMode) {
+                _movePointer(event.localPosition);
+                return;
+              }
+              if (_penMode && _stylusOnly && _isStylus(event)) _noteStylusNear();
+            },
+            onPointerUp: (event) {
+              // Mouse tetap menunjuk setelah tombolnya dilepas; jari dan stylus
+              // yang diangkat tidak lagi menunjuk apa pun.
+              if (_pointerMode) {
+                if (event.kind != PointerDeviceKind.mouse) _hidePointer();
+                return;
+              }
+              _onMarkerPointerUp();
+              _stylusFinish(event);
+              _handUp(event);
+              _annotationDragEnd(event);
+            },
+            onPointerCancel: (event) {
+              if (_pointerMode) {
+                _hidePointer();
+                return;
+              }
+              _onMarkerPointerUp();
+              _stylusFinish(event);
+              _handUp(event);
+              _annotationDragEnd(event);
+            },
+            child: _tint.filter == null
+                ? _buildPdf(scheme)
+                : ColorFiltered(colorFilter: _tint.filter!, child: _buildPdf(scheme)),
+          ),
         ),
       ),
       // Menyajikan: separuh kiri mundur, separuh kanan maju, dan geseran ke
       // samping juga berganti halaman — gulir bebas sudah dilepas, jadi
       // seretan mendatar tidak lagi dipakai siapa pun.
       if (_presentMode && !_penMode) ...<Widget>[
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onHorizontalDragEnd: (details) {
-              final v = details.primaryVelocity ?? 0;
-              if (v.abs() < 120) return;
-              _stepPage(v < 0 ? 1 : -1);
-            },
+        if (!_pointerMode)
+          Positioned.fill(
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onHorizontalDragEnd: (details) {
+                final v = details.primaryVelocity ?? 0;
+                if (v.abs() < 120) return;
+                _stepPage(v < 0 ? 1 : -1);
+              },
+            ),
           ),
-        ),
         Positioned(
           left: 0,
           top: 0,
@@ -2778,6 +3199,37 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                       ),
                       const SizedBox(width: 4),
                     ] else ...<Widget>[
+                      IconButton(
+                        tooltip: context.l10n.presenterPointer,
+                        isSelected: _pointerMode,
+                        selectedIcon: const Icon(Icons.highlight_alt),
+                        icon: const Icon(Icons.ads_click),
+                        onPressed: _togglePointer,
+                      ),
+                      if (_pointerMode)
+                        _TrailButton(
+                          milliseconds: _pointer.trail.inMilliseconds,
+                          onSelected: _setPointerTrail,
+                        ),
+                      if (AudienceLink.isSupported)
+                        IconButton(
+                          tooltip: _audience == null
+                              ? context.l10n.presenterOpenAudience
+                              : context.l10n.presenterStopAudience,
+                          isSelected: _audience != null,
+                          selectedIcon: const Icon(Icons.cancel_presentation),
+                          icon: const Icon(Icons.connected_tv),
+                          onPressed: _audience == null ? _openAudience : _closeAudience,
+                        ),
+                      if (_audience != null && !_presenterPanel)
+                        IconButton(
+                          tooltip: context.l10n.presenterShowPanel,
+                          icon: const Icon(Icons.view_sidebar_outlined),
+                          onPressed: () {
+                            setState(() => _presenterPanel = true);
+                            _refitSoon();
+                          },
+                        ),
                       const VerticalDivider(width: 10, indent: 8, endIndent: 8),
                       IconButton(
                         tooltip: context.l10n.readerZoomOut,
@@ -2950,6 +3402,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // lebih dulu. Ctrl+X dan Ctrl+V tidak dipakai penampil dan naik ke
       // pintasan di atas Scaffold.
       onKey: (params, key, isRealKeyPress) {
+        // Tombol menyajikan sudah dikerjakan [_onPresentKey]. Flutter tetap
+        // meneruskannya ke pohon fokus, dan tanpa ini penampil ikut
+        // menggulir dengan panah dan Page Up/Down — slide bergeser dua kali
+        // (terbukti di tablet: 3 → 2 → 1 untuk satu Page Up).
+        if (_presentMode && presenterKeyFor(key) != null) return true;
         if (_selectedAnnotation == null) return null;
         final keyboard = HardwareKeyboard.instance;
         final command = keyboard.isControlPressed || keyboard.isMetaPressed;
@@ -2987,7 +3444,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // halamannya ikut bergeser di bawah pena.
       //
       // Telapak tangan juga tidak boleh menggeser: lihat [_palmPointers].
-      panEnabled: !_markerMode && (!_penMode || (_stylusOnly && !_handLocked)),
+      panEnabled: !_markerMode && !_pointerMode && (!_penMode || (_stylusOnly && !_handLocked)),
       scaleEnabled: !_handLocked,
       // Saat menyajikan, tiap halaman diberi jarak setinggi halaman terpanjang.
       // Tanpa itu halaman sebelumnya dan berikutnya tetap menyembul di atas dan
@@ -3028,7 +3485,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           // Anotasi yang sedang dipilih bisa digeser, selama tidak ada alat
           // lain yang aktif — dua hal yang menerima seretan di tempat yang sama
           // akan saling merebut.
-          if (!_penMode && !_markerMode) ..._moveLayersFor(page: page, pageRect: pageRect),
+          if (!_penMode && !_markerMode && !_pointerMode)
+            ..._moveLayersFor(page: page, pageRect: pageRect),
           ..._noteBubblesFor(page: page, pageRect: pageRect),
           if (_penMode)
             Positioned.fill(
@@ -3047,7 +3505,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 liveRepaint: _stylusTick,
                 strokes: _inkPage == page.pageNumber ? _pendingInk : const <InkPath>[],
                 onStrokeFinished: (stroke) => _addStroke(page.pageNumber, stroke),
+                onLiveChanged: _audience == null
+                    ? null
+                    : (points) => _sendLive(page.pageNumber, points),
               ),
+            ),
+          if (_presentMode)
+            Positioned.fill(
+              child: LaserPointerLayer(pointer: _pointer, pageNumber: page.pageNumber),
             ),
         ];
       },
@@ -4520,4 +4985,36 @@ class _CollectionChoice {
 
   final String? key;
   final bool create;
+}
+
+/// Lama buntut penunjuk: dari tanpa buntut sampai dua detik.
+class _TrailButton extends StatelessWidget {
+  const _TrailButton({required this.milliseconds, required this.onSelected});
+
+  final int milliseconds;
+  final ValueChanged<int> onSelected;
+
+  static const List<int> choices = <int>[0, 300, 600, 1000, 1500, 2000];
+
+  @override
+  Widget build(BuildContext context) => PopupMenuButton<int>(
+    tooltip: context.l10n.presenterPointerTrail,
+    icon: const Icon(Icons.timelapse),
+    initialValue: milliseconds,
+    onSelected: onSelected,
+    itemBuilder: (context) => <PopupMenuEntry<int>>[
+      for (final ms in choices)
+        CheckedPopupMenuItem<int>(
+          value: ms,
+          checked: ms == milliseconds,
+          child: Text(
+            ms == 0
+                ? context.l10n.presenterTrailOff
+                : context.l10n.presenterTrailSeconds(
+                    (ms / 1000).toStringAsFixed(ms % 1000 == 0 ? 0 : 1),
+                  ),
+          ),
+        ),
+    ],
+  );
 }

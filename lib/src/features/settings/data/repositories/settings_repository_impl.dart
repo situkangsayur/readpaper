@@ -68,6 +68,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
     bool? stylusOnly,
     bool? citationServer,
     String? language,
+    int? pointerTrailMs,
   }) async {
     final settings = await _local.load();
     final updated = settings.copyWith(
@@ -77,6 +78,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
       stylusOnly: stylusOnly,
       citationServer: citationServer,
       language: language,
+      pointerTrailMs: pointerTrailMs,
     );
     await _local.save(updated);
     return updated;
