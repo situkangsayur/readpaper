@@ -1,0 +1,33 @@
+name: Uji ujung ke ujung (desktop)
+
+# Aplikasi asli di Windows sungguhan: menandai teks dengan seret mouse,
+# komentar, catatan tempel, format anotasi Zotero, commit git, server sitasi,
+# dan inti add-in Word/OnlyOffice (citeproc-js) terhadap server itu. Word
+# sendiri tidak ada di runner, jadi lapisan Office.js-nya tidak ikut teruji.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.5'
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - run: flutter pub get
+
+      - name: Tandai, komentar, catatan, sitasi
+        run: flutter test integration_test -d windows --reporter expanded
