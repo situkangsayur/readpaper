@@ -544,67 +544,73 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
 
   final action = await showModalBottomSheet<String>(
     context: context,
+    // Tujuh pilihan tidak muat di lembar bawaan (9/16 tinggi layar) pada
+    // jendela yang pendek: "Hapus koleksi" terpotong. Boleh setinggi layar
+    // dan bisa digulir bila tetap tidak muat.
+    isScrollControlled: true,
     builder: (sheet) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          ListTile(
-            dense: true,
-            title: Text(collection.name, style: Theme.of(sheet).textTheme.titleSmall),
-            subtitle: collection.path == collection.name ? null : Text(collection.path),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.note_add_outlined),
-            title: const Text('Tambahkan berkas ke sini…'),
-            subtitle: Text(
-              FileDropZone.supported
-                  ? 'jenis apa pun, beberapa sekaligus; atau seret dari pengelola berkas'
-                  : 'jenis apa pun, beberapa sekaligus',
-            ),
-            onTap: () => Navigator.of(sheet).pop('pdf'),
-          ),
-          if (FileDropZone.supported)
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
             ListTile(
-              leading: const Icon(Icons.drive_folder_upload_outlined),
-              title: const Text('Tambahkan folder ke sini…'),
-              subtitle: const Text('subfolder jadi sub-koleksi'),
-              onTap: () => Navigator.of(sheet).pop('folder'),
+              dense: true,
+              title: Text(collection.name, style: Theme.of(sheet).textTheme.titleSmall),
+              subtitle: collection.path == collection.name ? null : Text(collection.path),
             ),
-          ListTile(
-            leading: const Icon(Icons.create_new_folder_outlined),
-            title: const Text('Sub-koleksi baru'),
-            onTap: () => Navigator.of(sheet).pop('baru'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.drive_file_rename_outline),
-            title: const Text('Ubah nama'),
-            onTap: () => Navigator.of(sheet).pop('nama'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.drive_file_move_outline),
-            title: const Text('Pindahkan ke…'),
-            onTap: () => Navigator.of(sheet).pop('pindah'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.storage_outlined),
-            title: const Text('Pindahkan atau salin ke repositori lain…'),
-            subtitle: const Text('beserta sub-koleksi dan paper-nya'),
-            onTap: () => Navigator.of(sheet).pop('repo'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.functions),
-            title: const Text('Ekspor ke BibTeX (.bib)'),
-            subtitle: const Text('untuk naskah LaTeX; sub-koleksi ikut'),
-            onTap: () => Navigator.of(sheet).pop('bib'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.folder_delete_outlined),
-            title: const Text('Hapus koleksi'),
-            subtitle: const Text('Paper di dalamnya tidak ikut terhapus'),
-            onTap: () => Navigator.of(sheet).pop('hapus'),
-          ),
-        ],
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.note_add_outlined),
+              title: const Text('Tambahkan berkas ke sini…'),
+              subtitle: Text(
+                FileDropZone.supported
+                    ? 'jenis apa pun, beberapa sekaligus; atau seret dari pengelola berkas'
+                    : 'jenis apa pun, beberapa sekaligus',
+              ),
+              onTap: () => Navigator.of(sheet).pop('pdf'),
+            ),
+            if (FileDropZone.supported)
+              ListTile(
+                leading: const Icon(Icons.drive_folder_upload_outlined),
+                title: const Text('Tambahkan folder ke sini…'),
+                subtitle: const Text('subfolder jadi sub-koleksi'),
+                onTap: () => Navigator.of(sheet).pop('folder'),
+              ),
+            ListTile(
+              leading: const Icon(Icons.create_new_folder_outlined),
+              title: const Text('Sub-koleksi baru'),
+              onTap: () => Navigator.of(sheet).pop('baru'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.drive_file_rename_outline),
+              title: const Text('Ubah nama'),
+              onTap: () => Navigator.of(sheet).pop('nama'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.drive_file_move_outline),
+              title: const Text('Pindahkan ke…'),
+              onTap: () => Navigator.of(sheet).pop('pindah'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.storage_outlined),
+              title: const Text('Pindahkan atau salin ke repositori lain…'),
+              subtitle: const Text('beserta sub-koleksi dan paper-nya'),
+              onTap: () => Navigator.of(sheet).pop('repo'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.functions),
+              title: const Text('Ekspor ke BibTeX (.bib)'),
+              subtitle: const Text('untuk naskah LaTeX; sub-koleksi ikut'),
+              onTap: () => Navigator.of(sheet).pop('bib'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_delete_outlined),
+              title: const Text('Hapus koleksi'),
+              subtitle: const Text('Paper di dalamnya tidak ikut terhapus'),
+              onTap: () => Navigator.of(sheet).pop('hapus'),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -802,50 +808,56 @@ Future<void> _noteCollectionMenu(
 ) async {
   final action = await showModalBottomSheet<String>(
     context: context,
+    // Tujuh pilihan tidak muat di lembar bawaan (9/16 tinggi layar) pada
+    // jendela yang pendek: "Hapus koleksi" terpotong. Boleh setinggi layar
+    // dan bisa digulir bila tetap tidak muat.
+    isScrollControlled: true,
     builder: (sheet) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          ListTile(
-            dense: true,
-            title: Text(collection.name, style: Theme.of(sheet).textTheme.titleSmall),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            leading: const Icon(Icons.create_new_folder_outlined),
-            title: const Text('Sub-koleksi baru'),
-            onTap: () => Navigator.of(sheet).pop('baru'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.drive_file_rename_outline),
-            title: const Text('Ubah nama'),
-            onTap: () => Navigator.of(sheet).pop('nama'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.note_add_outlined),
-            title: const Text('Tambahkan berkas ke sini…'),
-            onTap: () => Navigator.of(sheet).pop('berkas'),
-          ),
-          if (FileDropZone.supported)
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
             ListTile(
-              leading: const Icon(Icons.drive_folder_upload_outlined),
-              title: const Text('Tambahkan folder ke sini…'),
-              subtitle: const Text('subfolder jadi sub-koleksi'),
-              onTap: () => Navigator.of(sheet).pop('folder'),
+              dense: true,
+              title: Text(collection.name, style: Theme.of(sheet).textTheme.titleSmall),
             ),
-          ListTile(
-            leading: const Icon(Icons.storage_outlined),
-            title: const Text('Pindahkan atau salin ke repositori lain…'),
-            subtitle: const Text('beserta sub-koleksi dan catatannya'),
-            onTap: () => Navigator.of(sheet).pop('repo'),
-          ),
-          ListTile(
-            leading: const Icon(Icons.folder_delete_outlined),
-            title: const Text('Hapus koleksi'),
-            subtitle: const Text('Catatannya tidak ikut terhapus'),
-            onTap: () => Navigator.of(sheet).pop('hapus'),
-          ),
-        ],
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.create_new_folder_outlined),
+              title: const Text('Sub-koleksi baru'),
+              onTap: () => Navigator.of(sheet).pop('baru'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.drive_file_rename_outline),
+              title: const Text('Ubah nama'),
+              onTap: () => Navigator.of(sheet).pop('nama'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.note_add_outlined),
+              title: const Text('Tambahkan berkas ke sini…'),
+              onTap: () => Navigator.of(sheet).pop('berkas'),
+            ),
+            if (FileDropZone.supported)
+              ListTile(
+                leading: const Icon(Icons.drive_folder_upload_outlined),
+                title: const Text('Tambahkan folder ke sini…'),
+                subtitle: const Text('subfolder jadi sub-koleksi'),
+                onTap: () => Navigator.of(sheet).pop('folder'),
+              ),
+            ListTile(
+              leading: const Icon(Icons.storage_outlined),
+              title: const Text('Pindahkan atau salin ke repositori lain…'),
+              subtitle: const Text('beserta sub-koleksi dan catatannya'),
+              onTap: () => Navigator.of(sheet).pop('repo'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.folder_delete_outlined),
+              title: const Text('Hapus koleksi'),
+              subtitle: const Text('Catatannya tidak ikut terhapus'),
+              onTap: () => Navigator.of(sheet).pop('hapus'),
+            ),
+          ],
+        ),
       ),
     ),
   );

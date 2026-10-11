@@ -339,7 +339,7 @@ class _SyncActions extends ConsumerWidget {
 
     final message = await showDialog<String>(
       context: context,
-      builder: (_) => const CommitDialog(),
+      builder: (_) => CommitDialog(initialMessage: controller.pendingCommitMessage()),
     );
     if (message == null || message.trim().isEmpty) return;
     await controller.commitAll(message: message.trim());
@@ -545,16 +545,17 @@ RelativeRect _anchorOf(BuildContext context) {
 
 /// Asks for the message of a manual commit.
 class CommitDialog extends StatefulWidget {
-  const CommitDialog({super.key});
+  const CommitDialog({this.initialMessage = 'Perbarui library dari ReadPaper', super.key});
+
+  /// Usulan pesan: ringkasan perubahan yang menunggu dikirim.
+  final String initialMessage;
 
   @override
   State<CommitDialog> createState() => _CommitDialogState();
 }
 
 class _CommitDialogState extends State<CommitDialog> {
-  late final TextEditingController _controller = TextEditingController(
-    text: 'Perbarui anotasi dari ReadPaper',
-  );
+  late final TextEditingController _controller = TextEditingController(text: widget.initialMessage);
 
   @override
   void dispose() {

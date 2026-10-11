@@ -8,6 +8,64 @@ Legenda: `[x]` selesai · `[~]` sebagian · `[ ]` belum.
 
 ---
 
+## Antrean 2026-10-11 (permintaan terbaru, didahulukan)
+
+Dicatat 2026-10-11. Urutan = prioritas. Semua harus berjalan di Windows,
+Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
+
+### Sedang dikerjakan (rilis 0.25.5)
+
+- [x] Tambah berkas/folder tidak diam-diam gagal saat dialog mengubah ukuran
+  jendela (GNOME + Forge, tiling WM).
+- [x] Anotasi PDF di **Catatan** tersimpan seketika (`anotasi.json` di folder
+  catatannya), muncul di panel anotasi, bisa disunting dan dihapus, tetap ada
+  saat dibuka lagi — tidak lagi "harus Simpan sebagai". Juga bila dibuka dari
+  "Terakhir dibaca".
+- [x] Anotasi baru langsung masuk panel dan bisa diurungkan, tanpa menunggu
+  git selesai.
+- [x] Tidak ada commit otomatis: perubahan menunggu tombol **Kirim**, yang
+  meng-commit semuanya sekaligus dengan ringkasan, lalu mengirim. (Pindah/salin
+  antar-repositori tetap commit seketika; profil "kirim otomatis" tetap seperti
+  dulu.)
+- [x] Panel folder kerja "readpaper" terlipat secara bawaan.
+- [x] APK: tombol Tarik/Sinkron tidak terdorong keluar layar oleh chip status.
+- [x] Menu ⋮ koleksi bisa digulir di jendela pendek ("Hapus koleksi" tidak
+  terpotong).
+- [x] Uji ujung ke ujung di Windows sungguhan (CI): tandai, komentar, catatan,
+  format Zotero, sitasi Office (APA/IEEE).
+- [ ] Uji fitur desktop lengkap hijau di Linux dan Windows.
+- [ ] Rilis 0.25.5: Windows, Linux (deb, tar.gz, Arch), APK, iOS; 8899.
+
+### Berikutnya — anotasi (didahulukan)
+
+1. **Catatan gaya Zotero**: penanda kecil (ikon) di halaman; diklik membesar
+   menampilkan isinya, diklik lagi mengecil. Ditulis sebagai `annotationType:
+   note` supaya Zotero menampilkannya sama.
+2. **Teks langsung di halaman** (`annotationType: text`): bisa diputar,
+   diperbesar/diperkecil, dipindah — seperti di Zotero.
+3. **Anotasi terbaca Zotero**: paper library sudah (format Zotero lewat
+   plugin sinkronisasi). Untuk PDF di Catatan (bukan item Zotero), pilihannya
+   menulis anotasinya juga ke dalam PDF sebagai anotasi PDF sungguhan
+   (bukan dileburkan), supaya terbaca Zotero dan pembaca PDF lain.
+
+### Setelah itu
+
+4. **Pemasang Windows**: bila sudah terpasang, tawarkan Perbarui / Ubah /
+   Perbaiki / Hapus.
+5. **Dua bahasa** (Indonesia / English), dipilih di Pengaturan.
+6. **Masuk GitHub tanpa token**: login lewat browser (OAuth device flow);
+   bila repo belum ada, minta izin lalu buatkan; bila sudah ada, pilih/ketik
+   nama repo.
+7. **MCP / API untuk LLM**: menambah dokumen ke koleksi tertentu, beserta
+   dokumentasi untuk LLM-nya.
+
+### Selesai di luar kode
+
+- ReadPaper 0.25.5 terpasang di nvda11-gpu; profil dan clone disalin dari
+  p14s (zotero-astri punya 3 commit yang belum di-push, ada di kedua mesin).
+
+---
+
 ## Urutan pengerjaan
 
 Fase 1–4 sudah jalan. Sisanya dikerjakan berurutan seperti di bawah; urutannya

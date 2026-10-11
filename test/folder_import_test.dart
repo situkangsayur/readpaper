@@ -107,8 +107,19 @@ void main() {
     expect(csvItem.collectionKeys, <String>[data.key]);
     expect(csvItem.attachments.single.contentType, 'text/csv');
 
+    // Impor tidak lagi meng-commit sendiri: perubahannya menunggu Kirim,
+    // yang meng-commit semuanya sekaligus dengan ringkasan perubahannya.
     final log = await Process.run('git', <String>['log', '--oneline'], workingDirectory: repo);
-    expect((log.stdout as String).trim().split('\n'), hasLength(2), reason: 'satu commit impor');
+    expect((log.stdout as String).trim().split('\n'), hasLength(1), reason: 'belum ada commit');
+    final dirty = await Process.run('git', <String>[
+      'status',
+      '--porcelain',
+    ], workingDirectory: repo);
+    expect((dirty.stdout as String).trim(), isNotEmpty, reason: 'hasil impor menunggu dikirim');
+    expect(
+      container.read(workspaceControllerProvider.notifier).pendingCommitMessage(),
+      contains('Impor folder'),
+    );
 
     // Impor ulang: koleksi dipakai lagi, tidak ada "Kuliah 2026" kedua.
     final again = await ctl.importFolderToLibrary(folder: folder);

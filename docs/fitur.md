@@ -292,9 +292,9 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   di koleksi itu; berkas apa pun yang dilepas di akar Catatan menjadi catatan.
   Lepasan yang tidak pantas ditolak dengan alasannya — misalnya berkas
   bukan-PDF di akar paper.
-- **Panel bisa dilipat** ketika tidak sedang memasukkan berkas. Di laci menu
-  (☰, layar sempit) panel ini terlipat secara bawaan, supaya library dan
-  Catatan tidak terdesak.
+- **Panel terlipat secara bawaan**, di samping maupun di laci menu (☰),
+  supaya My Library dan Catatan langsung terlihat; ketuk kepalanya untuk
+  membukanya saat hendak memasukkan berkas.
 
 ## Sitasi
 

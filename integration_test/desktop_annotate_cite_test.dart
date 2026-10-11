@@ -317,12 +317,13 @@ void main() {
     final meta = (item['meta'] as Map<String, dynamic>)['attachments'] as List<dynamic>;
     expect((meta.single as Map<String, dynamic>)['annotationCount'], 2);
 
-    // Setiap simpan menjadi commit; tidak ada yang tertinggal tak ter-commit.
+    // Tersimpan ke berkas, tetapi belum di-commit: commit dan kirim menunggu
+    // tombol Kirim (diuji di desktop_features_test).
     final commitsAfter = int.parse(
       ((await git(<String>['rev-list', '--count', 'HEAD'])).stdout as String).trim(),
     );
-    expect(commitsAfter, greaterThanOrEqualTo(commitsBefore + 3));
-    expect(((await git(<String>['status', '--porcelain'])).stdout as String).trim(), isEmpty);
+    expect(commitsAfter, commitsBefore, reason: 'tidak ada commit otomatis');
+    expect(((await git(<String>['status', '--porcelain'])).stdout as String).trim(), isNotEmpty);
 
     // Server sitasi untuk Word/OnlyOffice: hidup, bertoken, dan melihat
     // anotasi yang baru dibuat.

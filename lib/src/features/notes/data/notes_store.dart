@@ -28,6 +28,27 @@ import '../domain/note_entities.dart';
 /// JSON beridentasi tab dengan kunci terurut — supaya diff git tetap kecil dan
 /// siapa pun yang sudah membaca repositori ini langsung mengenalinya.
 class NotesStore {
+  /// Anotasi PDF sebuah catatan, di folder catatan itu sendiri: stabilo,
+  /// komentar, catatan tempel, dan tinta dalam format anotasi Zotero. Ikut
+  /// tersalin saat catatan dipindah ke repositori lain, karena yang disalin
+  /// seluruh foldernya.
+  static const String annotationsFileName = 'anotasi.json';
+
+  static String annotationsFileFor(String noteFilePath) =>
+      p.join(p.dirname(noteFilePath), annotationsFileName);
+
+  /// Kunci catatan pemilik [filePath] bila berkas itu berkas sebuah catatan
+  /// (`…/catatan/berkas/<XX>/<KUNCI>/<berkas>`), selain itu null. Supaya PDF
+  /// catatan yang dibuka dari mana pun — "Terakhir dibaca", misalnya — tetap
+  /// menyimpan anotasinya, bukan diperlakukan sebagai PDF lepas.
+  static String? noteKeyForFile(String filePath) {
+    final parts = p.split(p.normalize(filePath));
+    final n = parts.length;
+    if (n < 5) return null;
+    if (parts[n - 5] != dirName || parts[n - 4] != 'berkas') return null;
+    return parts[n - 2];
+  }
+
   const NotesStore(this.directory);
 
   /// Nama foldernya di akar repositori.
@@ -257,6 +278,8 @@ class NotesStore {
     final file = File(p.normalize(p.join(directory, item.file)));
     if (p.isWithin(p.normalize(_filesRoot), file.path)) {
       if (file.existsSync()) await file.delete();
+      final annotations = File(annotationsFileFor(file.path));
+      if (annotations.existsSync()) await annotations.delete();
       final holder = file.parent;
       if (p.isWithin(p.normalize(_filesRoot), p.normalize(holder.path)) &&
           holder.existsSync() &&

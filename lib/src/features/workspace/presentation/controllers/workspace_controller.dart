@@ -275,6 +275,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       await _endPhase(commit);
       return false;
     }
+    _pendingChanges.remove(profile.id);
     if (!push) {
       await _endPhase(commit);
       return true;
@@ -750,6 +751,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       await _commitAnnotation(
         profile: target,
         message: '${move ? 'Dipindahkan' : 'Disalin'} dari ${profile.name}: ${item.title}',
+        now: true,
       );
       if (move) {
         await ref
@@ -758,6 +760,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         await _commitAnnotation(
           profile: profile,
           message: 'Dipindahkan ke ${target.name}: ${item.title}',
+          now: true,
         );
         await reloadLibrary();
       }
@@ -803,6 +806,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         message:
             '${move ? 'Dipindahkan' : 'Disalin'} dari ${profile.name}: koleksi ${collection.path} '
             '(${result.itemFiles.length} paper)',
+        now: true,
       );
       if (move) {
         final repo = ref.read(libraryRepositoryProvider);
@@ -818,6 +822,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         await _commitAnnotation(
           profile: profile,
           message: 'Dipindahkan ke ${target.name}: koleksi ${collection.path}',
+          now: true,
         );
         await reloadLibrary();
       }
@@ -834,7 +839,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   /// Meng-commit perubahan di repositori [profile], aktif atau tidak — untuk
   /// sisi tujuan saat memindah sesuatu antar repositori.
   Future<void> commitIn(RepoProfile profile, String message) =>
-      _commitAnnotation(profile: profile, message: message);
+      _commitAnnotation(profile: profile, message: message, now: true);
 
   static String _missingMessage(int count) =>
       '$count lampiran belum ada di perangkat ini — belum diunduh, atau masih penunjuk '
@@ -951,7 +956,43 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await _commitAnnotation(profile: profile, message: message);
   }
 
-  Future<void> _commitAnnotation({required RepoProfile profile, required String message}) async {
+  /// Perubahan yang sudah tertulis ke berkas tetapi belum di-commit, per
+  /// profil: bahan pesan commit saat Kirim ditekan.
+  final Map<String, List<String>> _pendingChanges = <String, List<String>>{};
+
+  /// Pesan commit usulan untuk perubahan yang menunggu dikirim.
+  String pendingCommitMessage() {
+    final changes = _pendingChanges[state.profile?.id] ?? const <String>[];
+    if (changes.isEmpty) return 'Perbarui library dari ReadPaper';
+    if (changes.length == 1) return changes.single;
+    return <String>[
+      '${changes.length} perubahan dari ReadPaper',
+      '',
+      for (final c in changes) '- $c',
+    ].join('\n');
+  }
+
+  /// Mencatat satu perubahan yang sudah ditulis ke berkas.
+  ///
+  /// Tidak di-commit di sini: setiap tambah, hapus, atau ganti nama dulu
+  /// langsung menjadi commit, dan riwayatnya penuh commit kecil. Sekarang
+  /// perubahan menunggu tombol Kirim, yang meng-commit semuanya sekaligus dan
+  /// mengirimnya. Profil yang menyalakan "kirim otomatis" tetap seperti dulu:
+  /// itu pilihan pemiliknya.
+  ///
+  /// [now]: pindah dan salin antar-repositori tetap di-commit seketika. Ia
+  /// menyentuh repositori yang tidak sedang dibuka, dan urutan "salin dan
+  /// commit di tujuan dulu, baru hapus dari asal" bergantung pada commit itu.
+  Future<void> _commitAnnotation({
+    required RepoProfile profile,
+    required String message,
+    bool now = false,
+  }) async {
+    if (!profile.autoPushOnSave && !now) {
+      (_pendingChanges[profile.id] ??= <String>[]).add(message);
+      if (state.profile?.id == profile.id) await refreshGitStatus();
+      return;
+    }
     final backend = ref.read(gitBackendProvider);
     state = state.copyWith(phase: SyncPhase.committing, clearError: true);
     final commit = await backend.commitAll(
@@ -964,6 +1005,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       await _endPhase(commit);
       return;
     }
+    // commitAll ikut membawa perubahan lain yang menunggu di repositori ini.
+    _pendingChanges.remove(profile.id);
     if (!profile.autoPushOnSave) {
       await _endPhase(commit);
       return;

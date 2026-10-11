@@ -13,6 +13,8 @@ import '../screens/library_stats_screen.dart';
 import 'creator_facet_sheet.dart';
 import 'recent_papers_card.dart';
 import '../import_actions.dart';
+import '../../../notes/data/notes_store.dart';
+import '../../../notes/presentation/controllers/notes_controller.dart';
 import '../../../files/presentation/open_any_file.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../domain/entities/library_index.dart';
@@ -44,18 +46,34 @@ class ItemListPane extends ConsumerWidget {
               children: <Widget>[
                 if (!searching)
                   RecentPapersCard(
-                    onOpen: (entry) => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => ReaderScreen(
-                          itemKey: entry.itemKey,
-                          itemFilePath: entry.itemFilePath,
-                          attachmentKey: entry.attachmentKey,
-                          filePath: entry.filePath,
-                          title: entry.title,
-                          subtitle: entry.subtitle,
+                    onOpen: (entry) {
+                      // PDF catatan: anotasinya tersimpan di folder catatannya,
+                      // sama seperti bila dibuka dari daftar catatan.
+                      final noteKey = entry.itemFilePath.isEmpty
+                          ? NotesStore.noteKeyForFile(entry.filePath)
+                          : null;
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => ReaderScreen(
+                            itemKey: entry.itemKey,
+                            itemFilePath: entry.itemFilePath,
+                            attachmentKey: entry.attachmentKey,
+                            filePath: entry.filePath,
+                            title: entry.title,
+                            subtitle: entry.subtitle,
+                            annotationsFile: noteKey == null
+                                ? null
+                                : NotesStore.annotationsFileFor(entry.filePath),
+                            onAnnotationsChanged: noteKey == null
+                                ? null
+                                : (message) => ref
+                                      .read(notesControllerProvider.notifier)
+                                      .touch(itemKey: noteKey, message: message)
+                                      .then((_) {}),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 if (items.isEmpty)
                   const Padding(

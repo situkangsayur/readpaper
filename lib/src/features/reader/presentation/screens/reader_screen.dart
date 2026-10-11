@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math' as math;
@@ -64,6 +65,8 @@ class ReaderScreen extends ConsumerStatefulWidget {
     required this.filePath,
     required this.title,
     this.subtitle = '',
+    this.annotationsFile,
+    this.onAnnotationsChanged,
     super.key,
   });
 
@@ -82,6 +85,15 @@ class ReaderScreen extends ConsumerStatefulWidget {
   /// memory until the file is saved as a new PDF. Everything else about the
   /// reader is the same.
   bool get isStandalone => itemFilePath.isEmpty;
+
+  /// Berkas tempat anotasi PDF lepas disimpan seketika — untuk PDF di
+  /// Catatan. Tanpa ini stabilo dan catatan di PDF catatan hanya hidup di
+  /// memori, menuntut "Simpan sebagai", dan hilang saat dibuka lagi.
+  final String? annotationsFile;
+
+  /// Dipanggil setelah [annotationsFile] ditulis, dengan ringkasan
+  /// perubahannya (mis. untuk dicatat sebagai perubahan yang menunggu Kirim).
+  final Future<void> Function(String message)? onAnnotationsChanged;
 
   @override
   ConsumerState<ReaderScreen> createState() => _ReaderScreenState();
@@ -375,18 +387,33 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _load();
   }
 
+  /// Nomor pemuatan terakhir. Dua pemuatan bisa berjalan bersamaan (simpan
+  /// yang berurutan cepat), dan yang selesai belakangan tidak boleh menimpa
+  /// daftar dengan isi berkas yang lebih tua — itu membuat anotasi yang baru
+  /// disimpan hilang dari panel dan dari urungkan.
+  int _loadGeneration = 0;
+
+  /// PDF lepas yang anotasinya tersimpan seketika ke berkas pendamping.
+  bool get _autoSaves => widget.isStandalone && widget.annotationsFile != null;
+
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
     if (widget.isStandalone) {
-      // Nothing to read: a loose PDF carries no Zotero annotations, and the
-      // ones made here are held in memory.
-      if (mounted) setState(() => _loading = false);
+      // A loose PDF carries no Zotero annotations; a note PDF keeps its own
+      // beside it, the rest are held in memory.
+      final saved = _autoSaves ? await _readAnnotationsFile() : null;
+      if (!mounted || generation != _loadGeneration) return;
+      setState(() {
+        if (saved != null) _annotations = saved;
+        _loading = false;
+      });
       return;
     }
     try {
       final detail = await ref.read(libraryRepositoryProvider).loadItem(widget.itemFilePath);
       final store = _workspace.pagePictures(widget.attachmentKey);
       final pictures = store == null ? const <ZoteroAnnotation>[] : await store.load();
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _detail = detail;
         _annotations = <ZoteroAnnotation>[
@@ -403,6 +430,40 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         _loading = false;
       });
     }
+  }
+
+  Future<List<ZoteroAnnotation>> _readAnnotationsFile() async {
+    final file = File(widget.annotationsFile!);
+    if (!file.existsSync()) return <ZoteroAnnotation>[];
+    try {
+      final json = jsonDecode(await file.readAsString());
+      final list = json is Map ? json['annotations'] : null;
+      if (list is! List) return <ZoteroAnnotation>[];
+      return <ZoteroAnnotation>[
+        for (final entry in list)
+          if (entry is Map) ZoteroAnnotation.fromJson(entry.cast<String, dynamic>()),
+      ];
+    } on Object catch (e) {
+      _say('Anotasi catatan ini tidak terbaca: $e');
+      return <ZoteroAnnotation>[];
+    }
+  }
+
+  /// Menulis semua anotasi (kecuali gambar tempelan, yang isinya hanya ada
+  /// di memori) ke berkas pendamping, lalu memberi tahu pemanggil.
+  Future<void> _writeAnnotationsFile(String message) async {
+    final file = File(widget.annotationsFile!);
+    final kept = _annotations.where((a) => !PagePicture.isPicture(a)).toList()
+      ..sort((a, b) => a.sortIndex.compareTo(b.sortIndex));
+    await file.parent.create(recursive: true);
+    await file.writeAsString(
+      '${const JsonEncoder.withIndent('\t').convert(<String, dynamic>{
+        'schema': 1,
+        'annotations': <dynamic>[for (final a in kept) a.toJson()],
+      })}\n',
+      flush: true,
+    );
+    await widget.onAnnotationsChanged?.call(message);
   }
 
   void _onTextSelectionChange(PdfTextSelection selection) {
@@ -1718,7 +1779,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// berarti boleh keluar.
   Future<bool> _confirmLeave() async {
     if (_leaving || !_hasUnsavedWork || !mounted) return true;
-    final standalone = widget.isStandalone && (_unsaved || _pendingInk.isNotEmpty);
+    final standalone = widget.isStandalone && (_unsaved || (!_autoSaves && _pendingInk.isNotEmpty));
     final choice = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -3897,9 +3958,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (widget.isStandalone) {
       setState(() {
         _annotations = _annotations.where((a) => a.key != annotation.key).toList();
-        _unsaved = true;
+        if (!_autoSaves || PagePicture.isPicture(annotation)) _unsaved = true;
         _selectedAnnotationKey = null;
       });
+      if (_autoSaves && !PagePicture.isPicture(annotation)) {
+        await _writeAnnotationsFile('Hapus anotasi: ${widget.title}');
+        _say('Anotasi dihapus');
+      }
       return;
     }
     if (item == null) return;
@@ -3958,21 +4023,39 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       return;
     }
     if (widget.isStandalone) {
+      final autoSave = _autoSaves && !PagePicture.isPicture(annotation);
       setState(() {
         _annotations = <ZoteroAnnotation>[
           for (final a in _annotations)
             if (a.key != annotation.key) a,
           annotation,
         ];
-        _unsaved = true;
+        if (!autoSave) _unsaved = true;
         _selectedAnnotationKey = annotation.key;
       });
+      if (autoSave) {
+        await _writeAnnotationsFile('${isNew ? 'Anotasi baru' : 'Ubah anotasi'}: ${widget.title}');
+        _say(isNew ? 'Tersimpan' : 'Perubahan tersimpan');
+        return;
+      }
       _say(undoable ? 'Ditambahkan — belum disimpan ke berkas' : 'Ditambahkan');
       return;
     }
 
     final item = _detail?.item;
     if (item == null) return;
+    // Langsung masuk daftar, sebelum disimpan: penyimpanannya menunggu git
+    // (di library besar bisa beberapa detik), dan selama itu panel anotasi
+    // kosong dan Urungkan tidak menemukan apa-apa. Pemuatan ulang sesudahnya
+    // menyamakan daftar dengan isi berkas — termasuk bila simpannya gagal.
+    setState(() {
+      _annotations = <ZoteroAnnotation>[
+        for (final a in _annotations)
+          if (a.key != annotation.key) a,
+        annotation,
+      ];
+      _selectedAnnotationKey = annotation.key;
+    });
     final saved = await ref
         .read(workspaceControllerProvider.notifier)
         .saveAnnotation(item: item, annotation: annotation, isNew: isNew);

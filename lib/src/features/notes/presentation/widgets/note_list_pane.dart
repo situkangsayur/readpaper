@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../../data/notes_store.dart';
+
 import '../../../library/domain/entities/library_index.dart';
 import '../../../../shared/widgets/tree_drag.dart';
 import '../../../library/presentation/controllers/library_controllers.dart';
@@ -375,6 +377,15 @@ Future<void> _open(BuildContext context, WidgetRef ref, NoteItem note, NotesInde
           attachmentKey: '',
           filePath: path,
           title: note.title,
+          // Anotasi PDF catatan tersimpan seketika di folder catatannya dan
+          // menunggu Kirim seperti perubahan lain — bukan coretan yang
+          // menuntut "Simpan sebagai".
+          annotationsFile: NotesStore.annotationsFileFor(path),
+          onAnnotationsChanged: (message) async {
+            await ref
+                .read(notesControllerProvider.notifier)
+                .touch(itemKey: note.key, message: message);
+          },
         ),
       ),
     );

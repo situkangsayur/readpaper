@@ -238,4 +238,24 @@ void main() {
       expect(target.collectionKey, 'KOLEKSI1');
     });
   });
+
+  test('noteKeyForFile mengenali berkas catatan, juga jalur Windows', () {
+    expect(
+      NotesStore.noteKeyForFile(
+        p.join('repo', 'catatan', 'berkas', 'Q5', 'Q5UC5X78', 'panduan-analisis.pdf'),
+      ),
+      'Q5UC5X78',
+    );
+    expect(
+      NotesStore.annotationsFileFor(p.join('repo', 'catatan', 'berkas', 'Q5', 'Q5UC5X78', 'a.pdf')),
+      p.join('repo', 'catatan', 'berkas', 'Q5', 'Q5UC5X78', 'anotasi.json'),
+    );
+    expect(NotesStore.noteKeyForFile(p.join('Documents', 'readpaper', 'lepas.pdf')), isNull);
+    expect(
+      NotesStore.noteKeyForFile(
+        p.join('repo', 'zotero', 'my', 'attachments', 'AT', 'ATTACH01', 'p.pdf'),
+      ),
+      isNull,
+    );
+  });
 }
