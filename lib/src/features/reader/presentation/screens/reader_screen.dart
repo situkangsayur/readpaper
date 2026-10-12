@@ -881,6 +881,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         _textMode = false;
         _showSidebar = false;
         _pendingSignature = null;
+        // Gagang geser dan bilah aksi anotasi terpilih tidak pantas tampil
+        // di depan audiens.
+        _selectedAnnotationKey = null;
       }
     });
     SystemChrome.setEnabledSystemUIMode(
@@ -3206,11 +3209,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                         icon: const Icon(Icons.ads_click),
                         onPressed: _togglePointer,
                       ),
-                      if (_pointerMode)
-                        _TrailButton(
-                          milliseconds: _pointer.trail.inMilliseconds,
-                          onSelected: _setPointerTrail,
-                        ),
+                      // Selalu ada, tidak hanya saat penunjuk menyala: bilah ini
+                      // rata tengah, dan tombol yang muncul menggeser tombol
+                      // penunjuk keluar dari bawah kursor — klik kedua untuk
+                      // mematikannya malah membuka menu buntut.
+                      _TrailButton(
+                        milliseconds: _pointer.trail.inMilliseconds,
+                        onSelected: _setPointerTrail,
+                      ),
                       if (AudienceLink.isSupported)
                         IconButton(
                           tooltip: _audience == null

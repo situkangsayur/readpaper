@@ -72,7 +72,7 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
      (mati … beberapa detik). Tidak meninggalkan coretan; tampil juga di
      layar audiens.
 
-9. [ ] **Video demo untuk blog** (permintaan 2026-10-12): beberapa video
+9. [x] **Video demo untuk blog** (permintaan 2026-10-12): beberapa video
    pendek per fitur, bukan satu video ujung ke ujung — library dan koleksi,
    menandai dan anotasi gaya Zotero, pena dan teks, catatan dan Markdown,
    sitasi di Word/OnlyOffice, sinkronisasi (Kirim, masuk GitHub), dua bahasa,
