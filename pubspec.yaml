@@ -47,7 +47,7 @@ dependencies:
   image: ^4.5.4
 
   # Membaca gaya dan locale CSL, yang berbentuk XML
-  xml: ^7.0.1
+  xml: ^7.1.0
   # Membaca .doc/.xls yang sebenarnya HTML (ekspor aplikasi web).
   html: ^0.15.4
 
