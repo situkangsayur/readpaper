@@ -375,6 +375,32 @@
   "commonShapeTriangle": "Segitiga",
   "commonShapeLine": "Garis",
   "commonShapeArrow": "Panah",
+  "findTooltip": "Cari di dokumen (Ctrl+F)",
+  "findHint": "Cari kata…",
+  "findSearching": "Mencari…",
+  "findNoResults": "Tidak ditemukan",
+  "findCount": "{current} dari {total}",
+  "@findCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "findPrevious": "Sebelumnya (Shift+Enter)",
+  "findNext": "Berikutnya (Enter)",
+  "findClose": "Tutup pencarian (Esc)",
+  "findInChapter": "Bab {chapter}",
+  "@findInChapter": {
+    "placeholders": {
+      "chapter": {
+        "type": "int"
+      }
+    }
+  },
   "githubLoginButton": "Masuk dengan GitHub",
   "githubLoginButtonHint": "Tanpa membuat token: masuk lewat browser, lalu pilih atau buat repositori library.",
   "githubLoginTitle": "Masuk dengan GitHub",
@@ -1667,6 +1693,37 @@
   "notebookDeleteSheet": "Hapus lembar ini",
   "whiteboardErrPngEncode": "PNG gagal dikodekan",
   "whiteboardErrPixels": "Piksel gagal dibaca",
+  "officeUnreadable": "Dokumen ini tidak bisa dibaca: {error}",
+  "@officeUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "officeEmpty": "Dokumennya kosong.",
+  "officeTextSmaller": "Perkecil teks",
+  "officeTextLarger": "Perbesar teks",
+  "officeOpenExact": "Tampilan persis — ubah ke PDF lewat LibreOffice, lalu bisa dicari, ditandai, dan disajikan",
+  "officeConvertFailed": "LibreOffice gagal mengubahnya ke PDF: {error}",
+  "@officeConvertFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "officeTextOnly": "Format Office lama: hanya teksnya yang terbaca di sini. Untuk tampilan lengkap, buka di aplikasi Office.",
+  "officeTextOnlyWithExact": "Format Office lama: hanya teksnya yang terbaca di sini. Tombol PDF di atas menampilkannya persis, lewat LibreOffice.",
+  "officeSlideN": "Slide {number}",
+  "@officeSlideN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "officeSpeakerNotes": "Catatan pembicara",
   "presenterAudienceWaiting": "Menunggu presenter…",
   "presenterSlideOf": "Slide {page} dari {total}",
   "presenterResetTimer": "Waktu berjalan — ketuk untuk mengulang dari nol",

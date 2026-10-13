@@ -1,0 +1,33 @@
+{
+  "officeUnreadable": "This document can't be read: {error}",
+  "@officeUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "officeEmpty": "The document is empty.",
+  "officeTextSmaller": "Smaller text",
+  "officeTextLarger": "Larger text",
+  "officeOpenExact": "Exact view — convert to PDF with LibreOffice, then search, mark up, and present it",
+  "officeConvertFailed": "LibreOffice couldn't convert it to PDF: {error}",
+  "@officeConvertFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "officeTextOnly": "Old Office format: only its text is shown here. Open it in an Office app for the full layout.",
+  "officeTextOnlyWithExact": "Old Office format: only its text is shown here. The PDF button above shows it exactly, via LibreOffice.",
+  "officeSlideN": "Slide {number}",
+  "@officeSlideN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "officeSpeakerNotes": "Speaker notes"
+}

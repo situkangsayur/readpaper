@@ -163,6 +163,32 @@
   "commonShapeTriangle": "Triangle",
   "commonShapeLine": "Line",
   "commonShapeArrow": "Arrow",
+  "findTooltip": "Find in document (Ctrl+F)",
+  "findHint": "Find…",
+  "findSearching": "Searching…",
+  "findNoResults": "No results",
+  "findCount": "{current} of {total}",
+  "@findCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "findPrevious": "Previous (Shift+Enter)",
+  "findNext": "Next (Enter)",
+  "findClose": "Close search (Esc)",
+  "findInChapter": "Chapter {chapter}",
+  "@findInChapter": {
+    "placeholders": {
+      "chapter": {
+        "type": "int"
+      }
+    }
+  },
   "githubLoginButton": "Sign in with GitHub",
   "githubLoginButtonHint": "No token needed: sign in in the browser, then pick or create the library repository.",
   "githubLoginTitle": "Sign in with GitHub",
@@ -650,6 +676,37 @@
   "notebookDeleteSheet": "Delete this sheet",
   "whiteboardErrPngEncode": "PNG encoding failed",
   "whiteboardErrPixels": "Could not read the pixels",
+  "officeUnreadable": "This document can't be read: {error}",
+  "@officeUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "officeEmpty": "The document is empty.",
+  "officeTextSmaller": "Smaller text",
+  "officeTextLarger": "Larger text",
+  "officeOpenExact": "Exact view — convert to PDF with LibreOffice, then search, mark up, and present it",
+  "officeConvertFailed": "LibreOffice couldn't convert it to PDF: {error}",
+  "@officeConvertFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "officeTextOnly": "Old Office format: only its text is shown here. Open it in an Office app for the full layout.",
+  "officeTextOnlyWithExact": "Old Office format: only its text is shown here. The PDF button above shows it exactly, via LibreOffice.",
+  "officeSlideN": "Slide {number}",
+  "@officeSlideN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "officeSpeakerNotes": "Speaker notes",
   "presenterAudienceWaiting": "Waiting for the presenter…",
   "presenterSlideOf": "Slide {page} of {total}",
   "presenterResetTimer": "Elapsed time — tap to restart from zero",

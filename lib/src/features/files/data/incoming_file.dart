@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as p;
 
-/// PDF yang dibuka dari aplikasi lain.
+import '../../office/data/office_loader.dart';
+
+/// Berkas yang dibuka dari aplikasi lain: PDF, EPUB, Word, PowerPoint, Excel.
 ///
 /// Android menyerahkan berkasnya sebagai `content://` URI yang hanya boleh
 /// dibaca selama Activity-nya hidup; sisi Android sudah menyalinnya ke cache,
@@ -15,15 +18,21 @@ class IncomingFile {
 
   static String? _fromArguments;
 
+  /// Akhiran yang dibuka ReadPaper sendiri saat diserahkan aplikasi lain.
+  static bool accepts(String path) {
+    final ext = p.extension(path).toLowerCase();
+    return const <String>{'.pdf', '.epub', '.xlsx', '.xlsm', '.xls', '.csv'}.contains(ext) ||
+        officeExtensions.contains(ext);
+  }
+
   /// Berkas dari baris perintah di desktop: argumen pertama yang menunjuk ke
-  /// PDF atau EPUB yang ada. Pengelola berkas di Linux memanggil
+  /// berkas yang bisa dibuka ([accepts]) dan ada. Pengelola berkas di Linux memanggil
   /// `readpaper /jalur/berkas.pdf`, Windows `readpaper.exe "C:\...\berkas.pdf"`.
   /// Tanpa ini "Buka dengan ReadPaper" hanya membuka layar utama.
   static void fromArguments(List<String> args) {
     for (final arg in args) {
       final path = arg.startsWith('file://') ? Uri.parse(arg).toFilePath() : arg;
-      final lower = path.toLowerCase();
-      if ((lower.endsWith('.pdf') || lower.endsWith('.epub')) && File(path).existsSync()) {
+      if (accepts(path) && File(path).existsSync()) {
         _fromArguments = File(path).absolute.path;
         return;
       }

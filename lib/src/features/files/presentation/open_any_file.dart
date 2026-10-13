@@ -6,18 +6,21 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../epub/presentation/epub_reader_screen.dart';
 import '../../notes/presentation/screens/image_viewer_screen.dart';
+import '../../office/data/office_loader.dart';
+import '../../office/presentation/office_viewer_screen.dart';
 import '../../reader/presentation/screens/reader_screen.dart';
 import 'screens/table_viewer_screen.dart';
 import '../../../core/l10n.dart';
 
 /// Jenis berkas menurut cara ReadPaper membukanya.
-enum FileKind { pdf, epub, image, table, other }
+enum FileKind { pdf, epub, image, table, office, other }
 
 FileKind fileKindOf(String path) => switch (p.extension(path).toLowerCase()) {
   '.pdf' => FileKind.pdf,
   '.epub' => FileKind.epub,
   '.png' || '.jpg' || '.jpeg' || '.webp' || '.gif' || '.bmp' => FileKind.image,
-  '.csv' || '.tsv' || '.xlsx' || '.xlsm' => FileKind.table,
+  '.csv' || '.tsv' || '.xlsx' || '.xlsm' || '.xls' => FileKind.table,
+  final ext when officeExtensions.contains(ext) => FileKind.office,
   _ => FileKind.other,
 };
 
@@ -28,7 +31,8 @@ bool canOpenInApp(String path) => fileKindOf(path) != FileKind.other;
 bool get canOpenWithSystem => Platform.isLinux || Platform.isWindows || Platform.isMacOS;
 
 /// Membuka [path]: PDF di pembaca (sebagai PDF lepas), EPUB di pembaca EPUB,
-/// gambar dan tabel di penampilnya, sisanya di aplikasi bawaan sistem.
+/// gambar, tabel, dan dokumen Word/PowerPoint di penampilnya, sisanya di
+/// aplikasi bawaan sistem.
 Future<void> openAnyFile(BuildContext context, String path, {String? title}) async {
   final name = title ?? p.basenameWithoutExtension(path);
   final Widget? screen = switch (fileKindOf(path)) {
@@ -42,6 +46,7 @@ Future<void> openAnyFile(BuildContext context, String path, {String? title}) asy
     FileKind.epub => EpubReaderScreen(path: path, title: name),
     FileKind.image => ImageViewerScreen(path: path, title: name),
     FileKind.table => TableViewerScreen(path: path, title: name),
+    FileKind.office => OfficeViewerScreen(path: path, title: name),
     FileKind.other => null,
   };
   if (screen != null) {

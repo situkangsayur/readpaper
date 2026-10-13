@@ -1076,6 +1076,60 @@ abstract class AppLocalizations {
   /// **'Panah'**
   String get commonShapeArrow;
 
+  /// No description provided for @findTooltip.
+  ///
+  /// In id, this message translates to:
+  /// **'Cari di dokumen (Ctrl+F)'**
+  String get findTooltip;
+
+  /// No description provided for @findHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Cari kata…'**
+  String get findHint;
+
+  /// No description provided for @findSearching.
+  ///
+  /// In id, this message translates to:
+  /// **'Mencari…'**
+  String get findSearching;
+
+  /// No description provided for @findNoResults.
+  ///
+  /// In id, this message translates to:
+  /// **'Tidak ditemukan'**
+  String get findNoResults;
+
+  /// No description provided for @findCount.
+  ///
+  /// In id, this message translates to:
+  /// **'{current} dari {total}'**
+  String findCount(int current, int total);
+
+  /// No description provided for @findPrevious.
+  ///
+  /// In id, this message translates to:
+  /// **'Sebelumnya (Shift+Enter)'**
+  String get findPrevious;
+
+  /// No description provided for @findNext.
+  ///
+  /// In id, this message translates to:
+  /// **'Berikutnya (Enter)'**
+  String get findNext;
+
+  /// No description provided for @findClose.
+  ///
+  /// In id, this message translates to:
+  /// **'Tutup pencarian (Esc)'**
+  String get findClose;
+
+  /// No description provided for @findInChapter.
+  ///
+  /// In id, this message translates to:
+  /// **'Bab {chapter}'**
+  String findInChapter(int chapter);
+
   /// No description provided for @githubLoginButton.
   ///
   /// In id, this message translates to:
@@ -4008,6 +4062,66 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Piksel gagal dibaca'**
   String get whiteboardErrPixels;
+
+  /// No description provided for @officeUnreadable.
+  ///
+  /// In id, this message translates to:
+  /// **'Dokumen ini tidak bisa dibaca: {error}'**
+  String officeUnreadable(String error);
+
+  /// No description provided for @officeEmpty.
+  ///
+  /// In id, this message translates to:
+  /// **'Dokumennya kosong.'**
+  String get officeEmpty;
+
+  /// No description provided for @officeTextSmaller.
+  ///
+  /// In id, this message translates to:
+  /// **'Perkecil teks'**
+  String get officeTextSmaller;
+
+  /// No description provided for @officeTextLarger.
+  ///
+  /// In id, this message translates to:
+  /// **'Perbesar teks'**
+  String get officeTextLarger;
+
+  /// No description provided for @officeOpenExact.
+  ///
+  /// In id, this message translates to:
+  /// **'Tampilan persis — ubah ke PDF lewat LibreOffice, lalu bisa dicari, ditandai, dan disajikan'**
+  String get officeOpenExact;
+
+  /// No description provided for @officeConvertFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'LibreOffice gagal mengubahnya ke PDF: {error}'**
+  String officeConvertFailed(String error);
+
+  /// No description provided for @officeTextOnly.
+  ///
+  /// In id, this message translates to:
+  /// **'Format Office lama: hanya teksnya yang terbaca di sini. Untuk tampilan lengkap, buka di aplikasi Office.'**
+  String get officeTextOnly;
+
+  /// No description provided for @officeTextOnlyWithExact.
+  ///
+  /// In id, this message translates to:
+  /// **'Format Office lama: hanya teksnya yang terbaca di sini. Tombol PDF di atas menampilkannya persis, lewat LibreOffice.'**
+  String get officeTextOnlyWithExact;
+
+  /// No description provided for @officeSlideN.
+  ///
+  /// In id, this message translates to:
+  /// **'Slide {number}'**
+  String officeSlideN(int number);
+
+  /// No description provided for @officeSpeakerNotes.
+  ///
+  /// In id, this message translates to:
+  /// **'Catatan pembicara'**
+  String get officeSpeakerNotes;
 
   /// No description provided for @presenterAudienceWaiting.
   ///

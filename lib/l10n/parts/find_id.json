@@ -1,0 +1,28 @@
+{
+  "findTooltip": "Cari di dokumen (Ctrl+F)",
+  "findHint": "Cari kata…",
+  "findSearching": "Mencari…",
+  "findNoResults": "Tidak ditemukan",
+  "findCount": "{current} dari {total}",
+  "@findCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "findPrevious": "Sebelumnya (Shift+Enter)",
+  "findNext": "Berikutnya (Enter)",
+  "findClose": "Tutup pencarian (Esc)",
+  "findInChapter": "Bab {chapter}",
+  "@findInChapter": {
+    "placeholders": {
+      "chapter": {
+        "type": "int"
+      }
+    }
+  }
+}

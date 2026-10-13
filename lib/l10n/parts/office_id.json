@@ -1,0 +1,33 @@
+{
+  "officeUnreadable": "Dokumen ini tidak bisa dibaca: {error}",
+  "@officeUnreadable": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "officeEmpty": "Dokumennya kosong.",
+  "officeTextSmaller": "Perkecil teks",
+  "officeTextLarger": "Perbesar teks",
+  "officeOpenExact": "Tampilan persis — ubah ke PDF lewat LibreOffice, lalu bisa dicari, ditandai, dan disajikan",
+  "officeConvertFailed": "LibreOffice gagal mengubahnya ke PDF: {error}",
+  "@officeConvertFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "officeTextOnly": "Format Office lama: hanya teksnya yang terbaca di sini. Untuk tampilan lengkap, buka di aplikasi Office.",
+  "officeTextOnlyWithExact": "Format Office lama: hanya teksnya yang terbaca di sini. Tombol PDF di atas menampilkannya persis, lewat LibreOffice.",
+  "officeSlideN": "Slide {number}",
+  "@officeSlideN": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "officeSpeakerNotes": "Catatan pembicara"
+}

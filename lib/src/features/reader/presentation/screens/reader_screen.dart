@@ -54,6 +54,7 @@ import '../widgets/page_tint.dart';
 import '../widgets/signature_pad.dart';
 import '../widgets/selection_action_bar.dart';
 import '../../../../core/l10n.dart';
+import '../../../../core/widgets/find_bar.dart';
 import '../../../presenter/data/audience_link.dart';
 import '../../../presenter/data/presenter_notes_store.dart';
 import '../../../presenter/domain/audience_state.dart';
@@ -108,6 +109,17 @@ class ReaderScreen extends ConsumerStatefulWidget {
 
 class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   final PdfViewerController _controller = PdfViewerController();
+
+  /// Cari kata di dokumen: pdfrx membaca teks tiap halaman di latar, hasilnya
+  /// disorot di halaman lewat [_paintMatches]. Dibuat saat penampil siap —
+  /// ia langsung membaca dokumen dari controller — dan dibuat ulang setiap
+  /// kali PDF-nya dimuat ulang (halaman kosong ditambahkan, disimpan).
+  PdfTextSearcher? _searcher;
+  late final List<PdfViewerPagePaintCallback> _paintMatches = <PdfViewerPagePaintCallback>[
+    (canvas, pageRect, page) => _searcher?.pageTextMatchPaintCallback(canvas, pageRect, page),
+  ];
+  bool _finding = false;
+  String _findQuery = '';
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   /// Two fixed configurations, swapped by the marker toggle.
@@ -419,6 +431,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
     HardwareKeyboard.instance.removeHandler(_onPresentKey);
     _pointer.dispose();
+    _searcher?.removeListener(_onSearchChanged);
+    _searcher?.dispose();
     _exitListener.dispose();
     _stylusNearTimer?.cancel();
     _dragScroll?.cancel();
@@ -451,6 +465,54 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _pointer = LaserPointer(trail: Duration(milliseconds: settings.pointerTrailMs));
     if (settings.keepScreenOn) _applyKeepScreenOn(true);
     _load();
+  }
+
+  void _onSearchChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _openFind() {
+    if (_loading) return;
+    setState(() => _finding = true);
+  }
+
+  void _find(String query) {
+    _findQuery = query;
+    final searcher = _searcher;
+    if (searcher == null) return;
+    if (query.trim().isEmpty) {
+      searcher.resetTextSearch();
+    } else {
+      searcher.startTextSearch(query.trim(), caseInsensitive: true, goToFirstMatch: true);
+    }
+  }
+
+  void _closeFind() {
+    _searcher?.resetTextSearch();
+    setState(() => _finding = false);
+  }
+
+  /// Ke hasil berikutnya ([delta] 1) atau sebelumnya (-1), memutar di ujung
+  /// seperti pencarian di peramban. pdfrx sendiri berhenti di ujung dan tidak
+  /// memberi tahu pendengarnya saat berpindah, jadi angkanya diperbarui di sini.
+  Future<void> _stepMatch(int delta) async {
+    final searcher = _searcher;
+    if (searcher == null || searcher.matches.isEmpty) return;
+    final count = searcher.matches.length;
+    final current = searcher.currentIndex ?? (delta > 0 ? -1 : 0);
+    await searcher.goToMatchOfIndex((current + delta) % count);
+    if (mounted) setState(() {});
+  }
+
+  /// Penampil siap dengan dokumen (baru): pencari dibuat untuknya, dan
+  /// pencarian yang sedang terbuka diulang di dokumen itu.
+  void _attachSearcher() {
+    _searcher?.removeListener(_onSearchChanged);
+    _searcher?.dispose();
+    _searcher = PdfTextSearcher(_controller)..addListener(_onSearchChanged);
+    if (_finding && _findQuery.trim().isNotEmpty) {
+      _searcher!.startTextSearch(_findQuery.trim(), caseInsensitive: true, goToFirstMatch: false);
+    }
   }
 
   /// Nomor pemuatan terakhir. Dua pemuatan bisa berjalan bersamaan (simpan
@@ -2246,6 +2308,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final isWide = LayoutSize.of(context) == LayoutSize.expanded;
 
     final tools = <Widget>[
+      IconButton(
+        tooltip: context.l10n.findTooltip,
+        isSelected: _finding,
+        icon: const Icon(Icons.search),
+        onPressed: _loading ? null : (_finding ? _closeFind : _openFind),
+      ),
       // Labelled on purpose: a bare icon left people swiping at the page
       // and wondering why nothing was marked. Di desktop juga: memblok teks
       // lalu mencari bilah stabilo tidak pernah ditemukan di Windows, jadi
@@ -2544,6 +2612,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         const SingleActivator(LogicalKeyboardKey.keyY, control: true): () => _redoAction?.call(),
         const SingleActivator(LogicalKeyboardKey.keyS, control: true): _savePdf,
         const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _savePdf,
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true): _openFind,
+        const SingleActivator(LogicalKeyboardKey.keyF, meta: true): _openFind,
+        const SingleActivator(LogicalKeyboardKey.f3): () => _finding ? _stepMatch(1) : _openFind(),
         const SingleActivator(LogicalKeyboardKey.keyS, control: true, shift: true): _savePdfAs,
         const SingleActivator(LogicalKeyboardKey.keyS, meta: true, shift: true): _savePdfAs,
         // Salin, potong, tempel anotasi. Tanpa anotasi terpilih, Ctrl+C tetap
@@ -2645,6 +2716,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                               style: TextStyle(color: scheme.onErrorContainer, fontSize: 12),
                             ),
                           ),
+                        ),
+                      if (_finding)
+                        FindBar(
+                          initialQuery: _findQuery,
+                          current: _searcher?.currentIndex == null
+                              ? null
+                              : _searcher!.currentIndex! + 1,
+                          total: _findQuery.trim().isEmpty
+                              ? null
+                              : (_searcher?.matches.length ?? 0),
+                          searching: _searcher?.isSearching ?? false,
+                          onChanged: _find,
+                          onNext: () => _stepMatch(1),
+                          onPrevious: () => _stepMatch(-1),
+                          onClose: _closeFind,
                         ),
                       if (_showCoach &&
                           !_markerMode &&
@@ -3428,6 +3514,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       },
       backgroundColor: _tint.background ?? AppTheme.readerBackground(scheme),
       margin: 10,
+      pagePaintCallbacks: _paintMatches,
       textSelectionParams: _penMode ? _selectOff : (_markerMode ? _selectByDrag : _selectByHandles),
       // While marking, the drag belongs to the selection; while drawing, to
       // the pen. Panning would fight either one for the same gesture.
@@ -3463,6 +3550,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         _scheduleRecordVisit();
       },
       onViewerReady: (document, controller) async {
+        _attachSearcher();
         // Outlines are cheap to read but only exist once the document is
         // open, so this cannot be part of the annotation load.
         final outline = await document.loadOutline();

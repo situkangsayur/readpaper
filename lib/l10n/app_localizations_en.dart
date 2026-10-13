@@ -608,6 +608,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonShapeArrow => 'Arrow';
 
   @override
+  String get findTooltip => 'Find in document (Ctrl+F)';
+
+  @override
+  String get findHint => 'Find…';
+
+  @override
+  String get findSearching => 'Searching…';
+
+  @override
+  String get findNoResults => 'No results';
+
+  @override
+  String findCount(int current, int total) {
+    return '$current of $total';
+  }
+
+  @override
+  String get findPrevious => 'Previous (Shift+Enter)';
+
+  @override
+  String get findNext => 'Next (Enter)';
+
+  @override
+  String get findClose => 'Close search (Esc)';
+
+  @override
+  String findInChapter(int chapter) {
+    return 'Chapter $chapter';
+  }
+
+  @override
   String get githubLoginButton => 'Sign in with GitHub';
 
   @override
@@ -2460,6 +2491,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get whiteboardErrPixels => 'Could not read the pixels';
+
+  @override
+  String officeUnreadable(String error) {
+    return 'This document can\'t be read: $error';
+  }
+
+  @override
+  String get officeEmpty => 'The document is empty.';
+
+  @override
+  String get officeTextSmaller => 'Smaller text';
+
+  @override
+  String get officeTextLarger => 'Larger text';
+
+  @override
+  String get officeOpenExact =>
+      'Exact view — convert to PDF with LibreOffice, then search, mark up, and present it';
+
+  @override
+  String officeConvertFailed(String error) {
+    return 'LibreOffice couldn\'t convert it to PDF: $error';
+  }
+
+  @override
+  String get officeTextOnly =>
+      'Old Office format: only its text is shown here. Open it in an Office app for the full layout.';
+
+  @override
+  String get officeTextOnlyWithExact =>
+      'Old Office format: only its text is shown here. The PDF button above shows it exactly, via LibreOffice.';
+
+  @override
+  String officeSlideN(int number) {
+    return 'Slide $number';
+  }
+
+  @override
+  String get officeSpeakerNotes => 'Speaker notes';
 
   @override
   String get presenterAudienceWaiting => 'Waiting for the presenter…';

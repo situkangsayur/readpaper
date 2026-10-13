@@ -398,8 +398,8 @@ Future<void> _open(BuildContext context, WidgetRef ref, NoteItem note, NotesInde
     );
     return;
   }
-  // CSV dan Excel dibuka sebagai tabel; jenis lain diserahkan ke aplikasi
-  // bawaan sistem di desktop.
+  // CSV dan Excel dibuka sebagai tabel, Word dan PowerPoint di penampilnya;
+  // jenis lain diserahkan ke aplikasi bawaan sistem di desktop.
   await openAnyFile(context, path, title: note.title);
 }
 

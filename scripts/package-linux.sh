@@ -76,8 +76,8 @@ done
 # nama mentah "com.situkangsayur.readpaper". Nama ikonnya ikut app id untuk
 # alasan yang sama.
 #
-# MimeType membuat ReadPaper muncul di "Buka dengan" untuk PDF, sama seperti
-# di Android. StartupWMClass adalah cadangan untuk dok yang mencocokkan lewat
+# MimeType membuat ReadPaper muncul di "Buka dengan" untuk PDF, EPUB, Word,
+# PowerPoint, dan Excel, sama seperti di Android. StartupWMClass adalah cadangan untuk dok yang mencocokkan lewat
 # WM_CLASS alih-alih lewat id aplikasi.
 appid="com.situkangsayur.readpaper"
 
@@ -102,7 +102,7 @@ Exec=readpaper %f
 Icon=com.situkangsayur.readpaper
 Terminal=false
 Categories=Office;Education;Science;Viewer;
-MimeType=application/pdf;
+MimeType=application/pdf;application/epub+zip;application/msword;application/vnd.openxmlformats-officedocument.wordprocessingml.document;application/rtf;application/vnd.ms-powerpoint;application/vnd.openxmlformats-officedocument.presentationml.presentation;application/vnd.openxmlformats-officedocument.presentationml.slideshow;application/vnd.ms-excel;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;
 Keywords=zotero;paper;pdf;sitasi;anotasi;
 StartupWMClass=com.situkangsayur.readpaper
 DESKTOP

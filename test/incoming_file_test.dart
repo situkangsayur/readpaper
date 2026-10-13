@@ -24,7 +24,15 @@ void main() {
     expect(await IncomingFile.takeInitial(), epub.absolute.path);
   });
 
-  test('berkas yang tidak ada atau bukan PDF/EPUB diabaikan', () async {
+  test('Word, PowerPoint, dan Excel juga diterima', () async {
+    for (final name in <String>['laporan.docx', 'kuliah.ppt', 'data.xls']) {
+      final file = File(p.join(dir.path, name))..writeAsStringSync('x');
+      IncomingFile.fromArguments(<String>[file.path]);
+      expect(await IncomingFile.takeInitial(), file.absolute.path);
+    }
+  });
+
+  test('berkas yang tidak ada atau tidak bisa dibuka diabaikan', () async {
     final txt = File(p.join(dir.path, 'catatan.txt'))..writeAsStringSync('x');
     IncomingFile.fromArguments(<String>[txt.path, p.join(dir.path, 'hilang.pdf')]);
     expect(await IncomingFile.takeInitial(), isNull);

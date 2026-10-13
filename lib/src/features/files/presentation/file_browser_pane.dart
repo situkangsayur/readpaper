@@ -841,6 +841,8 @@ class _EntryRow extends StatelessWidget {
                     ? Icons.image_outlined
                     : kind == FileKind.table
                     ? Icons.table_chart_outlined
+                    : kind == FileKind.office
+                    ? Icons.article_outlined
                     : Icons.insert_drive_file_outlined,
                 size: 15,
                 color: canOpen ? scheme.primary : scheme.outline,

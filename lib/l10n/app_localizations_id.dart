@@ -576,6 +576,37 @@ class AppLocalizationsId extends AppLocalizations {
   String get commonShapeArrow => 'Panah';
 
   @override
+  String get findTooltip => 'Cari di dokumen (Ctrl+F)';
+
+  @override
+  String get findHint => 'Cari kata…';
+
+  @override
+  String get findSearching => 'Mencari…';
+
+  @override
+  String get findNoResults => 'Tidak ditemukan';
+
+  @override
+  String findCount(int current, int total) {
+    return '$current dari $total';
+  }
+
+  @override
+  String get findPrevious => 'Sebelumnya (Shift+Enter)';
+
+  @override
+  String get findNext => 'Berikutnya (Enter)';
+
+  @override
+  String get findClose => 'Tutup pencarian (Esc)';
+
+  @override
+  String findInChapter(int chapter) {
+    return 'Bab $chapter';
+  }
+
+  @override
   String get githubLoginButton => 'Masuk dengan GitHub';
 
   @override
@@ -2303,6 +2334,45 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get whiteboardErrPixels => 'Piksel gagal dibaca';
+
+  @override
+  String officeUnreadable(String error) {
+    return 'Dokumen ini tidak bisa dibaca: $error';
+  }
+
+  @override
+  String get officeEmpty => 'Dokumennya kosong.';
+
+  @override
+  String get officeTextSmaller => 'Perkecil teks';
+
+  @override
+  String get officeTextLarger => 'Perbesar teks';
+
+  @override
+  String get officeOpenExact =>
+      'Tampilan persis — ubah ke PDF lewat LibreOffice, lalu bisa dicari, ditandai, dan disajikan';
+
+  @override
+  String officeConvertFailed(String error) {
+    return 'LibreOffice gagal mengubahnya ke PDF: $error';
+  }
+
+  @override
+  String get officeTextOnly =>
+      'Format Office lama: hanya teksnya yang terbaca di sini. Untuk tampilan lengkap, buka di aplikasi Office.';
+
+  @override
+  String get officeTextOnlyWithExact =>
+      'Format Office lama: hanya teksnya yang terbaca di sini. Tombol PDF di atas menampilkannya persis, lewat LibreOffice.';
+
+  @override
+  String officeSlideN(int number) {
+    return 'Slide $number';
+  }
+
+  @override
+  String get officeSpeakerNotes => 'Catatan pembicara';
 
   @override
   String get presenterAudienceWaiting => 'Menunggu presenter…';

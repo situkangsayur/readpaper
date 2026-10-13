@@ -414,6 +414,19 @@ void main() {
     await tester.tap(find.text('Baca'));
     await pumpUntil(tester, find.byType(PdfViewer));
     await pumpFor(tester, const Duration(seconds: 4));
+
+    // Cari kata: 26 baris PDF-nya memuat "commit"; Enter maju satu hasil.
+    await tester.tap(find.byTooltip('Cari di dokumen (Ctrl+F)'));
+    await tester.pump();
+    await tester.enterText(find.byKey(const ValueKey<String>('find-field')), 'commit');
+    await pumpUntil(tester, find.text('1 dari 26'));
+    await tester.tap(find.byTooltip('Berikutnya (Enter)'));
+    await pumpUntil(tester, find.text('2 dari 26'));
+    await shot(tester, 'f2-cari');
+    await tester.tap(find.byTooltip('Tutup pencarian (Esc)'));
+    await pumpFor(tester, const Duration(milliseconds: 500));
+    diag('cari di PDF');
+
     var viewer = tester.getRect(find.byType(PdfViewer));
     final item2 = fx.itemFile('ITEMKEY2');
     List<Map<String, dynamic>> annotations() => (fx.readJson(item2)['children'] as List<dynamic>)

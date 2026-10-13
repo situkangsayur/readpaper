@@ -59,9 +59,10 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   masuk, ke Zotero sebagai item berlampiran atau ke Catatan sebagai catatan,
   sesuai tempat lepasnya. Koleksi bernama sama dipakai ulang, dan seluruh impor
   menjadi satu commit.
-- **Penampil gambar dan tabel.** CSV, TSV, dan Excel (.xlsx) tampil sebagai
-  tabel berlembar. Jenis berkas lain dibuka dengan aplikasi bawaan sistem di
-  desktop.
+- **Penampil gambar dan tabel.** CSV, TSV, dan Excel (.xlsx, juga .xls lama)
+  tampil sebagai tabel berlembar. Isinya yang menentukan, bukan akhirannya:
+  ".xls" yang sebenarnya .xlsx atau HTML (ekspor banyak aplikasi web) tetap
+  terbaca. Jenis berkas lain dibuka dengan aplikasi bawaan sistem di desktop.
 - **Hapus koleksi selalu dikonfirmasi**, dengan peringatan merah dan rincian
   isi bila koleksinya tidak kosong. Berlaku untuk koleksi paper maupun catatan.
 - **Menambah PDF ke koleksi** langsung dari pohon: **⋮ → Tambahkan PDF ke
@@ -108,6 +109,31 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 
 ## Membaca
 
+- **Cari kata di dokumen yang terbuka** — PDF, EPUB, Word, PowerPoint, dan
+  tabel. Ikon kaca pembesar atau **Ctrl+F**; semua hasil disorot kuning, yang
+  sedang dituju oranye, dengan hitungan "3 dari 12". **Enter** ke hasil
+  berikutnya, **Shift+Enter** ke sebelumnya (memutar di ujung), **Esc**
+  menutup, **F3** maju. Di EPUB pencariannya meliputi seluruh buku dan pindah
+  bab sendiri; di tabel meliputi semua lembar.
+- **Membaca Word dan PowerPoint** tanpa aplikasi Office, di semua platform
+  termasuk tablet: .docx, .doc, .rtf, .pptx, .ppt, .pps(x).
+  - **Word** tampil sebagai teks mengalir di atas lembar putih — judul, tebal,
+    miring, warna, butir dan nomor, tabel, gambar, tautan — dengan tombol
+    perbesar/perkecil teks. Bukan halaman persis.
+  - **PowerPoint** tampil per slide di posisi aslinya: kotak teks, gambar,
+    bidang berwarna, tabel, latar, warna tema, gaya dari master dan tata
+    letak, dan **catatan pembicara** di bawah tiap slide.
+  - **Format lama (.doc, .ppt)** dibaca dari berkas binernya sendiri: hanya
+    teksnya (paragraf, tabel, judul dan isi slide), dan diberi tahu demikian.
+  - **Tampilan persis** (desktop, bila LibreOffice terpasang): tombol PDF di
+    bilah atas mengubah dokumennya ke PDF lewat LibreOffice lalu membukanya di
+    pembaca PDF — huruf dan tata letak persis, dan bisa dicari, ditandai,
+    dicoret, serta **disajikan** dengan mode menyajikan dan layar audiens.
+    Hasilnya disimpan, jadi membuka lagi berkas yang sama tidak mengubahnya
+    lagi.
+  - ReadPaper muncul di **Buka dengan** untuk Word, PowerPoint, dan Excel
+    (Android, iOS, Linux, Windows); lampiran Word/PowerPoint di library dan
+    di Catatan dibuka di penampil ini.
 - **Pembaca EPUB**: satu bab per layar, daftar isi bertingkat, ukuran huruf,
   dan tiga warna halaman (Terang, Sepia, Gelap). Bab, posisi gulir, ukuran
   huruf, dan warnanya diingat per buku. ReadPaper muncul di pilihan **Buka
@@ -415,8 +441,13 @@ Diringkas dari butir yang belum selesai di [backlog.md](backlog.md):
   library 1.740 item, mendekati kuota GitHub 5.000 per jam.
 - **Token di Android** disimpan di berkas privat aplikasi, belum di keystore.
   APK masih ditandatangani dengan kunci debug.
-- **Belum ada pencarian teks di dalam PDF**, panel thumbnail halaman, atau
-  tingkat zum yang tersimpan per paper.
+- **Belum ada panel thumbnail halaman** atau tingkat zum yang tersimpan per
+  paper.
+- **Word dan PowerPoint hanya untuk dibaca**, dan tanpa LibreOffice bukan
+  tampilan persis: huruf tema diganti huruf aplikasi, bagan dan SmartArt
+  tidak tampil, bentuk selain kotak/elips digambar sebagai kotak, dan
+  .doc/.ppt lama hanya teksnya. Excel tidak menghitung rumus — nilai tersimpan
+  yang tampil, tanggal sebagai nomor seri.
 - **Pena di pembaca belum punya penghapus**; coretan dibuang lewat urungkan,
   buang, atau panel anotasi.
 - **Salin teks tidak bisa selama mode Tandai aktif** — matikan dulu.

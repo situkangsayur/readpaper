@@ -4,6 +4,10 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:xml/xml.dart';
 
+import '../../office/data/compound_file.dart';
+import '../../office/data/text_formats.dart';
+import '../../office/data/xls_reader.dart';
+
 /// Satu lembar tabel: nama dan baris-barisnya, semuanya teks.
 class TableSheet {
   const TableSheet({required this.name, required this.rows});
@@ -14,7 +18,7 @@ class TableSheet {
   int get columnCount => rows.fold(0, (m, r) => r.length > m ? r.length : m);
 }
 
-/// Membaca CSV, TSV, dan Excel (`.xlsx`) untuk ditampilkan.
+/// Membaca CSV, TSV, dan Excel (`.xlsx`, juga `.xls` lama) untuk ditampilkan.
 ///
 /// Hanya untuk dilihat: rumus tidak dihitung, yang ditampilkan nilai
 /// terakhir yang disimpan Excel di berkasnya. Paket `excel` tidak bisa dipakai
@@ -29,7 +33,17 @@ class TableData {
 
   static List<TableSheet> read(String fileName, Uint8List bytes) {
     final lower = fileName.toLowerCase();
-    if (lower.endsWith('.xlsx') || lower.endsWith('.xlsm')) return xlsx(bytes);
+    // Isinya yang menentukan: banyak ".xls" sebenarnya .xlsx yang diganti
+    // nama, HTML, atau BIFF tanpa pembungkus — ekspor aplikasi web.
+    if (bytes.length > 4 && bytes[0] == 0x50 && bytes[1] == 0x4B) return xlsx(bytes);
+    if (CompoundFile.looksLike(bytes)) return XlsReader.read(bytes);
+    if (lower.endsWith('.xls') && XlsReader.looksBare(bytes)) return XlsReader.readBare(bytes);
+    if (TextFormats.isHtml(bytes)) {
+      return <TableSheet>[
+        for (final (name, rows) in TextFormats.htmlTables(bytes))
+          TableSheet(name: name, rows: rows),
+      ];
+    }
     final text = utf8.decode(bytes, allowMalformed: true);
     final separator = lower.endsWith('.tsv') ? '\t' : _guessSeparator(text);
     return <TableSheet>[

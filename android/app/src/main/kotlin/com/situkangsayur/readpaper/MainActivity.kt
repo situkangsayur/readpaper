@@ -72,7 +72,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        // Aplikasi sudah berjalan dan sebuah PDF dibuka dari tempat lain:
+        // Aplikasi sudah berjalan dan sebuah berkas dibuka dari tempat lain:
         // jalurnya dikirim langsung, tidak menunggu ditanya.
         val path = copyIncoming(intent) ?: return
         val sink = channel
@@ -110,8 +110,7 @@ class MainActivity : FlutterActivity() {
                     // Akhirannya yang menentukan pembaca mana yang membuka
                     // berkasnya di sisi Dart, jadi nama tanpa akhiran diberi
                     // akhiran dari tipenya — bukan selalu ".pdf".
-                    val known = value.endsWith(".pdf", ignoreCase = true) ||
-                        value.endsWith(".epub", ignoreCase = true)
+                    val known = KNOWN_EXTENSIONS.any { value.endsWith(it, ignoreCase = true) }
                     return if (known) value else "$value${extensionFor(uri)}"
                 }
             }
@@ -136,9 +135,28 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun extensionFor(uri: Uri): String =
-        if (contentResolver.getType(uri) == "application/epub+zip") ".epub" else ".pdf"
+        MIME_EXTENSIONS[contentResolver.getType(uri)] ?: ".pdf"
 
     private companion object {
         const val CHANNEL = "readpaper/berkas-masuk"
+
+        /** Tipe yang didaftarkan di manifest → akhiran yang dikenali sisi Dart. */
+        val MIME_EXTENSIONS = mapOf(
+            "application/pdf" to ".pdf",
+            "application/epub+zip" to ".epub",
+            "application/msword" to ".doc",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" to ".docx",
+            "application/rtf" to ".rtf",
+            "text/rtf" to ".rtf",
+            "application/vnd.ms-powerpoint" to ".ppt",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation" to ".pptx",
+            "application/vnd.openxmlformats-officedocument.presentationml.slideshow" to ".ppsx",
+            "application/vnd.ms-excel" to ".xls",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" to ".xlsx",
+            "text/csv" to ".csv",
+        )
+
+        val KNOWN_EXTENSIONS = MIME_EXTENSIONS.values.toSet() +
+            setOf(".pps", ".dot", ".dotx", ".docm", ".pptm", ".potx", ".pot", ".xlsm", ".tsv")
     }
 }

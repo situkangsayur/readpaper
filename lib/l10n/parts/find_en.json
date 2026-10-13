@@ -1,0 +1,28 @@
+{
+  "findTooltip": "Find in document (Ctrl+F)",
+  "findHint": "Find…",
+  "findSearching": "Searching…",
+  "findNoResults": "No results",
+  "findCount": "{current} of {total}",
+  "@findCount": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "findPrevious": "Previous (Shift+Enter)",
+  "findNext": "Next (Enter)",
+  "findClose": "Close search (Esc)",
+  "findInChapter": "Chapter {chapter}",
+  "@findInChapter": {
+    "placeholders": {
+      "chapter": {
+        "type": "int"
+      }
+    }
+  }
+}

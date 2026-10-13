@@ -197,8 +197,9 @@ class _AttachmentCard extends ConsumerWidget {
     final repository = ref.watch(libraryRepositoryProvider);
     final isPointer = file != null && repository.isLfsPointer(file!);
     final canRead = file != null && !isPointer && (attachment.isPdf || attachment.isEpub);
-    // Lampiran selain PDF/EPUB: gambar dan tabel dibuka di penampilnya,
-    // sisanya — Word, PowerPoint, zip — di aplikasi bawaan sistem (desktop).
+    // Lampiran selain PDF/EPUB: gambar, tabel, Word, dan PowerPoint dibuka di
+    // penampilnya; sisanya — zip dan sebagainya — di aplikasi bawaan sistem
+    // (desktop).
     final canOpen =
         file != null && !isPointer && !canRead && (canOpenInApp(file!.path) || canOpenWithSystem);
 

@@ -152,7 +152,7 @@ final class BerkasMasuk: NSObject, FlutterPlugin, FlutterSceneLifeCycleDelegate 
     // Dart, jadi nama tanpa akhiran yang dikenal diberi akhiran dari tipenya —
     // sama seperti di Android, bukan selalu ".pdf".
     let ext = (name as NSString).pathExtension.lowercased()
-    if ext != "pdf" && ext != "epub" { name += extensionFor(url) }
+    if !AppDelegate.knownExtensions.contains(ext) { name += extensionFor(url) }
     let target = dir.appendingPathComponent(name)
 
     var copied = false
@@ -177,9 +177,24 @@ final class BerkasMasuk: NSObject, FlutterPlugin, FlutterSceneLifeCycleDelegate 
     return target.path
   }
 
+  private static let knownExtensions: Set<String> = [
+    "pdf", "epub", "doc", "docx", "rtf", "ppt", "pptx", "pps", "ppsx", "xls", "xlsx", "csv",
+  ]
+
+  private static let typeExtensions: [String: String] = [
+    "org.idpf.epub-container": ".epub",
+    "com.microsoft.word.doc": ".doc",
+    "org.openxmlformats.wordprocessingml.document": ".docx",
+    "public.rtf": ".rtf",
+    "com.microsoft.powerpoint.ppt": ".ppt",
+    "org.openxmlformats.presentationml.presentation": ".pptx",
+    "com.microsoft.excel.xls": ".xls",
+    "org.openxmlformats.spreadsheetml.sheet": ".xlsx",
+  ]
+
   private func extensionFor(_ url: URL) -> String {
     let type = (try? url.resourceValues(forKeys: [.typeIdentifierKey]))?.typeIdentifier
-    return type == "org.idpf.epub-container" ? ".epub" : ".pdf"
+    return type.flatMap { AppDelegate.typeExtensions[$0] } ?? ".pdf"
   }
 
   /// Hanya salinan milik sendiri di Documents/Inbox yang boleh dihapus —

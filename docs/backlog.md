@@ -78,6 +78,16 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
    sitasi di Word/OnlyOffice, sinkronisasi (Kirim, masuk GitHub), dua bahasa,
    mode presenter dengan layar audiens dan penunjuk.
 
+### Berikutnya — cari dan membaca Office (permintaan 2026-10-13)
+
+10. [x] **Cari kata di berkas yang terbuka**: PDF, EPUB, Word, PowerPoint,
+    tabel. Ctrl+F, sorotan semua hasil, "n dari N", Enter/Shift+Enter/Esc/F3.
+11. [x] **Membaca .doc/.docx, .xls, .ppt/.pptx** di dalam ReadPaper, semua
+    platform. Word mengalir, slide di posisi aslinya dengan catatan
+    pembicara, format biner lama dibaca teksnya; "tampilan persis" lewat
+    LibreOffice di desktop (lalu bisa ditandai dan disajikan). "Buka dengan"
+    untuk Office di Android, iOS, Linux, Windows.
+
 ## Setelah itu
 
 4. [x] **Pemasang Windows**: bila sudah terpasang, tawarkan Perbarui / Ubah /
