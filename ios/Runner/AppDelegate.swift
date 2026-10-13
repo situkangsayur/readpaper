@@ -152,7 +152,7 @@ final class BerkasMasuk: NSObject, FlutterPlugin, FlutterSceneLifeCycleDelegate 
     // Dart, jadi nama tanpa akhiran yang dikenal diberi akhiran dari tipenya —
     // sama seperti di Android, bukan selalu ".pdf".
     let ext = (name as NSString).pathExtension.lowercased()
-    if !AppDelegate.knownExtensions.contains(ext) { name += extensionFor(url) }
+    if !BerkasMasuk.knownExtensions.contains(ext) { name += extensionFor(url) }
     let target = dir.appendingPathComponent(name)
 
     var copied = false
@@ -194,7 +194,7 @@ final class BerkasMasuk: NSObject, FlutterPlugin, FlutterSceneLifeCycleDelegate 
 
   private func extensionFor(_ url: URL) -> String {
     let type = (try? url.resourceValues(forKeys: [.typeIdentifierKey]))?.typeIdentifier
-    return type.flatMap { AppDelegate.typeExtensions[$0] } ?? ".pdf"
+    return type.flatMap { BerkasMasuk.typeExtensions[$0] } ?? ".pdf"
   }
 
   /// Hanya salinan milik sendiri di Documents/Inbox yang boleh dihapus —
