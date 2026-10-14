@@ -545,5 +545,26 @@
         "type": "int"
       }
     }
-  }
+  },
+  "notesEditDetails": "Ubah keterangan",
+  "notesOpen": "Buka",
+  "notesPickNote": "Pilih catatan untuk melihat keterangannya.",
+  "notesDetails": "Keterangan",
+  "notesNoDetails": "Belum ada keterangan. Tambahkan penulis, tanggal, tag, atau sumber supaya catatan ini mudah dikenali dan dicari.",
+  "notesAddDetails": "Tambah keterangan",
+  "notesFieldAuthors": "Penulis / pengajar",
+  "notesFieldAuthorsHint": "Satu nama per baris",
+  "notesFieldDate": "Tanggal",
+  "notesFieldDateHint": "mis. 14 Okt 2026, atau Minggu 3",
+  "notesFieldTags": "Tag",
+  "notesFieldTagsHint": "Pisahkan dengan koma",
+  "notesFieldSource": "Sumber",
+  "notesFieldSourceHint": "Tautan, mata kuliah, atau acara",
+  "notesFieldDescription": "Uraian",
+  "notesFieldCollections": "Koleksi",
+  "notesFieldAdded": "Ditambahkan",
+  "notesFieldModified": "Diubah",
+  "notesFieldFile": "Berkas",
+  "notesMoreActions": "Tindakan lain",
+  "notesBackToList": "Kembali ke daftar"
 }

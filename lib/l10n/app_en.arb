@@ -695,6 +695,27 @@
       }
     }
   },
+  "notesEditDetails": "Edit details",
+  "notesOpen": "Open",
+  "notesPickNote": "Pick a note to see its details.",
+  "notesDetails": "Details",
+  "notesNoDetails": "No details yet. Add authors, a date, tags or a source so this note is easy to recognise and find.",
+  "notesAddDetails": "Add details",
+  "notesFieldAuthors": "Authors / lecturers",
+  "notesFieldAuthorsHint": "One name per line",
+  "notesFieldDate": "Date",
+  "notesFieldDateHint": "e.g. 14 Oct 2026, or Week 3",
+  "notesFieldTags": "Tags",
+  "notesFieldTagsHint": "Separate with commas",
+  "notesFieldSource": "Source",
+  "notesFieldSourceHint": "Link, course, or event",
+  "notesFieldDescription": "Description",
+  "notesFieldCollections": "Collections",
+  "notesFieldAdded": "Added",
+  "notesFieldModified": "Modified",
+  "notesFieldFile": "File",
+  "notesMoreActions": "More actions",
+  "notesBackToList": "Back to list",
   "officeUnreadable": "This document can't be read: {error}",
   "@officeUnreadable": {
     "placeholders": {

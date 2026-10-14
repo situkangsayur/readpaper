@@ -2358,6 +2358,70 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get notesEditDetails => 'Ubah keterangan';
+
+  @override
+  String get notesOpen => 'Buka';
+
+  @override
+  String get notesPickNote => 'Pilih catatan untuk melihat keterangannya.';
+
+  @override
+  String get notesDetails => 'Keterangan';
+
+  @override
+  String get notesNoDetails =>
+      'Belum ada keterangan. Tambahkan penulis, tanggal, tag, atau sumber supaya catatan ini mudah dikenali dan dicari.';
+
+  @override
+  String get notesAddDetails => 'Tambah keterangan';
+
+  @override
+  String get notesFieldAuthors => 'Penulis / pengajar';
+
+  @override
+  String get notesFieldAuthorsHint => 'Satu nama per baris';
+
+  @override
+  String get notesFieldDate => 'Tanggal';
+
+  @override
+  String get notesFieldDateHint => 'mis. 14 Okt 2026, atau Minggu 3';
+
+  @override
+  String get notesFieldTags => 'Tag';
+
+  @override
+  String get notesFieldTagsHint => 'Pisahkan dengan koma';
+
+  @override
+  String get notesFieldSource => 'Sumber';
+
+  @override
+  String get notesFieldSourceHint => 'Tautan, mata kuliah, atau acara';
+
+  @override
+  String get notesFieldDescription => 'Uraian';
+
+  @override
+  String get notesFieldCollections => 'Koleksi';
+
+  @override
+  String get notesFieldAdded => 'Ditambahkan';
+
+  @override
+  String get notesFieldModified => 'Diubah';
+
+  @override
+  String get notesFieldFile => 'Berkas';
+
+  @override
+  String get notesMoreActions => 'Tindakan lain';
+
+  @override
+  String get notesBackToList => 'Kembali ke daftar';
+
+  @override
   String officeUnreadable(String error) {
     return 'Dokumen ini tidak bisa dibaca: $error';
   }

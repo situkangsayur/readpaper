@@ -45,6 +45,10 @@ jobs:
         if: always()
         run: flutter test integration_test/desktop_presenter_test.dart -d windows --reporter expanded
 
+      - name: Slide 4:3 utuh dan di tengah saat menyajikan
+        if: always()
+        run: flutter test integration_test/desktop_present_fit_test.dart -d windows --reporter expanded
+
       - name: Tangkapan layar uji
         if: always()
         uses: actions/upload-artifact@v4

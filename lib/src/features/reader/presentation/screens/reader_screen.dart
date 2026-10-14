@@ -986,7 +986,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         if (!mounted || !_presentMode || step != _stepCount) return;
         if (jeda > 0) await Future<void>.delayed(Duration(milliseconds: jeda));
         if (!mounted || !_presentMode || step != _stepCount) return;
-        await _fitCurrentPage();
+        // Tanpa animasi. Terbukti di Linux dengan slide 4:3: pemasangan
+        // pertama beranimasi, penampil menyusun ulang dirinya di tengah
+        // animasi itu, dan `await`-nya tidak pernah kembali — tiga pemasangan
+        // susulan tidak pernah jalan, dan slidenya tertinggal terlalu besar
+        // dan turun ke bawah layar.
+        await _fitCurrentPage(null, Duration.zero);
       }
     });
   }
@@ -1284,6 +1289,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
   }
 
+  /// Ruang di bawah slide untuk bilah kendali menyajikan: tinggi bilahnya
+  /// (tombol 48 + bantalan 8), jaraknya dari tepi, dan bilah navigasi sistem.
+  static double _presentBarRoom(BuildContext context) =>
+      48 + 8 + 8 + 8 + MediaQuery.viewPaddingOf(context).bottom;
+
   /// Tata letak mode menyajikan: satu halaman per layar.
   static PdfPageLayout _presentLayout(List<PdfPage> pages, PdfViewerParams params) {
     final width = pages.fold(0.0, (w, page) => math.max(w, page.width));
@@ -1307,7 +1317,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// `PdfPageAnchor.all` memaksa seluruh halaman masuk — bukan lebarnya saja.
   /// Menyajikan berarti orang melihat dari jauh; halaman yang terpotong di
   /// bawah adalah kalimat yang hilang.
-  Future<void> _fitCurrentPage([int? pageNumber]) async {
+  ///
+  /// [duration] nol untuk pemasangan otomatis: animasi yang dihentikan
+  /// penampil saat menyusun ulang dirinya tidak pernah selesai, dan yang
+  /// menunggunya ikut menggantung selamanya.
+  Future<void> _fitCurrentPage([
+    int? pageNumber,
+    Duration duration = const Duration(milliseconds: 200),
+  ]) async {
     if (!_controller.isReady) return;
     final page = pageNumber ?? _currentPage;
 
@@ -1318,9 +1335,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     // memperbesar.
     try {
       final rect = _controller.layout.pageLayouts[page - 1];
-      await _controller.goToArea(rect: rect.inflate(6), anchor: PdfPageAnchor.all);
+      await _controller.goToArea(rect: rect.inflate(6), anchor: PdfPageAnchor.all, duration: duration);
     } on Object {
-      await _controller.goToPage(pageNumber: page, anchor: PdfPageAnchor.all);
+      await _controller.goToPage(pageNumber: page, anchor: PdfPageAnchor.all, duration: duration);
     }
   }
 
@@ -3101,9 +3118,23 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   Widget _buildViewer(ColorScheme scheme) => Stack(
     children: <Widget>[
+      if (_presentMode)
+        Positioned.fill(
+          child: ColoredBox(color: _tint.background ?? AppTheme.readerBackground(scheme)),
+        ),
       // Listener only watches; it never claims the gesture, so the viewer's
       // own drag-to-select still runs underneath.
-      Positioned.fill(
+      //
+      // Saat menyajikan, slide dipaskan di **atas** bilah kendali, bukan di
+      // bawahnya. Bilahnya mengambang, dan di layar yang bentuknya mirip slide
+      // ia menutupi baris terbawah — keluhan pemakai, di beberapa perangkat
+      // dan ukuran slide. Hanya bawahnya yang menyusut, jadi titik asal
+      // penampil (dan koordinat coretan) tidak bergeser.
+      Positioned(
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: _presentMode ? _presentBarRoom(context) : 0,
         child: MouseRegion(
           // Penunjuk menggantikan kursor: dua penanda di satu titik membuat
           // audiens bertanya mana yang dimaksud.

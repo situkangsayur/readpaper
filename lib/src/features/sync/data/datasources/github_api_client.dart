@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../../core/errors/failure.dart';
@@ -195,18 +196,205 @@ class GitHubApiClient {
   /// lebih berguna daripada mengunggah empat puluh menit untuk mendapat 4xx.
   static const int maxBlobBytes = 100 * 1024 * 1024;
 
+  /// Berkas di atas ini tidak dikirim lewat API blob, melainkan sebagai paket
+  /// git ([_pushBlob]).
+  ///
+  /// Batas resmi API blob memang 100 MB, tetapi badan JSON-nya ditolak jauh
+  /// sebelum itu dengan "Sorry, your input was too large to process" —
+  /// terbukti di APK dengan dua slide kuliah PowerPoint. Batas sebenarnya
+  /// tidak diumumkan, jadi angkanya dipilih jauh di bawah yang pernah gagal.
+  static const int maxApiBlobBytes = 20 * 1024 * 1024;
+
   Future<String> createBlob(List<int> content) async {
     if (content.length > maxBlobBytes) {
       throw GitFailure(l10n.syncErrBlobTooLarge(_megabytes(content.length)), exitCode: 413);
     }
-    final response = await _post(
-      _uri('/git/blobs'),
-      <String, dynamic>{'content': base64Encode(content), 'encoding': 'base64'},
-      // Base64 menambah sepertiga, dan itu yang benar-benar dikirim.
-      timeoutOverride: timeoutForBytes(content.length * 4 ~/ 3),
-    );
-    return (jsonDecode(response.body) as Map<String, dynamic>)['sha'] as String;
+    if (content.length > maxApiBlobBytes) return _pushBlob(content);
+    try {
+      final response = await _post(
+        _uri('/git/blobs'),
+        <String, dynamic>{'content': base64Encode(content), 'encoding': 'base64'},
+        // Base64 menambah sepertiga, dan itu yang benar-benar dikirim.
+        timeoutOverride: timeoutForBytes(content.length * 4 ~/ 3),
+      );
+      return (jsonDecode(response.body) as Map<String, dynamic>)['sha'] as String;
+    } on GitFailure catch (e) {
+      // Batasnya tidak diumumkan; kalau ternyata lebih rendah dari
+      // [maxApiBlobBytes], jalan paket git tetap bisa menampungnya.
+      // Hanya penolakan badan permintaan ("your input was too large to
+      // process"); berkas yang memang melewati batas GitHub tetap ditolak.
+      if (!e.message.toLowerCase().contains('input was too large')) rethrow;
+      return _pushBlob(content);
+    }
   }
+
+  /// Ref sementara yang menahan blob kiriman [_pushBlob], sampai commit yang
+  /// memakainya terpasang di branch.
+  final List<String> _parkedRefs = <String>[];
+
+  /// Mengirim satu blob seperti `git push` dari klon lokal — saran GitHub
+  /// sendiri untuk berkas yang terlalu besar bagi API.
+  ///
+  /// Android tidak punya `git`, jadi paketnya disusun di sini: blob itu,
+  /// sebuah pohon yang hanya berisi blob itu, dan sebuah commit di atasnya,
+  /// lalu dikirim ke `git-receive-pack` sebagai ref sementara
+  /// `refs/readpaper/blob-<sha>`. Setelah itu blobnya ada di repositori dan
+  /// bisa dipakai pohon biasa lewat API; ref sementaranya dihapus
+  /// [releaseParkedBlobs] begitu commit sebenarnya terpasang.
+  Future<String> _pushBlob(List<int> content) async {
+    final blob = _gitObject('blob', content);
+    final tree = _gitObject('tree', <int>[
+      ...utf8.encode('100644 berkas\u0000'),
+      ...blob.id.bytes,
+    ]);
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    const who = 'ReadPaper <readpaper@users.noreply.github.com>';
+    final commit = _gitObject(
+      'commit',
+      utf8.encode(
+        'tree ${tree.id}\nauthor $who $now +0000\ncommitter $who $now +0000\n\n'
+        'ReadPaper: penampung sementara berkas besar\n',
+      ),
+    );
+    final refName = 'refs/readpaper/blob-${blob.id}';
+
+    final body = BytesBuilder(copy: false)
+      ..add(_pktLine('${'0' * 40} ${commit.id} $refName\u0000report-status agent=readpaper\n'))
+      ..add(utf8.encode('0000'))
+      ..add(_pack(<_GitObject>[blob, tree, commit]));
+    final bytes = body.takeBytes();
+    final uri = Uri.parse('https://${ref.host}/${ref.owner}/${ref.repo}.git/git-receive-pack');
+    final response = await _send(
+      () => _client.post(
+        uri,
+        headers: <String, String>{
+          'Content-Type': 'application/x-git-receive-pack-request',
+          'Accept': 'application/x-git-receive-pack-result',
+          'User-Agent': 'git/2.0 ReadPaper',
+          if ((token ?? '').isNotEmpty)
+            'Authorization': 'Basic ${base64Encode(utf8.encode('x-access-token:$token'))}',
+        },
+        body: bytes,
+      ),
+      uri,
+      timeoutOverride: timeoutForBytes(bytes.length),
+    );
+    final report = _pktLines(response.bodyBytes);
+    final unpack = report.firstWhere((l) => l.startsWith('unpack '), orElse: () => '');
+    final status = report.firstWhere(
+      (l) => l.startsWith('ok ') || l.startsWith('ng '),
+      orElse: () => '',
+    );
+    if (unpack != 'unpack ok' || !status.startsWith('ok ')) {
+      final reason = status.startsWith('ng ')
+          ? status.substring(3 + refName.length).trim()
+          : unpack.replaceFirst('unpack ', '');
+      throw GitFailure(
+        l10n.syncErrRejected(reason.isEmpty ? report.join(' ') : reason),
+        details: '${uri.path} → ${report.join(' | ')}',
+        exitCode: 422,
+      );
+    }
+    _parkedRefs.add(refName);
+    return blob.id.toString();
+  }
+
+  /// Menghapus ref sementara dari [_pushBlob]. Gagal menghapus tidak apa-apa:
+  /// yang tertinggal hanya ref tersembunyi yang tidak terlihat sebagai branch.
+  Future<void> releaseParkedBlobs() async {
+    final refs = List<String>.of(_parkedRefs);
+    _parkedRefs.clear();
+    for (final name in refs) {
+      try {
+        await _send(
+          () => _client.delete(_uri('/git/$name'), headers: _headers()),
+          _uri('/git/$name'),
+        );
+      } on GitFailure {
+        // Lihat di atas.
+      }
+    }
+  }
+
+  static _GitObject _gitObject(String type, List<int> content) {
+    // Bertahap, bukan disambung dulu: isi berkas bisa puluhan megabita.
+    final sink = _DigestSink();
+    sha1.startChunkedConversion(sink)
+      ..add(utf8.encode('$type ${content.length}\u0000'))
+      ..add(content)
+      ..close();
+    return _GitObject(type, content, sink.value);
+  }
+
+  static List<int> _pktLine(String line) {
+    final data = utf8.encode(line);
+    return <int>[...ascii.encode((data.length + 4).toRadixString(16).padLeft(4, '0')), ...data];
+  }
+
+  static List<String> _pktLines(List<int> bytes) {
+    final lines = <String>[];
+    var i = 0;
+    while (i + 4 <= bytes.length) {
+      final length = int.tryParse(ascii.decode(bytes.sublist(i, i + 4), allowInvalid: true), radix: 16);
+      if (length == null) break;
+      if (length < 4) {
+        i += 4;
+        continue;
+      }
+      if (i + length > bytes.length) break;
+      var payload = bytes.sublist(i + 4, i + length);
+      // Pita samping: 1 = isi, 2 = kemajuan, 3 = galat.
+      if (payload.isNotEmpty && payload.first <= 3) {
+        if (payload.first == 1) {
+          lines.addAll(_pktLines(payload.sublist(1)));
+        } else if (payload.first == 3) {
+          lines.add('unpack ${utf8.decode(payload.sublist(1), allowMalformed: true).trim()}');
+        }
+      } else {
+        lines.add(utf8.decode(payload, allowMalformed: true).trim());
+      }
+      i += length;
+    }
+    return lines;
+  }
+
+  /// Paket git versi 2 tanpa delta: tiap objek ditulis utuh, dipadatkan zlib.
+  static Uint8List _pack(List<_GitObject> objects) {
+    final out = BytesBuilder(copy: false)
+      ..add(ascii.encode('PACK'))
+      ..add(_uint32(2))
+      ..add(_uint32(objects.length));
+    for (final object in objects) {
+      final type = switch (object.type) {
+        'commit' => 1,
+        'tree' => 2,
+        _ => 3,
+      };
+      var size = object.content.length;
+      final header = <int>[];
+      var byte = (type << 4) | (size & 0x0f);
+      size >>= 4;
+      while (size > 0) {
+        header.add(byte | 0x80);
+        byte = size & 0x7f;
+        size >>= 7;
+      }
+      header.add(byte);
+      out
+        ..add(header)
+        ..add(zlib.encode(object.content));
+    }
+    final pack = out.toBytes();
+    out.add(sha1.convert(pack).bytes);
+    return out.takeBytes();
+  }
+
+  static List<int> _uint32(int value) => <int>[
+    (value >> 24) & 0xff,
+    (value >> 16) & 0xff,
+    (value >> 8) & 0xff,
+    value & 0xff,
+  ];
 
   static String _megabytes(int bytes) => (bytes / (1024 * 1024)).toStringAsFixed(1);
 
@@ -400,4 +588,22 @@ class GitHubApiClient {
       return '';
     }
   }
+}
+
+class _GitObject {
+  const _GitObject(this.type, this.content, this.id);
+
+  final String type;
+  final List<int> content;
+  final Digest id;
+}
+
+class _DigestSink implements Sink<Digest> {
+  late Digest value;
+
+  @override
+  void add(Digest data) => value = data;
+
+  @override
+  void close() {}
 }

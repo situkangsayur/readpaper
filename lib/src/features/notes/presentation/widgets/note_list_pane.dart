@@ -24,6 +24,7 @@ import '../controllers/notes_controller.dart';
 import '../../../files/presentation/open_any_file.dart';
 import '../../../library/presentation/import_actions.dart';
 import '../../../../core/l10n.dart';
+import 'note_detail_pane.dart';
 
 /// Panel tengah saat yang dipilih ada di bawah akar catatan.
 ///
@@ -41,6 +42,7 @@ class NoteListPane extends ConsumerWidget {
 
     final index = asyncNotes.value ?? NotesIndex.empty;
     final notes = notesFor(index, selection);
+    final selectedNote = ref.watch(selectedNoteKeyProvider);
     // Seperti folder di aplikasi berkas: sub-koleksi di atas, bisa dimasuki,
     // lalu berkas koleksi ini sendiri. Tanpa ini isi sub-koleksi hanya bisa
     // dicapai lewat pohon di panel kiri, yang di ponsel tersembunyi di laci.
@@ -159,8 +161,11 @@ class NoteListPane extends ConsumerWidget {
                         return _NoteTile(
                           note: note,
                           directory: index.directory,
-                          onOpen: () => _open(context, ref, note, index),
-                          onMenu: () => _menu(context, ref, note),
+                          onOpen: () => openNote(context, ref, note, index),
+                          onMenu: () => showNoteMenu(context, ref, note),
+                          onSelect: () =>
+                              ref.read(selectedNoteKeyProvider.notifier).select(note.key),
+                          selected: note.key == selectedNote,
                         );
                       },
                     ),
@@ -226,12 +231,16 @@ class _NoteTile extends StatelessWidget {
     required this.directory,
     required this.onOpen,
     required this.onMenu,
+    required this.onSelect,
+    required this.selected,
   });
 
   final NoteItem note;
   final String directory;
   final VoidCallback onOpen;
   final VoidCallback onMenu;
+  final VoidCallback onSelect;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) => LongPressDraggable<TreeDrag>(
@@ -261,14 +270,7 @@ class _NoteTile extends StatelessWidget {
   );
 
   Widget _tile(BuildContext context) {
-    final icon = note.isNotebook
-        ? Icons.auto_stories_outlined
-        : switch (note.extension) {
-            '.pdf' => Icons.picture_as_pdf_outlined,
-            '.md' || '.txt' => Icons.notes_outlined,
-            '.png' || '.jpg' || '.jpeg' || '.webp' => Icons.image_outlined,
-            _ => Icons.insert_drive_file_outlined,
-          };
+    final icon = noteIcon(note);
     return ListTile(
       dense: true,
       leading: Icon(icon, size: 20),
@@ -277,12 +279,25 @@ class _NoteTile extends StatelessWidget {
         '${p.basename(note.file)} · ${_when(note.dateModified)}',
         style: Theme.of(context).textTheme.labelSmall,
       ),
-      trailing: IconButton(
-        tooltip: context.l10n.notesActions,
-        icon: const Icon(Icons.more_vert, size: 20),
-        onPressed: onMenu,
+      selected: selected,
+      // Ketuk memilih dan menampilkan keterangannya, seperti paper di My
+      // Library; membuka langsung tetap sekali ketuk lewat tombol di kanan.
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          IconButton(
+            tooltip: context.l10n.notesOpen,
+            icon: const Icon(Icons.open_in_new, size: 20),
+            onPressed: onOpen,
+          ),
+          IconButton(
+            tooltip: context.l10n.notesActions,
+            icon: const Icon(Icons.more_vert, size: 20),
+            onPressed: onMenu,
+          ),
+        ],
       ),
-      onTap: onOpen,
+      onTap: onSelect,
       onLongPress: onMenu,
     );
   }
@@ -423,7 +438,8 @@ Future<void> _newMarkdown(BuildContext context, WidgetRef ref, LibrarySelection 
   await controller.touch(itemKey: key, message: 'Ubah catatan: ${note.title}');
 }
 
-Future<void> _open(BuildContext context, WidgetRef ref, NoteItem note, NotesIndex index) async {
+/// Membuka catatan di penampil atau penyunting yang sesuai jenis berkasnya.
+Future<void> openNote(BuildContext context, WidgetRef ref, NoteItem note, NotesIndex index) async {
   final path = p.join(index.directory, note.file);
   if (note.isNotebook) {
     await Navigator.of(context).push(
@@ -493,7 +509,9 @@ Future<void> _open(BuildContext context, WidgetRef ref, NoteItem note, NotesInde
   await openAnyFile(context, path, title: note.title);
 }
 
-Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
+/// Aksi untuk satu catatan: ubah keterangan, ganti nama, bagikan, pindahkan,
+/// kirim ke repo lain, hapus.
+Future<void> showNoteMenu(BuildContext context, WidgetRef ref, NoteItem note) async {
   final index = ref.read(notesControllerProvider).value ?? NotesIndex.empty;
   final action = await showModalBottomSheet<String>(
     context: context,
@@ -503,6 +521,11 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
         children: <Widget>[
           ListTile(dense: true, title: Text(note.title)),
           const Divider(height: 1),
+          ListTile(
+            leading: const Icon(Icons.edit_note),
+            title: Text(context.l10n.notesEditDetails),
+            onTap: () => Navigator.of(sheet).pop('keterangan'),
+          ),
           ListTile(
             leading: const Icon(Icons.drive_file_rename_outline),
             title: Text(context.l10n.notesRename),
@@ -569,6 +592,8 @@ Future<void> _menu(BuildContext context, WidgetRef ref, NoteItem note) async {
             ),
           ),
         );
+    case 'keterangan':
+      await editNoteDetails(context, ref, note);
     case 'bagikan':
       await shareAnyFile(context, p.join(index.directory, note.file), title: note.title);
     case 'nama':

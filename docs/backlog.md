@@ -108,6 +108,22 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
 19. [ ] Excel: perlu contoh berkas .xlsx yang gagal dibuka (laporan
     2026-10-14 "xlsx juga harusnya bisa dibuka").
 
+### Selesai di 0.30.0 (permintaan 2026-10-14)
+
+20. [x] **Slide di tengah saat Putar presentasi** (laporan dari Linux Arch):
+    pemasangan pertama menunggu animasi yang dihentikan penampil, dan
+    pemasangan susulannya tidak pernah jalan; slide 4:3 tertinggal terlalu
+    besar dan turun. Sekarang dipasang tanpa animasi, dengan uji di
+    `integration_test/desktop_present_fit_test.dart`.
+21. [x] **Bilah alat Putar (coret, buntut penunjuk, simpan, …) tidak lagi
+    menutupi slide**: slide dipaskan di atas bilah itu.
+22. [x] **Keterangan catatan seperti di My Library**: mengetuk catatan
+    menampilkan panel keterangan (penulis, tanggal, tag, sumber, uraian) yang
+    bisa diubah; membuka berkas lewat tombol Buka atau ikon di baris.
+23. [x] **Push dari APK untuk berkas besar**: berkas di atas 20 MB dikirim
+    sebagai paket git ke `git-receive-pack`, bukan lewat API blob yang menolak
+    dengan "Sorry, your input was too large to process".
+
 ## Setelah itu
 
 4. [x] **Pemasang Windows**: bila sudah terpasang, tawarkan Perbarui / Ubah /

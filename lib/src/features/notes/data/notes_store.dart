@@ -268,6 +268,37 @@ class NotesStore {
     return renamed;
   }
 
+  /// Mengganti judul dan keterangan sebuah catatan sekaligus.
+  Future<NoteItem> updateDetails({
+    required String itemKey,
+    required String title,
+    List<String> authors = const <String>[],
+    String date = '',
+    List<String> tags = const <String>[],
+    String source = '',
+    String description = '',
+  }) async {
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) throw LibraryFailure(l10n.notesErrEmptyTitle);
+    final index = await read();
+    final item = index.items.where((i) => i.key == itemKey).firstOrNull;
+    if (item == null) throw LibraryFailure(l10n.notesErrNoteMissing, details: itemKey);
+    List<String> clean(List<String> values) => <String>{
+      for (final v in values)
+        if (v.trim().isNotEmpty) v.trim(),
+    }.toList();
+    final updated = item.copyWith(
+      title: trimmed,
+      authors: clean(authors),
+      date: date.trim(),
+      tags: clean(tags),
+      source: source.trim(),
+      description: description.trim(),
+    );
+    await _writeItem(updated);
+    return updated;
+  }
+
   /// Membuang sebuah catatan beserta berkasnya.
   Future<void> deleteItem(String itemKey) async {
     final index = await read();

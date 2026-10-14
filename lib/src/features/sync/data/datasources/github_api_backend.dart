@@ -540,6 +540,7 @@ class GitHubApiBackend implements GitBackend {
         authorName: auth.httpsUsername,
       );
       await client.updateRef(branch: state.branch, commitSha: commitSha);
+      await client.releaseParkedBlobs();
 
       // The mirror now matches the new commit: refresh the bookkeeping so the
       // files stop showing up as local changes.

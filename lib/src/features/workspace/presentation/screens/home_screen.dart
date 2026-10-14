@@ -17,6 +17,8 @@ import '../../../library/presentation/widgets/collection_tree_pane.dart';
 import '../../../library/presentation/widgets/item_detail_pane.dart';
 import '../../../library/presentation/widgets/item_list_pane.dart';
 import '../../../notes/presentation/widgets/note_list_pane.dart';
+import '../../../notes/presentation/widgets/note_detail_pane.dart';
+import '../../../notes/presentation/controllers/notes_controller.dart';
 import '../../../settings/presentation/screens/profiles_screen.dart';
 import '../controllers/workspace_controller.dart';
 import '../widgets/workspace_bar.dart';
@@ -145,10 +147,14 @@ class _Body extends ConsumerWidget {
     // yang sama hanya menghasilkan kolom kosong.
     final notesSelected = ref.watch(selectionProvider.select((s) => s.isNotes));
     final Widget list = notesSelected ? const NoteListPane() : const ItemListPane();
+    // Catatan punya panel keterangannya sendiri, seperti paper.
+    final Widget detail = notesSelected ? const NoteDetailPane() : const ItemDetailPane();
 
     switch (layout) {
       case LayoutSize.compact:
-        if (notesSelected) return list;
+        if (notesSelected) {
+          return ref.watch(selectedNoteKeyProvider) == null ? list : detail;
+        }
         final selected = ref.watch(selectedItemKeyProvider);
         return selected == null ? const ItemListPane() : const ItemDetailPane();
 
@@ -160,7 +166,7 @@ class _Body extends ConsumerWidget {
           children: <Widget>[
             SizedBox(width: 340, child: list),
             const VerticalDivider(width: 1),
-            const Expanded(child: ItemDetailPane()),
+            Expanded(child: detail),
           ],
         );
 
@@ -172,7 +178,7 @@ class _Body extends ConsumerWidget {
             const VerticalDivider(width: 1),
             SizedBox(width: 400, child: list),
             const VerticalDivider(width: 1),
-            const Expanded(child: ItemDetailPane()),
+            Expanded(child: detail),
           ],
         );
     }

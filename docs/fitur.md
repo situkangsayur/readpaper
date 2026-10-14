@@ -272,7 +272,8 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 
 - **Mode menyajikan**: satu halaman penuh layar, tanpa halaman tetangga yang
   menyembul. Ganti halaman lewat ketuk tepi kiri/kanan, geser ke samping, atau
-  tombol. Tiap halaman dipaskan ke layar; gulir bebas dimatikan supaya
+  tombol. Tiap halaman dipaskan ke layar, utuh dan di tengah, di atas bilah
+  bawah sehingga bilah itu tidak menutupi slide; gulir bebas dimatikan supaya
   halamannya tidak tergeser setengah karena tersenggol.
 - **Bilah bawah** berisi semua yang diperlukan tanpa keluar dari mode: halaman
   sebelumnya/berikutnya, perkecil, perbesar, pas ke layar, pena, urungkan,
@@ -348,6 +349,12 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Markdown ke PDF** dengan teks sungguhan (bisa dicari dan disalin), dan
   **PDF ke Markdown** yang menebak tajuk, paragraf, dan daftar dari tata letak.
   PDF hasil pindaian dikatakan tidak punya lapisan teks.
+- **Keterangan catatan**: mengetuk catatan menampilkan panel keterangannya
+  (seperti paper di My Library) — penulis/pengajar, tanggal, tag, sumber, dan
+  uraian, semuanya bisa diubah lewat **Ubah keterangan**. Berkasnya dibuka
+  dengan tombol **Buka**, atau langsung dari ikon buka di baris daftar.
+  Keterangan disimpan di berkas JSON catatan itu sendiri, jadi ikut
+  tersinkron.
 - **Catatan lepas di akar Catatan**: buku catatan baru, catatan Markdown baru,
   atau berkas apa pun (PDF, gambar, Markdown) ditambahkan dari berkas atau
   diseret dari panel berkas. Gambar bisa dibuka, diperbesar, dan dibagikan.
@@ -406,6 +413,9 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Pesan galat yang bisa ditindaklanjuti**: token kurang izin, kuota habis,
   branch sudah bergerak, berkas terlalu besar — masing-masing dengan pesan
   sendiri, bukan satu pesan umum.
+- **Berkas besar dari Android** (di atas 20 MB, sampai batas GitHub 100 MB)
+  dikirim sebagai paket git, seperti `git push`, karena API GitHub menolak
+  isian sebesar itu. Ref sementaranya dihapus begitu commit-nya terpasang.
 - **Berkas yang ditolak GitHub disisihkan**, tidak menahan yang lain. Yang
   ditolak tetap menunggu di antrean dengan nama dan alasannya.
 - **Tidak pernah memaksa.** Kalau GitHub sudah punya commit lebih baru,

@@ -2517,6 +2517,70 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notesEditDetails => 'Edit details';
+
+  @override
+  String get notesOpen => 'Open';
+
+  @override
+  String get notesPickNote => 'Pick a note to see its details.';
+
+  @override
+  String get notesDetails => 'Details';
+
+  @override
+  String get notesNoDetails =>
+      'No details yet. Add authors, a date, tags or a source so this note is easy to recognise and find.';
+
+  @override
+  String get notesAddDetails => 'Add details';
+
+  @override
+  String get notesFieldAuthors => 'Authors / lecturers';
+
+  @override
+  String get notesFieldAuthorsHint => 'One name per line';
+
+  @override
+  String get notesFieldDate => 'Date';
+
+  @override
+  String get notesFieldDateHint => 'e.g. 14 Oct 2026, or Week 3';
+
+  @override
+  String get notesFieldTags => 'Tags';
+
+  @override
+  String get notesFieldTagsHint => 'Separate with commas';
+
+  @override
+  String get notesFieldSource => 'Source';
+
+  @override
+  String get notesFieldSourceHint => 'Link, course, or event';
+
+  @override
+  String get notesFieldDescription => 'Description';
+
+  @override
+  String get notesFieldCollections => 'Collections';
+
+  @override
+  String get notesFieldAdded => 'Added';
+
+  @override
+  String get notesFieldModified => 'Modified';
+
+  @override
+  String get notesFieldFile => 'File';
+
+  @override
+  String get notesMoreActions => 'More actions';
+
+  @override
+  String get notesBackToList => 'Back to list';
+
+  @override
   String officeUnreadable(String error) {
     return 'This document can\'t be read: $error';
   }

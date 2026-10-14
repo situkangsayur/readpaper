@@ -4075,6 +4075,132 @@ abstract class AppLocalizations {
   /// **'{notes, plural, =0{kosong} other{{notes} catatan}}{subs, plural, =0{} other{ · {subs} sub-koleksi}}'**
   String notesSubcollectionSummary(int notes, int subs);
 
+  /// No description provided for @notesEditDetails.
+  ///
+  /// In id, this message translates to:
+  /// **'Ubah keterangan'**
+  String get notesEditDetails;
+
+  /// No description provided for @notesOpen.
+  ///
+  /// In id, this message translates to:
+  /// **'Buka'**
+  String get notesOpen;
+
+  /// No description provided for @notesPickNote.
+  ///
+  /// In id, this message translates to:
+  /// **'Pilih catatan untuk melihat keterangannya.'**
+  String get notesPickNote;
+
+  /// No description provided for @notesDetails.
+  ///
+  /// In id, this message translates to:
+  /// **'Keterangan'**
+  String get notesDetails;
+
+  /// No description provided for @notesNoDetails.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum ada keterangan. Tambahkan penulis, tanggal, tag, atau sumber supaya catatan ini mudah dikenali dan dicari.'**
+  String get notesNoDetails;
+
+  /// No description provided for @notesAddDetails.
+  ///
+  /// In id, this message translates to:
+  /// **'Tambah keterangan'**
+  String get notesAddDetails;
+
+  /// No description provided for @notesFieldAuthors.
+  ///
+  /// In id, this message translates to:
+  /// **'Penulis / pengajar'**
+  String get notesFieldAuthors;
+
+  /// No description provided for @notesFieldAuthorsHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Satu nama per baris'**
+  String get notesFieldAuthorsHint;
+
+  /// No description provided for @notesFieldDate.
+  ///
+  /// In id, this message translates to:
+  /// **'Tanggal'**
+  String get notesFieldDate;
+
+  /// No description provided for @notesFieldDateHint.
+  ///
+  /// In id, this message translates to:
+  /// **'mis. 14 Okt 2026, atau Minggu 3'**
+  String get notesFieldDateHint;
+
+  /// No description provided for @notesFieldTags.
+  ///
+  /// In id, this message translates to:
+  /// **'Tag'**
+  String get notesFieldTags;
+
+  /// No description provided for @notesFieldTagsHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Pisahkan dengan koma'**
+  String get notesFieldTagsHint;
+
+  /// No description provided for @notesFieldSource.
+  ///
+  /// In id, this message translates to:
+  /// **'Sumber'**
+  String get notesFieldSource;
+
+  /// No description provided for @notesFieldSourceHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Tautan, mata kuliah, atau acara'**
+  String get notesFieldSourceHint;
+
+  /// No description provided for @notesFieldDescription.
+  ///
+  /// In id, this message translates to:
+  /// **'Uraian'**
+  String get notesFieldDescription;
+
+  /// No description provided for @notesFieldCollections.
+  ///
+  /// In id, this message translates to:
+  /// **'Koleksi'**
+  String get notesFieldCollections;
+
+  /// No description provided for @notesFieldAdded.
+  ///
+  /// In id, this message translates to:
+  /// **'Ditambahkan'**
+  String get notesFieldAdded;
+
+  /// No description provided for @notesFieldModified.
+  ///
+  /// In id, this message translates to:
+  /// **'Diubah'**
+  String get notesFieldModified;
+
+  /// No description provided for @notesFieldFile.
+  ///
+  /// In id, this message translates to:
+  /// **'Berkas'**
+  String get notesFieldFile;
+
+  /// No description provided for @notesMoreActions.
+  ///
+  /// In id, this message translates to:
+  /// **'Tindakan lain'**
+  String get notesMoreActions;
+
+  /// No description provided for @notesBackToList.
+  ///
+  /// In id, this message translates to:
+  /// **'Kembali ke daftar'**
+  String get notesBackToList;
+
   /// No description provided for @officeUnreadable.
   ///
   /// In id, this message translates to:

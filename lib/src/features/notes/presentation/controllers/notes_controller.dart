@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../library/domain/entities/library_index.dart';
+import '../../../library/presentation/controllers/library_controllers.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
 import '../../data/notes_store.dart';
@@ -134,6 +135,27 @@ class NotesController extends AsyncNotifier<NotesIndex> {
         return item.key;
       });
 
+  Future<String?> updateDetails({
+    required String itemKey,
+    required String title,
+    List<String> authors = const <String>[],
+    String date = '',
+    List<String> tags = const <String>[],
+    String source = '',
+    String description = '',
+  }) => _guard('Ubah keterangan catatan: $title', (store) async {
+    final item = await store.updateDetails(
+      itemKey: itemKey,
+      title: title,
+      authors: authors,
+      date: date,
+      tags: tags,
+      source: source,
+      description: description,
+    );
+    return item.key;
+  });
+
   /// Menyimpan perubahan yang terjadi di luar store: berkasnya sudah ditulis
   /// penyunting, yang tersisa adalah mencatat waktunya dan meng-commit.
   Future<String?> touch({required String itemKey, required String message}) =>
@@ -254,6 +276,25 @@ class NotesController extends AsyncNotifier<NotesIndex> {
 
 final notesControllerProvider = AsyncNotifierProvider<NotesController, NotesIndex>(
   NotesController.new,
+);
+
+/// Catatan yang keterangannya sedang ditampilkan — padanan
+/// [selectedItemKeyProvider] untuk paper. Mengetuk catatan memilihnya, bukan
+/// langsung membukanya, supaya keterangannya bisa dilihat dan diubah dulu.
+class SelectedNoteController extends Notifier<String?> {
+  @override
+  String? build() {
+    // Pindah koleksi berarti daftar yang lain; keterangan catatan dari daftar
+    // sebelumnya tidak lagi pada tempatnya.
+    ref.listen(selectionProvider, (_, _) => state = null);
+    return null;
+  }
+
+  void select(String? key) => state = key;
+}
+
+final selectedNoteKeyProvider = NotifierProvider<SelectedNoteController, String?>(
+  SelectedNoteController.new,
 );
 
 /// Pesan galat terakhir dari sisi catatan, supaya panelnya bisa menampilkannya

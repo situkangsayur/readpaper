@@ -515,8 +515,16 @@ paper. Kalau akar Catatan masih kosong, buat koleksinya dulu lewat ikon
 - **Catatan Markdown baru** — langsung terbuka di penyunting Markdown;
 - **Tambah catatan dari berkas** — PDF, gambar, Markdown, atau berkas lain.
 
-Menu **Tindakan** pada sebuah catatan berisi **Ubah judul**, **Pindahkan ke
-koleksi**, dan **Hapus catatan** (berkasnya ikut terhapus). Catatan juga bisa
+**Mengetuk catatan** menampilkan keterangannya di panel kanan (di ponsel,
+menggantikan daftar; panah kiri kembali ke daftar). Di sana ada tombol
+**Buka**, dan **Tambah/Ubah keterangan** untuk judul, penulis atau pengajar
+(satu per baris), tanggal (bebas, misalnya *Minggu 3*), tag (dipisah koma),
+sumber (tautan, mata kuliah, atau acara), dan uraian. Untuk langsung membuka
+tanpa melihat keterangan, pakai ikon buka di ujung kanan baris.
+
+Menu **Tindakan** pada sebuah catatan berisi **Ubah keterangan**, **Ubah
+judul**, **Pindahkan ke koleksi**, dan **Hapus catatan** (berkasnya ikut
+terhapus). Catatan juga bisa
 diseret antar koleksi catatan di pohon.
 
 **Papan tulis** dibuat dari panel berkas: **Buat baru di folder ini → Papan
