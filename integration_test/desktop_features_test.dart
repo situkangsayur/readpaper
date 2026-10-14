@@ -13,6 +13,8 @@ import 'package:readpaper/src/core/utils/work_folder.dart';
 import 'package:readpaper/src/features/files/presentation/file_browser_pane.dart';
 import 'package:readpaper/src/features/library/presentation/widgets/recent_papers_card.dart';
 import 'package:readpaper/src/features/library/presentation/widgets/collection_tree_pane.dart';
+import 'package:readpaper/src/features/notes/presentation/widgets/note_detail_pane.dart';
+import 'package:readpaper/src/features/notes/presentation/widgets/note_list_pane.dart';
 
 import 'support.dart';
 
@@ -305,7 +307,7 @@ void main() {
 
     // PDF di Catatan: anotasi tersimpan seketika ke anotasi.json di folder
     // catatannya — tanpa "Simpan sebagai", dan tetap ada saat dibuka lagi.
-    await tester.tap(find.text('tambahan').first);
+    await openNoteFromList(tester, 'tambahan');
     await pumpUntil(tester, find.text('Tandai'));
     await pumpFor(tester, const Duration(seconds: 4));
     await tester.tap(find.text('Tandai'));
@@ -371,7 +373,7 @@ void main() {
       reason: 'anotasi catatan sudah tersimpan, tidak perlu Simpan sebagai',
     );
     await pumpUntil(tester, find.text('tambahan'));
-    await tester.tap(find.text('tambahan').first);
+    await openNoteFromList(tester, 'tambahan');
     await pumpUntil(tester, find.textContaining('1 anotasi'));
     await back(tester);
     await pumpUntil(tester, find.text('tambahan'));
@@ -752,4 +754,16 @@ void main() {
     diag('tarik: koleksi dari mesin lain tampil');
     await shot(tester, 'f4-akhir');
   });
+}
+
+/// Mengetuk catatan menampilkan keterangannya; berkasnya dibuka dengan
+/// tombol Buka di panel keterangan.
+Future<void> openNoteFromList(WidgetTester tester, String title) async {
+  await tester.tap(find.descendant(of: find.byType(NoteListPane), matching: find.text(title)).first);
+  final open = find.descendant(
+    of: find.byType(NoteDetailPane),
+    matching: find.widgetWithText(FilledButton, 'Buka'),
+  );
+  await pumpUntil(tester, open);
+  await tester.tap(open);
 }
