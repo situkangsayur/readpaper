@@ -105,8 +105,9 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
 17. [x] **Sub-koleksi catatan di daftar**: tampil di atas berkas, bisa
     dimasuki, dengan baris kembali ke induk.
 18. [x] **Warna latar per bagian** panel kiri: library, Catatan, readpaper.
-19. [ ] Excel: perlu contoh berkas .xlsx yang gagal dibuka (laporan
-    2026-10-14 "xlsx juga harusnya bisa dibuka").
+19. [x] Excel .xlsx besar tidak pernah terbuka di tablet (laporan
+    2026-10-14 "xlsx juga harusnya bisa dibuka"): seluruh XML lembar dibangun
+    jadi pohon dulu. Selesai di 0.30.1 — lihat di bawah.
 
 ### Selesai di 0.30.0 (permintaan 2026-10-14)
 
@@ -123,6 +124,18 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
 23. [x] **Push dari APK untuk berkas besar**: berkas di atas 20 MB dikirim
     sebagai paket git ke `git-receive-pack`, bukan lewat API blob yang menolak
     dengan "Sorry, your input was too large to process".
+
+### Selesai di 0.30.1 (permintaan 2026-10-14)
+
+24. [x] **xlsx besar terbuka**: lembar dibaca mengalir dan berhenti di 5.000
+    baris. Ekspor 300 MB XML: dari tidak pernah terbuka (masih berputar
+    setelah 2 menit di tablet) menjadi sekitar 4 detik. Diuji pada 879 berkas
+    xlsx: hasilnya sama dengan pembaca lama, kecuali dua yang kini lebih benar,
+    dan tidak ada yang lebih dari 2 detik di desktop. Berkas terpotong kini
+    disebut rusak, bukan tabel kosong.
+25. [x] **Push berkas besar berkelompok**: semua berkas di atas 20 MB dikirim
+    dalam paket git sampai 100 MB per kiriman, tidak satu push per berkas.
+    Batas API blob terukur: 30 MB diterima, 40 MB ditolak.
 
 ## Setelah itu
 

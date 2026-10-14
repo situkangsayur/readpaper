@@ -445,6 +445,7 @@ class GitHubApiBackend implements GitBackend {
       // di tempat yang sama dengan antrean yang makin panjang.
       final rejectedNow = <String, RejectedFile>{};
       final sent = <String>[];
+      final large = <({String path, String sha, int size})>[];
       var index = 0;
       for (final path in sendable) {
         index++;
@@ -477,6 +478,12 @@ class GitHubApiBackend implements GitBackend {
           rejectedNow[path] = known;
           continue;
         }
+        final size = file.lengthSync();
+        if (size > GitHubApiClient.maxApiBlobBytes && size <= GitHubApiClient.maxBlobBytes) {
+          // Dikirim belakangan, berkelompok, sebagai paket git — lihat di bawah.
+          large.add((path: path, sha: localSha, size: size));
+          continue;
+        }
         onProgress?.call(
           SyncProgress(
             message: l10n.syncUploading,
@@ -501,6 +508,56 @@ class GitHubApiBackend implements GitBackend {
           'type': 'blob',
           'sha': blobSha,
         });
+      }
+
+      // Berkas besar dikirim seperti `git push`, berkelompok sampai
+      // [GitHubApiClient.maxPushBatchBytes] per kiriman: API blob menolak isian
+      // di atas sekitar 30 MB ("Sorry, your input was too large to process"),
+      // dan satu push per berkas membuang waktu jabat tangan untuk tiap slide.
+      final batches = <List<({String path, String sha, int size})>>[];
+      for (final entry in large) {
+        final last = batches.isEmpty ? null : batches.last;
+        final total = last?.fold<int>(0, (n, e) => n + e.size) ?? 0;
+        if (last == null || total + entry.size > GitHubApiClient.maxPushBatchBytes) {
+          batches.add(<({String path, String sha, int size})>[entry]);
+        } else {
+          last.add(entry);
+        }
+      }
+      var done = 0;
+      for (final batch in batches) {
+        onProgress?.call(
+          SyncProgress(
+            message: l10n.syncUploading,
+            fraction: (sendable.length - large.length + done) / sendable.length,
+            current: sendable.length - large.length + done + 1,
+            total: sendable.length,
+            detail: batch.map((e) => p.basename(e.path)).join(', '),
+          ),
+        );
+        final List<String> shas;
+        try {
+          shas = await client.pushBlobs(<Future<List<int>> Function()>[
+            for (final entry in batch) () => File(p.join(repoPath, entry.path)).readAsBytes(),
+          ]);
+        } on GitFailure catch (e) {
+          if (!_isRejection(e)) rethrow;
+          for (final entry in batch) {
+            rejectedNow[entry.path] = RejectedFile(sha: entry.sha, reason: e.message);
+          }
+          done += batch.length;
+          continue;
+        }
+        for (var i = 0; i < batch.length; i++) {
+          sent.add(batch[i].path);
+          treeEntries.add(<String, dynamic>{
+            'path': batch[i].path,
+            'mode': '100644',
+            'type': 'blob',
+            'sha': shas[i],
+          });
+        }
+        done += batch.length;
       }
 
       if (treeEntries.isEmpty) {

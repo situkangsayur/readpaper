@@ -62,7 +62,10 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Penampil gambar dan tabel.** CSV, TSV, dan Excel (.xlsx, juga .xls lama)
   tampil sebagai tabel berlembar. Isinya yang menentukan, bukan akhirannya:
   ".xls" yang sebenarnya .xlsx atau HTML (ekspor banyak aplikasi web) tetap
-  terbaca. Jenis berkas lain dibuka dengan aplikasi bawaan sistem di desktop.
+  terbaca. Lembar raksasa (ratusan ribu baris) tetap terbuka dalam beberapa
+  detik, juga di tablet: yang ditampilkan 5.000 baris pertama, dan sisanya
+  tidak dibaca sama sekali. Jenis berkas lain dibuka dengan aplikasi bawaan
+  sistem di desktop.
 - **Hapus koleksi selalu dikonfirmasi**, dengan peringatan merah dan rincian
   isi bila koleksinya tidak kosong. Berlaku untuk koleksi paper maupun catatan.
 - **Menambah PDF ke koleksi** langsung dari pohon: **⋮ → Tambahkan PDF ke
@@ -413,9 +416,10 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Pesan galat yang bisa ditindaklanjuti**: token kurang izin, kuota habis,
   branch sudah bergerak, berkas terlalu besar — masing-masing dengan pesan
   sendiri, bukan satu pesan umum.
-- **Berkas besar dari Android** (di atas 20 MB, sampai batas GitHub 100 MB)
-  dikirim sebagai paket git, seperti `git push`, karena API GitHub menolak
-  isian sebesar itu. Ref sementaranya dihapus begitu commit-nya terpasang.
+- **Berkas besar dari Android** (di atas 20 MB, sampai batas GitHub 100 MB
+  per berkas) dikirim sebagai paket git, seperti `git push`, karena API GitHub
+  menolak isian di atas sekitar 30 MB. Berkas-berkas itu dikelompokkan sampai
+  100 MB per kiriman. Ref sementaranya dihapus begitu commit-nya terpasang.
 - **Berkas yang ditolak GitHub disisihkan**, tidak menahan yang lain. Yang
   ditolak tetap menunggu di antrean dengan nama dan alasannya.
 - **Tidak pernah memaksa.** Kalau GitHub sudah punya commit lebih baru,

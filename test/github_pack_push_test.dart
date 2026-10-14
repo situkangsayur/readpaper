@@ -74,7 +74,7 @@ void main() {
     expect(verify.stdout.toString(), contains('$sha blob'));
 
     await client.releaseParkedBlobs();
-    expect(deleted, <String>['/repos/o/r/git/refs/readpaper/blob-$sha']);
+    expect(deleted.single, startsWith('/repos/o/r/git/refs/readpaper/blob-'));
   });
 
   test('penolakan dari git-receive-pack menjadi penolakan berkas', () async {
@@ -96,5 +96,57 @@ void main() {
       client.createBlob(Uint8List(GitHubApiClient.maxApiBlobBytes + 1)),
       throwsA(isA<Exception>().having((e) => '$e', 'pesan', contains('pre-receive hook declined'))),
     );
+  });
+
+  test('beberapa berkas besar dalam satu paket', () async {
+    Uint8List? sent;
+    final client = GitHubApiClient(
+      ref: const GitHubRepoRef(owner: 'o', repo: 'r'),
+      token: 't',
+      client: MockClient((request) async {
+        sent = request.bodyBytes;
+        final ref = RegExp(
+          r'refs/readpaper/blob-[0-9a-f]{40}',
+        ).firstMatch(latin1.decode(request.bodyBytes.sublist(0, 200)))!.group(0)!;
+        return http.Response.bytes(<int>[
+          ...pkt('unpack ok\n'),
+          ...pkt('ok $ref\n'),
+          ...ascii.encode('0000'),
+        ], 200);
+      }),
+    );
+    final contents = <Uint8List>[
+      for (var k = 1; k <= 3; k++)
+        Uint8List.fromList(List<int>.generate(1000 * k, (i) => (i * k) & 0xff)),
+    ];
+    final shas = await client.pushBlobs(<Future<List<int>> Function()>[
+      for (final c in contents) () async => c,
+    ]);
+    expect(shas, hasLength(3));
+
+    final dir = Directory.systemTemp.createTempSync('rp_pack3_');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    for (var k = 0; k < 3; k++) {
+      final f = File('${dir.path}/b$k')..writeAsBytesSync(contents[k]);
+      final h = await Process.run('git', <String>['hash-object', f.path]);
+      expect(shas[k], h.stdout.toString().trim());
+    }
+    final body = sent!;
+    final start = latin1.decode(body.sublist(0, 300)).indexOf('0000PACK') + 4;
+    final pack = File('${dir.path}/kiriman.pack')..writeAsBytesSync(body.sublist(start));
+    await Process.run('git', <String>['init', '-q', dir.path]);
+    final check = await Process.run('git', <String>[
+      'index-pack',
+      pack.path,
+    ], workingDirectory: dir.path);
+    expect(check.exitCode, 0, reason: '${check.stderr}');
+    final verify = await Process.run('git', <String>[
+      'verify-pack',
+      '-v',
+      pack.path.replaceAll('.pack', '.idx'),
+    ], workingDirectory: dir.path);
+    for (final sha in shas) {
+      expect(verify.stdout.toString(), contains('$sha blob'));
+    }
   });
 }

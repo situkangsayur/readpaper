@@ -234,16 +234,57 @@ class GitHubApiClient {
 
   /// Mengirim satu blob seperti `git push` dari klon lokal — saran GitHub
   /// sendiri untuk berkas yang terlalu besar bagi API.
+  Future<String> _pushBlob(List<int> content) async =>
+      (await pushBlobs(<Future<List<int>> Function()>[() async => content])).single;
+
+  /// Batas isi satu kiriman [pushBlobs]: berkas-berkas besar dikumpulkan
+  /// sampai sebesar ini lalu dikirim sekali jalan, seperti satu `git push`.
   ///
-  /// Android tidak punya `git`, jadi paketnya disusun di sini: blob itu,
-  /// sebuah pohon yang hanya berisi blob itu, dan sebuah commit di atasnya,
-  /// lalu dikirim ke `git-receive-pack` sebagai ref sementara
-  /// `refs/readpaper/blob-<sha>`. Setelah itu blobnya ada di repositori dan
-  /// bisa dipakai pohon biasa lewat API; ref sementaranya dihapus
-  /// [releaseParkedBlobs] begitu commit sebenarnya terpasang.
-  Future<String> _pushBlob(List<int> content) async {
-    final blob = _gitObject('blob', content);
-    final tree = _gitObject('tree', <int>[...utf8.encode('100644 berkas\u0000'), ...blob.id.bytes]);
+  /// GitHub sendiri menerima push sampai 2 GB, tetapi paketnya disusun di
+  /// memori tablet; seratus megabita (juga batas GitHub untuk satu berkas)
+  /// masih aman di sana.
+  static const int maxPushBatchBytes = 100 * 1024 * 1024;
+
+  /// Mengirim beberapa blob sekaligus sebagai satu paket git ke
+  /// `git-receive-pack`, dan mengembalikan sha tiap blob sesuai urutannya.
+  ///
+  /// Android tidak punya `git`, jadi paketnya disusun di sini: blob-blob itu,
+  /// sebuah pohon yang berisi semuanya, dan sebuah commit di atasnya, dikirim
+  /// sebagai ref sementara `refs/readpaper/blob-<sha commit>`. Setelah itu
+  /// blobnya ada di repositori dan bisa dipakai pohon biasa lewat API; ref
+  /// sementaranya dihapus [releaseParkedBlobs] begitu commit sebenarnya
+  /// terpasang.
+  ///
+  /// Isi tiap berkas dibaca lewat [contents] satu per satu, dipadatkan, lalu
+  /// dilepas, dan badan permintaannya dialirkan per potong — yang tinggal di
+  /// memori hanya versi padatnya, tidak tiga salinan seratus megabita.
+  Future<List<String>> pushBlobs(List<Future<List<int>> Function()> contents) async {
+    final chunks = <List<int>>[];
+    final hash = _DigestSink();
+    final packHash = sha1.startChunkedConversion(hash);
+    void emit(List<int> data) {
+      chunks.add(data);
+      packHash.add(data);
+    }
+
+    emit(ascii.encode('PACK'));
+    emit(_uint32(2));
+    emit(_uint32(contents.length + 2));
+    final ids = <Digest>[];
+    for (final load in contents) {
+      final content = await load();
+      final blob = _gitObject('blob', content);
+      ids.add(blob.id);
+      _emitObject(blob, emit);
+    }
+    final treeBody = BytesBuilder(copy: false);
+    for (var i = 0; i < ids.length; i++) {
+      // Nama berurutan dengan lebar tetap: git meminta entri pohon terurut.
+      treeBody
+        ..add(utf8.encode('100644 b${i.toString().padLeft(6, '0')}\u0000'))
+        ..add(ids[i].bytes);
+    }
+    final tree = _gitObject('tree', treeBody.takeBytes());
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     const who = 'ReadPaper <readpaper@users.noreply.github.com>';
     final commit = _gitObject(
@@ -253,28 +294,39 @@ class GitHubApiClient {
         'ReadPaper: penampung sementara berkas besar\n',
       ),
     );
-    final refName = 'refs/readpaper/blob-${blob.id}';
+    _emitObject(tree, emit);
+    _emitObject(commit, emit);
+    packHash.close();
+    chunks.add(hash.value.bytes);
 
-    final body = BytesBuilder(copy: false)
-      ..add(_pktLine('${'0' * 40} ${commit.id} $refName\u0000report-status agent=readpaper\n'))
-      ..add(utf8.encode('0000'))
-      ..add(_pack(<_GitObject>[blob, tree, commit]));
-    final bytes = body.takeBytes();
+    final refName = 'refs/readpaper/blob-${commit.id}';
+    chunks.insert(0, utf8.encode('0000'));
+    chunks.insert(
+      0,
+      _pktLine('${'0' * 40} ${commit.id} $refName\u0000report-status agent=readpaper\n'),
+    );
+    final length = chunks.fold<int>(0, (n, c) => n + c.length);
     final uri = Uri.parse('https://${ref.host}/${ref.owner}/${ref.repo}.git/git-receive-pack');
     final response = await _send(
-      () => _client.post(
-        uri,
-        headers: <String, String>{
-          'Content-Type': 'application/x-git-receive-pack-request',
-          'Accept': 'application/x-git-receive-pack-result',
-          'User-Agent': 'git/2.0 ReadPaper',
-          if ((token ?? '').isNotEmpty)
-            'Authorization': 'Basic ${base64Encode(utf8.encode('x-access-token:$token'))}',
-        },
-        body: bytes,
-      ),
+      () async {
+        final request = http.StreamedRequest('POST', uri)
+          ..contentLength = length
+          ..headers.addAll(<String, String>{
+            'Content-Type': 'application/x-git-receive-pack-request',
+            'Accept': 'application/x-git-receive-pack-result',
+            'User-Agent': 'git/2.0 ReadPaper',
+            if ((token ?? '').isNotEmpty)
+              'Authorization': 'Basic ${base64Encode(utf8.encode('x-access-token:$token'))}',
+          });
+        final sent = _client.send(request);
+        for (final chunk in chunks) {
+          request.sink.add(chunk);
+        }
+        unawaited(request.sink.close());
+        return http.Response.fromStream(await sent);
+      },
       uri,
-      timeoutOverride: timeoutForBytes(bytes.length),
+      timeoutOverride: timeoutForBytes(length),
     );
     final report = _pktLines(response.bodyBytes);
     final unpack = report.firstWhere((l) => l.startsWith('unpack '), orElse: () => '');
@@ -293,10 +345,10 @@ class GitHubApiClient {
       );
     }
     _parkedRefs.add(refName);
-    return blob.id.toString();
+    return <String>[for (final id in ids) id.toString()];
   }
 
-  /// Menghapus ref sementara dari [_pushBlob]. Gagal menghapus tidak apa-apa:
+  /// Menghapus ref sementara dari [pushBlobs]. Gagal menghapus tidak apa-apa:
   /// yang tertinggal hanya ref tersembunyi yang tidak terlihat sebagai branch.
   Future<void> releaseParkedBlobs() async {
     final refs = List<String>.of(_parkedRefs);
@@ -358,35 +410,26 @@ class GitHubApiClient {
     return lines;
   }
 
-  /// Paket git versi 2 tanpa delta: tiap objek ditulis utuh, dipadatkan zlib.
-  static Uint8List _pack(List<_GitObject> objects) {
-    final out = BytesBuilder(copy: false)
-      ..add(ascii.encode('PACK'))
-      ..add(_uint32(2))
-      ..add(_uint32(objects.length));
-    for (final object in objects) {
-      final type = switch (object.type) {
-        'commit' => 1,
-        'tree' => 2,
-        _ => 3,
-      };
-      var size = object.content.length;
-      final header = <int>[];
-      var byte = (type << 4) | (size & 0x0f);
-      size >>= 4;
-      while (size > 0) {
-        header.add(byte | 0x80);
-        byte = size & 0x7f;
-        size >>= 7;
-      }
-      header.add(byte);
-      out
-        ..add(header)
-        ..add(zlib.encode(object.content));
+  /// Satu objek dalam paket git versi 2, tanpa delta: kepala jenis dan
+  /// ukuran, lalu isinya dipadatkan zlib.
+  static void _emitObject(_GitObject object, void Function(List<int>) emit) {
+    final type = switch (object.type) {
+      'commit' => 1,
+      'tree' => 2,
+      _ => 3,
+    };
+    var size = object.content.length;
+    final header = <int>[];
+    var byte = (type << 4) | (size & 0x0f);
+    size >>= 4;
+    while (size > 0) {
+      header.add(byte | 0x80);
+      byte = size & 0x7f;
+      size >>= 7;
     }
-    final pack = out.toBytes();
-    out.add(sha1.convert(pack).bytes);
-    return out.takeBytes();
+    header.add(byte);
+    emit(header);
+    emit(zlib.encode(object.content));
   }
 
   static List<int> _uint32(int value) => <int>[

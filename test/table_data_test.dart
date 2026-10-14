@@ -70,4 +70,58 @@ void main() {
     expect(sheets.first.columnCount, 3);
     expect(sheets.last.rows.single, <String>['', 'TRUE']);
   });
+
+  // Dibaca mengalir sejak 0.30.1 — dulu seluruh XML dibangun jadi pohon, dan
+  // ekspor besar (300 MB XML) tidak pernah terbuka di tablet.
+  test('xlsx: berhenti di batas baris tanpa membaca sisa lembar', () {
+    final rows = StringBuffer();
+    for (var r = 1; r <= TableData.maxRows + 50; r++) {
+      rows.write('<row r="$r"><c r="A$r" t="inlineStr"><is><t>baris $r</t></is></c></row>');
+    }
+    // Sisa lembar sesudah batas sengaja rusak: kalau masih dibaca, gagal.
+    final bytes = xlsx(<String, String>{
+      'xl/workbook.xml':
+          '<workbook xmlns:r="r"><sheets><sheet name="Besar" r:id="rId1"/></sheets></workbook>',
+      'xl/_rels/workbook.xml.rels':
+          '<Relationships><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>',
+      'xl/worksheets/sheet1.xml': '<worksheet><sheetData>$rows<row><<<rusak',
+    });
+    final sheet = TableData.read('besar.xlsx', bytes).single;
+    expect(sheet.rows, hasLength(TableData.maxRows));
+    expect(sheet.rows.last, <String>['baris ${TableData.maxRows}']);
+  });
+
+  test('xlsx: awalan namespace, sel tertutup sendiri, furigana, entitas, nama berkas beda huruf', () {
+    final bytes = xlsx(<String, String>{
+      'xl/workbook.xml':
+          '<x:workbook xmlns:x="m" xmlns:r="r"><x:sheets><x:sheet name="L" r:id="rId1"/>'
+          '</x:sheets></x:workbook>',
+      'xl/_rels/workbook.xml.rels':
+          '<Relationships><Relationship Id="rId1" Target="/xl/worksheets/Sheet1.xml"/></Relationships>',
+      'xl/SharedStrings.xml':
+          '<x:sst xmlns:x="m"><x:si><x:t>漢字</x:t><x:rPh><x:t>かんじ</x:t></x:rPh></x:si>'
+          '<x:si><x:t>R&amp;D</x:t></x:si><x:si/></x:sst>',
+      'xl/worksheets/sheet1.xml':
+          '<x:worksheet xmlns:x="m"><x:sheetData>'
+          '<x:row r="1"><x:c r="A1" t="s"><x:v>0</x:v></x:c><x:c r="B1" s="3"/>'
+          '<x:c r="C1" t="s"><x:v>1</x:v></x:c><x:c r="D1" t="s"><x:v>2</x:v></x:c></x:row>'
+          '<x:row r="2"/>'
+          '<x:row r="3"><x:c r="B3" t="inlineStr"><x:is> <x:t>sebaris</x:t> </x:is></x:c></x:row>'
+          '</x:sheetData></x:worksheet>',
+    });
+    final sheet = TableData.read('awalan.xlsx', bytes).single;
+    expect(sheet.rows, <List<String>>[
+      <String>['漢字', '', 'R&D', ''],
+      <String>[],
+      <String>['', 'sebaris'],
+    ]);
+  });
+
+  test('xlsx yang terpotong dikatakan rusak, bukan tabel kosong', () {
+    final whole = xlsx(<String, String>{'xl/worksheets/sheet1.xml': '<worksheet/>'});
+    expect(
+      () => TableData.read('rusak.xlsx', Uint8List.sublistView(whole, 0, whole.length ~/ 2)),
+      throwsA(isA<Exception>()),
+    );
+  });
 }

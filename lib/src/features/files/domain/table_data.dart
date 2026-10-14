@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io' as io show ZLibDecoder;
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
+import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
+import 'package:xml/xml_events.dart';
 
 import '../../office/data/compound_file.dart';
 import '../../office/data/text_formats.dart';
@@ -113,28 +116,28 @@ class TableData {
   }
 
   /// Semua lembar sebuah `.xlsx`, sesuai urutan di buku kerjanya.
+  ///
+  /// Lembar dan daftar teksnya dibaca **mengalir**: isinya di-inflate sedikit
+  /// demi sedikit, diurai sebagai rangkaian event XML, dan pembacaan lembar
+  /// berhenti begitu [maxRows] baris terkumpul. Dulu seluruh XML-nya dibangun
+  /// menjadi pohon lebih dulu — terbukti pada ekspor transaksi 36 MB yang
+  /// berisi 300 MB XML: hampir satu menit di desktop, dan di tablet tidak
+  /// pernah terbuka, padahal yang ditampilkan hanya lima ribu baris pertama.
   static List<TableSheet> xlsx(Uint8List bytes) {
     final archive = ZipDecoder().decodeBytes(bytes);
+    ArchiveFile? entry(String path) =>
+        archive.findFile(path) ??
+        // Nama di dalam zip kadang berbeda huruf besar-kecilnya dari relasinya.
+        archive.files.where((f) => f.name.toLowerCase() == path.toLowerCase()).firstOrNull;
     String? text(String path) {
-      final file = archive.findFile(path);
+      final file = entry(path);
       if (file == null) return null;
-      return utf8.decode(file.content as List<int>, allowMalformed: true);
+      return utf8.decode(file.content, allowMalformed: true);
     }
 
     final shared = <String>[];
-    final sharedXml = text('xl/sharedStrings.xml');
-    if (sharedXml != null) {
-      for (final si in XmlDocument.parse(sharedXml).findAllElements('si')) {
-        // Teks kaya (<r><t>…</t></r>) disambung; <rPh> (furigana) dilewati.
-        shared.add(
-          si.descendants
-              .whereType<XmlElement>()
-              .where((e) => e.name.local == 't' && e.parentElement?.name.local != 'rPh')
-              .map((e) => e.innerText)
-              .join(),
-        );
-      }
-    }
+    final sharedFile = entry('xl/sharedStrings.xml');
+    if (sharedFile != null) _readShared(sharedFile, shared);
 
     // Nama lembar dari workbook.xml, berkasnya dari relasinya.
     final rels = <String, String>{};
@@ -144,61 +147,200 @@ class TableData {
         final id = rel.getAttribute('Id');
         final target = rel.getAttribute('Target');
         if (id == null || target == null) continue;
-        rels[id] = target.startsWith('/') ? target.substring(1) : 'xl/$target';
+        rels[id] = target.startsWith('/') ? target.substring(1) : p.posix.normalize('xl/$target');
       }
     }
     final sheets = <TableSheet>[];
     final workbook = text('xl/workbook.xml');
-    if (workbook == null) return sheets;
-    for (final sheet in XmlDocument.parse(workbook).findAllElements('sheet')) {
+    if (workbook == null) {
+      // Zip yang terpotong atau bukan buku kerja: lebih jujur dikatakan
+      // daripada menampilkan tabel kosong.
+      throw const FormatException('Berkas Excel rusak atau terpotong');
+    }
+    for (final sheet in XmlDocument.parse(
+      workbook,
+    ).descendants.whereType<XmlElement>().where((e) => e.name.local == 'sheet')) {
       final name = sheet.getAttribute('name') ?? 'Lembar ${sheets.length + 1}';
       final id = sheet.attributes
-          .where((a) => a.name.local == 'id' && a.name.prefix == 'r')
+          .where((a) => a.name.local == 'id' && a.name.prefix != null)
           .map((a) => a.value)
           .firstOrNull;
       final path = (id == null ? null : rels[id]) ?? 'xl/worksheets/sheet${sheets.length + 1}.xml';
-      final xml = text(path);
+      final file = entry(path);
       sheets.add(
         TableSheet(
           name: name,
-          rows: xml == null ? const <List<String>>[] : _sheetRows(xml, shared),
+          rows: file == null ? const <List<String>>[] : _sheetRows(file, shared),
         ),
       );
     }
     return sheets;
   }
 
-  static List<List<String>> _sheetRows(String xml, List<String> shared) {
-    final rows = <List<String>>[];
-    for (final row in XmlDocument.parse(xml).findAllElements('row')) {
-      final cells = <String>[];
-      for (final c in row.findElements('c')) {
-        // Sel kosong tidak ditulis Excel; kolomnya dibaca dari alamatnya (B7).
-        final column = _columnIndex(c.getAttribute('r'));
-        while (column != null && cells.length < column) {
-          cells.add('');
-        }
-        final type = c.getAttribute('t');
-        final value = c.getElement('v')?.innerText ?? '';
-        cells.add(switch (type) {
-          's' =>
-            int.tryParse(value) != null && int.parse(value) < shared.length
-                ? shared[int.parse(value)]
-                : '',
-          'inlineStr' => c.getElement('is')?.innerText ?? '',
-          'b' => value == '1' ? 'TRUE' : 'FALSE',
-          _ => value,
-        });
+  /// Menyuapkan isi [file] (sudah di-inflate) ke [onEvents] sedikit demi
+  /// sedikit, sampai habis atau sampai [stop] bernilai benar.
+  static void _streamXml(
+    ArchiveFile file,
+    void Function(List<XmlEvent> events) onEvents,
+    bool Function() stop,
+  ) {
+    final events = XmlEventDecoder().startChunkedConversion(_EventSink(onEvents));
+    final text = const Utf8Decoder(allowMalformed: true).startChunkedConversion(events);
+    final raw = file.rawContent?.getStream(decompress: false).toUint8List();
+    const step = 64 * 1024;
+    if (raw == null || file.compression == CompressionType.none || raw.isEmpty) {
+      final plain = raw ?? file.content;
+      for (var i = 0; i < plain.length && !stop(); i += step) {
+        text.add(plain.sublist(i, i + step > plain.length ? plain.length : i + step));
       }
-      final number = int.tryParse(row.getAttribute('r') ?? '');
-      while (number != null && rows.length < number - 1) {
+    } else {
+      final inflate = io.ZLibDecoder(raw: true).startChunkedConversion(_ByteSink(text.add));
+      for (var i = 0; i < raw.length && !stop(); i += step) {
+        inflate.add(Uint8List.sublistView(raw, i, i + step > raw.length ? raw.length : i + step));
+      }
+      if (!stop()) inflate.close();
+    }
+    if (!stop()) text.close();
+  }
+
+  static String _local(String qualified) {
+    final colon = qualified.indexOf(':');
+    return colon < 0 ? qualified : qualified.substring(colon + 1);
+  }
+
+  static void _readShared(ArchiveFile file, List<String> shared) {
+    StringBuffer? current;
+    var inText = false;
+    var phonetic = 0;
+    _streamXml(file, (events) {
+      for (final event in events) {
+        if (event is XmlStartElementEvent) {
+          switch (_local(event.name)) {
+            case 'si':
+              current = StringBuffer();
+              if (event.isSelfClosing) {
+                shared.add('');
+                current = null;
+              }
+            case 't':
+              inText = !event.isSelfClosing;
+            // Teks kaya (<r><t>…</t></r>) disambung; <rPh> (furigana) dilewati.
+            case 'rPh':
+              if (!event.isSelfClosing) phonetic++;
+          }
+        } else if (event is XmlEndElementEvent) {
+          switch (_local(event.name)) {
+            case 'si':
+              shared.add(current?.toString() ?? '');
+              current = null;
+            case 't':
+              inText = false;
+            case 'rPh':
+              phonetic--;
+          }
+        } else if (inText && phonetic == 0) {
+          if (event is XmlTextEvent) current?.write(event.value);
+          if (event is XmlCDATAEvent) current?.write(event.value);
+        }
+      }
+    }, () => false);
+  }
+
+  static List<List<String>> _sheetRows(ArchiveFile file, List<String> shared) {
+    final rows = <List<String>>[];
+    List<String>? cells;
+    int? rowNumber;
+    int? column;
+    String? type;
+    final value = StringBuffer();
+    final inline = StringBuffer();
+    var inValue = false;
+    var inInline = false;
+    var inInlineText = false;
+    var phonetic = 0;
+    var done = false;
+
+    void endCell() {
+      final row = cells;
+      if (row == null) return;
+      // Sel kosong tidak ditulis Excel; kolomnya dibaca dari alamatnya (B7).
+      while (column != null && row.length < column!) {
+        row.add('');
+      }
+      final v = value.toString();
+      row.add(switch (type) {
+        's' => () {
+          final i = int.tryParse(v.trim());
+          return i != null && i >= 0 && i < shared.length ? shared[i] : '';
+        }(),
+        'inlineStr' => inline.toString(),
+        'b' => v == '1' ? 'TRUE' : 'FALSE',
+        _ => v,
+      });
+    }
+
+    void endRow() {
+      final row = cells ?? <String>[];
+      while (rowNumber != null && rows.length < rowNumber! - 1) {
         rows.add(const <String>[]);
       }
-      rows.add(cells);
-      if (rows.length >= maxRows) break;
+      rows.add(row);
+      cells = null;
+      if (rows.length >= maxRows) done = true;
     }
+
+    _streamXml(file, (events) {
+      for (final event in events) {
+        if (done) return;
+        if (event is XmlStartElementEvent) {
+          switch (_local(event.name)) {
+            case 'row':
+              cells = <String>[];
+              rowNumber = int.tryParse(_attribute(event, 'r') ?? '');
+              if (event.isSelfClosing) endRow();
+            case 'c':
+              cells ??= <String>[];
+              column = _columnIndex(_attribute(event, 'r'));
+              type = _attribute(event, 't');
+              value.clear();
+              inline.clear();
+              if (event.isSelfClosing) endCell();
+            case 'v':
+              inValue = !event.isSelfClosing;
+            case 'is':
+              inInline = !event.isSelfClosing;
+            case 't':
+              inInlineText = inInline && !event.isSelfClosing;
+            case 'rPh':
+              if (!event.isSelfClosing) phonetic++;
+          }
+        } else if (event is XmlEndElementEvent) {
+          switch (_local(event.name)) {
+            case 'row':
+              endRow();
+            case 'c':
+              endCell();
+            case 'v':
+              inValue = false;
+            case 'is':
+              inInline = false;
+            case 't':
+              inInlineText = false;
+            case 'rPh':
+              phonetic--;
+          }
+        } else if (event is XmlTextEvent || event is XmlCDATAEvent) {
+          final text = event is XmlTextEvent ? event.value : (event as XmlCDATAEvent).value;
+          if (inValue) value.write(text);
+          if (inInlineText && phonetic == 0) inline.write(text);
+        }
+      }
+    }, () => done);
     return rows;
   }
+
+  static String? _attribute(XmlStartElementEvent event, String name) =>
+      event.attributes.where((a) => _local(a.name) == name).map((a) => a.value).firstOrNull;
 
   /// `B7` → 1, `AA3` → 26.
   static int? _columnIndex(String? reference) {
@@ -211,4 +353,28 @@ class TableData {
     }
     return index - 1;
   }
+}
+
+class _EventSink implements Sink<List<XmlEvent>> {
+  _EventSink(this._onEvents);
+
+  final void Function(List<XmlEvent>) _onEvents;
+
+  @override
+  void add(List<XmlEvent> data) => _onEvents(data);
+
+  @override
+  void close() {}
+}
+
+class _ByteSink implements Sink<List<int>> {
+  _ByteSink(this._onBytes);
+
+  final void Function(List<int>) _onBytes;
+
+  @override
+  void add(List<int> data) => _onBytes(data);
+
+  @override
+  void close() {}
 }
