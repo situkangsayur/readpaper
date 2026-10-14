@@ -80,10 +80,15 @@ void main() {
 
   /// Waktu nyata untuk berkas dan HTTP tiruan, lalu beberapa frame. Bukan
   /// pumpAndSettle: indikator putar dialog tidak pernah "tenang".
-  Future<void> settle(WidgetTester tester) async {
-    for (var i = 0; i < 8; i++) {
+  ///
+  /// Dengan [until], terus menunggu (paling lama ±6 detik) sampai yang dicari
+  /// muncul: di runner CI yang lambat, delapan putaran tetap kadang belum
+  /// cukup dan ujinya merah tanpa ada yang salah.
+  Future<void> settle(WidgetTester tester, {Finder? until}) async {
+    for (var i = 0; i < 40; i++) {
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 40)));
       await tester.pump(const Duration(milliseconds: 100));
+      if (i >= 7 && (until == null || until.evaluate().isNotEmpty)) return;
     }
   }
 
@@ -97,7 +102,7 @@ void main() {
     await pumpEditor(tester);
 
     await tester.tap(find.text('Masuk dengan GitHub').first);
-    await settle(tester);
+    await settle(tester, until: find.text('situkangsayur/zotero-lab'));
     expect(find.text('Masuk sebagai situkangsayur'), findsOneWidget);
     expect(calls, contains('POST /login/device/code'));
 
@@ -128,12 +133,12 @@ void main() {
     await pumpEditor(tester);
 
     await tester.tap(find.text('Masuk dengan GitHub').first);
-    await settle(tester);
+    await settle(tester, until: find.text('Pakai akun situkangsayur'));
     expect(find.text('Pakai akun situkangsayur'), findsOneWidget);
     expect(find.text('Masuk dengan akun lain'), findsOneWidget);
 
     await tester.tap(find.text('Pakai akun situkangsayur'));
-    await settle(tester);
+    await settle(tester, until: find.text('situkangsayur/zotero-hendri'));
     await tester.tap(find.text('situkangsayur/zotero-hendri'));
     await settle(tester);
 
