@@ -2336,6 +2336,28 @@ class AppLocalizationsId extends AppLocalizations {
   String get whiteboardErrPixels => 'Piksel gagal dibaca';
 
   @override
+  String notesUpTo(String name) {
+    return 'Kembali ke $name';
+  }
+
+  @override
+  String notesSubcollectionSummary(int notes, int subs) {
+    String _temp0 = intl.Intl.pluralLogic(
+      notes,
+      locale: localeName,
+      other: '$notes catatan',
+      zero: 'kosong',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      subs,
+      locale: localeName,
+      other: ' · $subs sub-koleksi',
+      zero: '',
+    );
+    return '$_temp0$_temp1';
+  }
+
+  @override
   String officeUnreadable(String error) {
     return 'Dokumen ini tidak bisa dibaca: $error';
   }

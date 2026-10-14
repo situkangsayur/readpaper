@@ -41,6 +41,42 @@ class NoteListPane extends ConsumerWidget {
 
     final index = asyncNotes.value ?? NotesIndex.empty;
     final notes = notesFor(index, selection);
+    // Seperti folder di aplikasi berkas: sub-koleksi di atas, bisa dimasuki,
+    // lalu berkas koleksi ini sendiri. Tanpa ini isi sub-koleksi hanya bisa
+    // dicapai lewat pohon di panel kiri, yang di ponsel tersembunyi di laci.
+    final currentKey = selection.noteCollectionKey;
+    final folders = switch (selection.kind) {
+      SelectionKind.noteCollection => index.childrenOf(currentKey),
+      SelectionKind.notes => index.childrenOf(null),
+      _ => const <NoteCollection>[],
+    };
+    final current = index.collections.firstWhereOrNull((c) => c.key == currentKey);
+    final parent = current?.parentKey == null
+        ? null
+        : index.collections.firstWhereOrNull((c) => c.key == current!.parentKey);
+    final showUp = selection.kind == SelectionKind.noteCollection;
+    final leading = <Widget>[
+      if (showUp)
+        _UpTile(
+          label: context.l10n.notesUpTo(parent?.name ?? context.l10n.libraryNotesRoot),
+          onTap: () => ref
+              .read(selectionProvider.notifier)
+              .select(
+                parent == null
+                    ? const LibrarySelection.notes()
+                    : LibrarySelection.noteCollection(parent.key),
+              ),
+        ),
+      for (final folder in folders)
+        _FolderTile(
+          collection: folder,
+          notes: index.countIn(folder.key),
+          subcollections: index.childrenOf(folder.key).length,
+          onOpen: () => ref
+              .read(selectionProvider.notifier)
+              .select(LibrarySelection.noteCollection(folder.key)),
+        ),
+    ];
     final title = switch (selection.kind) {
       SelectionKind.notesUnfiled => context.l10n.notesUnfiledTitle,
       SelectionKind.noteCollection =>
@@ -99,10 +135,11 @@ class NoteListPane extends ConsumerWidget {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => pullToRefresh(ref),
-              child: notes.isEmpty
+              child: notes.isEmpty && folders.isEmpty
                   ? ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       children: <Widget>[
+                        ...leading,
                         Padding(
                           padding: const EdgeInsets.all(32),
                           child: Center(
@@ -114,18 +151,71 @@ class NoteListPane extends ConsumerWidget {
                   : ListView.separated(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: EdgeInsets.zero,
-                      itemCount: notes.length,
+                      itemCount: leading.length + notes.length,
                       separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, i) => _NoteTile(
-                        note: notes[i],
-                        directory: index.directory,
-                        onOpen: () => _open(context, ref, notes[i], index),
-                        onMenu: () => _menu(context, ref, notes[i]),
-                      ),
+                      itemBuilder: (context, i) {
+                        if (i < leading.length) return leading[i];
+                        final note = notes[i - leading.length];
+                        return _NoteTile(
+                          note: note,
+                          directory: index.directory,
+                          onOpen: () => _open(context, ref, note, index),
+                          onMenu: () => _menu(context, ref, note),
+                        );
+                      },
                     ),
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Baris "kembali ke induk" di atas isi sebuah koleksi catatan.
+class _UpTile extends StatelessWidget {
+  const _UpTile({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    dense: true,
+    leading: const Icon(Icons.arrow_upward),
+    title: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+    onTap: onTap,
+  );
+}
+
+/// Sub-koleksi di daftar catatan: diketuk untuk masuk; catatan yang
+/// diseret ke sini dipindahkan ke dalamnya.
+class _FolderTile extends StatelessWidget {
+  const _FolderTile({
+    required this.collection,
+    required this.notes,
+    required this.subcollections,
+    required this.onOpen,
+  });
+
+  final NoteCollection collection;
+  final int notes;
+  final int subcollections;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return DragTarget<TreeDrag>(
+      onAcceptWithDetails: (details) =>
+          dropIntoNotes(ImportHost.of(context), details.data, collection.key, collection.name),
+      builder: (context, candidate, rejected) => ListTile(
+        tileColor: candidate.isNotEmpty ? scheme.primary.withValues(alpha: 0.18) : null,
+        leading: Icon(Icons.folder, color: scheme.primary),
+        title: Text(collection.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(context.l10n.notesSubcollectionSummary(notes, subcollections)),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onOpen,
+      ),
     );
   }
 }

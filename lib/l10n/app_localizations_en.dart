@@ -2493,6 +2493,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whiteboardErrPixels => 'Could not read the pixels';
 
   @override
+  String notesUpTo(String name) {
+    return 'Back to $name';
+  }
+
+  @override
+  String notesSubcollectionSummary(int notes, int subs) {
+    String _temp0 = intl.Intl.pluralLogic(
+      notes,
+      locale: localeName,
+      other: '$notes notes',
+      one: '1 note',
+      zero: 'empty',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      subs,
+      locale: localeName,
+      other: ' · $subs sub-collections',
+      one: ' · 1 sub-collection',
+      zero: '',
+    );
+    return '$_temp0$_temp1';
+  }
+
+  @override
   String officeUnreadable(String error) {
     return 'This document can\'t be read: $error';
   }

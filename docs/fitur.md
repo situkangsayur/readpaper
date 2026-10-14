@@ -145,6 +145,13 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   - ReadPaper muncul di **Buka dengan** untuk Word, PowerPoint, dan Excel
     (Android, iOS, Linux, Windows); lampiran Word/PowerPoint di library dan
     di Catatan dibuka di penampil ini.
+- **Sub-koleksi catatan seperti folder**: membuka koleksi catatan
+  menampilkan sub-koleksinya di paling atas (jumlah catatan dan
+  sub-koleksinya), bisa diketuk untuk masuk, lalu berkas koleksi itu sendiri;
+  baris "Kembali ke …" naik ke induknya. Catatan yang diseret ke sub-koleksi
+  dipindahkan ke sana.
+- **Panel kiri berwarna per bagian**: library paper, Catatan, dan folder kerja
+  "readpaper" masing-masing punya warna latar tipis sendiri.
 - **Pembaca EPUB**: satu bab per layar, daftar isi bertingkat, ukuran huruf,
   dan tiga warna halaman (Terang, Sepia, Gelap). Bab, posisi gulir, ukuran
   huruf, dan warnanya diingat per buku. ReadPaper muncul di pilihan **Buka

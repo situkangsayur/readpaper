@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/utils/layout_size.dart';
+import '../../../../shared/widgets/section_tint.dart';
 import '../../../library/presentation/controllers/library_controllers.dart';
 import 'package:path/path.dart' as p;
 
@@ -285,12 +286,18 @@ class _TreeAndFilesState extends State<_TreeAndFiles> {
       if (_filesOpen)
         Expanded(
           flex: 2,
-          child: FileBrowserPane(onToggleCollapsed: () => setState(() => _filesOpen = false)),
+          child: Material(
+            color: SectionTint.files(Theme.of(context).colorScheme),
+            child: FileBrowserPane(onToggleCollapsed: () => setState(() => _filesOpen = false)),
+          ),
         )
       else
-        FileBrowserPane(
-          collapsed: true,
-          onToggleCollapsed: () => setState(() => _filesOpen = true),
+        Material(
+          color: SectionTint.files(Theme.of(context).colorScheme),
+          child: FileBrowserPane(
+            collapsed: true,
+            onToggleCollapsed: () => setState(() => _filesOpen = true),
+          ),
         ),
     ],
   );

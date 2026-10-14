@@ -102,7 +102,10 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
 16. [x] **Putar presentasi dan mode baca untuk PowerPoint di APK**: slide
     dijadikan PDF (gambar slide + teks tak terlihat untuk dicari) lalu dibuka
     di pembaca PDF, langsung dalam mode menyajikan.
-17. [ ] Excel: perlu contoh berkas .xlsx yang gagal dibuka (laporan
+17. [x] **Sub-koleksi catatan di daftar**: tampil di atas berkas, bisa
+    dimasuki, dengan baris kembali ke induk.
+18. [x] **Warna latar per bagian** panel kiri: library, Catatan, readpaper.
+19. [ ] Excel: perlu contoh berkas .xlsx yang gagal dibuka (laporan
     2026-10-14 "xlsx juga harusnya bisa dibuka").
 
 ## Setelah itu

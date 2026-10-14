@@ -1693,6 +1693,25 @@
   "notebookDeleteSheet": "Hapus lembar ini",
   "whiteboardErrPngEncode": "PNG gagal dikodekan",
   "whiteboardErrPixels": "Piksel gagal dibaca",
+  "notesUpTo": "Kembali ke {name}",
+  "@notesUpTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notesSubcollectionSummary": "{notes, plural, =0{kosong} other{{notes} catatan}}{subs, plural, =0{} other{ · {subs} sub-koleksi}}",
+  "@notesSubcollectionSummary": {
+    "placeholders": {
+      "notes": {
+        "type": "int"
+      },
+      "subs": {
+        "type": "int"
+      }
+    }
+  },
   "officeUnreadable": "Dokumen ini tidak bisa dibaca: {error}",
   "@officeUnreadable": {
     "placeholders": {

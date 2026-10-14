@@ -222,5 +222,24 @@
   "notebookInsertPdfSheet": "Insert PDF pages as sheets",
   "notebookDeleteSheet": "Delete this sheet",
   "whiteboardErrPngEncode": "PNG encoding failed",
-  "whiteboardErrPixels": "Could not read the pixels"
+  "whiteboardErrPixels": "Could not read the pixels",
+  "notesUpTo": "Back to {name}",
+  "@notesUpTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "notesSubcollectionSummary": "{notes, plural, =0{empty} =1{1 note} other{{notes} notes}}{subs, plural, =0{} =1{ · 1 sub-collection} other{ · {subs} sub-collections}}",
+  "@notesSubcollectionSummary": {
+    "placeholders": {
+      "notes": {
+        "type": "int"
+      },
+      "subs": {
+        "type": "int"
+      }
+    }
+  }
 }

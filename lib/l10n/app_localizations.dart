@@ -4063,6 +4063,18 @@ abstract class AppLocalizations {
   /// **'Piksel gagal dibaca'**
   String get whiteboardErrPixels;
 
+  /// No description provided for @notesUpTo.
+  ///
+  /// In id, this message translates to:
+  /// **'Kembali ke {name}'**
+  String notesUpTo(String name);
+
+  /// No description provided for @notesSubcollectionSummary.
+  ///
+  /// In id, this message translates to:
+  /// **'{notes, plural, =0{kosong} other{{notes} catatan}}{subs, plural, =0{} other{ · {subs} sub-koleksi}}'**
+  String notesSubcollectionSummary(int notes, int subs);
+
   /// No description provided for @officeUnreadable.
   ///
   /// In id, this message translates to:

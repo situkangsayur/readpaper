@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import '../../../../core/utils/layout_size.dart';
 import '../../../../core/utils/file_pick.dart';
+import '../../../../shared/widgets/section_tint.dart';
 import '../../../../shared/widgets/file_drop_zone.dart';
 import '../import_actions.dart';
 import '../../../../shared/widgets/tree_drag.dart';
@@ -142,6 +143,9 @@ class CollectionTreePane extends ConsumerWidget {
       }
     }
 
+    // Baris sebelum ini milik library paper, sesudahnya milik catatan; masing-
+    // masing diberi warna latarnya sendiri.
+    final notesStart = rows.length;
     rows.add(const Divider(height: 12));
 
     rows.add(
@@ -242,10 +246,26 @@ class CollectionTreePane extends ConsumerWidget {
         _Header(index: index),
         const Divider(height: 1),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            itemCount: rows.length,
-            itemBuilder: (context, i) => rows[i],
+          child: Builder(
+            builder: (context) {
+              final scheme = Theme.of(context).colorScheme;
+              // Dibuat buram: barisnya duduk di atas warna catatan di bawahnya.
+              final libraryTint = Color.alphaBlend(SectionTint.library(scheme), scheme.surface);
+              final notesTint = SectionTint.notes(scheme);
+              // Ruang kosong di bawah baris terakhir ikut warna catatan, bagian
+              // yang paling bawah.
+              return Material(
+                color: notesTint,
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  itemCount: rows.length,
+                  // Material, bukan ColoredBox: percikan InkWell digambar di
+                  // Material terdekat, dan ColoredBox di atasnya menutupinya.
+                  itemBuilder: (context, i) =>
+                      i < notesStart ? Material(color: libraryTint, child: rows[i]) : rows[i],
+                ),
+              );
+            },
           ),
         ),
       ],
