@@ -1335,7 +1335,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     // memperbesar.
     try {
       final rect = _controller.layout.pageLayouts[page - 1];
-      await _controller.goToArea(rect: rect.inflate(6), anchor: PdfPageAnchor.all, duration: duration);
+      await _controller.goToArea(
+        rect: rect.inflate(6),
+        anchor: PdfPageAnchor.all,
+        duration: duration,
+      );
     } on Object {
       await _controller.goToPage(pageNumber: page, anchor: PdfPageAnchor.all, duration: duration);
     }

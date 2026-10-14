@@ -27,13 +27,14 @@ void main() {
         if (request.url.path == '/o/r.git/git-receive-pack') {
           expect(request.headers['Authorization'], startsWith('Basic '));
           sent = request.bodyBytes;
-          final ref = RegExp(r'refs/readpaper/blob-[0-9a-f]{40}')
-              .firstMatch(latin1.decode(request.bodyBytes.sublist(0, 200)))!
-              .group(0)!;
-          return http.Response.bytes(
-            <int>[...pkt('unpack ok\n'), ...pkt('ok $ref\n'), ...ascii.encode('0000')],
-            200,
-          );
+          final ref = RegExp(
+            r'refs/readpaper/blob-[0-9a-f]{40}',
+          ).firstMatch(latin1.decode(request.bodyBytes.sublist(0, 200)))!.group(0)!;
+          return http.Response.bytes(<int>[
+            ...pkt('unpack ok\n'),
+            ...pkt('ok $ref\n'),
+            ...ascii.encode('0000'),
+          ], 200);
         }
         if (request.method == 'DELETE') {
           deleted.add(request.url.path);
@@ -49,7 +50,10 @@ void main() {
     final dir = Directory.systemTemp.createTempSync('rp_pack_');
     addTearDown(() => dir.deleteSync(recursive: true));
     final file = File('${dir.path}/berkas')..writeAsBytesSync(content);
-    final expected = (await Process.run('git', <String>['hash-object', file.path])).stdout.toString().trim();
+    final expected = (await Process.run('git', <String>[
+      'hash-object',
+      file.path,
+    ])).stdout.toString().trim();
     expect(sha, expected);
 
     // Bagian setelah "0000" adalah paketnya; git sendiri yang memeriksa.
@@ -57,13 +61,16 @@ void main() {
     final start = latin1.decode(body.sublist(0, 300)).indexOf('0000PACK') + 4;
     final pack = File('${dir.path}/kiriman.pack')..writeAsBytesSync(body.sublist(start));
     await Process.run('git', <String>['init', '-q', dir.path]);
-    final check = await Process.run('git', <String>['index-pack', pack.path], workingDirectory: dir.path);
+    final check = await Process.run('git', <String>[
+      'index-pack',
+      pack.path,
+    ], workingDirectory: dir.path);
     expect(check.exitCode, 0, reason: '${check.stderr}');
-    final verify = await Process.run(
-      'git',
-      <String>['verify-pack', '-v', pack.path.replaceAll('.pack', '.idx')],
-      workingDirectory: dir.path,
-    );
+    final verify = await Process.run('git', <String>[
+      'verify-pack',
+      '-v',
+      pack.path.replaceAll('.pack', '.idx'),
+    ], workingDirectory: dir.path);
     expect(verify.stdout.toString(), contains('$sha blob'));
 
     await client.releaseParkedBlobs();
@@ -75,13 +82,14 @@ void main() {
       ref: const GitHubRepoRef(owner: 'o', repo: 'r'),
       token: 't',
       client: MockClient((request) async {
-        final ref = RegExp(r'refs/readpaper/blob-[0-9a-f]{40}')
-            .firstMatch(latin1.decode(request.bodyBytes.sublist(0, 200)))!
-            .group(0)!;
-        return http.Response.bytes(
-          <int>[...pkt('unpack ok\n'), ...pkt('ng $ref pre-receive hook declined\n'), ...ascii.encode('0000')],
-          200,
-        );
+        final ref = RegExp(
+          r'refs/readpaper/blob-[0-9a-f]{40}',
+        ).firstMatch(latin1.decode(request.bodyBytes.sublist(0, 200)))!.group(0)!;
+        return http.Response.bytes(<int>[
+          ...pkt('unpack ok\n'),
+          ...pkt('ng $ref pre-receive hook declined\n'),
+          ...ascii.encode('0000'),
+        ], 200);
       }),
     );
     await expectLater(

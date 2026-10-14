@@ -243,10 +243,7 @@ class GitHubApiClient {
   /// [releaseParkedBlobs] begitu commit sebenarnya terpasang.
   Future<String> _pushBlob(List<int> content) async {
     final blob = _gitObject('blob', content);
-    final tree = _gitObject('tree', <int>[
-      ...utf8.encode('100644 berkas\u0000'),
-      ...blob.id.bytes,
-    ]);
+    final tree = _gitObject('tree', <int>[...utf8.encode('100644 berkas\u0000'), ...blob.id.bytes]);
     final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     const who = 'ReadPaper <readpaper@users.noreply.github.com>';
     final commit = _gitObject(
@@ -335,7 +332,10 @@ class GitHubApiClient {
     final lines = <String>[];
     var i = 0;
     while (i + 4 <= bytes.length) {
-      final length = int.tryParse(ascii.decode(bytes.sublist(i, i + 4), allowInvalid: true), radix: 16);
+      final length = int.tryParse(
+        ascii.decode(bytes.sublist(i, i + 4), allowInvalid: true),
+        radix: 16,
+      );
       if (length == null) break;
       if (length < 4) {
         i += 4;

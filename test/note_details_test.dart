@@ -134,9 +134,13 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     final fake = _FakeNotes(notes);
-    final container = ProviderContainer(overrides: [notesControllerProvider.overrideWith(() => fake)]);
+    final container = ProviderContainer(
+      overrides: [notesControllerProvider.overrideWith(() => fake)],
+    );
     addTearDown(container.dispose);
-    container.read(selectionProvider.notifier).select(const LibrarySelection.noteCollection('KULIAH01'));
+    container
+        .read(selectionProvider.notifier)
+        .select(const LibrarySelection.noteCollection('KULIAH01'));
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

@@ -759,7 +759,9 @@ void main() {
 /// Mengetuk catatan menampilkan keterangannya; berkasnya dibuka dengan
 /// tombol Buka di panel keterangan.
 Future<void> openNoteFromList(WidgetTester tester, String title) async {
-  await tester.tap(find.descendant(of: find.byType(NoteListPane), matching: find.text(title)).first);
+  await tester.tap(
+    find.descendant(of: find.byType(NoteListPane), matching: find.text(title)).first,
+  );
   final open = find.descendant(
     of: find.byType(NoteDetailPane),
     matching: find.widgetWithText(FilledButton, 'Buka'),
