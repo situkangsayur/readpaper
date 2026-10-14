@@ -88,6 +88,23 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
     LibreOffice di desktop (lalu bisa ditandai dan disajikan). "Buka dengan"
     untuk Office di Android, iOS, Linux, Windows.
 
+### Selesai di 0.29.0 (permintaan 2026-10-14)
+
+12. [x] **Tambah folder di APK** (tablet dan ponsel), sama seperti Linux dan
+    Windows: pemilih folder Android, isinya (berikut subfolder) disalin dulu
+    lalu diimpor lewat jalur yang sama.
+13. [x] **Rumus dan matriks di PowerPoint/Word tampil**: gambar EMF (MathType,
+    Equation Editor, diagram) digambar sendiri.
+14. [x] **Lingkaran penanda kata transparan**: `<a:noFill/>` tidak lagi
+    diganti isi warna tema.
+15. [x] **Simpan sebagai PDF** untuk Word, PowerPoint, dan Excel/CSV, di
+    semua platform tanpa LibreOffice.
+16. [x] **Putar presentasi dan mode baca untuk PowerPoint di APK**: slide
+    dijadikan PDF (gambar slide + teks tak terlihat untuk dicari) lalu dibuka
+    di pembaca PDF, langsung dalam mode menyajikan.
+17. [ ] Excel: perlu contoh berkas .xlsx yang gagal dibuka (laporan
+    2026-10-14 "xlsx juga harusnya bisa dibuka").
+
 ## Setelah itu
 
 4. [x] **Pemasang Windows**: bila sudah terpasang, tawarkan Perbarui / Ubah /

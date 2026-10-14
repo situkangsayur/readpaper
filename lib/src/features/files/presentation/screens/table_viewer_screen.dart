@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'dart:isolate';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/widgets/find_bar.dart';
+import '../../../office/data/office_pdf.dart';
 import '../../domain/table_data.dart';
 import '../open_any_file.dart';
 import '../../../../core/l10n.dart';
@@ -80,6 +82,32 @@ class _TableViewerScreenState extends State<TableViewerScreen> {
     return Isolate.run(() => TableData.read(p.basename(path), bytes));
   }
 
+  /// Lembar-lembarnya sebagai PDF (mendatar, satu lembar per bagian).
+  Future<void> _saveAsPdf(List<TableSheet> sheets) async {
+    final messenger = ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(l10n.officeMakingPdf)));
+    try {
+      final bytes = await OfficePdf.sheets(sheets);
+      if (!mounted) return;
+      final uri = await FilePicker.saveFile(
+        fileName: '${p.basenameWithoutExtension(widget.path)}.pdf',
+        bytes: bytes,
+        mimeType: 'application/pdf',
+        dialogTitle: context.l10n.officeSaveAsPdf,
+      );
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(uri == null ? l10n.officePdfNotSaved : l10n.officePdfSaved)),
+        );
+    } on Object catch (e) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.officePdfFailed('$e'))));
+    }
+  }
+
   @override
   Widget build(BuildContext context) => FutureBuilder<List<TableSheet>>(
     future: _sheets,
@@ -92,6 +120,12 @@ class _TableViewerScreenState extends State<TableViewerScreen> {
             tooltip: context.l10n.findTooltip,
             icon: const Icon(Icons.search),
             onPressed: () => setState(() => _finding = true),
+          ),
+        if (sheets.isNotEmpty)
+          IconButton(
+            tooltip: context.l10n.officeSaveAsPdf,
+            icon: const Icon(Icons.save_alt),
+            onPressed: () => _saveAsPdf(sheets),
           ),
         if (canOpenWithSystem)
           IconButton(

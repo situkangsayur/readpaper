@@ -707,6 +707,31 @@
     }
   },
   "officeSpeakerNotes": "Speaker notes",
+  "officePlay": "Play presentation",
+  "officeOpenAsPdf": "Open as PDF — present, reading mode, mark up",
+  "officeSaveAsPdf": "Save as PDF…",
+  "officeMakingPdf": "Making the PDF…",
+  "officeMakingPdfSlides": "Making the PDF… slide {done} of {total}",
+  "@officeMakingPdfSlides": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "officePdfSaved": "PDF saved.",
+  "officePdfNotSaved": "PDF not saved.",
+  "officePdfFailed": "Couldn't make the PDF: {error}",
+  "@officePdfFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "presenterAudienceWaiting": "Waiting for the presenter…",
   "presenterSlideOf": "Slide {page} of {total}",
   "presenterResetTimer": "Elapsed time — tap to restart from zero",

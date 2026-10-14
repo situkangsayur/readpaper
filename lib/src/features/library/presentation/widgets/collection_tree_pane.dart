@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/utils/layout_size.dart';
+import '../../../../core/utils/file_pick.dart';
 import '../../../../shared/widgets/file_drop_zone.dart';
 import '../import_actions.dart';
 import '../../../../shared/widgets/tree_drag.dart';
@@ -76,7 +77,7 @@ class CollectionTreePane extends ConsumerWidget {
               },
               itemBuilder: (_) => <PopupMenuEntry<String>>[
                 PopupMenuItem<String>(value: 'berkas', child: Text(context.l10n.libraryAddFiles)),
-                if (FileDropZone.supported)
+                if (FilePick.canImportDirectory)
                   PopupMenuItem<String>(
                     value: 'folder',
                     child: Text(context.l10n.libraryAddFolderAsCollection),
@@ -579,7 +580,7 @@ Future<void> _paperCollectionMenu(BuildContext context, WidgetRef ref, String ke
               ),
               onTap: () => Navigator.of(sheet).pop('pdf'),
             ),
-            if (FileDropZone.supported)
+            if (FilePick.canImportDirectory)
               ListTile(
                 leading: const Icon(Icons.drive_folder_upload_outlined),
                 title: Text(context.l10n.libraryAddFolderHere),
@@ -860,7 +861,7 @@ Future<void> _noteCollectionMenu(
               title: Text(context.l10n.libraryAddFilesHere),
               onTap: () => Navigator.of(sheet).pop('berkas'),
             ),
-            if (FileDropZone.supported)
+            if (FilePick.canImportDirectory)
               ListTile(
                 leading: const Icon(Icons.drive_folder_upload_outlined),
                 title: Text(context.l10n.libraryAddFolderHere),

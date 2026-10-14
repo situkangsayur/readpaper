@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/utils/file_pick.dart';
-import '../../../shared/widgets/file_drop_zone.dart';
 import '../../../shared/widgets/tree_drag.dart';
 import '../../files/domain/folder_scan.dart';
 import '../../notes/domain/note_target.dart';
@@ -46,9 +45,19 @@ Future<void> pickFolderInto(
   required String? key,
   required String name,
 }) async {
-  final path = await pickDirectoryOrTell(host.context, title: l10n.libraryPickFolderFor(name));
-  if (path == null || !host.context.mounted) return;
-  await importFolderInto(host, path, notes: notes, key: key, name: name);
+  final path = await pickDirectoryOrTell(
+    host.context,
+    title: l10n.libraryPickFolderFor(name),
+    toImport: true,
+  );
+  if (path == null) return;
+  try {
+    if (host.context.mounted) {
+      await importFolderInto(host, path, notes: notes, key: key, name: name);
+    }
+  } finally {
+    await FilePick.discardImported(path);
+  }
 }
 
 /// Memilih berkas apa pun lalu memasukkannya ke koleksi catatan [key].
@@ -378,7 +387,7 @@ class AddFilesButton extends StatelessWidget {
           subtitle: Text(context.l10n.libraryAnyTypeMany),
         ),
       ),
-      if (FileDropZone.supported)
+      if (FilePick.canImportDirectory)
         PopupMenuItem<String>(
           value: 'folder',
           child: ListTile(

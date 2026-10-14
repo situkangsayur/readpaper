@@ -329,8 +329,11 @@ class _Context {
       _ => OfficeGeometry.rect,
     };
     final isTextBox = descendant(child(sp, 'nvSpPr'), 'cNvSpPr')?.getAttribute('txBox') == '1';
-    final fillColor =
-        fill(spPr) ?? (isTextBox || ph != null ? null : theme.color(child(style, 'fillRef')));
+    // <a:noFill/> berarti transparan, bukan "pakai isi tema": lingkaran
+    // penanda kata di atas teks harus tetap tembus pandang.
+    final fillColor = child(spPr, 'noFill') != null
+        ? null
+        : fill(spPr) ?? (isTextBox || ph != null ? null : theme.color(child(style, 'fillRef')));
     final ln = child(spPr, 'ln');
     final lineColor = ln != null
         ? (child(ln, 'noFill') != null ? null : theme.color(child(ln, 'solidFill')))

@@ -371,11 +371,14 @@ sub-koleksinya; di panel berkas, folder disalin utuh.
 Tombol **⋮** di koleksi, baik paper maupun catatan, membuka:
 
 - **Tambahkan berkas ke sini…**: jenis apa pun, beberapa sekaligus.
-- **Tambahkan folder ke sini…** (desktop): folder itu menjadi koleksi baru di
+- **Tambahkan folder ke sini…**: folder itu menjadi koleksi baru di
   dalam koleksi ini, subfoldernya menjadi sub-koleksi, dan setiap berkas masuk ke
   koleksi folder asalnya. Sebelum mulai, ReadPaper menyebut jumlah berkas,
   jumlah folder, dan ukurannya. Kemajuannya terlihat, dan semuanya berakhir
-  dengan satu commit.
+  dengan satu commit. Di Android, folder dipilih lewat pemilih folder sistem
+  (sentuh **Izinkan**); isinya disalin dulu, jadi bisa sebentar untuk folder
+  besar. Android tidak mengizinkan memilih akar penyimpanan atau akar
+  Download — pilih subfoldernya.
 
 Ikon berkas bertanda tambah di baris akar library juga punya dua pilihan itu.
 Menyeret folder dari pengelola berkas ke sebuah koleksi melakukan hal yang

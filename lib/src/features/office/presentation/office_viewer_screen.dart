@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:math' as math;
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
@@ -11,9 +12,12 @@ import '../../../core/l10n.dart';
 import '../../../core/widgets/find_bar.dart';
 import '../../files/presentation/open_any_file.dart';
 import '../../reader/presentation/screens/reader_screen.dart';
+import '../data/emf_picture.dart';
 import '../data/office_converter.dart';
+import '../data/office_pdf.dart';
 import '../data/office_loader.dart';
 import '../domain/office_document.dart';
+import 'offscreen_render.dart';
 
 /// Membaca dokumen Word (`.docx`, `.doc`, `.rtf`) dan PowerPoint (`.pptx`,
 /// `.ppt`) di dalam ReadPaper, di semua platform, tanpa aplikasi lain.
@@ -53,6 +57,9 @@ class _OfficeViewerScreenState extends State<OfficeViewerScreen> {
 
   String? _soffice;
   bool _converting = false;
+
+  /// PDF buatan ReadPaper sendiri (tanpa LibreOffice) selama layar ini terbuka.
+  String? _builtPdf;
 
   @override
   void initState() {
@@ -146,10 +153,81 @@ class _OfficeViewerScreenState extends State<OfficeViewerScreen> {
 
   // --------------------------------------------------- tampilan persis (PDF)
 
-  Future<void> _openExact() async {
+  /// PDF dokumen ini: lewat LibreOffice bila ada (persis seperti di Office),
+  /// atau dibuat sendiri — slide digambar seperti di layar ini, Word dan
+  /// teksnya ditulis ulang. Yang kedua yang dipakai di Android.
+  Future<String> _pdfPath() async {
+    if (_soffice != null) return OfficeConverter.toPdf(widget.path);
+    final built = _builtPdf;
+    if (built != null && File(built).existsSync()) return built;
+    final bytes = await _buildPdf();
+    final dir = await Directory.systemTemp.createTemp('readpaper-office-');
+    final file = File(p.join(dir.path, '${p.basenameWithoutExtension(widget.path)}.pdf'));
+    await file.writeAsBytes(bytes, flush: true);
+    return _builtPdf = file.path;
+  }
+
+  Future<Uint8List> _buildPdf() async {
+    final doc = _doc!;
+    if (!doc.isPresentation) return OfficePdf.document(doc);
+    final messenger = ScaffoldMessenger.of(context);
+    // Gambar slide harus sudah terurai sebelum digambar di luar layar.
+    for (final slide in doc.slides) {
+      final images = <Uint8List>[
+        ?slide.backgroundImage,
+        for (final shape in slide.shapes) ?shape.image,
+      ];
+      for (final bytes in images) {
+        final emf = EmfPicture.of(bytes);
+        if (emf != null) {
+          await prepareEmfImages(emf);
+        } else if (mounted) {
+          await precacheImage(MemoryImage(bytes), context, onError: (_, _) {});
+        }
+      }
+    }
+    if (!mounted) throw StateError('closed');
+    final render = OffscreenRender(context);
+    // Sorotan hasil pencarian tidak ikut ke PDF.
+    final matches = _matchesByParagraph;
+    final current = _current;
+    _matchesByParagraph = const <int, List<OfficeMatch>>{};
+    _current = -1;
+    final pngs = <Uint8List>[];
+    try {
+      final size = doc.slideSize;
+      for (final slide in doc.slides) {
+        // clearSnackBars, bukan hideCurrentSnackBar: pesan per slide yang
+        // mengantre ikut terbawa ke layar presentasi.
+        messenger
+          ..clearSnackBars()
+          ..showSnackBar(
+            SnackBar(
+              duration: const Duration(minutes: 1),
+              content: Text(l10n.officeMakingPdfSlides(slide.number, doc.slides.length)),
+            ),
+          );
+        final png = await render.png(
+          slide.hasLayout ? _slideCanvas(slide) : _plainSlide(slide),
+          size,
+          pixelRatio: 1600 / size.width,
+        );
+        if (png == null) throw StateError('slide ${slide.number}');
+        pngs.add(png);
+      }
+    } finally {
+      _matchesByParagraph = matches;
+      _current = current;
+      messenger.clearSnackBars();
+    }
+    return OfficePdf.slides(doc, pngs);
+  }
+
+  Future<void> _openAsPdf({bool present = false}) async {
+    if (_converting) return;
     setState(() => _converting = true);
     try {
-      final pdf = await OfficeConverter.toPdf(widget.path);
+      final pdf = await _pdfPath();
       if (!mounted) return;
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
@@ -159,18 +237,56 @@ class _OfficeViewerScreenState extends State<OfficeViewerScreen> {
             attachmentKey: '',
             filePath: pdf,
             title: _title,
+            startPresenting: present,
           ),
         ),
       );
     } on Object catch (e) {
-      if (!mounted) return;
-      final message = e is ProcessException ? e.message : '$e';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.officeConvertFailed(message))));
+      _pdfFailed(e);
     } finally {
       if (mounted) setState(() => _converting = false);
     }
+  }
+
+  Future<void> _saveAsPdf() async {
+    if (_converting) return;
+    setState(() => _converting = true);
+    try {
+      final bytes = await File(await _pdfPath()).readAsBytes();
+      if (!mounted) return;
+      final uri = await FilePicker.saveFile(
+        fileName: '${p.basenameWithoutExtension(widget.path)}.pdf',
+        bytes: bytes,
+        mimeType: 'application/pdf',
+        dialogTitle: context.l10n.officeSaveAsPdf,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(uri == null ? l10n.officePdfNotSaved : l10n.officePdfSaved)),
+        );
+    } on Object catch (e) {
+      _pdfFailed(e);
+    } finally {
+      if (mounted) setState(() => _converting = false);
+    }
+  }
+
+  void _pdfFailed(Object e) {
+    if (!mounted) return;
+    final message = e is ProcessException ? e.message : '$e';
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            _soffice != null
+                ? context.l10n.officeConvertFailed(message)
+                : context.l10n.officePdfFailed(message),
+          ),
+        ),
+      );
   }
 
   // ------------------------------------------------------------- tampilan
@@ -201,16 +317,28 @@ class _OfficeViewerScreenState extends State<OfficeViewerScreen> {
               : null,
         ),
       ],
-      if (_soffice != null)
+      if (doc != null && doc.isPresentation)
         IconButton(
-          tooltip: context.l10n.officeOpenExact,
+          tooltip: context.l10n.officePlay,
+          icon: const Icon(Icons.slideshow_outlined),
+          onPressed: _converting ? null : () => _openAsPdf(present: true),
+        ),
+      if (doc != null)
+        IconButton(
+          tooltip: _soffice != null ? context.l10n.officeOpenExact : context.l10n.officeOpenAsPdf,
           icon: _converting
               ? const SizedBox.square(
                   dimension: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.picture_as_pdf_outlined),
-          onPressed: _converting ? null : _openExact,
+          onPressed: _converting ? null : _openAsPdf,
+        ),
+      if (doc != null)
+        IconButton(
+          tooltip: context.l10n.officeSaveAsPdf,
+          icon: const Icon(Icons.save_alt),
+          onPressed: _converting ? null : _saveAsPdf,
         ),
       if (canOpenWithSystem)
         IconButton(
@@ -338,18 +466,29 @@ class _OfficeViewerScreenState extends State<OfficeViewerScreen> {
     ),
     OfficeImage() => Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Image.memory(
-          block.bytes,
-          width: block.width == null ? null : math.min(width, block.width! * 1.33 * _textScale),
-          fit: BoxFit.contain,
-          // EMF/WMF tidak bisa digambar Flutter.
-          errorBuilder: (context, error, stack) => const SizedBox.shrink(),
-        ),
-      ),
+      child: Align(alignment: Alignment.centerLeft, child: _docImage(block, width)),
     ),
   };
+
+  Widget _docImage(OfficeImage block, double width) {
+    final shown = block.width == null ? null : math.min(width, block.width! * 1.33 * _textScale);
+    final emf = EmfPicture.of(block.bytes);
+    if (emf != null) {
+      final w = shown ?? math.min(width, emf.bounds.width);
+      return SizedBox(
+        width: w,
+        height: w * emf.bounds.height / emf.bounds.width,
+        child: EmfImage(emf),
+      );
+    }
+    return Image.memory(
+      block.bytes,
+      width: shown,
+      fit: BoxFit.contain,
+      // WMF dan format lain yang tidak bisa digambar Flutter.
+      errorBuilder: (context, error, stack) => const SizedBox.shrink(),
+    );
+  }
 
   Widget _docParagraph(OfficeParagraph para, {bool compact = false}) {
     final heading = para.heading;
@@ -568,6 +707,8 @@ class _OfficeViewerScreenState extends State<OfficeViewerScreen> {
   Widget _shape(OfficeShape shape) {
     final image = shape.image;
     if (image != null) {
+      final emf = EmfPicture.of(image);
+      if (emf != null) return EmfImage(emf);
       return Image.memory(
         image,
         fit: BoxFit.fill,

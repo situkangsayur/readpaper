@@ -2375,6 +2375,35 @@ class AppLocalizationsId extends AppLocalizations {
   String get officeSpeakerNotes => 'Catatan pembicara';
 
   @override
+  String get officePlay => 'Putar presentasi';
+
+  @override
+  String get officeOpenAsPdf =>
+      'Buka sebagai PDF — mode menyajikan, mode baca, tandai';
+
+  @override
+  String get officeSaveAsPdf => 'Simpan sebagai PDF…';
+
+  @override
+  String get officeMakingPdf => 'Membuat PDF…';
+
+  @override
+  String officeMakingPdfSlides(int done, int total) {
+    return 'Membuat PDF… slide $done dari $total';
+  }
+
+  @override
+  String get officePdfSaved => 'PDF tersimpan.';
+
+  @override
+  String get officePdfNotSaved => 'PDF tidak disimpan.';
+
+  @override
+  String officePdfFailed(String error) {
+    return 'Gagal membuat PDF: $error';
+  }
+
+  @override
   String get presenterAudienceWaiting => 'Menunggu presenter…';
 
   @override

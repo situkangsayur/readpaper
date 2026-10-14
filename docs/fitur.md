@@ -131,6 +131,17 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
     dicoret, serta **disajikan** dengan mode menyajikan dan layar audiens.
     Hasilnya disimpan, jadi membuka lagi berkas yang sama tidak mengubahnya
     lagi.
+  - **Rumus dan diagram EMF** (MathType, Equation Editor, matriks, logo
+    vektor) digambar sendiri, jadi tidak hilang dari slide atau halaman.
+  - **Putar presentasi** (ikon layar) dan **Buka sebagai PDF** di semua
+    platform: tanpa LibreOffice, slide digambar seperti di layar lalu
+    dijadikan PDF — satu halaman per slide, dengan teks tak terlihat supaya
+    tetap bisa dicari — dan dibuka di pembaca PDF dengan mode menyajikan,
+    mode baca, dan alat tandai. "Putar presentasi" langsung masuk mode
+    menyajikan.
+  - **Simpan sebagai PDF…** untuk Word, PowerPoint, dan tabel (Excel, CSV).
+    Word dan tabel ditulis sebagai teks sungguhan; tabel mendatar, satu
+    lembar per bagian.
   - ReadPaper muncul di **Buka dengan** untuk Word, PowerPoint, dan Excel
     (Android, iOS, Linux, Windows); lampiran Word/PowerPoint di library dan
     di Catatan dibuka di penampil ini.
@@ -445,7 +456,8 @@ Diringkas dari butir yang belum selesai di [backlog.md](backlog.md):
   paper.
 - **Word dan PowerPoint hanya untuk dibaca**, dan tanpa LibreOffice bukan
   tampilan persis: huruf tema diganti huruf aplikasi, bagan dan SmartArt
-  tidak tampil, bentuk selain kotak/elips digambar sebagai kotak, dan
+  tidak tampil, bentuk selain kotak/elips digambar sebagai kotak, WMF belum
+  tergambar, dan
   .doc/.ppt lama hanya teksnya. Excel tidak menghitung rumus — nilai tersimpan
   yang tampil, tanggal sebagai nomor seri.
 - **Pena di pembaca belum punya penghapus**; coretan dibuang lewat urungkan,

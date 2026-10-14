@@ -1,8 +1,10 @@
 package com.situkangsayur.readpaper
 
+import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
+import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -21,6 +23,7 @@ class MainActivity : FlutterActivity() {
     private var pending: String? = null
     private var channel: MethodChannel? = null
     private var audience: AudienceDisplay? = null
+    private var folderResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -41,6 +44,10 @@ class MainActivity : FlutterActivity() {
                         val bytes = readClipboardImage()
                         runOnUiThread { result.success(bytes) }
                     }.start()
+                    // "Tambahkan folder…": pemilih folder sistem, lalu isinya
+                    // disalin ke cache. Jalur dari getDirectoryPath tidak bisa
+                    // dibaca dart:io di Android 11+ tanpa izin semua berkas.
+                    "pickFolderCopy" -> pickFolderCopy(result)
                     else -> result.notImplemented()
                 }
             }
@@ -69,6 +76,89 @@ class MainActivity : FlutterActivity() {
         audience?.close()
         super.onDestroy()
     }
+
+    private fun pickFolderCopy(result: MethodChannel.Result) {
+        // Pemilih yang tertinggal dijawab batal dulu, supaya Dart tidak
+        // menunggu selamanya.
+        folderResult?.success(null)
+        folderResult = result
+        try {
+            startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), PICK_FOLDER)
+        } catch (e: Exception) {
+            folderResult = null
+            result.error("tanpa-pemilih", e.message, null)
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != PICK_FOLDER) return
+        val result = folderResult ?: return
+        folderResult = null
+        val tree = data?.data
+        if (resultCode != Activity.RESULT_OK || tree == null) {
+            result.success(null)
+            return
+        }
+        // Folder berisi ratusan PDF bisa butuh waktu; jangan di utas UI.
+        Thread {
+            try {
+                val root = DocumentsContract.getTreeDocumentId(tree)
+                val name = treeName(tree, root)
+                val base = File(cacheDir, "folder-masuk").apply {
+                    deleteRecursively()
+                    mkdirs()
+                }
+                val target = File(base, safeName(name)).apply { mkdirs() }
+                copyTree(tree, root, target)
+                runOnUiThread { result.success(target.absolutePath) }
+            } catch (e: Exception) {
+                runOnUiThread { result.error("gagal-salin", e.message, null) }
+            }
+        }.start()
+    }
+
+    private fun treeName(tree: Uri, documentId: String): String {
+        val uri = DocumentsContract.buildDocumentUriUsingTree(tree, documentId)
+        contentResolver.query(
+            uri, arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null,
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) cursor.getString(0)?.let { if (it.isNotBlank()) return it }
+        }
+        return documentId.substringAfterLast(':').substringAfterLast('/').ifBlank { "Folder" }
+    }
+
+    /** Menyalin isi folder [documentId] ke [target], berikut subfoldernya. */
+    private fun copyTree(tree: Uri, documentId: String, target: File) {
+        val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, documentId)
+        val columns = arrayOf(
+            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+            DocumentsContract.Document.COLUMN_MIME_TYPE,
+        )
+        contentResolver.query(children, columns, null, null, null)?.use { cursor ->
+            while (cursor.moveToNext()) {
+                val id = cursor.getString(0) ?: continue
+                val name = cursor.getString(1) ?: continue
+                // Sama dengan FolderScan.skipped di sisi Dart: .git dan
+                // sejenisnya tidak perlu disalin sama sekali.
+                if (name.startsWith(".")) continue
+                val file = File(target, safeName(name))
+                if (cursor.getString(2) == DocumentsContract.Document.MIME_TYPE_DIR) {
+                    file.mkdirs()
+                    copyTree(tree, id, file)
+                } else {
+                    val uri = DocumentsContract.buildDocumentUriUsingTree(tree, id)
+                    contentResolver.openInputStream(uri)?.use { input ->
+                        file.outputStream().use { output -> input.copyTo(output) }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun safeName(name: String): String = name.replace('/', '_').ifBlank { "_" }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -139,6 +229,7 @@ class MainActivity : FlutterActivity() {
 
     private companion object {
         const val CHANNEL = "readpaper/berkas-masuk"
+        const val PICK_FOLDER = 4117
 
         /** Tipe yang didaftarkan di manifest → akhiran yang dikenali sisi Dart. */
         val MIME_EXTENSIONS = mapOf(

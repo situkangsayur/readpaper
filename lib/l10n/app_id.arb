@@ -1724,6 +1724,31 @@
     }
   },
   "officeSpeakerNotes": "Catatan pembicara",
+  "officePlay": "Putar presentasi",
+  "officeOpenAsPdf": "Buka sebagai PDF — mode menyajikan, mode baca, tandai",
+  "officeSaveAsPdf": "Simpan sebagai PDF…",
+  "officeMakingPdf": "Membuat PDF…",
+  "officeMakingPdfSlides": "Membuat PDF… slide {done} dari {total}",
+  "@officeMakingPdfSlides": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "officePdfSaved": "PDF tersimpan.",
+  "officePdfNotSaved": "PDF tidak disimpan.",
+  "officePdfFailed": "Gagal membuat PDF: {error}",
+  "@officePdfFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "presenterAudienceWaiting": "Menunggu presenter…",
   "presenterSlideOf": "Slide {page} dari {total}",
   "presenterResetTimer": "Waktu berjalan — ketuk untuk mengulang dari nol",

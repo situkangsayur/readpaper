@@ -4123,6 +4123,54 @@ abstract class AppLocalizations {
   /// **'Catatan pembicara'**
   String get officeSpeakerNotes;
 
+  /// No description provided for @officePlay.
+  ///
+  /// In id, this message translates to:
+  /// **'Putar presentasi'**
+  String get officePlay;
+
+  /// No description provided for @officeOpenAsPdf.
+  ///
+  /// In id, this message translates to:
+  /// **'Buka sebagai PDF — mode menyajikan, mode baca, tandai'**
+  String get officeOpenAsPdf;
+
+  /// No description provided for @officeSaveAsPdf.
+  ///
+  /// In id, this message translates to:
+  /// **'Simpan sebagai PDF…'**
+  String get officeSaveAsPdf;
+
+  /// No description provided for @officeMakingPdf.
+  ///
+  /// In id, this message translates to:
+  /// **'Membuat PDF…'**
+  String get officeMakingPdf;
+
+  /// No description provided for @officeMakingPdfSlides.
+  ///
+  /// In id, this message translates to:
+  /// **'Membuat PDF… slide {done} dari {total}'**
+  String officeMakingPdfSlides(int done, int total);
+
+  /// No description provided for @officePdfSaved.
+  ///
+  /// In id, this message translates to:
+  /// **'PDF tersimpan.'**
+  String get officePdfSaved;
+
+  /// No description provided for @officePdfNotSaved.
+  ///
+  /// In id, this message translates to:
+  /// **'PDF tidak disimpan.'**
+  String get officePdfNotSaved;
+
+  /// No description provided for @officePdfFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Gagal membuat PDF: {error}'**
+  String officePdfFailed(String error);
+
   /// No description provided for @presenterAudienceWaiting.
   ///
   /// In id, this message translates to:

@@ -75,6 +75,7 @@ class ReaderScreen extends ConsumerStatefulWidget {
     this.subtitle = '',
     this.annotationsFile,
     this.onAnnotationsChanged,
+    this.startPresenting = false,
     super.key,
   });
 
@@ -102,6 +103,10 @@ class ReaderScreen extends ConsumerStatefulWidget {
   /// Dipanggil setelah [annotationsFile] ditulis, dengan ringkasan
   /// perubahannya (mis. untuk dicatat sebagai perubahan yang menunggu Kirim).
   final Future<void> Function(String message)? onAnnotationsChanged;
+
+  /// Langsung masuk mode menyajikan begitu dokumennya terbuka — tombol
+  /// "Putar presentasi" di penampil PowerPoint.
+  final bool startPresenting;
 
   @override
   ConsumerState<ReaderScreen> createState() => _ReaderScreenState();
@@ -3556,6 +3561,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         final outline = await document.loadOutline();
         if (mounted) setState(() => _outline = outline);
         await _resumeAndRemember();
+        if (widget.startPresenting && mounted && !_presentMode) {
+          controller.goToPage(pageNumber: 1);
+          _togglePresent();
+        }
       },
       pageOverlaysBuilder: (context, pageRect, page) {
         // Kotak halaman di layar disimpan supaya goresan stylus yang ditangkap

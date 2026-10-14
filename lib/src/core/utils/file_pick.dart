@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../l10n.dart';
 
 /// Pemilih berkas dan folder yang tidak pernah gagal diam-diam.
@@ -66,6 +67,38 @@ class FilePick {
       final fallback = await _linuxDirectory(title: title);
       if (fallback != null) return fallback.isEmpty ? null : fallback;
       throw FilePickFailure(_linuxHelp(error));
+    }
+  }
+
+  /// Bisakah [importableDirectory] dipakai di sini: desktop dan Android.
+  static bool get canImportDirectory =>
+      Platform.isLinux || Platform.isWindows || Platform.isMacOS || Platform.isAndroid;
+
+  static const MethodChannel _android = MethodChannel('readpaper/berkas-masuk');
+
+  /// Folder yang isinya akan diimpor, atau null bila dibatalkan.
+  ///
+  /// Di Android jalur dari [directory] memang ada, tetapi sejak Android 11
+  /// dart:io tidak boleh membaca berkas di dalamnya tanpa izin "semua berkas".
+  /// Jadi folder dipilih lewat pemilih folder sistem dan isinya — berikut
+  /// subfoldernya — disalin ke cache lebih dulu; yang kembali adalah salinan
+  /// itu. Buang dengan [discardImported] sesudah diimpor.
+  static Future<String?> importableDirectory({String? title}) async {
+    if (!Platform.isAndroid) return directory(title: title);
+    try {
+      return await _android.invokeMethod<String>('pickFolderCopy');
+    } on PlatformException catch (error) {
+      throw FilePickFailure(l10n.commonFolderPickerFailed(error.message ?? error.code));
+    }
+  }
+
+  /// Membuang salinan dari [importableDirectory]; di desktop tidak berbuat apa-apa.
+  static Future<void> discardImported(String path) async {
+    if (!Platform.isAndroid) return;
+    try {
+      await Directory(path).parent.delete(recursive: true);
+    } on FileSystemException {
+      // Cache; dibersihkan lagi saat folder berikutnya dipilih.
     }
   }
 
@@ -181,10 +214,17 @@ Future<List<String>> pickFilesOrTell(
   }
 }
 
-/// [FilePick.directory], dengan galatnya ditampilkan sebagai pesan.
-Future<String?> pickDirectoryOrTell(BuildContext context, {String? title}) async {
+/// [FilePick.directory] (atau [FilePick.importableDirectory] bila
+/// [toImport]), dengan galatnya ditampilkan sebagai pesan.
+Future<String?> pickDirectoryOrTell(
+  BuildContext context, {
+  String? title,
+  bool toImport = false,
+}) async {
   try {
-    return await FilePick.directory(title: title);
+    return toImport
+        ? await FilePick.importableDirectory(title: title)
+        : await FilePick.directory(title: title);
   } on FilePickFailure catch (failure) {
     if (context.mounted) _tell(context, failure.message);
     return null;

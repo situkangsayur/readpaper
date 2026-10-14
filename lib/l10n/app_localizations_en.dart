@@ -2532,6 +2532,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get officeSpeakerNotes => 'Speaker notes';
 
   @override
+  String get officePlay => 'Play presentation';
+
+  @override
+  String get officeOpenAsPdf => 'Open as PDF — present, reading mode, mark up';
+
+  @override
+  String get officeSaveAsPdf => 'Save as PDF…';
+
+  @override
+  String get officeMakingPdf => 'Making the PDF…';
+
+  @override
+  String officeMakingPdfSlides(int done, int total) {
+    return 'Making the PDF… slide $done of $total';
+  }
+
+  @override
+  String get officePdfSaved => 'PDF saved.';
+
+  @override
+  String get officePdfNotSaved => 'PDF not saved.';
+
+  @override
+  String officePdfFailed(String error) {
+    return 'Couldn\'t make the PDF: $error';
+  }
+
+  @override
   String get presenterAudienceWaiting => 'Waiting for the presenter…';
 
   @override
