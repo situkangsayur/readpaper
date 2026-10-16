@@ -137,6 +137,19 @@ Linux, APK tablet, dan APK ponsel (iOS menyusul lewat CI).
     dalam paket git sampai 100 MB per kiriman, tidak satu push per berkas.
     Batas API blob terukur: 30 MB diterima, 40 MB ditolak.
 
+### Selesai di 0.31.0 (permintaan 2026-10-16)
+
+26. [x] **Simpan berkas asli** untuk Word, Excel, PowerPoint (dan semua yang
+    dibuka di penampil dokumen/tabel): disimpan apa adanya lewat dialog
+    simpan sistem, tidak diubah ke PDF. Ikon salinan berkas di sebelah
+    "Simpan sebagai PDF".
+27. [x] **OpenDocument**: .odt (Writer) dan .odp (Impress) dibaca sendiri di
+    penampil dokumen, .ods (Calc) di penampil tabel — dibaca mengalir dan
+    baris/kolom kosong yang "diulang" sejuta kali di ujung lembar dibuang.
+    "Buka dengan" di Android, iOS, Linux, Windows. Diuji pada 20 berkas ODF
+    sungguhan, dan pada salinan ODF dari pptx/docx yang dibandingkan dengan
+    pembaca Office-nya.
+
 ## Setelah itu
 
 4. [x] **Pemasang Windows**: bila sudah terpasang, tawarkan Perbarui / Ubah /

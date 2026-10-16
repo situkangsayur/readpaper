@@ -21,7 +21,8 @@ class TableSheet {
   int get columnCount => rows.fold(0, (m, r) => r.length > m ? r.length : m);
 }
 
-/// Membaca CSV, TSV, dan Excel (`.xlsx`, juga `.xls` lama) untuk ditampilkan.
+/// Membaca CSV, TSV, Excel (`.xlsx`, juga `.xls` lama), dan lembar kerja
+/// OpenDocument (`.ods`) untuk ditampilkan.
 ///
 /// Hanya untuk dilihat: rumus tidak dihitung, yang ditampilkan nilai
 /// terakhir yang disimpan Excel di berkasnya. Paket `excel` tidak bisa dipakai
@@ -38,7 +39,12 @@ class TableData {
     final lower = fileName.toLowerCase();
     // Isinya yang menentukan: banyak ".xls" sebenarnya .xlsx yang diganti
     // nama, HTML, atau BIFF tanpa pembungkus — ekspor aplikasi web.
-    if (bytes.length > 4 && bytes[0] == 0x50 && bytes[1] == 0x4B) return xlsx(bytes);
+    if (bytes.length > 4 && bytes[0] == 0x50 && bytes[1] == 0x4B) {
+      final archive = ZipDecoder().decodeBytes(bytes);
+      final content = archive.findFile('content.xml');
+      if (content != null && archive.findFile('mimetype') != null) return ods(content);
+      return xlsx(bytes);
+    }
     if (CompoundFile.looksLike(bytes)) return XlsReader.read(bytes);
     if (lower.endsWith('.xls') && XlsReader.looksBare(bytes)) return XlsReader.readBare(bytes);
     if (TextFormats.isHtml(bytes)) {
@@ -174,6 +180,131 @@ class TableData {
         ),
       );
     }
+    return sheets;
+  }
+
+  /// Semua lembar `.ods` (LibreOffice Calc), dibaca mengalir dari
+  /// `content.xml` seperti lembar xlsx.
+  ///
+  /// Calc menulis baris dan kolom kosong di ujung lembar sebagai satu baris
+  /// yang "diulang" sampai sejuta kali; yang kosong di ujung dibuang, dan
+  /// pengulangan kosong di tengah baru dibentangkan bila diikuti isi.
+  static List<TableSheet> ods(ArchiveFile content) {
+    final sheets = <TableSheet>[];
+    String? sheetName;
+    var rows = <List<String>>[];
+    var pendingRows = 0;
+    var rowRepeat = 1;
+    List<String>? cells;
+    var pendingCells = 0;
+    var cellRepeat = 1;
+    StringBuffer? cell;
+    var paragraphs = 0;
+    var inParagraph = false;
+    var tableDepth = 0;
+    var skip = 0;
+
+    void endCell() {
+      final row = cells;
+      final text = cell?.toString() ?? '';
+      cell = null;
+      if (row == null) return;
+      if (text.isEmpty) {
+        pendingCells += cellRepeat;
+        return;
+      }
+      for (var i = 0; i < pendingCells && row.length < 16384; i++) {
+        row.add('');
+      }
+      pendingCells = 0;
+      for (var i = 0; i < cellRepeat && row.length < 16384; i++) {
+        row.add(text);
+      }
+    }
+
+    void endRow() {
+      final row = cells ?? <String>[];
+      cells = null;
+      if (row.isEmpty) {
+        pendingRows += rowRepeat;
+        return;
+      }
+      for (var i = 0; i < pendingRows && rows.length < maxRows; i++) {
+        rows.add(const <String>[]);
+      }
+      pendingRows = 0;
+      for (var i = 0; i < rowRepeat && rows.length < maxRows; i++) {
+        rows.add(row);
+      }
+    }
+
+    _streamXml(content, (events) {
+      for (final event in events) {
+        if (event is XmlStartElementEvent) {
+          final name = _local(event.name);
+          if (skip > 0) {
+            if (!event.isSelfClosing) skip++;
+            continue;
+          }
+          switch (name) {
+            case 'table':
+              tableDepth++;
+              if (tableDepth == 1) {
+                sheetName = _attribute(event, 'name') ?? 'Lembar ${sheets.length + 1}';
+                rows = <List<String>>[];
+                pendingRows = 0;
+              }
+              if (event.isSelfClosing) tableDepth--;
+            case 'table-row' when tableDepth == 1:
+              rowRepeat = int.tryParse(_attribute(event, 'number-rows-repeated') ?? '') ?? 1;
+              cells = <String>[];
+              pendingCells = 0;
+              if (event.isSelfClosing) endRow();
+            case 'table-cell' || 'covered-table-cell' when tableDepth == 1 && cells != null:
+              cellRepeat = int.tryParse(_attribute(event, 'number-columns-repeated') ?? '') ?? 1;
+              cell = StringBuffer();
+              paragraphs = 0;
+              if (event.isSelfClosing) endCell();
+            case 'p' || 'h' when cell != null:
+              if (paragraphs++ > 0) cell!.write('\n');
+              inParagraph = !event.isSelfClosing;
+            case 's' when cell != null:
+              cell!.write(' ' * (int.tryParse(_attribute(event, 'c') ?? '') ?? 1));
+            case 'tab' when cell != null:
+              cell!.write('\t');
+            case 'line-break' when cell != null:
+              cell!.write('\n');
+            // Komentar sel tidak ikut isi selnya.
+            case 'annotation' || 'note-body':
+              if (!event.isSelfClosing) skip = 1;
+          }
+        } else if (event is XmlEndElementEvent) {
+          if (skip > 0) {
+            skip--;
+            continue;
+          }
+          switch (_local(event.name)) {
+            case 'table':
+              if (tableDepth == 1) {
+                sheets.add(
+                  TableSheet(name: sheetName ?? 'Lembar ${sheets.length + 1}', rows: rows),
+                );
+              }
+              tableDepth--;
+            case 'table-row' when tableDepth == 1:
+              endRow();
+            case 'table-cell' || 'covered-table-cell' when tableDepth == 1 && cells != null:
+              endCell();
+            case 'p' || 'h':
+              inParagraph = false;
+          }
+        } else if (skip == 0 && inParagraph && cell != null) {
+          if (event is XmlTextEvent) cell!.write(event.value);
+          if (event is XmlCDATAEvent) cell!.write(event.value);
+        }
+      }
+    }, () => false);
+    if (sheets.isEmpty) throw const FormatException('Bukan lembar kerja OpenDocument');
     return sheets;
   }
 

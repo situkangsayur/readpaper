@@ -4309,6 +4309,30 @@ abstract class AppLocalizations {
   /// **'Gagal membuat PDF: {error}'**
   String officePdfFailed(String error);
 
+  /// No description provided for @officeSaveOriginal.
+  ///
+  /// In id, this message translates to:
+  /// **'Simpan berkas asli…'**
+  String get officeSaveOriginal;
+
+  /// No description provided for @officeOriginalSaved.
+  ///
+  /// In id, this message translates to:
+  /// **'Berkas asli tersimpan.'**
+  String get officeOriginalSaved;
+
+  /// No description provided for @officeOriginalNotSaved.
+  ///
+  /// In id, this message translates to:
+  /// **'Berkas asli tidak disimpan.'**
+  String get officeOriginalNotSaved;
+
+  /// No description provided for @officeOriginalFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Gagal menyimpan berkas asli: {error}'**
+  String officeOriginalFailed(String error);
+
   /// No description provided for @presenterAudienceWaiting.
   ///
   /// In id, this message translates to:

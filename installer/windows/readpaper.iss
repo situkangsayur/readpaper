@@ -102,8 +102,8 @@ Name: "{autoprograms}\ReadPaper"; Filename: "{app}\readpaper.exe"
 Name: "{autodesktop}\ReadPaper"; Filename: "{app}\readpaper.exe"; Tasks: desktopicon
 
 [Registry]
-; "Buka dengan → ReadPaper" untuk PDF, EPUB, Word, PowerPoint, dan Excel, tanpa
-; merebut aplikasi bawaan.
+; "Buka dengan → ReadPaper" untuk PDF, EPUB, Word, PowerPoint, Excel, dan
+; OpenDocument, tanpa merebut aplikasi bawaan.
 Root: HKA; Subkey: "Software\Classes\Applications\readpaper.exe"; ValueType: string; ValueName: "FriendlyAppName"; ValueData: "ReadPaper"; Flags: uninsdeletekey; Tasks: openwith
 Root: HKA; Subkey: "Software\Classes\Applications\readpaper.exe\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\readpaper.exe"" ""%1"""; Flags: uninsdeletekey; Tasks: openwith
 Root: HKA; Subkey: "Software\Classes\.pdf\OpenWithList\readpaper.exe"; ValueType: none; Flags: uninsdeletekey; Tasks: openwith
@@ -117,6 +117,9 @@ Root: HKA; Subkey: "Software\Classes\.pps\OpenWithList\readpaper.exe"; ValueType
 Root: HKA; Subkey: "Software\Classes\.ppsx\OpenWithList\readpaper.exe"; ValueType: none; Flags: uninsdeletekey; Tasks: openwith
 Root: HKA; Subkey: "Software\Classes\.xls\OpenWithList\readpaper.exe"; ValueType: none; Flags: uninsdeletekey; Tasks: openwith
 Root: HKA; Subkey: "Software\Classes\.xlsx\OpenWithList\readpaper.exe"; ValueType: none; Flags: uninsdeletekey; Tasks: openwith
+Root: HKA; Subkey: "Software\Classes\.odt\OpenWithList\readpaper.exe"; ValueType: none; Flags: uninsdeletekey; Tasks: openwith
+Root: HKA; Subkey: "Software\Classes\.ods\OpenWithList\readpaper.exe"; ValueType: none; Flags: uninsdeletekey; Tasks: openwith
+Root: HKA; Subkey: "Software\Classes\.odp\OpenWithList\readpaper.exe"; ValueType: none; Flags: uninsdeletekey; Tasks: openwith
 
 [Run]
 Filename: "{app}\readpaper.exe"; Description: "{cm:RunApp}"; Flags: nowait postinstall skipifsilent
@@ -212,6 +215,9 @@ begin
   RegDeleteKeyIncludingSubkeys(Root, 'Software\Classes\.ppsx\OpenWithList\readpaper.exe');
   RegDeleteKeyIncludingSubkeys(Root, 'Software\Classes\.xls\OpenWithList\readpaper.exe');
   RegDeleteKeyIncludingSubkeys(Root, 'Software\Classes\.xlsx\OpenWithList\readpaper.exe');
+  RegDeleteKeyIncludingSubkeys(Root, 'Software\Classes\.odt\OpenWithList\readpaper.exe');
+  RegDeleteKeyIncludingSubkeys(Root, 'Software\Classes\.ods\OpenWithList\readpaper.exe');
+  RegDeleteKeyIncludingSubkeys(Root, 'Software\Classes\.odp\OpenWithList\readpaper.exe');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

@@ -6,7 +6,8 @@ import 'package:path/path.dart' as p;
 
 import '../../office/data/office_loader.dart';
 
-/// Berkas yang dibuka dari aplikasi lain: PDF, EPUB, Word, PowerPoint, Excel.
+/// Berkas yang dibuka dari aplikasi lain: PDF, EPUB, Word, PowerPoint, Excel,
+/// dan OpenDocument (LibreOffice).
 ///
 /// Android menyerahkan berkasnya sebagai `content://` URI yang hanya boleh
 /// dibaca selama Activity-nya hidup; sisi Android sudah menyalinnya ke cache,
@@ -22,7 +23,8 @@ class IncomingFile {
   static bool accepts(String path) {
     final ext = p.extension(path).toLowerCase();
     return const <String>{'.pdf', '.epub', '.xlsx', '.xlsm', '.xls', '.csv'}.contains(ext) ||
-        officeExtensions.contains(ext);
+        officeExtensions.contains(ext) ||
+        odfSheetExtensions.contains(ext);
   }
 
   /// Berkas dari baris perintah di desktop: argumen pertama yang menunjuk ke

@@ -245,9 +245,12 @@ class MainActivity : FlutterActivity() {
             "application/vnd.ms-excel" to ".xls",
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" to ".xlsx",
             "text/csv" to ".csv",
+            "application/vnd.oasis.opendocument.text" to ".odt",
+            "application/vnd.oasis.opendocument.spreadsheet" to ".ods",
+            "application/vnd.oasis.opendocument.presentation" to ".odp",
         )
 
         val KNOWN_EXTENSIONS = MIME_EXTENSIONS.values.toSet() +
-            setOf(".pps", ".dot", ".dotx", ".docm", ".pptm", ".potx", ".pot", ".xlsm", ".tsv")
+            setOf(".pps", ".dot", ".dotx", ".docm", ".pptm", ".potx", ".pot", ".xlsm", ".tsv", ".ott", ".ots", ".otp")
     }
 }

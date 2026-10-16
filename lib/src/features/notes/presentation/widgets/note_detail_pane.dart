@@ -168,9 +168,9 @@ IconData noteIcon(NoteItem note) => note.isNotebook
         '.pdf' => Icons.picture_as_pdf_outlined,
         '.md' || '.txt' => Icons.notes_outlined,
         '.png' || '.jpg' || '.jpeg' || '.webp' => Icons.image_outlined,
-        '.pptx' || '.ppt' => Icons.slideshow_outlined,
-        '.docx' || '.doc' => Icons.description_outlined,
-        '.xlsx' || '.xls' || '.csv' => Icons.table_chart_outlined,
+        '.pptx' || '.ppt' || '.odp' => Icons.slideshow_outlined,
+        '.docx' || '.doc' || '.odt' => Icons.description_outlined,
+        '.xlsx' || '.xls' || '.csv' || '.ods' => Icons.table_chart_outlined,
         _ => Icons.insert_drive_file_outlined,
       };
 

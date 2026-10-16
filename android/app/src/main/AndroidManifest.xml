@@ -64,8 +64,9 @@
                 <data android:scheme="file" android:host="*" android:pathPattern=".*\\.epub"/>
             </intent-filter>
 
-            <!-- Word, PowerPoint, dan Excel: dibaca di penampil ReadPaper sendiri,
-                 tanpa aplikasi Office. Tipe dulu, lalu akhiran. -->
+            <!-- Word, PowerPoint, Excel, dan OpenDocument (LibreOffice): dibaca di
+                 penampil ReadPaper sendiri, tanpa aplikasi Office. Tipe dulu, lalu
+                 akhiran. -->
             <intent-filter android:label="ReadPaper">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -88,6 +89,12 @@
                 <data android:scheme="file" android:mimeType="application/vnd.ms-excel"/>
                 <data android:scheme="content" android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
                 <data android:scheme="file" android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
+                <data android:scheme="content" android:mimeType="application/vnd.oasis.opendocument.text"/>
+                <data android:scheme="file" android:mimeType="application/vnd.oasis.opendocument.text"/>
+                <data android:scheme="content" android:mimeType="application/vnd.oasis.opendocument.spreadsheet"/>
+                <data android:scheme="file" android:mimeType="application/vnd.oasis.opendocument.spreadsheet"/>
+                <data android:scheme="content" android:mimeType="application/vnd.oasis.opendocument.presentation"/>
+                <data android:scheme="file" android:mimeType="application/vnd.oasis.opendocument.presentation"/>
             </intent-filter>
             <intent-filter android:label="ReadPaper">
                 <action android:name="android.intent.action.VIEW"/>
@@ -104,6 +111,9 @@
                 <data android:pathPattern=".*\\.ppsx"/>
                 <data android:pathPattern=".*\\.xls"/>
                 <data android:pathPattern=".*\\.xlsx"/>
+                <data android:pathPattern=".*\\.odt"/>
+                <data android:pathPattern=".*\\.ods"/>
+                <data android:pathPattern=".*\\.odp"/>
             </intent-filter>
 
             <!-- "Bagikan ke ReadPaper" dari aplikasi lain. -->
@@ -121,6 +131,9 @@
                 <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.slideshow"/>
                 <data android:mimeType="application/vnd.ms-excel"/>
                 <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
+                <data android:mimeType="application/vnd.oasis.opendocument.text"/>
+                <data android:mimeType="application/vnd.oasis.opendocument.spreadsheet"/>
+                <data android:mimeType="application/vnd.oasis.opendocument.presentation"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

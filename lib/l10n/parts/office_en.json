@@ -54,5 +54,16 @@
         "type": "String"
       }
     }
+  },
+  "officeSaveOriginal": "Save original file…",
+  "officeOriginalSaved": "Original file saved.",
+  "officeOriginalNotSaved": "Original file not saved.",
+  "officeOriginalFailed": "Could not save the original file: {error}",
+  "@officeOriginalFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }

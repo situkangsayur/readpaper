@@ -2490,6 +2490,20 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get officeSaveOriginal => 'Simpan berkas asli…';
+
+  @override
+  String get officeOriginalSaved => 'Berkas asli tersimpan.';
+
+  @override
+  String get officeOriginalNotSaved => 'Berkas asli tidak disimpan.';
+
+  @override
+  String officeOriginalFailed(String error) {
+    return 'Gagal menyimpan berkas asli: $error';
+  }
+
+  @override
   String get presenterAudienceWaiting => 'Menunggu presenter…';
 
   @override

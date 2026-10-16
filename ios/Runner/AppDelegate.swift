@@ -179,6 +179,7 @@ final class BerkasMasuk: NSObject, FlutterPlugin, FlutterSceneLifeCycleDelegate 
 
   private static let knownExtensions: Set<String> = [
     "pdf", "epub", "doc", "docx", "rtf", "ppt", "pptx", "pps", "ppsx", "xls", "xlsx", "csv",
+    "odt", "ods", "odp",
   ]
 
   private static let typeExtensions: [String: String] = [
@@ -190,6 +191,9 @@ final class BerkasMasuk: NSObject, FlutterPlugin, FlutterSceneLifeCycleDelegate 
     "org.openxmlformats.presentationml.presentation": ".pptx",
     "com.microsoft.excel.xls": ".xls",
     "org.openxmlformats.spreadsheetml.sheet": ".xlsx",
+    "org.oasis-open.opendocument.text": ".odt",
+    "org.oasis-open.opendocument.spreadsheet": ".ods",
+    "org.oasis-open.opendocument.presentation": ".odp",
   ]
 
   private func extensionFor(_ url: URL) -> String {

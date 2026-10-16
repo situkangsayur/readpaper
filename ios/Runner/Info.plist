@@ -50,6 +50,9 @@
 				<string>org.openxmlformats.presentationml.presentation</string>
 				<string>com.microsoft.excel.xls</string>
 				<string>org.openxmlformats.spreadsheetml.sheet</string>
+				<string>org.oasis-open.opendocument.text</string>
+				<string>org.oasis-open.opendocument.spreadsheet</string>
+				<string>org.oasis-open.opendocument.presentation</string>
 			</array>
 		</dict>
 	</array>

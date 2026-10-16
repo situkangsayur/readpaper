@@ -772,6 +772,17 @@
       }
     }
   },
+  "officeSaveOriginal": "Save original file…",
+  "officeOriginalSaved": "Original file saved.",
+  "officeOriginalNotSaved": "Original file not saved.",
+  "officeOriginalFailed": "Could not save the original file: {error}",
+  "@officeOriginalFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "presenterAudienceWaiting": "Waiting for the presenter…",
   "presenterSlideOf": "Slide {page} of {total}",
   "presenterResetTimer": "Elapsed time — tap to restart from zero",

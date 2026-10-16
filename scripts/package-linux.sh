@@ -102,7 +102,7 @@ Exec=readpaper %f
 Icon=com.situkangsayur.readpaper
 Terminal=false
 Categories=Office;Education;Science;Viewer;
-MimeType=application/pdf;application/epub+zip;application/msword;application/vnd.openxmlformats-officedocument.wordprocessingml.document;application/rtf;application/vnd.ms-powerpoint;application/vnd.openxmlformats-officedocument.presentationml.presentation;application/vnd.openxmlformats-officedocument.presentationml.slideshow;application/vnd.ms-excel;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;
+MimeType=application/pdf;application/epub+zip;application/msword;application/vnd.openxmlformats-officedocument.wordprocessingml.document;application/rtf;application/vnd.ms-powerpoint;application/vnd.openxmlformats-officedocument.presentationml.presentation;application/vnd.openxmlformats-officedocument.presentationml.slideshow;application/vnd.ms-excel;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;application/vnd.oasis.opendocument.text;application/vnd.oasis.opendocument.spreadsheet;application/vnd.oasis.opendocument.presentation;
 Keywords=zotero;paper;pdf;sitasi;anotasi;
 StartupWMClass=com.situkangsayur.readpaper
 DESKTOP

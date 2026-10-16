@@ -59,8 +59,8 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   masuk, ke Zotero sebagai item berlampiran atau ke Catatan sebagai catatan,
   sesuai tempat lepasnya. Koleksi bernama sama dipakai ulang, dan seluruh impor
   menjadi satu commit.
-- **Penampil gambar dan tabel.** CSV, TSV, dan Excel (.xlsx, juga .xls lama)
-  tampil sebagai tabel berlembar. Isinya yang menentukan, bukan akhirannya:
+- **Penampil gambar dan tabel.** CSV, TSV, Excel (.xlsx, juga .xls lama), dan
+  LibreOffice Calc (.ods) tampil sebagai tabel berlembar. Isinya yang menentukan, bukan akhirannya:
   ".xls" yang sebenarnya .xlsx atau HTML (ekspor banyak aplikasi web) tetap
   terbaca. Lembar raksasa (ratusan ribu baris) tetap terbuka dalam beberapa
   detik, juga di tablet: yang ditampilkan 5.000 baris pertama, dan sisanya
@@ -119,7 +119,10 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   menutup, **F3** maju. Di EPUB pencariannya meliputi seluruh buku dan pindah
   bab sendiri; di tabel meliputi semua lembar.
 - **Membaca Word dan PowerPoint** tanpa aplikasi Office, di semua platform
-  termasuk tablet: .docx, .doc, .rtf, .pptx, .ppt, .pps(x).
+  termasuk tablet: .docx, .doc, .rtf, .pptx, .ppt, .pps(x), dan padanan
+  OpenDocument dari LibreOffice — **.odt** (Writer), **.odp** (Impress), dan
+  **.ods** (Calc, di penampil tabel). .odt mengalir seperti Word, .odp per
+  slide di posisi aslinya dengan catatan pembicara.
   - **Word** tampil sebagai teks mengalir di atas lembar putih — judul, tebal,
     miring, warna, butir dan nomor, tabel, gambar, tautan — dengan tombol
     perbesar/perkecil teks. Bukan halaman persis.
@@ -145,9 +148,13 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   - **Simpan sebagai PDF…** untuk Word, PowerPoint, dan tabel (Excel, CSV).
     Word dan tabel ditulis sebagai teks sungguhan; tabel mendatar, satu
     lembar per bagian.
-  - ReadPaper muncul di **Buka dengan** untuk Word, PowerPoint, dan Excel
-    (Android, iOS, Linux, Windows); lampiran Word/PowerPoint di library dan
-    di Catatan dibuka di penampil ini.
+  - **Simpan berkas asli…** (ikon salinan berkas): menyimpan berkasnya apa
+    adanya — .docx tetap .docx, .ods tetap .ods — tanpa diubah ke PDF. Di
+    tablet dan ponsel ini jalan mengeluarkan berkas dari ReadPaper ke folder
+    Download atau aplikasi lain.
+  - ReadPaper muncul di **Buka dengan** untuk Word, PowerPoint, Excel, dan
+    OpenDocument (Android, iOS, Linux, Windows); lampiran Word/PowerPoint di
+    library dan di Catatan dibuka di penampil ini.
 - **Sub-koleksi catatan seperti folder**: membuka koleksi catatan
   menampilkan sub-koleksinya di paling atas (jumlah catatan dan
   sub-koleksinya), bisa diketuk untuk masuk, lalu berkas koleksi itu sendiri;

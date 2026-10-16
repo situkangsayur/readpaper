@@ -19,8 +19,9 @@ import '../data/office_loader.dart';
 import '../domain/office_document.dart';
 import 'offscreen_render.dart';
 
-/// Membaca dokumen Word (`.docx`, `.doc`, `.rtf`) dan PowerPoint (`.pptx`,
-/// `.ppt`) di dalam ReadPaper, di semua platform, tanpa aplikasi lain.
+/// Membaca dokumen Word (`.docx`, `.doc`, `.rtf`), PowerPoint (`.pptx`,
+/// `.ppt`), dan OpenDocument (`.odt`, `.odp`) di dalam ReadPaper, di semua
+/// platform, tanpa aplikasi lain.
 ///
 /// Word ditampilkan sebagai teks mengalir di atas lembar putih — judul,
 /// butir, tabel, dan gambar — bukan halaman persis; PowerPoint per slide di
@@ -340,6 +341,11 @@ class _OfficeViewerScreenState extends State<OfficeViewerScreen> {
           icon: const Icon(Icons.save_alt),
           onPressed: _converting ? null : _saveAsPdf,
         ),
+      IconButton(
+        tooltip: context.l10n.officeSaveOriginal,
+        icon: const Icon(Icons.file_copy_outlined),
+        onPressed: () => saveOriginalFile(context, widget.path),
+      ),
       if (canOpenWithSystem)
         IconButton(
           tooltip: context.l10n.filesOpenWithOtherApp,

@@ -12,7 +12,7 @@ import '../../domain/table_data.dart';
 import '../open_any_file.dart';
 import '../../../../core/l10n.dart';
 
-/// Menampilkan CSV, TSV, atau Excel (`.xlsx`, `.xls`) sebagai tabel, hanya
+/// Menampilkan CSV, TSV, Excel (`.xlsx`, `.xls`), atau Calc (`.ods`) sebagai tabel, hanya
 /// untuk dibaca, dan bisa dicari. Lembar-lembar Excel jadi tab; menyunting tetap di aplikasi
 /// spreadsheet lewat "Buka dengan aplikasi lain".
 class TableViewerScreen extends StatefulWidget {
@@ -127,6 +127,11 @@ class _TableViewerScreenState extends State<TableViewerScreen> {
             icon: const Icon(Icons.save_alt),
             onPressed: () => _saveAsPdf(sheets),
           ),
+        IconButton(
+          tooltip: context.l10n.officeSaveOriginal,
+          icon: const Icon(Icons.file_copy_outlined),
+          onPressed: () => saveOriginalFile(context, widget.path),
+        ),
         if (canOpenWithSystem)
           IconButton(
             tooltip: context.l10n.filesOpenWithOtherApp,

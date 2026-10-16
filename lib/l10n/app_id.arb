@@ -1789,6 +1789,17 @@
       }
     }
   },
+  "officeSaveOriginal": "Simpan berkas asli…",
+  "officeOriginalSaved": "Berkas asli tersimpan.",
+  "officeOriginalNotSaved": "Berkas asli tidak disimpan.",
+  "officeOriginalFailed": "Gagal menyimpan berkas asli: {error}",
+  "@officeOriginalFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "presenterAudienceWaiting": "Menunggu presenter…",
   "presenterSlideOf": "Slide {page} dari {total}",
   "presenterResetTimer": "Waktu berjalan — ketuk untuk mengulang dari nol",

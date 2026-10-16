@@ -2648,6 +2648,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get officeSaveOriginal => 'Save original file…';
+
+  @override
+  String get officeOriginalSaved => 'Original file saved.';
+
+  @override
+  String get officeOriginalNotSaved => 'Original file not saved.';
+
+  @override
+  String officeOriginalFailed(String error) {
+    return 'Could not save the original file: $error';
+  }
+
+  @override
   String get presenterAudienceWaiting => 'Waiting for the presenter…';
 
   @override

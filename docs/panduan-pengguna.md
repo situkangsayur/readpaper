@@ -393,11 +393,18 @@ bawaannya. Di koleksi catatan, setiap berkas menjadi catatan.
 ### Membuka berkas selain PDF
 
 PDF dan EPUB dibuka di pembacanya. **Gambar** dibuka di penampil yang bisa
-diperbesar. **CSV, TSV, dan Excel (.xlsx)** dibuka sebagai tabel, dengan tab
-untuk tiap lembar. Isinya hanya untuk dibaca: rumus menampilkan nilai terakhir
-yang disimpan Excel, dan tabel lebih dari 5000 baris dipotong. Jenis lain
-(Word, PowerPoint, zip, dan sebagainya) dibuka dengan aplikasi bawaan sistem di
-Linux dan Windows lewat tombol **Buka**.
+diperbesar. **CSV, TSV, Excel (.xlsx, .xls), dan Calc (.ods)** dibuka sebagai
+tabel, dengan tab untuk tiap lembar. Isinya hanya untuk dibaca: rumus
+menampilkan nilai terakhir yang disimpan, dan tabel lebih dari 5000 baris
+dipotong. **Word (.docx, .doc), PowerPoint (.pptx, .ppt), Writer (.odt), dan
+Impress (.odp)** dibuka di penampil dokumen ReadPaper sendiri. Jenis lain (zip
+dan sebagainya) dibuka dengan aplikasi bawaan sistem di Linux dan Windows lewat
+tombol **Buka**.
+
+Di penampil dokumen dan tabel ada dua cara menyimpan: **Simpan sebagai PDF…**
+(ikon unduh) mengubahnya ke PDF, sedangkan **Simpan berkas asli…** (ikon
+salinan berkas) menyimpan berkasnya apa adanya, tetap .docx, .xlsx, .pptx,
+.odt, dan seterusnya.
 
 ### Menghapus koleksi
 

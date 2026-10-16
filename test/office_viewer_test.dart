@@ -30,6 +30,9 @@ void main() {
     expect(fileKindOf('a.ppt'), FileKind.office);
     expect(fileKindOf('a.rtf'), FileKind.office);
     expect(fileKindOf('a.xls'), FileKind.table);
+    expect(fileKindOf('a.odt'), FileKind.office);
+    expect(fileKindOf('a.ODP'), FileKind.office);
+    expect(fileKindOf('a.ods'), FileKind.table);
     expect(canOpenInApp('a.zip'), isFalse);
   });
 

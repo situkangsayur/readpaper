@@ -54,5 +54,16 @@
         "type": "String"
       }
     }
+  },
+  "officeSaveOriginal": "Simpan berkas asli…",
+  "officeOriginalSaved": "Berkas asli tersimpan.",
+  "officeOriginalNotSaved": "Berkas asli tidak disimpan.",
+  "officeOriginalFailed": "Gagal menyimpan berkas asli: {error}",
+  "@officeOriginalFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   }
 }
