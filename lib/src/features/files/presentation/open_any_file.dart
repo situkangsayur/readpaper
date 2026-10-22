@@ -11,6 +11,7 @@ import '../../notes/presentation/screens/image_viewer_screen.dart';
 import '../../office/data/office_loader.dart';
 import '../../office/presentation/office_viewer_screen.dart';
 import '../../reader/presentation/screens/reader_screen.dart';
+import '../../tabs/presentation/document_tabs.dart';
 import 'screens/table_viewer_screen.dart';
 import '../../../core/l10n.dart';
 
@@ -25,6 +26,19 @@ FileKind fileKindOf(String path) => switch (p.extension(path).toLowerCase()) {
   final ext when odfSheetExtensions.contains(ext) => FileKind.table,
   final ext when officeExtensions.contains(ext) => FileKind.office,
   _ => FileKind.other,
+};
+
+/// Ikon tab untuk berkas [path].
+IconData iconForPath(String path) => switch (fileKindOf(path)) {
+  FileKind.pdf => Icons.picture_as_pdf_outlined,
+  FileKind.epub => Icons.menu_book_outlined,
+  FileKind.image => Icons.image_outlined,
+  FileKind.table => Icons.table_chart_outlined,
+  FileKind.office => Icons.article_outlined,
+  FileKind.other => switch (p.extension(path).toLowerCase()) {
+    '.md' => Icons.notes_outlined,
+    _ => Icons.description_outlined,
+  },
 };
 
 /// Berkas yang bisa dibuka di dalam ReadPaper sendiri.
@@ -53,7 +67,13 @@ Future<void> openAnyFile(BuildContext context, String path, {String? title}) asy
     FileKind.other => null,
   };
   if (screen != null) {
-    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
+    await openDocument<void>(
+      context,
+      screen,
+      title: name,
+      icon: iconForPath(path),
+      dedupeKey: path,
+    );
     return;
   }
   await openWithSystem(context, path);
@@ -116,5 +136,51 @@ Future<void> saveOriginalFile(BuildContext context, String path) async {
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(l10n.officeOriginalFailed('$e'))));
+  }
+}
+
+/// Satu tombol unduh untuk penampil Word, PowerPoint, dan tabel: berkas
+/// aslinya lebih dulu, PDF sesudahnya.
+///
+/// Dulu keduanya tombol terpisah, dan yang berikon "unduh" justru membuat
+/// PDF — yang butuh `.docx` atau `.xlsx`-nya mendapat PDF. Di ponsel tombol
+/// berkas asli malah terdorong keluar bilah.
+class DownloadFileButton extends StatelessWidget {
+  const DownloadFileButton({required this.path, this.onSavePdf, super.key});
+
+  final String path;
+
+  /// Null bila PDF belum bisa dibuat (dokumennya belum terbaca).
+  final VoidCallback? onSavePdf;
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = p.extension(path).toLowerCase();
+    return PopupMenuButton<bool>(
+      tooltip: context.l10n.officeDownload,
+      icon: const Icon(Icons.save_alt),
+      onSelected: (pdf) => pdf ? onSavePdf?.call() : saveOriginalFile(context, path),
+      itemBuilder: (_) => <PopupMenuEntry<bool>>[
+        PopupMenuItem<bool>(
+          value: false,
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.file_copy_outlined),
+            title: Text(context.l10n.officeDownloadOriginal(ext.isEmpty ? p.basename(path) : ext)),
+          ),
+        ),
+        if (onSavePdf != null && ext != '.pdf')
+          PopupMenuItem<bool>(
+            value: true,
+            child: ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.picture_as_pdf_outlined),
+              title: Text(context.l10n.officeDownloadPdf),
+            ),
+          ),
+      ],
+    );
   }
 }

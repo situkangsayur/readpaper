@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/utils/formatting.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
+import '../../data/pdf_embedded_annotations.dart';
 import '../../../../core/l10n.dart';
 
 /// The list of markers and comments next to the page view.
@@ -69,6 +70,8 @@ class _AnnotationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final color = colorFromHex(annotation.color);
+    // Tertanam di PDF (aplikasi lain): dibaca saja, seperti di Zotero.
+    final embedded = PdfEmbeddedAnnotations.isEmbedded(annotation);
 
     return InkWell(
       onTap: onTap,
@@ -100,6 +103,24 @@ class _AnnotationCard extends StatelessWidget {
                         ),
                         style: Theme.of(context).textTheme.labelSmall,
                       ),
+                      if (embedded) ...<Widget>[
+                        const SizedBox(width: 6),
+                        Icon(Icons.lock_outline, size: 12, color: scheme.onSurfaceVariant),
+                        const SizedBox(width: 2),
+                        Flexible(
+                          child: Text(
+                            <String>[
+                              if (annotation.authorName.isNotEmpty) annotation.authorName,
+                              context.l10n.readerEmbeddedLabel,
+                            ].join(' · '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   if (annotation.text.trim().isNotEmpty) ...<Widget>[
@@ -131,23 +152,24 @@ class _AnnotationCard extends StatelessWidget {
             ),
             // Sasaran jari, bukan sasaran tetikus: 16 piksel terlalu kecil
             // untuk ditekan di tablet tanpa meleset ke kartu di sebelahnya.
-            Column(
-              children: <Widget>[
-                IconButton(
-                  iconSize: 22,
-                  tooltip: context.l10n.readerEditCommentColor,
-                  icon: const Icon(Icons.edit_note),
-                  onPressed: onEdit,
-                ),
-                IconButton(
-                  iconSize: 22,
-                  tooltip: context.l10n.readerDelete,
-                  color: Theme.of(context).colorScheme.error,
-                  icon: const Icon(Icons.delete_outline),
-                  onPressed: onDelete,
-                ),
-              ],
-            ),
+            if (!embedded)
+              Column(
+                children: <Widget>[
+                  IconButton(
+                    iconSize: 22,
+                    tooltip: context.l10n.readerEditCommentColor,
+                    icon: const Icon(Icons.edit_note),
+                    onPressed: onEdit,
+                  ),
+                  IconButton(
+                    iconSize: 22,
+                    tooltip: context.l10n.readerDelete,
+                    color: Theme.of(context).colorScheme.error,
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: onDelete,
+                  ),
+                ],
+              ),
           ],
         ),
       ),

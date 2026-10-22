@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../l10n.dart';
+import 'frame_guard.dart';
 
 /// Pemilih berkas dan folder yang tidak pernah gagal diam-diam.
 ///
@@ -28,6 +29,28 @@ class FilePick {
     bool multiple = true,
   }) async {
     final allowed = extensions == null ? null : _bothCases(extensions);
+    // Dialognya bisa meninggalkan jendela dalam keadaan "tersembunyi"; lihat
+    // [FrameGuard].
+    try {
+      return await _files(
+        allowed,
+        title: title,
+        extensions: extensions,
+        type: type,
+        multiple: multiple,
+      );
+    } finally {
+      FrameGuard.kick();
+    }
+  }
+
+  static Future<List<String>> _files(
+    List<String>? allowed, {
+    String? title,
+    List<String>? extensions,
+    FileType type = FileType.any,
+    bool multiple = true,
+  }) async {
     try {
       final picked = await FilePicker.pickFiles(
         dialogTitle: title,
@@ -67,6 +90,8 @@ class FilePick {
       final fallback = await _linuxDirectory(title: title);
       if (fallback != null) return fallback.isEmpty ? null : fallback;
       throw FilePickFailure(_linuxHelp(error));
+    } finally {
+      FrameGuard.kick();
     }
   }
 

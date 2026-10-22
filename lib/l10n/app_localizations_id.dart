@@ -2504,6 +2504,17 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get officeDownload => 'Unduh…';
+
+  @override
+  String officeDownloadOriginal(String ext) {
+    return 'Berkas asli ($ext)';
+  }
+
+  @override
+  String get officeDownloadPdf => 'Sebagai PDF';
+
+  @override
   String get presenterAudienceWaiting => 'Menunggu presenter…';
 
   @override
@@ -3600,6 +3611,32 @@ class AppLocalizationsId extends AppLocalizations {
   String readerErrPageSize(String size) {
     return 'Ukuran halaman tidak masuk akal: $size';
   }
+
+  @override
+  String get readerEmbeddedLabel => 'Di dalam PDF · hanya dibaca';
+
+  @override
+  String get readerEmbeddedReadOnly =>
+      'Anotasi ini tertanam di dalam PDF (dibuat di aplikasi lain); di sini hanya bisa dibaca.';
+
+  @override
+  String get tabsLibrary => 'Library';
+
+  @override
+  String get tabsClose => 'Tutup tab';
+
+  @override
+  String get tabsCloseOthers => 'Tutup tab lain';
+
+  @override
+  String get tabsMoveRight => 'Pindah ke panel kanan';
+
+  @override
+  String get tabsMoveLeft => 'Pindah ke panel kiri';
+
+  @override
+  String get tabsSplitHint =>
+      'Seret tab ke sini, atau pilih \"Pindah ke panel kanan\", untuk membaca dua dokumen berdampingan';
 
   @override
   String workspaceSwitchRepoCount(int count) {

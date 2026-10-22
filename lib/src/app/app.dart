@@ -4,8 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/l10n.dart';
 
 import '../core/constants/app_constants.dart';
+import '../core/utils/frame_guard.dart';
+import '../features/notes/presentation/controllers/notes_controller.dart';
 import '../features/citation/presentation/controllers/citation_server_controller.dart';
 import '../features/workspace/presentation/controllers/workspace_controller.dart';
+import '../features/tabs/presentation/document_tabs.dart';
 import '../features/workspace/presentation/screens/home_screen.dart';
 import 'theme.dart';
 
@@ -27,6 +30,11 @@ class ReadPaperApp extends ConsumerWidget {
     if (CitationServerController.isDesktop) {
       ref.listen(citationServerProvider, (_, _) {});
     }
+    // Library dan catatan yang berubah harus tampil, juga bila mesinnya
+    // sedang menganggap jendela tersembunyi; lihat [FrameGuard].
+    FrameGuard.install();
+    ref.listen(workspaceControllerProvider, (_, _) => FrameGuard.kick());
+    ref.listen(notesControllerProvider, (_, _) => FrameGuard.kick());
 
     return MaterialApp(
       title: AppConstants.appName,
@@ -54,7 +62,8 @@ class ReadPaperApp extends ConsumerWidget {
         setCurrentL10n(AppLocalizations.of(context));
         return child ?? const SizedBox.shrink();
       },
-      home: const HomeScreen(),
+      // Library jadi tab pertama; dokumen yang dibuka jadi tab di sebelahnya.
+      home: const DocumentTabsHost(library: HomeScreen()),
     );
   }
 }

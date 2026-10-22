@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../reader/presentation/screens/reader_screen.dart';
+import '../../../tabs/presentation/document_tabs.dart';
 import '../../domain/entities/zotero_item.dart';
 import '../../../../shared/widgets/tree_drag.dart';
 import '../controllers/library_controllers.dart';
@@ -53,26 +54,28 @@ class ItemListPane extends ConsumerWidget {
                       final noteKey = entry.itemFilePath.isEmpty
                           ? NotesStore.noteKeyForFile(entry.filePath)
                           : null;
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => ReaderScreen(
-                            itemKey: entry.itemKey,
-                            itemFilePath: entry.itemFilePath,
-                            attachmentKey: entry.attachmentKey,
-                            filePath: entry.filePath,
-                            title: entry.title,
-                            subtitle: entry.subtitle,
-                            annotationsFile: noteKey == null
-                                ? null
-                                : NotesStore.annotationsFileFor(entry.filePath),
-                            onAnnotationsChanged: noteKey == null
-                                ? null
-                                : (message) => ref
-                                      .read(notesControllerProvider.notifier)
-                                      .touch(itemKey: noteKey, message: message)
-                                      .then((_) {}),
-                          ),
+                      openDocument<void>(
+                        context,
+                        ReaderScreen(
+                          itemKey: entry.itemKey,
+                          itemFilePath: entry.itemFilePath,
+                          attachmentKey: entry.attachmentKey,
+                          filePath: entry.filePath,
+                          title: entry.title,
+                          subtitle: entry.subtitle,
+                          annotationsFile: noteKey == null
+                              ? null
+                              : NotesStore.annotationsFileFor(entry.filePath),
+                          onAnnotationsChanged: noteKey == null
+                              ? null
+                              : (message) => ref
+                                    .read(notesControllerProvider.notifier)
+                                    .touch(itemKey: noteKey, message: message)
+                                    .then((_) {}),
                         ),
+                        title: entry.title,
+                        icon: iconForPath(entry.filePath),
+                        dedupeKey: entry.filePath,
                       );
                     },
                   ),

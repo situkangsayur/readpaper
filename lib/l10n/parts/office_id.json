@@ -65,5 +65,15 @@
         "type": "String"
       }
     }
-  }
+  },
+  "officeDownload": "Unduh…",
+  "officeDownloadOriginal": "Berkas asli ({ext})",
+  "@officeDownloadOriginal": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "officeDownloadPdf": "Sebagai PDF"
 }

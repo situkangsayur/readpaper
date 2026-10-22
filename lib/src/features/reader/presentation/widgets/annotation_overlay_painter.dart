@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/utils/formatting.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
 import '../../data/page_picture.dart';
+import '../../data/pdf_embedded_annotations.dart';
 
 /// Paints the markers of one page over the rendered PDF page.
 ///
@@ -38,6 +39,23 @@ class AnnotationOverlayPainter extends CustomPainter {
     for (final annotation in annotations) {
       final color = colorFromHex(annotation.color);
       final isSelected = annotation.key == selectedKey;
+
+      // Anotasi yang tertanam di PDF sudah digambar pdfium dengan tampilan
+      // aslinya; menggambarnya lagi hanya menggandakannya. Yang terpilih
+      // diberi bingkai supaya kelihatan mana yang sedang dibaca.
+      if (PdfEmbeddedAnnotations.isEmbedded(annotation)) {
+        final bounds = isSelected ? _boundsOf(annotation, scaleX, scaleY) : null;
+        if (bounds != null) {
+          canvas.drawRRect(
+            RRect.fromRectAndRadius(bounds.inflate(2), const Radius.circular(3)),
+            Paint()
+              ..color = color
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.5,
+          );
+        }
+        continue;
+      }
 
       switch (annotation.type) {
         case AnnotationType.highlight:

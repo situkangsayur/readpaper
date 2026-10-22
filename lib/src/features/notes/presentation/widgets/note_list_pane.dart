@@ -19,6 +19,7 @@ import '../../../epub/presentation/epub_reader_screen.dart';
 import '../../../notebook/presentation/share_note.dart';
 import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
+import '../../../tabs/presentation/document_tabs.dart';
 import '../../domain/note_entities.dart';
 import '../controllers/notes_controller.dart';
 import '../../../files/presentation/open_any_file.dart';
@@ -380,10 +381,12 @@ Future<void> _newNotebook(BuildContext context, WidgetRef ref, LibrarySelection 
   final index = ref.read(notesControllerProvider).value ?? NotesIndex.empty;
   final note = index.items.firstWhereOrNull((item) => item.key == key);
   if (note == null) return;
-  await Navigator.of(context).push(
-    MaterialPageRoute<String>(
-      builder: (_) => NotebookScreen(path: p.join(index.directory, note.file), title: note.title),
-    ),
+  await openDocument<String>(
+    context,
+    NotebookScreen(path: p.join(index.directory, note.file), title: note.title),
+    title: note.title,
+    icon: Icons.edit_note,
+    dedupeKey: p.join(index.directory, note.file),
   );
   await controller.touch(itemKey: key, message: 'Ubah catatan: ${note.title}');
 }
@@ -425,14 +428,16 @@ Future<void> _newMarkdown(BuildContext context, WidgetRef ref, LibrarySelection 
   final index = ref.read(notesControllerProvider).value ?? NotesIndex.empty;
   final note = index.items.firstWhereOrNull((item) => item.key == key);
   if (note == null) return;
-  await Navigator.of(context).push(
-    MaterialPageRoute<String>(
-      builder: (_) => MarkdownEditorScreen(
-        path: p.join(index.directory, note.file),
-        title: note.title,
-        startInEdit: true,
-      ),
+  await openDocument<String>(
+    context,
+    MarkdownEditorScreen(
+      path: p.join(index.directory, note.file),
+      title: note.title,
+      startInEdit: true,
     ),
+    title: note.title,
+    icon: Icons.notes_outlined,
+    dedupeKey: p.join(index.directory, note.file),
   );
   // Isinya berubah di luar store, jadi commit-nya dilakukan di sini.
   await controller.touch(itemKey: key, message: 'Ubah catatan: ${note.title}');
@@ -442,10 +447,12 @@ Future<void> _newMarkdown(BuildContext context, WidgetRef ref, LibrarySelection 
 Future<void> openNote(BuildContext context, WidgetRef ref, NoteItem note, NotesIndex index) async {
   final path = p.join(index.directory, note.file);
   if (note.isNotebook) {
-    await Navigator.of(context).push(
-      MaterialPageRoute<String>(
-        builder: (_) => NotebookScreen(path: path, title: note.title),
-      ),
+    await openDocument<String>(
+      context,
+      NotebookScreen(path: path, title: note.title),
+      title: note.title,
+      icon: Icons.edit_note,
+      dedupeKey: path,
     );
     await ref
         .read(notesControllerProvider.notifier)
@@ -453,10 +460,12 @@ Future<void> openNote(BuildContext context, WidgetRef ref, NoteItem note, NotesI
     return;
   }
   if (note.isMarkdown) {
-    await Navigator.of(context).push(
-      MaterialPageRoute<String>(
-        builder: (_) => MarkdownEditorScreen(path: path, title: note.title),
-      ),
+    await openDocument<String>(
+      context,
+      MarkdownEditorScreen(path: path, title: note.title),
+      title: note.title,
+      icon: Icons.notes_outlined,
+      dedupeKey: path,
     );
     // Penyuntingnya sudah menulis berkasnya; yang tersisa adalah mencatat
     // perubahannya ke git, sama seperti perubahan catatan yang lain.
@@ -466,41 +475,47 @@ Future<void> openNote(BuildContext context, WidgetRef ref, NoteItem note, NotesI
     return;
   }
   if (const <String>{'.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'}.contains(note.extension)) {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ImageViewerScreen(path: path, title: note.title),
-      ),
+    await openDocument<void>(
+      context,
+      ImageViewerScreen(path: path, title: note.title),
+      title: note.title,
+      icon: Icons.image_outlined,
+      dedupeKey: path,
     );
     return;
   }
   if (note.extension == '.epub') {
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => EpubReaderScreen(path: path, title: note.title),
-      ),
+    await openDocument<void>(
+      context,
+      EpubReaderScreen(path: path, title: note.title),
+      title: note.title,
+      icon: Icons.menu_book_outlined,
+      dedupeKey: path,
     );
     return;
   }
   if (note.isPdf) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ReaderScreen(
-          itemKey: '',
-          itemFilePath: '',
-          attachmentKey: '',
-          filePath: path,
-          title: note.title,
-          // Anotasi PDF catatan tersimpan seketika di folder catatannya dan
-          // menunggu Kirim seperti perubahan lain — bukan coretan yang
-          // menuntut "Simpan sebagai".
-          annotationsFile: NotesStore.annotationsFileFor(path),
-          onAnnotationsChanged: (message) async {
-            await ref
-                .read(notesControllerProvider.notifier)
-                .touch(itemKey: note.key, message: message);
-          },
-        ),
+    openDocument<void>(
+      context,
+      ReaderScreen(
+        itemKey: '',
+        itemFilePath: '',
+        attachmentKey: '',
+        filePath: path,
+        title: note.title,
+        // Anotasi PDF catatan tersimpan seketika di folder catatannya dan
+        // menunggu Kirim seperti perubahan lain — bukan coretan yang
+        // menuntut "Simpan sebagai".
+        annotationsFile: NotesStore.annotationsFileFor(path),
+        onAnnotationsChanged: (message) async {
+          await ref
+              .read(notesControllerProvider.notifier)
+              .touch(itemKey: note.key, message: message);
+        },
       ),
+      title: note.title,
+      icon: Icons.picture_as_pdf_outlined,
+      dedupeKey: path,
     );
     return;
   }

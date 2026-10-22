@@ -1,0 +1,8 @@
+{
+  "tabsLibrary": "Library",
+  "tabsClose": "Close tab",
+  "tabsCloseOthers": "Close other tabs",
+  "tabsMoveRight": "Move to right pane",
+  "tabsMoveLeft": "Move to left pane",
+  "tabsSplitHint": "Drag a tab here, or choose \"Move to right pane\", to read two documents side by side"
+}

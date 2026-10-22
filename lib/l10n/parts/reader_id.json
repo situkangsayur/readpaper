@@ -795,5 +795,7 @@
         "type": "String"
       }
     }
-  }
+  },
+  "readerEmbeddedLabel": "Di dalam PDF · hanya dibaca",
+  "readerEmbeddedReadOnly": "Anotasi ini tertanam di dalam PDF (dibuat di aplikasi lain); di sini hanya bisa dibaca."
 }

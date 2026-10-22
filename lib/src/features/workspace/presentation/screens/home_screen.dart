@@ -13,6 +13,7 @@ import '../../../files/data/incoming_file.dart';
 import '../../../files/presentation/file_browser_pane.dart';
 import '../../../files/presentation/open_any_file.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
+import '../../../tabs/presentation/document_tabs.dart';
 import '../../../library/presentation/widgets/collection_tree_pane.dart';
 import '../../../library/presentation/widgets/item_detail_pane.dart';
 import '../../../library/presentation/widgets/item_list_pane.dart';
@@ -62,16 +63,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       openAnyFile(context, path);
       return;
     }
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ReaderScreen(
-          itemKey: '',
-          itemFilePath: '',
-          attachmentKey: '',
-          filePath: path,
-          title: p.basenameWithoutExtension(path),
-        ),
+    openDocument<void>(
+      context,
+      ReaderScreen(
+        itemKey: '',
+        itemFilePath: '',
+        attachmentKey: '',
+        filePath: path,
+        title: p.basenameWithoutExtension(path),
       ),
+      title: p.basenameWithoutExtension(path),
+      icon: iconForPath(path),
+      dedupeKey: path,
     );
   }
 

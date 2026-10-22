@@ -2662,6 +2662,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get officeDownload => 'Download…';
+
+  @override
+  String officeDownloadOriginal(String ext) {
+    return 'Original file ($ext)';
+  }
+
+  @override
+  String get officeDownloadPdf => 'As PDF';
+
+  @override
   String get presenterAudienceWaiting => 'Waiting for the presenter…';
 
   @override
@@ -3814,6 +3825,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String readerErrPageSize(String size) {
     return 'Unreasonable page size: $size';
   }
+
+  @override
+  String get readerEmbeddedLabel => 'In the PDF · read-only';
+
+  @override
+  String get readerEmbeddedReadOnly =>
+      'This annotation is embedded in the PDF (made in another app); it can only be read here.';
+
+  @override
+  String get tabsLibrary => 'Library';
+
+  @override
+  String get tabsClose => 'Close tab';
+
+  @override
+  String get tabsCloseOthers => 'Close other tabs';
+
+  @override
+  String get tabsMoveRight => 'Move to right pane';
+
+  @override
+  String get tabsMoveLeft => 'Move to left pane';
+
+  @override
+  String get tabsSplitHint =>
+      'Drag a tab here, or choose \"Move to right pane\", to read two documents side by side';
 
   @override
   String workspaceSwitchRepoCount(int count) {

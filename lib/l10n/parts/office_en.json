@@ -65,5 +65,15 @@
         "type": "String"
       }
     }
-  }
+  },
+  "officeDownload": "Download…",
+  "officeDownloadOriginal": "Original file ({ext})",
+  "@officeDownloadOriginal": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "officeDownloadPdf": "As PDF"
 }

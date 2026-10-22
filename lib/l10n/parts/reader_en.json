@@ -278,5 +278,7 @@
   "readerSaveAsExplain": "The open file is not touched. After this, Save writes to this new file.",
   "readerOutsideZoteroPalette": "{name} (outside Zotero's palette)",
   "readerErrCannotRead": "Cannot be read: {path}",
-  "readerErrPageSize": "Unreasonable page size: {size}"
+  "readerErrPageSize": "Unreasonable page size: {size}",
+  "readerEmbeddedLabel": "In the PDF · read-only",
+  "readerEmbeddedReadOnly": "This annotation is embedded in the PDF (made in another app); it can only be read here."
 }

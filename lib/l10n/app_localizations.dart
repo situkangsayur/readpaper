@@ -4333,6 +4333,24 @@ abstract class AppLocalizations {
   /// **'Gagal menyimpan berkas asli: {error}'**
   String officeOriginalFailed(String error);
 
+  /// No description provided for @officeDownload.
+  ///
+  /// In id, this message translates to:
+  /// **'Unduh…'**
+  String get officeDownload;
+
+  /// No description provided for @officeDownloadOriginal.
+  ///
+  /// In id, this message translates to:
+  /// **'Berkas asli ({ext})'**
+  String officeDownloadOriginal(String ext);
+
+  /// No description provided for @officeDownloadPdf.
+  ///
+  /// In id, this message translates to:
+  /// **'Sebagai PDF'**
+  String get officeDownloadPdf;
+
   /// No description provided for @presenterAudienceWaiting.
   ///
   /// In id, this message translates to:
@@ -6138,6 +6156,54 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Ukuran halaman tidak masuk akal: {size}'**
   String readerErrPageSize(String size);
+
+  /// No description provided for @readerEmbeddedLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Di dalam PDF · hanya dibaca'**
+  String get readerEmbeddedLabel;
+
+  /// No description provided for @readerEmbeddedReadOnly.
+  ///
+  /// In id, this message translates to:
+  /// **'Anotasi ini tertanam di dalam PDF (dibuat di aplikasi lain); di sini hanya bisa dibaca.'**
+  String get readerEmbeddedReadOnly;
+
+  /// No description provided for @tabsLibrary.
+  ///
+  /// In id, this message translates to:
+  /// **'Library'**
+  String get tabsLibrary;
+
+  /// No description provided for @tabsClose.
+  ///
+  /// In id, this message translates to:
+  /// **'Tutup tab'**
+  String get tabsClose;
+
+  /// No description provided for @tabsCloseOthers.
+  ///
+  /// In id, this message translates to:
+  /// **'Tutup tab lain'**
+  String get tabsCloseOthers;
+
+  /// No description provided for @tabsMoveRight.
+  ///
+  /// In id, this message translates to:
+  /// **'Pindah ke panel kanan'**
+  String get tabsMoveRight;
+
+  /// No description provided for @tabsMoveLeft.
+  ///
+  /// In id, this message translates to:
+  /// **'Pindah ke panel kiri'**
+  String get tabsMoveLeft;
+
+  /// No description provided for @tabsSplitHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Seret tab ke sini, atau pilih \"Pindah ke panel kanan\", untuk membaca dua dokumen berdampingan'**
+  String get tabsSplitHint;
 
   /// No description provided for @workspaceSwitchRepoCount.
   ///

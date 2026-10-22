@@ -147,14 +147,20 @@ void main() {
     await audienceShows(tester, (s) => s['pointerPage'] == 2, 'penunjuk');
     await shot(tester, 'p3-penunjuk');
     // SnackBar "coretan disimpan" masih menutupi bilah bawah.
-    tester.state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger).first).clearSnackBars();
+    // Setiap tab punya ScaffoldMessenger sendiri; pesannya bisa di mana saja.
+    for (final m in tester.stateList<ScaffoldMessengerState>(find.byType(ScaffoldMessenger))) {
+      m.clearSnackBars();
+    }
     await pumpFor(tester, const Duration(milliseconds: 400));
     await tester.tap(find.byTooltip('Penunjuk'));
     await mouse.moveTo(Offset(viewer.left - 40, viewer.top + 10));
     await audienceShows(tester, (s) => s['pointerPage'] == null, 'penunjuk padam');
 
     // Menutup layar audiens dari panel presenter.
-    tester.state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger).first).clearSnackBars();
+    // Setiap tab punya ScaffoldMessenger sendiri; pesannya bisa di mana saja.
+    for (final m in tester.stateList<ScaffoldMessengerState>(find.byType(ScaffoldMessenger))) {
+      m.clearSnackBars();
+    }
     await pumpFor(tester, const Duration(milliseconds: 400));
     await tester.tap(find.text('Tutup layar audiens'));
     await pumpUntilTrue(tester, () => !screen.isOpen, 'layar audiens tertutup');

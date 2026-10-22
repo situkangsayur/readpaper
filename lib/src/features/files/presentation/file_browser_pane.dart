@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../core/utils/layout_size.dart';
+import '../../../core/utils/frame_guard.dart';
 import '../../../core/utils/work_folder.dart';
 import '../../epub/presentation/epub_reader_screen.dart';
 import '../../notebook/presentation/share_note.dart';
@@ -15,6 +16,7 @@ import '../../markdown/presentation/screens/markdown_editor_screen.dart';
 import '../../notebook/data/note_document_store.dart';
 import '../../notebook/presentation/screens/notebook_screen.dart';
 import '../../reader/presentation/screens/reader_screen.dart';
+import '../../tabs/presentation/document_tabs.dart';
 import '../../whiteboard/domain/board.dart';
 import '../../whiteboard/presentation/whiteboard_screen.dart';
 import 'open_any_file.dart';
@@ -76,6 +78,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
         _entries = entries;
         _error = null;
       });
+      FrameGuard.kick();
     } on FileSystemException catch (e) {
       if (mounted) setState(() => _error = e.message);
     }
@@ -463,10 +466,12 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
     await file.writeAsString('# $stem\n\n');
     await _open(dir);
     if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute<String>(
-        builder: (_) => MarkdownEditorScreen(path: file.path, startInEdit: true),
-      ),
+    await openDocument<String>(
+      context,
+      MarkdownEditorScreen(path: file.path, startInEdit: true),
+      title: p.basenameWithoutExtension(file.path),
+      icon: Icons.notes_outlined,
+      dedupeKey: file.path,
     );
   }
 
@@ -514,10 +519,12 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
       target = p.join(dir.path, '$stem-$n${NoteDocumentStore.extension}');
     }
     if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute<String>(
-        builder: (_) => NotebookScreen(path: target, title: stem),
-      ),
+    await openDocument<String>(
+      context,
+      NotebookScreen(path: target, title: stem),
+      title: stem,
+      icon: Icons.edit_note,
+      dedupeKey: target,
     );
     await _open(dir);
   }
@@ -525,40 +532,51 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   void _openFile(File file) {
     final extension = p.extension(file.path).toLowerCase();
     if (NoteDocumentStore.isNoteDocument(file.path)) {
-      Navigator.of(context).push(
-        MaterialPageRoute<String>(
-          builder: (_) =>
-              NotebookScreen(path: file.path, title: NoteDocumentStore.stemOf(file.path)),
-        ),
+      openDocument<String>(
+        context,
+        NotebookScreen(path: file.path, title: NoteDocumentStore.stemOf(file.path)),
+        title: NoteDocumentStore.stemOf(file.path),
+        icon: Icons.edit_note,
+        dedupeKey: file.path,
       );
       return;
     }
     if (extension == '.md') {
-      Navigator.of(
+      openDocument<String>(
         context,
-      ).push(MaterialPageRoute<String>(builder: (_) => MarkdownEditorScreen(path: file.path)));
+        MarkdownEditorScreen(path: file.path),
+        title: p.basenameWithoutExtension(file.path),
+        icon: Icons.notes_outlined,
+        dedupeKey: file.path,
+      );
       return;
     }
     if (extension == '.epub') {
-      Navigator.of(
+      openDocument<void>(
         context,
-      ).push(MaterialPageRoute<void>(builder: (_) => EpubReaderScreen(path: file.path)));
+        EpubReaderScreen(path: file.path),
+        title: p.basenameWithoutExtension(file.path),
+        icon: Icons.menu_book_outlined,
+        dedupeKey: file.path,
+      );
       return;
     }
     if (extension != '.pdf') {
       openAnyFile(context, file.path);
       return;
     }
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ReaderScreen(
-          itemKey: '',
-          itemFilePath: '',
-          attachmentKey: '',
-          filePath: file.path,
-          title: p.basenameWithoutExtension(file.path),
-        ),
+    openDocument<void>(
+      context,
+      ReaderScreen(
+        itemKey: '',
+        itemFilePath: '',
+        attachmentKey: '',
+        filePath: file.path,
+        title: p.basenameWithoutExtension(file.path),
       ),
+      title: p.basenameWithoutExtension(file.path),
+      icon: Icons.picture_as_pdf_outlined,
+      dedupeKey: file.path,
     );
   }
 

@@ -121,16 +121,9 @@ class _TableViewerScreenState extends State<TableViewerScreen> {
             icon: const Icon(Icons.search),
             onPressed: () => setState(() => _finding = true),
           ),
-        if (sheets.isNotEmpty)
-          IconButton(
-            tooltip: context.l10n.officeSaveAsPdf,
-            icon: const Icon(Icons.save_alt),
-            onPressed: () => _saveAsPdf(sheets),
-          ),
-        IconButton(
-          tooltip: context.l10n.officeSaveOriginal,
-          icon: const Icon(Icons.file_copy_outlined),
-          onPressed: () => saveOriginalFile(context, widget.path),
+        DownloadFileButton(
+          path: widget.path,
+          onSavePdf: sheets.isEmpty ? null : () => _saveAsPdf(sheets),
         ),
         if (canOpenWithSystem)
           IconButton(

@@ -783,6 +783,16 @@
       }
     }
   },
+  "officeDownload": "Download…",
+  "officeDownloadOriginal": "Original file ({ext})",
+  "@officeDownloadOriginal": {
+    "placeholders": {
+      "ext": {
+        "type": "String"
+      }
+    }
+  },
+  "officeDownloadPdf": "As PDF",
   "presenterAudienceWaiting": "Waiting for the presenter…",
   "presenterSlideOf": "Slide {page} of {total}",
   "presenterResetTimer": "Elapsed time — tap to restart from zero",
@@ -1084,6 +1094,14 @@
   "readerOutsideZoteroPalette": "{name} (outside Zotero's palette)",
   "readerErrCannotRead": "Cannot be read: {path}",
   "readerErrPageSize": "Unreasonable page size: {size}",
+  "readerEmbeddedLabel": "In the PDF · read-only",
+  "readerEmbeddedReadOnly": "This annotation is embedded in the PDF (made in another app); it can only be read here.",
+  "tabsLibrary": "Library",
+  "tabsClose": "Close tab",
+  "tabsCloseOthers": "Close other tabs",
+  "tabsMoveRight": "Move to right pane",
+  "tabsMoveLeft": "Move to left pane",
+  "tabsSplitHint": "Drag a tab here, or choose \"Move to right pane\", to read two documents side by side",
   "workspaceSwitchRepoCount": "Switch repository ({count} available)",
   "workspaceAddAnotherRepo": "{remote} — add another repository",
   "workspaceManageRepos": "Manage repositories…",

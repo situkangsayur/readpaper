@@ -26,6 +26,8 @@ import '../../../../core/utils/work_folder.dart';
 import '../../../notebook/data/note_document_store.dart';
 import '../../../notebook/data/pdf_to_notebook.dart';
 import '../../../notebook/presentation/screens/notebook_screen.dart';
+import '../../../tabs/presentation/document_tabs.dart';
+import '../../data/pdf_embedded_annotations.dart';
 import '../../../../core/utils/zotero_key.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../library/domain/entities/zotero_annotation.dart';
@@ -152,6 +154,17 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   ItemDetail? _detail;
   List<ZoteroAnnotation> _annotations = const <ZoteroAnnotation>[];
+
+  /// Anotasi yang tertanam di PDF-nya sendiri (aplikasi lain); hanya dibaca.
+  /// Lihat [PdfEmbeddedAnnotations].
+  List<ZoteroAnnotation> _embedded = const <ZoteroAnnotation>[];
+
+  /// Yang tampil di panel dan bisa diketuk di halaman: milik ReadPaper lalu
+  /// yang tertanam, urut letaknya.
+  List<ZoteroAnnotation> get _shown => _embedded.isEmpty
+      ? _annotations
+      : (<ZoteroAnnotation>[..._annotations, ..._embedded]
+          ..sort((a, b) => a.sortIndex.compareTo(b.sortIndex)));
   String? _selectedAnnotationKey;
 
   /// Catatan gaya Zotero yang balonnya sedang terbuka. Mengetuk ikonnya
@@ -435,6 +448,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       unawaited(_writePresenterNotes());
     }
     HardwareKeyboard.instance.removeHandler(_onPresentKey);
+    _watchDebounce?.cancel();
+    for (final watch in _watches) {
+      unawaited(watch.cancel());
+    }
     _pointer.dispose();
     _searcher?.removeListener(_onSearchChanged);
     _searcher?.dispose();
@@ -470,6 +487,65 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _pointer = LaserPointer(trail: Duration(milliseconds: settings.pointerTrailMs));
     if (settings.keepScreenOn) _applyKeepScreenOn(true);
     _load();
+    _watchFiles();
+  }
+
+  final List<StreamSubscription<FileSystemEvent>> _watches =
+      <StreamSubscription<FileSystemEvent>>[];
+  Timer? _watchDebounce;
+  (int, DateTime)? _pdfStamp;
+  String? _pdfStampPath;
+
+  static (int, DateTime)? _stampOf(String path) {
+    try {
+      final stat = File(path).statSync();
+      return stat.type == FileSystemEntityType.notFound ? null : (stat.size, stat.modified);
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Memantau berkas anotasi dan PDF-nya di disk.
+  ///
+  /// Berkas yang diubah dari luar — Tarik di aplikasi ini, skrip, Zotero,
+  /// atau pembaca PDF lain — dulu baru terlihat setelah PDF ditutup dan dibuka
+  /// lagi. Yang dipantau foldernya, bukan berkasnya: git dan banyak penyunting
+  /// mengganti berkas dengan berkas baru, dan pemantau pada berkas lama
+  /// berhenti mendengar begitu itu terjadi.
+  void _watchFiles() {
+    _pdfStamp = _stampOf(_path);
+    _pdfStampPath = _path;
+    final dirs = <String>{
+      p.dirname(_path),
+      if (widget.annotationsFile != null) p.dirname(widget.annotationsFile!),
+      if (!widget.isStandalone && widget.itemFilePath.isNotEmpty) p.dirname(widget.itemFilePath),
+    };
+    for (final dir in dirs) {
+      try {
+        _watches.add(Directory(dir).watch().listen((_) => _onFilesChanged(), onError: (_) {}));
+      } on Object {
+        // Sistem berkas tanpa pemantauan: tetap ada pemuatan ulang sesudah
+        // commit baru (lihat [build]).
+      }
+    }
+  }
+
+  void _onFilesChanged() {
+    _watchDebounce?.cancel();
+    _watchDebounce = Timer(const Duration(milliseconds: 600), () async {
+      if (!mounted) return;
+      final stamp = _stampOf(_path);
+      // PDF-nya sendiri diganti dari luar: muat ulang penampilnya, kecuali
+      // ada coretan yang belum disimpan di atas versi lama. Salinan kerja
+      // yang dibuat layar ini sendiri (halaman kosong baru) sudah dimuat.
+      final samePath = _pdfStampPath == _path;
+      if (samePath && stamp != null && _pdfStamp != null && stamp != _pdfStamp && !_unsaved) {
+        setState(() => _reloadToken++);
+      }
+      _pdfStamp = stamp;
+      _pdfStampPath = _path;
+      await _reloadIfChangedOnDisk();
+    });
   }
 
   void _onSearchChanged() {
@@ -563,6 +639,40 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         _loading = false;
       });
     }
+  }
+
+  /// Memuat ulang anotasi bila berkasnya di disk berubah tanpa lewat layar
+  /// ini — Tarik atau Sinkron membawa anotasi yang dibuat di perangkat lain.
+  ///
+  /// Dulu daftar anotasi hanya dibaca sekali saat dibuka, jadi PDF yang
+  /// terbuka selama Tarik tetap memperlihatkan keadaan lama sampai ditutup
+  /// dan dibuka lagi. Dengan tab, pembaca bisa terbuka berjam-jam.
+  /// Perubahan dari layar ini sendiri sudah ada di daftarnya dan tidak memicu
+  /// pemuatan ulang.
+  Future<void> _reloadIfChangedOnDisk() async {
+    if (_loading) return;
+    final List<ZoteroAnnotation> fresh;
+    try {
+      if (widget.isStandalone) {
+        if (!_autoSaves) return;
+        fresh = await _readAnnotationsFile();
+      } else {
+        final detail = await ref.read(libraryRepositoryProvider).loadItem(widget.itemFilePath);
+        fresh = detail.annotationsFor(widget.attachmentKey);
+      }
+    } on Object {
+      return;
+    }
+    if (!mounted) return;
+    String signature(Iterable<ZoteroAnnotation> list) =>
+        (list
+                .where((a) => !PagePicture.isPicture(a))
+                .map((a) => '${a.key}@${a.dateModified?.millisecondsSinceEpoch}')
+                .toList()
+              ..sort())
+            .join(',');
+    if (signature(fresh) == signature(_annotations)) return;
+    await _load();
   }
 
   Future<List<ZoteroAnnotation>> _readAnnotationsFile() async {
@@ -1903,10 +2013,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         title: widget.title,
       );
       if (!mounted) return;
-      await Navigator.of(context).push(
-        MaterialPageRoute<String>(
-          builder: (_) => NotebookScreen(path: notePath, title: NoteDocumentStore.stemOf(notePath)),
-        ),
+      // Tab baru, supaya PDF dan buku catatannya bisa dibuka berdampingan.
+      await openDocument<String>(
+        context,
+        NotebookScreen(path: notePath, title: NoteDocumentStore.stemOf(notePath)),
+        title: NoteDocumentStore.stemOf(notePath),
+        icon: Icons.edit_note,
+        dedupeKey: notePath,
       );
     } on Object catch (e) {
       if (mounted) _say(context.l10n.readerNotebookFailed('$e'));
@@ -1991,10 +2104,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           SnackBar(content: Text(context.l10n.readerNoTextLayer), duration: Duration(seconds: 6)),
         );
       }
-      await Navigator.of(context).push(
-        MaterialPageRoute<String>(
-          builder: (_) => MarkdownEditorScreen(path: file.path, title: widget.title),
-        ),
+      await openDocument<String>(
+        context,
+        MarkdownEditorScreen(path: file.path, title: widget.title),
+        title: p.basenameWithoutExtension(file.path),
+        icon: Icons.notes_outlined,
+        dedupeKey: file.path,
       );
     } on Object catch (e) {
       if (!mounted) return;
@@ -2263,8 +2378,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       ..showSnackBar(SnackBar(duration: const Duration(seconds: 2), content: Text(message)));
   }
 
-  List<ZoteroAnnotation> _onPage(int pageNumber) =>
-      _annotations.where((a) => a.pageIndex == pageNumber - 1).toList(growable: false);
+  List<ZoteroAnnotation> _onPage(int pageNumber) => <ZoteroAnnotation>[
+    ..._annotations.where((a) => a.pageIndex == pageNumber - 1),
+    ..._embedded.where((a) => a.pageIndex == pageNumber - 1),
+  ];
+
+  Future<void> _loadEmbedded(PdfDocument document) async {
+    try {
+      final found = await PdfEmbeddedAnnotations.read(document);
+      if (mounted) setState(() => _embedded = found);
+    } on Object {
+      // PDF yang anotasinya tidak terbaca tetap bisa dibaca dan ditandai.
+    }
+  }
 
   /// Sudah dijawab "keluar" — PopScope tidak boleh menahan lagi.
   bool _leaving = false;
@@ -2327,6 +2453,12 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // Commit baru di repositori — Tarik, Sinkron, atau Kirim — bisa membawa
+    // anotasi dari tempat lain; lihat [_reloadIfChangedOnDisk].
+    ref.listen(
+      workspaceControllerProvider.select((s) => s.gitStatus?.lastCommitDate),
+      (_, _) => _reloadIfChangedOnDisk(),
+    );
     if (_audience != null) WidgetsBinding.instance.addPostFrameCallback((_) => _syncAudience());
     // Portrait on a tablet is still ~960dp: wide enough for a docked panel,
     // but the page itself wants that width more, so the panel stays a drawer
@@ -2612,8 +2744,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       IconButton(
         tooltip: context.l10n.readerAnnotationPanel,
         icon: Badge(
-          isLabelVisible: !isWide && _annotations.isNotEmpty,
-          label: Text('${_annotations.length}'),
+          isLabelVisible: !isWide && _shown.isNotEmpty,
+          label: Text('${_shown.length}'),
           child: Icon(_showSidebar && isWide ? Icons.view_sidebar : Icons.view_sidebar_outlined),
         ),
         // Wide layouts dock the panel; a phone opens it as a drawer.
@@ -2694,7 +2826,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                               children: <Widget>[
                                 Text(
                                   '${_unsaved ? '• ' : ''}'
-                                  '${_controller.isReady ? context.l10n.readerStatusOf(_annotations.length, _currentPage, _controller.pages.length) : context.l10n.readerStatus(_annotations.length, _currentPage)}',
+                                  '${_controller.isReady ? context.l10n.readerStatusOf(_shown.length, _currentPage, _controller.pages.length) : context.l10n.readerStatus(_shown.length, _currentPage)}',
                                   style: Theme.of(context).textTheme.labelSmall,
                                 ),
                                 const SizedBox(width: 3),
@@ -2971,7 +3103,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                               SizedBox(
                                 width: 320,
                                 child: AnnotationSidebar(
-                                  annotations: _annotations,
+                                  annotations: _shown,
                                   selectedKey: _selectedAnnotationKey,
                                   onTap: _goToAnnotation,
                                   onEdit: _editAnnotation,
@@ -2989,7 +3121,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
                 : Drawer(
                     child: SafeArea(
                       child: AnnotationSidebar(
-                        annotations: _annotations,
+                        annotations: _shown,
                         selectedKey: _selectedAnnotationKey,
                         onTap: (annotation) {
                           Navigator.of(context).pop();
@@ -3584,6 +3716,21 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       // di bawah — dan yang menyajikan tidak sedang memamerkan dua slide
       // sekaligus.
       layoutPages: _presentMode ? _presentLayout : null,
+      // Panel yang menyempit atau melebar — tab dipindah ke panel kanan,
+      // pembatas panel diseret, jendela diubah ukurannya — membawa zumnya
+      // sebanding dengan lebarnya. Tanpa itu halaman yang tadinya pas selebar
+      // jendela terpotong separuh begitu layarnya dibelah dua.
+      onViewSizeChanged: (viewSize, oldViewSize, controller) {
+        if (oldViewSize == null || _presentMode || oldViewSize.width <= 0) return;
+        if ((viewSize.width - oldViewSize.width).abs() < 1) return;
+        final center = controller.value.calcPosition(oldViewSize);
+        final zoom = controller.currentZoom * viewSize.width / oldViewSize.width;
+        Future<void>.delayed(Duration.zero, () {
+          if (mounted && controller.isReady) {
+            controller.setZoom(center, zoom, duration: Duration.zero);
+          }
+        });
+      },
       onPageChanged: (pageNumber) {
         if (pageNumber == null || !mounted) return;
         setState(() => _currentPage = pageNumber);
@@ -3591,6 +3738,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       },
       onViewerReady: (document, controller) async {
         _attachSearcher();
+        unawaited(_loadEmbedded(document));
         // Outlines are cheap to read but only exist once the document is
         // open, so this cannot be part of the annotation load.
         final outline = await document.loadOutline();
@@ -3702,7 +3850,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           width: width,
           child: _NoteBubble(
             note: note,
-            onEdit: () => _editAnnotation(note),
+            onEdit: PdfEmbeddedAnnotations.isEmbedded(note) ? null : () => _editAnnotation(note),
             onClose: () => setState(() => _openNotes.remove(note.key)),
           ),
         ),
@@ -3717,7 +3865,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (key == null) return const <Widget>[];
 
     final annotation = _onPage(page.pageNumber).where((a) => a.key == key).firstOrNull;
-    if (annotation == null) return const <Widget>[];
+    if (annotation == null || PdfEmbeddedAnnotations.isEmbedded(annotation)) {
+      return const <Widget>[];
+    }
 
     final rects = AnnotationMove.rectsOf(annotation);
     if (rects.isEmpty) return const <Widget>[];
@@ -4622,6 +4772,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   Future<void> _editAnnotation(ZoteroAnnotation annotation) async {
     setState(() => _selectedAnnotationKey = annotation.key);
+    if (PdfEmbeddedAnnotations.isEmbedded(annotation)) {
+      await _showEmbedded(annotation);
+      return;
+    }
     final result = await showAnnotationEditor(
       context,
       initialColor: annotation.color,
@@ -4647,7 +4801,57 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     await _persist(edited, isNew: false, recordUndo: false);
   }
 
+  /// Anotasi yang tertanam di PDF: dibaca, tidak disunting — perubahannya
+  /// tidak akan sampai ke PDF dan akan hilang saat dibuka lagi.
+  Future<void> _showEmbedded(ZoteroAnnotation annotation) => showDialog<void>(
+    context: context,
+    builder: (dialog) => AlertDialog(
+      title: Text(context.l10n.readerAnnotationOnPage(annotation.pageLabel)),
+      content: SizedBox(
+        width: 420,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                <String>[
+                  if (annotation.authorName.isNotEmpty) annotation.authorName,
+                  context.l10n.readerEmbeddedLabel,
+                ].join(' · '),
+                style: Theme.of(dialog).textTheme.labelSmall,
+              ),
+              if (annotation.text.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 10),
+                SelectableText(
+                  annotation.text,
+                  style: Theme.of(
+                    dialog,
+                  ).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic),
+                ),
+              ],
+              if (annotation.hasComment) ...<Widget>[
+                const SizedBox(height: 10),
+                SelectableText(annotation.comment),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(dialog).pop(),
+          child: Text(MaterialLocalizations.of(dialog).closeButtonLabel),
+        ),
+      ],
+    ),
+  );
+
   Future<void> _deleteAnnotation(ZoteroAnnotation annotation) async {
+    if (PdfEmbeddedAnnotations.isEmbedded(annotation)) {
+      _say(context.l10n.readerEmbeddedReadOnly);
+      return;
+    }
     // Tidak ada pagar `item == null` di sini, dan itu disengaja: PDF yang
     // dibuka lepas — dari panel berkas, dari koleksi catatan, atau lewat "buka
     // dengan" — tidak punya item Zotero, dan pagar itu dulu membuat tombol
@@ -4861,7 +5065,9 @@ class _NoteBubble extends StatelessWidget {
   const _NoteBubble({required this.note, required this.onEdit, required this.onClose});
 
   final ZoteroAnnotation note;
-  final VoidCallback onEdit;
+
+  /// Null untuk catatan yang tertanam di PDF: hanya dibaca.
+  final VoidCallback? onEdit;
   final VoidCallback onClose;
 
   @override
@@ -4890,13 +5096,14 @@ class _NoteBubble extends StatelessWidget {
                     style: theme.textTheme.labelSmall,
                   ),
                 ),
-                IconButton(
-                  tooltip: context.l10n.readerEditNote,
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 18,
-                  icon: const Icon(Icons.edit_outlined),
-                  onPressed: onEdit,
-                ),
+                if (onEdit != null)
+                  IconButton(
+                    tooltip: context.l10n.readerEditNote,
+                    visualDensity: VisualDensity.compact,
+                    iconSize: 18,
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: onEdit,
+                  ),
                 IconButton(
                   tooltip: context.l10n.readerCloseNote,
                   visualDensity: VisualDensity.compact,

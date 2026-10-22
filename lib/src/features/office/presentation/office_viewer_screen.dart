@@ -335,16 +335,9 @@ class _OfficeViewerScreenState extends State<OfficeViewerScreen> {
               : const Icon(Icons.picture_as_pdf_outlined),
           onPressed: _converting ? null : _openAsPdf,
         ),
-      if (doc != null)
-        IconButton(
-          tooltip: context.l10n.officeSaveAsPdf,
-          icon: const Icon(Icons.save_alt),
-          onPressed: _converting ? null : _saveAsPdf,
-        ),
-      IconButton(
-        tooltip: context.l10n.officeSaveOriginal,
-        icon: const Icon(Icons.file_copy_outlined),
-        onPressed: () => saveOriginalFile(context, widget.path),
+      DownloadFileButton(
+        path: widget.path,
+        onSavePdf: doc == null || _converting ? null : _saveAsPdf,
       ),
       if (canOpenWithSystem)
         IconButton(

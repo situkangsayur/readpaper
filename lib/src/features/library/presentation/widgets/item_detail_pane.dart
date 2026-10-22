@@ -9,6 +9,7 @@ import '../../../../core/utils/layout_size.dart';
 import '../../../../shared/providers/app_providers.dart';
 import '../../../epub/presentation/epub_reader_screen.dart';
 import '../../../reader/presentation/screens/reader_screen.dart';
+import '../../../tabs/presentation/document_tabs.dart';
 import '../../../citation/presentation/bibtex_actions.dart';
 import '../../../workspace/presentation/widgets/repo_transfer_sheet.dart';
 import '../../../workspace/presentation/controllers/workspace_controller.dart';
@@ -245,24 +246,26 @@ class _AttachmentCard extends ConsumerWidget {
         ),
         trailing: canRead
             ? FilledButton.tonalIcon(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    // EPUB punya pembacanya sendiri; anotasinya belum ditulis
-                    // ke Zotero, jadi ia dibuka hanya untuk dibaca.
-                    builder: (_) => attachment.isEpub
-                        ? EpubReaderScreen(path: file!.path, title: item.title)
-                        : ReaderScreen(
-                            itemKey: item.key,
-                            itemFilePath: item.filePath,
-                            attachmentKey: attachment.key,
-                            filePath: file!.path,
-                            title: item.title,
-                            subtitle: <String>[
-                              if (item.creatorLabel.isNotEmpty) item.creatorLabel,
-                              if (item.year.isNotEmpty) item.year,
-                            ].join(' · '),
-                          ),
-                  ),
+                onPressed: () => openDocument<void>(
+                  context,
+                  // EPUB punya pembacanya sendiri; anotasinya belum ditulis
+                  // ke Zotero, jadi ia dibuka hanya untuk dibaca.
+                  attachment.isEpub
+                      ? EpubReaderScreen(path: file!.path, title: item.title)
+                      : ReaderScreen(
+                          itemKey: item.key,
+                          itemFilePath: item.filePath,
+                          attachmentKey: attachment.key,
+                          filePath: file!.path,
+                          title: item.title,
+                          subtitle: <String>[
+                            if (item.creatorLabel.isNotEmpty) item.creatorLabel,
+                            if (item.year.isNotEmpty) item.year,
+                          ].join(' · '),
+                        ),
+                  title: item.title,
+                  icon: iconForPath(file!.path),
+                  dedupeKey: file!.path,
                 ),
                 icon: const Icon(Icons.chrome_reader_mode_outlined, size: 18),
                 label: Text(context.l10n.libraryRead),

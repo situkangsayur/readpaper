@@ -8,6 +8,32 @@ Legenda: `[x]` selesai · `[~]` sebagian · `[ ]` belum.
 
 ---
 
+## Antrean 2026-10-22
+
+- [x] **Tab dokumen seperti Zotero**: library jadi tab pertama, setiap
+  dokumen (PDF, EPUB, Markdown, buku catatan, tabel, Office, gambar) terbuka
+  sebagai tab. Berkas yang sama memilih tab yang sudah ada. Klik tengah atau
+  Ctrl+W menutup, Ctrl+Tab berpindah. Di ponsel tetap satu layar penuh.
+- [x] **Panel kanan**: tab bisa dipindah (menu klik kanan, tombol belah, atau
+  diseret) ke panel kanan supaya dua dokumen terbaca berdampingan; pembatasnya
+  bisa digeser dan zum PDF mengikuti lebar panel.
+- [x] Berkas/folder yang baru ditambahkan langsung tampil di Linux (GNOME +
+  Forge), tanpa harus meminimalkan jendela dulu — lihat `FrameGuard`.
+- [x] **Anotasi yang tertanam di PDF terbaca** (dari Acrobat, Okular, skrip,
+  atau aplikasi lain — yang selama ini hanya terbaca Zotero): stabilo, garis
+  bawah, coret, catatan tempel, kotak teks, dan tinta tampil di panel anotasi
+  dengan komentar dan penulisnya, terkunci (hanya dibaca). Catatan tempel di
+  halaman bisa diklik untuk membaca isinya.
+- [x] Pembaca yang terbuka memuat ulang anotasi dan PDF-nya bila berkasnya
+  berubah di disk (Tarik/Sinkron, skrip, aplikasi lain) — tidak perlu ditutup
+  dan dibuka lagi.
+- [x] Penampil Word/PowerPoint/Excel/tabel: satu tombol **Unduh** dengan
+  "Berkas asli (.docx/.xlsx/…)" di urutan pertama, PDF kedua. Dulu tombol
+  berikon unduh justru membuat PDF.
+- [ ] Tab yang terbuka belum diingat saat aplikasi dibuka lagi.
+- [ ] Anotasi tertanam belum bisa diimpor jadi anotasi ReadPaper yang bisa
+  disunting (Zotero punya "Impor anotasi").
+
 ## Antrean 2026-10-11 (permintaan terbaru, didahulukan)
 
 Dicatat 2026-10-11. Urutan = prioritas. Semua harus berjalan di Windows,
