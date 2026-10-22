@@ -220,8 +220,9 @@ class PdfEmbeddedAnnotations {
             r + 2,
             r + 3,
           ) ==
-          0)
+          0) {
         return null;
+      }
       String hex(int v) => v.clamp(0, 255).toRadixString(16).padLeft(2, '0');
       return '#${hex(r[0])}${hex(r[1])}${hex(r[2])}';
     } finally {

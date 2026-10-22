@@ -530,10 +530,28 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
   }
 
+  /// Kapan layar ini terakhir menulis anotasinya sendiri.
+  ///
+  /// Tulisan sendiri juga membangunkan pemantau. Memuat ulang di saat itu
+  /// membaca berkas yang mungkin belum memuat suntingan berikutnya — di
+  /// Windows, yang git-nya lambat, memperbesar teks yang baru diputar pernah
+  /// menghapus sudutnya karena itu. Jadi selama layar ini sedang menulis,
+  /// pemantau menunggu.
+  DateTime _lastOwnChange = DateTime.fromMillisecondsSinceEpoch(0);
+
+  void _markOwnChange() => _lastOwnChange = DateTime.now();
+
+  bool get _ownChangeRecent =>
+      DateTime.now().difference(_lastOwnChange) < const Duration(seconds: 3);
+
   void _onFilesChanged() {
     _watchDebounce?.cancel();
     _watchDebounce = Timer(const Duration(milliseconds: 600), () async {
       if (!mounted) return;
+      if (_ownChangeRecent) {
+        _onFilesChanged();
+        return;
+      }
       final stamp = _stampOf(_path);
       // PDF-nya sendiri diganti dari luar: muat ulang penampilnya, kecuali
       // ada coretan yang belum disimpan di atas versi lama. Salinan kerja
@@ -650,7 +668,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// Perubahan dari layar ini sendiri sudah ada di daftarnya dan tidak memicu
   /// pemuatan ulang.
   Future<void> _reloadIfChangedOnDisk() async {
-    if (_loading) return;
+    if (_loading || _ownChangeRecent) return;
     final List<ZoteroAnnotation> fresh;
     try {
       if (widget.isStandalone) {
@@ -663,14 +681,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     } on Object {
       return;
     }
-    if (!mounted) return;
+    if (!mounted || _ownChangeRecent) return;
+    // Isinya yang dibandingkan, dalam bentuk yang ditulis ke berkas: waktu
+    // ubah di memori bermilidetik, di berkas hanya sampai detik.
     String signature(Iterable<ZoteroAnnotation> list) =>
-        (list
-                .where((a) => !PagePicture.isPicture(a))
-                .map((a) => '${a.key}@${a.dateModified?.millisecondsSinceEpoch}')
-                .toList()
+        (list.where((a) => !PagePicture.isPicture(a)).map((a) => jsonEncode(a.toJson())).toList()
               ..sort())
-            .join(',');
+            .join('\n');
     if (signature(fresh) == signature(_annotations)) return;
     await _load();
   }
@@ -695,6 +712,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// Menulis semua anotasi (kecuali gambar tempelan, yang isinya hanya ada
   /// di memori) ke berkas pendamping, lalu memberi tahu pemanggil.
   Future<void> _writeAnnotationsFile(String message) async {
+    _markOwnChange();
     final file = File(widget.annotationsFile!);
     final kept = _annotations.where((a) => !PagePicture.isPicture(a)).toList()
       ..sort((a, b) => a.sortIndex.compareTo(b.sortIndex));
@@ -4891,6 +4909,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// Menghapus tanpa bertanya. Dipakai penghapusan yang sudah disetujui dan
   /// oleh urungkan.
   Future<void> _removeAnnotation(ZoteroAnnotation annotation) async {
+    _markOwnChange();
     final item = _detail?.item;
 
     if (widget.isStandalone) {
@@ -4944,6 +4963,20 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     required bool isNew,
     bool undoable = false,
     bool recordUndo = true,
+  }) async {
+    _markOwnChange();
+    try {
+      await _persistNow(annotation, isNew: isNew, undoable: undoable, recordUndo: recordUndo);
+    } finally {
+      _markOwnChange();
+    }
+  }
+
+  Future<void> _persistNow(
+    ZoteroAnnotation annotation, {
+    required bool isNew,
+    required bool undoable,
+    required bool recordUndo,
   }) async {
     if (isNew && recordUndo) {
       _recordChange(
