@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:readpaper/src/core/utils/app_paths.dart';
 import 'package:readpaper/src/features/citation/data/citation_server.dart';
 import 'package:readpaper/src/features/citation/data/citation_token_store.dart';
+import 'package:readpaper/src/features/citation/data/js_engine.dart';
 import 'package:readpaper/src/features/library/domain/entities/library_index.dart';
 import 'package:readpaper/src/features/library/domain/entities/zotero_annotation.dart';
 import 'package:readpaper/src/features/library/domain/entities/zotero_item.dart';
@@ -172,6 +173,7 @@ void main() {
       'version': '0.25.0',
       'api': 1,
       'library': 'My Library',
+      'run': false,
     });
     library = null;
     final none = jsonDecode((await send('GET', '/api/ping', auth: false)).body) as Map;
@@ -388,5 +390,101 @@ void main() {
       expect(await store.loadOrCreate(), second);
       expect(await local.tokenFor('profil-1'), 'ghp_rahasia');
     });
+  });
+
+  group('POST /api/run (LibreOffice)', () {
+    late CitationServer runServer;
+    late Uri runBase;
+    final hasEngine = JsEngine.open()?..dispose();
+
+    setUp(() async {
+      runServer = CitationServer(
+        source: CitationSource(
+          index: () => library,
+          loadDetail: (item) async => _detail(item),
+          loadAsset: (path) => File('assets/csl/$path').readAsString(),
+          loadScript: (path) => File('integrations/core/$path').readAsString(),
+          version: '0.33.0',
+        ),
+        token: _token,
+        port: 0,
+      );
+      await runServer.start();
+      runBase = Uri.parse('http://127.0.0.1:${runServer.boundPort}');
+    });
+
+    tearDown(() => runServer.stop());
+
+    Future<Map<String, dynamic>> run(
+      String command,
+      Map<String, Object?> doc, [
+      Map<String, Object?>? args,
+    ]) async {
+      final request = await client.openUrl('POST', runBase.resolve('/api/run'));
+      request.headers.set('Authorization', 'Bearer $_token');
+      request.headers.contentType = ContentType.json;
+      request.write(
+        jsonEncode(<String, Object?>{'command': command, 'args': args ?? {}, 'doc': doc}),
+      );
+      final response = await request.close();
+      final body = await utf8.decoder.bind(response).join();
+      expect(response.statusCode, 200, reason: body);
+      return jsonDecode(body) as Map<String, dynamic>;
+    }
+
+    test(
+      'sisip, daftar pustaka, dan perbarui dijalankan citeproc di dalam ReadPaper',
+      () async {
+        final ping = jsonDecode((await send('GET', '/api/ping', auth: false)).body);
+        expect(ping, isA<Map>());
+
+        // Dokumen kosong, gaya IEEE.
+        var doc = <String, Object?>{'tagMode': 'inline', 'controls': <Object>[], 'cursor': 0};
+        final styled = await run('setStyle', doc, {'style': 'ieee', 'locale': 'id-ID'});
+        expect(styled['ok'], isTrue, reason: '$styled');
+        var store = (styled['changes'] as Map)['store'] as String?;
+
+        final ins = await run(
+          'insert',
+          {...doc, 'storeXml': store},
+          {
+            'items': [
+              {'key': '2T4TVLLZ', 'locator': '12'},
+            ],
+          },
+        );
+        expect(ins['ok'], isTrue, reason: '$ins');
+        expect((ins['result'] as Map)['text'], '[1, hlm. 12]');
+        final insert = (ins['changes'] as Map)['insert'] as Map;
+        expect((insert['tag'] as String).startsWith('READPAPER_CITATION_v1:'), isTrue);
+        store = ((ins['changes'] as Map)['store'] as String?) ?? store;
+
+        doc = <String, Object?>{
+          'tagMode': 'inline',
+          'controls': [
+            {'handle': 'a', 'tag': insert['tag']},
+          ],
+          'cursor': 1,
+          'storeXml': store,
+        };
+        final bib = await run('bibliography', doc);
+        expect(bib['ok'], isTrue, reason: '$bib');
+        final b = ((bib['changes'] as Map)['bibliographies'] as List).single as Map;
+        expect(b['created'], isTrue);
+        final paragraphs = ((b['bib'] as Map)['paragraphs'] as List).cast<Map>();
+        final text = (paragraphs.single['runs'] as List).map((r) => (r as Map)['text']).join();
+        expect(text, contains('McClean'));
+        expect(text, contains('Barren plateaus'));
+
+        final unknown = await run('insert', doc, {
+          'items': [
+            {'key': 'TIDAKADA'},
+          ],
+        });
+        expect(unknown['ok'], isFalse);
+        expect(unknown['error'], contains('TIDAKADA'));
+      },
+      skip: hasEngine == null ? 'JavaScriptCore tidak terpasang di mesin ini' : false,
+    );
   });
 }

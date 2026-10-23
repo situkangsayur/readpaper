@@ -1,0 +1,1 @@
+Sisipkan sitasi dan daftar pustaka dari library ReadPaper di komputer ini, dengan gaya CSL yang sama dengan Zotero (APA, IEEE, Vancouver, Harvard, MLA, Chicago, AMA). Daftar pustaka selalu dibangun dari sitasi yang benar-benar ada di dokumen. Butuh ReadPaper desktop yang sedang berjalan.

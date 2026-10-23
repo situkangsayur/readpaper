@@ -1,7 +1,7 @@
 name: readpaper
 description: "ReadPaper — Zotero-style paper reader with GitHub sync, highlights and comments. Free software, AGPL-3.0-or-later."
 publish_to: 'none'
-version: 0.32.1+75
+version: 0.33.0+76
 
 environment:
   sdk: ^3.10.0
@@ -101,3 +101,11 @@ flutter:
     - assets/csl/styles.json
     - assets/csl/styles/
     - assets/csl/locales/
+    # Inti sitasi yang sama dengan panel Word dan OnlyOffice, dijalankan
+    # ReadPaper untuk LibreOffice (POST /api/run).
+    - integrations/core/polyfill.js
+    - integrations/core/vendor/citeproc.js
+    - integrations/core/citations.js
+    - integrations/core/readpaper-api.js
+    - integrations/core/controller.js
+    - integrations/core/host.js

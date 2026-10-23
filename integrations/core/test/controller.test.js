@@ -233,3 +233,34 @@ test('[ref] sitasi tanpa data (ditempel dari dokumen lain) dilaporkan, tidak dih
   assert.equal(sum.broken, 1);
   assert.equal(ed.doc.controls[0].text, '(Lama, 2000)');
 });
+
+for (const mode of ['inline', 'ref']) {
+  test(`[${mode}] aturan 1 (bug Zotero): klaster dikurangi dan sitasi dihapus tidak meninggalkan referensi`, async () => {
+    const { ctl, ed } = setup(mode);
+    await ctl.setStyle('apa', 'id-ID');
+    await insert(ctl, ['KARISMA', 'ZHANG']);
+    await insert(ctl, ['MCCLEAN']);
+    ed.doc.cursor = ed.doc.controls.length;
+    await ctl.bibliography();
+    assert.equal(ed.doc.controls[2].paragraphs.length, 3);
+
+    // Klaster disunting: Zhang dikeluarkan.
+    ed.doc.cursorIn = 0;
+    const cur = await ctl.currentCitation();
+    await ctl.updateCitation(cur.entry, RP.makeCitation([{ itemData: ITEMS.KARISMA }], { id: cur.entry.citation.id }));
+    ed.doc.cursorIn = undefined;
+    await ctl.refreshAll();
+    assert.doesNotMatch(ed.doc.controls[2].paragraphs.join('\n'), /Zhang/);
+
+    // Sitasi McClean dihapus dari teks. Di mode 'ref' datanya sengaja masih
+    // tersimpan di custom XML part (supaya Urungkan jalan) — daftar pustaka
+    // tetap tidak boleh memakainya.
+    ed.doc.controls.splice(1, 1);
+    await ctl.refreshAll();
+    const bib = ed.doc.controls[1].paragraphs;
+    assert.equal(bib.length, 1);
+    assert.match(bib[0], /^Karisma/);
+    const doc = await ctl.loadDocument();
+    assert.deepEqual(doc.settings.uncited, []);
+  });
+}

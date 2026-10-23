@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!-- Panel ReadPaper di Google Docs. SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="id">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <?!= include('rp-ui-css') ?>
+  <?!= include('rp-citeproc') ?>
+  <?!= include('rp-citations') ?>
+  <?!= include('rp-readpaper-api') ?>
+  <?!= include('rp-controller') ?>
+  <?!= include('rp-host') ?>
+  <?!= include('rp-ui') ?>
+  <?!= include('rp-gdocs-bridge') ?>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    (function () {
+      // Panel ini berjalan di peramban penulis, jadi ia bisa menghubungi
+      // ReadPaper di 127.0.0.1 (peramban menanyakan izin akses jaringan
+      // lokal sekali). Dokumennya ditulis lewat Code.js di server Google.
+      var api = new ReadPaperApi.Client();
+      var controller = ReadPaperGDocs.create({ api: api, call: ReadPaperGDocs.scriptRunner(google.script.run) });
+      ReadPaperUI.mount(document.getElementById('app'), { controller: controller, editor: 'Google Docs' });
+    })();
+  </script>
+</body>
+</html>

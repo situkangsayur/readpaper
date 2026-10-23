@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../controllers/citation_server_controller.dart';
 import '../../../../core/l10n.dart';
+import '../../data/js_engine.dart';
 
 /// Kartu "Sitasi di Word & OnlyOffice" di layar pengaturan.
 ///
@@ -124,6 +125,13 @@ class _CitationServerCardState extends ConsumerState<CitationServerCard> {
             ),
             const SizedBox(height: 4),
             Text(context.l10n.citationPasteHint, style: small),
+            const SizedBox(height: 4),
+            Text(
+              JsEngine.availableName == null
+                  ? context.l10n.citationLibreOfficeMissing
+                  : context.l10n.citationLibreOfficeReady(JsEngine.availableName!),
+              style: small,
+            ),
           ],
         ),
       ),

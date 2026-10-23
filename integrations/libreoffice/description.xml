@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<description xmlns="http://openoffice.org/extensions/description/2006"
+             xmlns:xlink="http://www.w3.org/1999/xlink"
+             xmlns:d="http://openoffice.org/extensions/description/2006">
+  <identifier value="com.situkangsayur.readpaper.libreoffice"/>
+  <version value="1.0.0"/>
+  <dependencies>
+    <!-- Content control bertag ada sejak LibreOffice 7.6. -->
+    <lo:LibreOffice-minimal-version xmlns:lo="http://libreoffice.org/extensions/description/2011"
+        d:name="LibreOffice 7.6" value="7.6"/>
+  </dependencies>
+  <platform value="all"/>
+  <display-name>
+    <name lang="id">ReadPaper — sitasi dan daftar pustaka</name>
+    <name lang="en">ReadPaper — citations and bibliography</name>
+  </display-name>
+  <publisher>
+    <name xlink:href="https://github.com/situkangsayur/readpaper" lang="id">Hendri Karisma</name>
+  </publisher>
+  <icon>
+    <default xlink:href="icons/icon-64.png"/>
+  </icon>
+  <extension-description>
+    <src xlink:href="description/desc-id.txt" lang="id"/>
+    <src xlink:href="description/desc-en.txt" lang="en"/>
+  </extension-description>
+</description>

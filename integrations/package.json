@@ -1,10 +1,10 @@
 {
   "name": "readpaper-integrations",
   "private": true,
-  "description": "Sitasi ReadPaper untuk Microsoft Word dan OnlyOffice",
+  "description": "Sitasi ReadPaper untuk Microsoft Word, OnlyOffice, LibreOffice, dan Google Docs",
   "license": "AGPL-3.0-or-later",
   "scripts": {
-    "test": "node --test core/test/*.test.js",
+    "test": "node --test core/test/*.test.js google-docs/test/*.test.js",
     "validate:word": "npx --yes office-addin-manifest validate word/manifest.xml"
   },
   "engines": {

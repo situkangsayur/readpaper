@@ -81,7 +81,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Sitasi di Word & OnlyOffice'), findsOneWidget);
+    expect(find.text('Sitasi di Word, OnlyOffice, LibreOffice & Google Docs'), findsOneWidget);
     expect(find.text('Berjalan di http://127.0.0.1:23121'), findsOneWidget);
     expect(find.textContaining('tokenrahasia'), findsNothing);
     await tester.tap(find.byTooltip('Tampilkan token'));

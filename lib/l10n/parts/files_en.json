@@ -90,9 +90,9 @@
   "settingsPickSshKey": "Choose an SSH private key",
   "settingsPickCloneFolder": "Choose a clone folder",
   "citationRunningAt": "Running at {address}",
-  "citationOff": "Off. The Word and OnlyOffice add-ins cannot connect.",
+  "citationOff": "Off. The Word, OnlyOffice, LibreOffice, and Google Docs add-ins cannot connect.",
   "citationStarting": "Starting…",
-  "citationTitle": "Citations in Word & OnlyOffice",
+  "citationTitle": "Citations in Word, OnlyOffice, LibreOffice & Google Docs",
   "citationSubtitle": "Local server the add-ins use to search and cite.",
   "citationRetry": "Retry",
   "citationAddress": "Address",
@@ -104,9 +104,9 @@
   "citationCopyToken": "Copy token",
   "citationTokenCopied": "Token copied.",
   "citationNewToken": "Create a new token",
-  "citationPasteHint": "Paste this address and token into the add-in. Guide: docs/api-sitasi.md in the ReadPaper repository.",
+  "citationPasteHint": "Paste this address and token into the Word, OnlyOffice, or Google Docs add-in. The LibreOffice extension finds the token by itself. Guide: integrations/README.md in the ReadPaper repository.",
   "citationNewTokenTitle": "Create a new token?",
-  "citationNewTokenBody": "The old token stops working immediately. Word and OnlyOffice add-ins that are already connected must be given the new token.",
+  "citationNewTokenBody": "The old token stops working immediately. Word, OnlyOffice, and Google Docs add-ins that are already connected must be given the new token.",
   "citationCreateNew": "Create new",
   "citationTokenSaveFailed": "The new token could not be saved: {error}",
   "citationSettingsUnreadable": "The citation server settings could not be read: {error}",
@@ -152,5 +152,7 @@
   "commonShapeDiamond": "Diamond",
   "commonShapeTriangle": "Triangle",
   "commonShapeLine": "Line",
-  "commonShapeArrow": "Arrow"
+  "commonShapeArrow": "Arrow",
+  "citationLibreOfficeReady": "LibreOffice ready — citations are rendered with {engine}.",
+  "citationLibreOfficeMissing": "LibreOffice cannot be used yet: install libjavascriptcoregtk-4.1 (Debian/Ubuntu) or webkit2gtk-4.1 (Arch/CachyOS), then reopen ReadPaper."
 }

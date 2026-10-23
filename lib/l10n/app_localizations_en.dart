@@ -373,13 +373,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get citationOff =>
-      'Off. The Word and OnlyOffice add-ins cannot connect.';
+      'Off. The Word, OnlyOffice, LibreOffice, and Google Docs add-ins cannot connect.';
 
   @override
   String get citationStarting => 'Starting…';
 
   @override
-  String get citationTitle => 'Citations in Word & OnlyOffice';
+  String get citationTitle =>
+      'Citations in Word, OnlyOffice, LibreOffice & Google Docs';
 
   @override
   String get citationSubtitle =>
@@ -417,14 +418,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get citationPasteHint =>
-      'Paste this address and token into the add-in. Guide: docs/api-sitasi.md in the ReadPaper repository.';
+      'Paste this address and token into the Word, OnlyOffice, or Google Docs add-in. The LibreOffice extension finds the token by itself. Guide: integrations/README.md in the ReadPaper repository.';
 
   @override
   String get citationNewTokenTitle => 'Create a new token?';
 
   @override
   String get citationNewTokenBody =>
-      'The old token stops working immediately. Word and OnlyOffice add-ins that are already connected must be given the new token.';
+      'The old token stops working immediately. Word, OnlyOffice, and Google Docs add-ins that are already connected must be given the new token.';
 
   @override
   String get citationCreateNew => 'Create new';
@@ -606,6 +607,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commonShapeArrow => 'Arrow';
+
+  @override
+  String citationLibreOfficeReady(String engine) {
+    return 'LibreOffice ready — citations are rendered with $engine.';
+  }
+
+  @override
+  String get citationLibreOfficeMissing =>
+      'LibreOffice cannot be used yet: install libjavascriptcoregtk-4.1 (Debian/Ubuntu) or webkit2gtk-4.1 (Arch/CachyOS), then reopen ReadPaper.';
 
   @override
   String get findTooltip => 'Find in document (Ctrl+F)';

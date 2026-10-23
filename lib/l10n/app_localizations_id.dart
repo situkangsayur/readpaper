@@ -353,13 +353,14 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get citationOff =>
-      'Mati. Add-in Word dan OnlyOffice tidak bisa tersambung.';
+      'Mati. Add-in Word, OnlyOffice, LibreOffice, dan Google Docs tidak bisa tersambung.';
 
   @override
   String get citationStarting => 'Menyalakan…';
 
   @override
-  String get citationTitle => 'Sitasi di Word & OnlyOffice';
+  String get citationTitle =>
+      'Sitasi di Word, OnlyOffice, LibreOffice & Google Docs';
 
   @override
   String get citationSubtitle =>
@@ -397,14 +398,14 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get citationPasteHint =>
-      'Tempel alamat dan token ini di add-in. Panduannya: docs/api-sitasi.md di repositori ReadPaper.';
+      'Tempel alamat dan token ini di add-in Word, OnlyOffice, atau Google Docs. Ekstensi LibreOffice menemukan tokennya sendiri. Panduannya: integrations/README.md di repositori ReadPaper.';
 
   @override
   String get citationNewTokenTitle => 'Buat token baru?';
 
   @override
   String get citationNewTokenBody =>
-      'Token lama langsung tidak berlaku. Add-in Word dan OnlyOffice yang sudah tersambung harus diberi token baru.';
+      'Token lama langsung tidak berlaku. Add-in Word, OnlyOffice, dan Google Docs yang sudah tersambung harus diberi token baru.';
 
   @override
   String get citationCreateNew => 'Buat baru';
@@ -574,6 +575,15 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get commonShapeArrow => 'Panah';
+
+  @override
+  String citationLibreOfficeReady(String engine) {
+    return 'LibreOffice siap — sitasi dirender dengan $engine.';
+  }
+
+  @override
+  String get citationLibreOfficeMissing =>
+      'LibreOffice belum bisa dipakai: pasang libjavascriptcoregtk-4.1 (Debian/Ubuntu) atau webkit2gtk-4.1 (Arch/CachyOS), lalu buka ulang ReadPaper.';
 
   @override
   String get findTooltip => 'Cari di dokumen (Ctrl+F)';

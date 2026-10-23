@@ -147,6 +147,7 @@ class CitationServerController extends Notifier<CitationServerStatus> {
         index: () => ref.read(workspaceControllerProvider).index,
         loadDetail: (item) => ref.read(libraryRepositoryProvider).loadItem(item.filePath),
         loadAsset: (path) => rootBundle.loadString('assets/csl/$path'),
+        loadScript: (path) => rootBundle.loadString('integrations/core/$path'),
         version: await _version(),
       ),
       token: token,

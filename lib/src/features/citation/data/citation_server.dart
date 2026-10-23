@@ -7,6 +7,8 @@ import '../../library/domain/entities/zotero_annotation.dart';
 import '../../library/domain/entities/zotero_item.dart';
 import '../domain/csl_catalog.dart';
 import '../domain/csl_json.dart';
+import 'js_engine.dart';
+import 'office_host.dart';
 
 /// Semua yang dibutuhkan server dari aplikasi, dan tidak lebih.
 ///
@@ -19,6 +21,8 @@ class CitationSource {
     required this.loadDetail,
     required this.loadAsset,
     required this.version,
+    this.loadScript,
+    this.openEngine = JsEngine.open,
   });
 
   /// Library yang sedang terbuka, atau null kalau belum ada.
@@ -37,6 +41,13 @@ class CitationSource {
 
   /// Versi ReadPaper yang dilaporkan `/api/ping`.
   final String version;
+
+  /// Membaca berkas di bawah `integrations/core/` untuk `POST /api/run`.
+  /// Null berarti perintah itu tidak tersedia.
+  final Future<String> Function(String path)? loadScript;
+
+  /// Mesin JavaScript untuk `POST /api/run`; bisa diganti dalam pengujian.
+  final JsEngine? Function() openEngine;
 }
 
 /// Galat yang dijawab ke add-in sebagai `{"error": ...}`.
@@ -85,6 +96,15 @@ class CitationServer {
   HttpServer? _server;
   CslCatalog? _catalog;
 
+  /// Dibangun saat `POST /api/run` pertama, lalu dipakai terus. Null di
+  /// dalamnya berarti sistem ini tidak punya mesin JavaScript.
+  Future<OfficeHost?>? _host;
+
+  /// Isi gaya (sudah diganti induknya bila dependen) dan locale, untuk
+  /// menjawab mesin sitasi secara serempak.
+  final Map<String, String> _styleText = <String, String>{};
+  final Map<String, String> _localeText = <String, String>{};
+
   /// Token bisa diganti tanpa mematikan server: membuat token baru dimaksudkan
   /// untuk langsung menolak add-in yang masih memegang token lama.
   set token(String value) => _token = value;
@@ -110,6 +130,9 @@ class CitationServer {
     final server = _server;
     _server = null;
     await server?.close(force: true);
+    final host = _host;
+    _host = null;
+    (await host?.catchError((Object _) => null))?.dispose();
   }
 
   // ----------------------------------------------------------------- routing
@@ -163,6 +186,9 @@ class CitationServer {
         case ['locales', final tag]:
           _expectMethod(request, 'GET');
           return _xml(response, await _locale(tag));
+        case ['run']:
+          _expectMethod(request, 'POST');
+          return _json(response, await _run(await _readJson(request)));
       }
       throw const _ApiError(HttpStatus.notFound, 'Alamat tidak dikenal.');
     } on _ApiError catch (e) {
@@ -256,6 +282,7 @@ class CitationServer {
     'version': source.version,
     'api': apiVersion,
     'library': source.index()?.library.name,
+    'run': source.loadScript != null,
   };
 
   Map<String, Object> _search(Map<String, String> query) {
@@ -373,8 +400,10 @@ class CitationServer {
     return source.loadAsset(resolved.file);
   }
 
-  Future<String> _locale(String tag) async {
-    final catalog = await _loadCatalog();
+  Future<String> _locale(String tag) async =>
+      source.loadAsset(_localeFile(await _loadCatalog(), tag));
+
+  static String _localeFile(CslCatalog catalog, String tag) {
     final wanted = tag.toLowerCase();
     String? match;
     for (final l in catalog.locales) {
@@ -393,7 +422,84 @@ class CitationServer {
     }
     // Bukan 404: sitasi tanpa locale lebih buruk daripada sitasi berbahasa
     // Inggris.
-    return source.loadAsset('locales/locales-${match ?? 'en-US'}.xml');
+    return 'locales/locales-${match ?? 'en-US'}.xml';
+  }
+
+  // ------------------------------------------------------------ /api/run
+
+  /// Menjalankan satu perintah sitasi atas potret dokumen dari LibreOffice.
+  Future<Map<String, dynamic>> _run(Object? body) async {
+    if (body is! Map<String, dynamic> || body['command'] is! String) {
+      throw const _ApiError(
+        HttpStatus.badRequest,
+        'Isi permintaan harus berbentuk {"command": ..., "args": {...}, "doc": {...}}.',
+      );
+    }
+    final host = await (_host ??= _startHost());
+    if (host == null) {
+      throw const _ApiError(
+        HttpStatus.notImplemented,
+        'ReadPaper tidak menemukan mesin JavaScript (JavaScriptCore) di komputer ini. '
+        'Di Linux pasang libjavascriptcoregtk-4.1 (Debian/Ubuntu) atau webkit2gtk-4.1 (Arch), '
+        'lalu jalankan ulang ReadPaper.',
+      );
+    }
+    // Serempak di dalam isolate utama: dua perintah tidak pernah bertumpuk di
+    // mesin yang sama.
+    return host.run(body);
+  }
+
+  Future<OfficeHost?> _startHost() async {
+    final loadScript = source.loadScript;
+    if (loadScript == null) {
+      throw const _ApiError(
+        HttpStatus.notImplemented,
+        'Perintah ini tidak tersedia di ReadPaper ini.',
+      );
+    }
+    final catalog = await _loadCatalog();
+    for (final s in catalog.choices) {
+      final resolved = catalog.resolve(s.id);
+      if (resolved != null) _styleText[s.id] = await source.loadAsset(resolved.file);
+    }
+    for (final l in catalog.locales) {
+      _localeText[l] = await source.loadAsset('locales/locales-$l.xml');
+    }
+    try {
+      return await OfficeHost.start(
+        loadScript: loadScript,
+        fetch: _internalFetch,
+        openEngine: source.openEngine,
+      );
+    } catch (_) {
+      _host = null; // coba lagi pada permintaan berikutnya
+      rethrow;
+    }
+  }
+
+  /// Jawaban untuk "fetch" dari mesin sitasi: alamat yang sama dengan
+  /// server ini, tanpa jaringan dan tanpa token.
+  HostResponse _internalFetch(String method, String path, Object? body) {
+    final route = Uri(path: path).pathSegments.where((s) => s.isNotEmpty).skip(1).toList();
+    try {
+      switch (route) {
+        case ['items'] when method == 'POST':
+          return (status: 200, body: jsonEncode(_items(body)));
+        case ['styles', final id]:
+          final xml = _styleText[id];
+          if (xml == null) {
+            throw _ApiError(HttpStatus.notFound, 'Gaya "$id" tidak dibundel di ReadPaper.');
+          }
+          return (status: 200, body: xml);
+        case ['locales', final tag]:
+          final file = _localeFile(_catalog!, tag);
+          final name = file.substring('locales/locales-'.length, file.length - '.xml'.length);
+          return (status: 200, body: _localeText[name] ?? _localeText['en-US'] ?? '');
+      }
+      throw const _ApiError(HttpStatus.notFound, 'Alamat tidak dikenal.');
+    } on _ApiError catch (e) {
+      return (status: e.status, body: jsonEncode(<String, Object>{'error': e.message}));
+    }
   }
 }
 

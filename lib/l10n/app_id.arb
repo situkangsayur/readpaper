@@ -198,9 +198,9 @@
       }
     }
   },
-  "citationOff": "Mati. Add-in Word dan OnlyOffice tidak bisa tersambung.",
+  "citationOff": "Mati. Add-in Word, OnlyOffice, LibreOffice, dan Google Docs tidak bisa tersambung.",
   "citationStarting": "Menyalakan…",
-  "citationTitle": "Sitasi di Word & OnlyOffice",
+  "citationTitle": "Sitasi di Word, OnlyOffice, LibreOffice & Google Docs",
   "citationSubtitle": "Server lokal yang dipakai add-in untuk mencari dan menyitasi.",
   "citationRetry": "Coba lagi",
   "citationAddress": "Alamat",
@@ -212,9 +212,9 @@
   "citationCopyToken": "Salin token",
   "citationTokenCopied": "Token disalin.",
   "citationNewToken": "Buat token baru",
-  "citationPasteHint": "Tempel alamat dan token ini di add-in. Panduannya: docs/api-sitasi.md di repositori ReadPaper.",
+  "citationPasteHint": "Tempel alamat dan token ini di add-in Word, OnlyOffice, atau Google Docs. Ekstensi LibreOffice menemukan tokennya sendiri. Panduannya: integrations/README.md di repositori ReadPaper.",
   "citationNewTokenTitle": "Buat token baru?",
-  "citationNewTokenBody": "Token lama langsung tidak berlaku. Add-in Word dan OnlyOffice yang sudah tersambung harus diberi token baru.",
+  "citationNewTokenBody": "Token lama langsung tidak berlaku. Add-in Word, OnlyOffice, dan Google Docs yang sudah tersambung harus diberi token baru.",
   "citationCreateNew": "Buat baru",
   "citationTokenSaveFailed": "Token baru tidak bisa disimpan: {error}",
   "@citationTokenSaveFailed": {
@@ -375,6 +375,15 @@
   "commonShapeTriangle": "Segitiga",
   "commonShapeLine": "Garis",
   "commonShapeArrow": "Panah",
+  "citationLibreOfficeReady": "LibreOffice siap — sitasi dirender dengan {engine}.",
+  "@citationLibreOfficeReady": {
+    "placeholders": {
+      "engine": {
+        "type": "String"
+      }
+    }
+  },
+  "citationLibreOfficeMissing": "LibreOffice belum bisa dipakai: pasang libjavascriptcoregtk-4.1 (Debian/Ubuntu) atau webkit2gtk-4.1 (Arch/CachyOS), lalu buka ulang ReadPaper.",
   "findTooltip": "Cari di dokumen (Ctrl+F)",
   "findHint": "Cari kata…",
   "findSearching": "Mencari…",

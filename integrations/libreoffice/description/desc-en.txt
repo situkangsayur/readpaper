@@ -1,0 +1,1 @@
+Insert citations and bibliographies from the ReadPaper library on this computer, using the same CSL styles as Zotero (APA, IEEE, Vancouver, Harvard, MLA, Chicago, AMA). The bibliography is always built from the citations actually present in the document. Requires ReadPaper desktop to be running.

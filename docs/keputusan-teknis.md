@@ -131,7 +131,18 @@ keputusan ini bisa dilonggarkan kemudian — arah sebaliknya tidak bisa.
 
 ## KT-3 — Google Docs lewat API resmi, bukan ekstensi peramban
 
-**Status:** disetujui 2026-09-25. Rinciannya di [google-docs-api.md](google-docs-api.md).
+**Status:** disetujui 2026-09-25, **diganti 2026-10-23** (lihat di bawah).
+Rinciannya di [google-docs-api.md](google-docs-api.md).
+
+**Diganti dengan add-on panel samping (disetujui 2026-10-23).** Saat
+dikerjakan ketahuan dua hal. Docs API tidak tahu posisi kursor penulis,
+jadi sitasi hanya bisa disisipkan lewat penanda yang diketik dulu — jauh
+dari "satu tombol". Dan anggapan bahwa add-on tidak bisa menghubungi
+`127.0.0.1` hanya benar untuk bagian server-nya: panel samping add-on
+berjalan di peramban penulis, sama seperti Word web, dan boleh memanggil
+alamat lokal dengan izin akses jaringan lokal. Jadi Google Docs kini memakai
+panel yang sama dengan Word dan OnlyOffice (`integrations/google-docs/`),
+scope `documents.currentonly`, tanpa proyek OAuth tersendiri.
 
 Ringkasnya: add-on Google Docs berjalan di server Google dan tidak bisa
 menghubungi ReadPaper di `127.0.0.1`, jadi pola yang dipakai LibreOffice dan
@@ -173,6 +184,15 @@ OnlyOffice. Ada tiga alasannya:
 - **Satu inti untuk dua editor.** `integrations/core/` dipakai apa adanya oleh
   keduanya. Yang berbeda hanya lapisan tipis yang menulis ke content control
   masing-masing.
+
+**Tambahan 2026-10-23 — LibreOffice.** LibreOffice tidak punya mesin
+JavaScript, jadi untuknya ReadPaper sendiri yang menjalankan inti yang sama
+(`POST /api/run`, `integrations/core/host.js`) di **JavaScriptCore** lewat
+API C-nya. QuickJS dicoba lebih dulu dan ditolak: membangun mesin citeproc
+untuk APA makan 26 detik di sana, ±1 detik di JavaScriptCore dan V8, karena
+citeproc menjabarkan setiap makro di setiap tempat ia dipakai. Konsekuensinya
+LibreOffice butuh ReadPaper berjalan untuk setiap perintah, termasuk
+"Perbarui semua" — persis seperti Zotero.
 
 Server lokal hanya mendengarkan di `127.0.0.1` dan wajib bertoken. Tanpa
 token, halaman web mana pun yang terbuka di peramban yang sama bisa membaca

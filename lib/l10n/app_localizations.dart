@@ -701,7 +701,7 @@ abstract class AppLocalizations {
   /// No description provided for @citationOff.
   ///
   /// In id, this message translates to:
-  /// **'Mati. Add-in Word dan OnlyOffice tidak bisa tersambung.'**
+  /// **'Mati. Add-in Word, OnlyOffice, LibreOffice, dan Google Docs tidak bisa tersambung.'**
   String get citationOff;
 
   /// No description provided for @citationStarting.
@@ -713,7 +713,7 @@ abstract class AppLocalizations {
   /// No description provided for @citationTitle.
   ///
   /// In id, this message translates to:
-  /// **'Sitasi di Word & OnlyOffice'**
+  /// **'Sitasi di Word, OnlyOffice, LibreOffice & Google Docs'**
   String get citationTitle;
 
   /// No description provided for @citationSubtitle.
@@ -785,7 +785,7 @@ abstract class AppLocalizations {
   /// No description provided for @citationPasteHint.
   ///
   /// In id, this message translates to:
-  /// **'Tempel alamat dan token ini di add-in. Panduannya: docs/api-sitasi.md di repositori ReadPaper.'**
+  /// **'Tempel alamat dan token ini di add-in Word, OnlyOffice, atau Google Docs. Ekstensi LibreOffice menemukan tokennya sendiri. Panduannya: integrations/README.md di repositori ReadPaper.'**
   String get citationPasteHint;
 
   /// No description provided for @citationNewTokenTitle.
@@ -797,7 +797,7 @@ abstract class AppLocalizations {
   /// No description provided for @citationNewTokenBody.
   ///
   /// In id, this message translates to:
-  /// **'Token lama langsung tidak berlaku. Add-in Word dan OnlyOffice yang sudah tersambung harus diberi token baru.'**
+  /// **'Token lama langsung tidak berlaku. Add-in Word, OnlyOffice, dan Google Docs yang sudah tersambung harus diberi token baru.'**
   String get citationNewTokenBody;
 
   /// No description provided for @citationCreateNew.
@@ -1075,6 +1075,18 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Panah'**
   String get commonShapeArrow;
+
+  /// No description provided for @citationLibreOfficeReady.
+  ///
+  /// In id, this message translates to:
+  /// **'LibreOffice siap — sitasi dirender dengan {engine}.'**
+  String citationLibreOfficeReady(String engine);
+
+  /// No description provided for @citationLibreOfficeMissing.
+  ///
+  /// In id, this message translates to:
+  /// **'LibreOffice belum bisa dipakai: pasang libjavascriptcoregtk-4.1 (Debian/Ubuntu) atau webkit2gtk-4.1 (Arch/CachyOS), lalu buka ulang ReadPaper.'**
+  String get citationLibreOfficeMissing;
 
   /// No description provided for @findTooltip.
   ///

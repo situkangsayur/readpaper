@@ -1,4 +1,4 @@
-# Sitasi di Word dan OnlyOffice — kontrak
+# Sitasi di Word, OnlyOffice, LibreOffice, dan Google Docs — kontrak
 
 Dokumen ini mengikat tiga bagian yang dikerjakan terpisah: **server lokal di
 ReadPaper desktop**, **plugin OnlyOffice**, dan **add-in Microsoft Word**.
@@ -106,6 +106,30 @@ yang disitasi:
 `GET /api/styles/<id>` — XML gaya itu (`application/xml`). Untuk gaya dependen
 yang dikirim adalah **gaya induknya**, karena citeproc-js butuh gaya independen.
 
+`POST /api/run` — untuk editor tanpa mesin JavaScript (LibreOffice).
+ReadPaper menjalankan `integrations/core/` (citeproc-js, `citations.js`,
+`controller.js`, `host.js`) di JavaScriptCore atas potret dokumen yang
+dikirim, dan menjawab dengan perubahan yang harus ditulis editor.
+```json
+{"command": "insert", "args": {"items": [{"key": "2T4TVLLZ", "locator": "12"}]},
+ "doc": {"tagMode": "inline", "controls": [{"handle": "cc0", "tag": "READPAPER_CITATION_v1:..."}],
+         "storeXml": "<readpaper ...>", "cursor": 1, "cursorIn": null}}
+```
+`command`: `state`, `insert`, `update`, `refresh`, `bibliography`, `setStyle`
+(`{style, locale}`), `addUncited`/`removeUncited` (`{key}`), `convertToText`.
+`cursor` = banyaknya sitasi sebelum kursor; `cursorIn` = handle sitasi tempat
+kursor berada. Jawabannya:
+```json
+{"ok": true, "result": {"text": "[1, hlm. 12]"},
+ "changes": {"insert": {"handle": "new:1", "tag": "...", "runs": [...]},
+             "citations": [{"handle": "cc0", "tag": null, "runs": [...]}],
+             "bibliographies": [{"handle": "bm:...", "created": false, "tag": "...", "bib": {...}}],
+             "store": "<readpaper ...>", "unwrap": []}}
+```
+atau `{"ok": false, "error": "..."}`. `store` tidak ada = tidak berubah, `null`
+= hapus. Tanpa JavaScriptCore di sistem: `501` dengan pesan apa yang harus
+dipasang. `GET /api/ping` menyertakan `"run": true` bila alamat ini tersedia.
+
 `GET /api/locales/<tag>` — XML locale (`id-ID`, `en-US`). Tag yang tidak ada
 dijawab dengan `en-US`, bukan `404`: sitasi tanpa locale lebih buruk daripada
 sitasi berbahasa Inggris.
@@ -166,5 +190,14 @@ Sama di kedua editor:
   disajikan dari GitHub Pages repositori ini. Halaman https boleh memanggil
   `http://127.0.0.1` di Chromium/WebView2 (Word Windows, Word web di Chrome dan
   Edge). Word di macOS memakai Safari/WKWebView, yang perlu diuji tersendiri.
+- **LibreOffice** — ekstensi Python-UNO (`.oxt`) di `integrations/libreoffice/`.
+  Sitasi berupa content control inline (bentuk tag sama dengan OnlyOffice);
+  daftar pustaka berupa bookmark di atas paragrafnya; store di properti
+  dokumen `ReadPaperCitations`. Perintahnya lewat `POST /api/run`.
+- **Google Docs** — add-on Apps Script di `integrations/google-docs/`. Panel
+  sampingnya (peramban) menjalankan inti yang sama di atas
+  `ReadPaperHost.MemoryAdapter`; server Apps Script hanya memotret dan
+  menulis dokumen. Sitasi dan daftar pustaka berupa named range, store di
+  properti dokumen add-on.
 - Kode bersama — pemanggil API, citeproc-js, pengelolaan klaster sitasi dan
-  penomoran — ada di `integrations/core/` dan dipakai keduanya apa adanya.
+  penomoran — ada di `integrations/core/` dan dipakai keempatnya apa adanya.

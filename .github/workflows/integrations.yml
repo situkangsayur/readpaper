@@ -1,15 +1,18 @@
-name: Integrasi Word dan OnlyOffice
+name: Integrasi Word, OnlyOffice, LibreOffice, Google Docs
 
-# Sitasi ReadPaper di Word dan OnlyOffice (integrations/, kontrak di
-# docs/api-sitasi.md).
+# Sitasi ReadPaper di Word, OnlyOffice, LibreOffice, dan Google Docs
+# (integrations/, kontrak di docs/api-sitasi.md).
 #
 # - Setiap push ke main dan PR yang menyentuh integrations/: uji Node.
 # - Push ke main: task pane Word (integrations/word + integrations/core)
 #   disajikan lewat GitHub Pages di https://situkangsayur.github.io/readpaper/word/
 #   (manifest Word menunjuk ke sana). Pages harus sudah diatur ke sumber
 #   "GitHub Actions" di Settings → Pages; workflow ini tidak mengubahnya.
-# - Tag v*: plugin OnlyOffice dipaket menjadi .plugin dan dilampirkan ke rilis
-#   bertag sama, bila rilisnya ada.
+# - LibreOffice: ekstensinya diuji di Writer sungguhan (soffice tanpa layar)
+#   melawan ReadPaper tiruan yang menjalankan host.js asli, lalu .oxt-nya
+#   dipasang dengan unopkg dan dipanggil lewat layanan UNO-nya.
+# - Tag v*: plugin OnlyOffice (.plugin), ekstensi LibreOffice (.oxt), dan
+#   proyek add-on Google Docs (.zip) dilampirkan ke rilis bertag sama.
 
 on:
   push:
@@ -18,6 +21,8 @@ on:
     paths:
       - 'integrations/**'
       - 'scripts/package-onlyoffice-plugin.sh'
+      - 'scripts/package-libreoffice-extension.sh'
+      - 'scripts/package-google-docs-addon.sh'
       - '.github/workflows/integrations.yml'
   pull_request:
     paths:
@@ -55,6 +60,29 @@ jobs:
       - name: Validasi manifest Word
         continue-on-error: true
         run: npx --yes office-addin-manifest validate word/manifest.xml
+
+  libreoffice:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Writer dan jembatan Python-UNO saja, tanpa antarmuka GTK lengkap.
+      - name: Pasang LibreOffice
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libreoffice-writer libreoffice-script-provider-python python3-uno
+
+      - name: Uji di Writer
+        run: python3 integrations/libreoffice/test/test_writer.py
+
+      - name: Paket dan uji .oxt terpasang
+        run: |
+          scripts/package-libreoffice-extension.sh
+          python3 integrations/libreoffice/test/test_installed.py build/integrations/readpaper-libreoffice-*.oxt
 
   pages:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -100,20 +128,26 @@ jobs:
 
   onlyoffice-plugin:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: test
+    needs: [test, libreoffice]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Paket plugin
-        run: scripts/package-onlyoffice-plugin.sh
+      - name: Paket plugin, ekstensi, dan add-on
+        run: |
+          scripts/package-onlyoffice-plugin.sh
+          scripts/package-libreoffice-extension.sh
+          scripts/package-google-docs-addon.sh
 
       - uses: actions/upload-artifact@v4
         with:
-          name: readpaper-onlyoffice-plugin
-          path: build/integrations/*.plugin
+          name: readpaper-integrations
+          path: |
+            build/integrations/*.plugin
+            build/integrations/*.oxt
+            build/integrations/*.zip
 
       # Rilisnya dibuat di tempat lain dan bisa menyusul beberapa menit; tunggu
       # sebentar, lalu menyerah tanpa menggagalkan workflow.
@@ -124,8 +158,8 @@ jobs:
         run: |
           for attempt in 1 2 3 4 5 6 7 8 9 10; do
             if gh release view "$TAG" >/dev/null 2>&1; then
-              gh release upload "$TAG" build/integrations/*.plugin --clobber
-              echo "Plugin dilampirkan ke rilis $TAG."
+              gh release upload "$TAG" build/integrations/*.plugin build/integrations/*.oxt build/integrations/*.zip --clobber
+              echo "Plugin, ekstensi, dan add-on dilampirkan ke rilis $TAG."
               exit 0
             fi
             echo "Rilis $TAG belum ada (percobaan $attempt), menunggu 30 detik…"

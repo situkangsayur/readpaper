@@ -8,6 +8,23 @@ Legenda: `[x]` selesai · `[~]` sebagian · `[ ]` belum.
 
 ---
 
+## Antrean 2026-10-23 — sitasi di empat editor
+
+- [x] **LibreOffice Writer**: ekstensi `.oxt` dengan menu, bilah alat, dan
+  dialog sitasi (cari sambil mengetik, beberapa item, lokator, prefiks/sufiks,
+  sembunyikan pengarang, pilih anotasi), gaya, tanpa disitasi, teks biasa.
+  ReadPaper merender lewat `POST /api/run` dengan JavaScriptCore.
+- [x] **Google Docs**: add-on Apps Script dengan panel yang sama dengan Word.
+- [x] **Bug Zotero diuji di keempat editor**: klaster yang dikurangi dan
+  sitasi yang dihapus tidak meninggalkan referensi di daftar pustaka maupun di
+  daftar "Tanpa disitasi". Di LibreOffice, content control yang teksnya
+  dihapus tapi wadahnya tertinggal dihitung sebagai sitasi yang dihapus.
+- [ ] Google Docs: coba pemasangan pertama di akun Google sungguhan.
+- [ ] LibreOffice di Windows (mesin JavaScript ber-JIT; JavaScriptCore tidak
+  ada di Windows).
+- [ ] Gaya CSL kesehatan nasional Indonesia (pilih dari repositori resmi).
+- [ ] Sitasi di catatan kaki (gaya Chicago notes) di semua editor.
+
 ## Antrean 2026-10-22
 
 - [x] **Tab dokumen seperti Zotero**: library jadi tab pertama, setiap
@@ -686,8 +703,12 @@ membaca dokumentasinya (dicatat 2026-09-30):
       penulis, dan perbarui otomatis saat sitasi berubah.
 
 ### 10.3 Penyambung per editor
-- [ ] **LibreOffice / OpenOffice**: ekstensi UNO (`.oxt`) dengan menu dan
-      toolbar sendiri, berbicara ke API lokal ReadPaper.
+- [x] **LibreOffice**: ekstensi Python-UNO (`.oxt`, LibreOffice 7.6+) dengan
+      menu, bilah alat, dan dialog sendiri (`integrations/libreoffice/`).
+      ReadPaper merender sitasinya lewat `POST /api/run` dengan
+      JavaScriptCore (KT-5). Token ditemukan sendiri. Diuji di Writer 24.2.
+      Belum: sitasi di catatan kaki/kotak teks, LibreOffice di Windows
+      (butuh mesin JavaScript ber-JIT di Windows).
 - [x] **Microsoft Word**: add-in Office.js — satu basis kode untuk **Word 365
       web dan Word desktop** (Windows & macOS). Manifest di
       `integrations/word/`, task pane dari GitHub Pages, sideload lewat
@@ -696,11 +717,10 @@ membaca dokumentasinya (dicatat 2026-09-30):
 - [x] **OnlyOffice**: plugin JavaScript (`integrations/onlyoffice/`, berkas
       `.plugin` di setiap rilis), OnlyOffice 9.0+. Kode editornya diuji di
       DocumentBuilder 9.0 dan 9.4; 8.x tidak punya API yang dibutuhkan.
-- [ ] **Google Docs**: lewat Google Docs API resmi dengan OAuth PKCE dan scope
-      `drive.file`, bukan ekstensi peramban. Alasan dan langkah lengkapnya —
-      termasuk cara mendapatkan kredensialnya — ada di
-      [google-docs-api.md](google-docs-api.md); keputusannya KT-3 di
-      [keputusan-teknis.md](keputusan-teknis.md).
+- [x] **Google Docs**: add-on Apps Script dengan panel samping yang sama
+      dengan Word/OnlyOffice (`integrations/google-docs/`; KT-3 direvisi
+      2026-10-23). Diuji dengan DocumentApp tiruan; pemasangan pertama di
+      akun Google sungguhan belum dicoba.
 - [ ] Uji lintas editor: satu dokumen yang sama disitasi dari dua editor
       berbeda harus tetap bisa diperbarui. (Kedua add-in sudah membaca kedua
       bentuk tag; tinggal dicoba di Word dan OnlyOffice sungguhan.)

@@ -1,6 +1,10 @@
 # Sitasi di Google Docs — cara mendapatkan dan memakai API-nya
 
-Status: rencana. Belum ada kodenya. Bagian dari Fase 10 di [backlog](backlog.md).
+Status: **tidak dipakai.** Diganti add-on panel samping pada 2026-10-23
+(KT-3 di [keputusan-teknis.md](keputusan-teknis.md); kodenya di
+`integrations/google-docs/`). Catatan ini disimpan karena langkah-langkah
+proyek Google Cloud dan OAuth-nya tetap berlaku bila suatu saat add-on itu
+diterbitkan di Google Workspace Marketplace.
 
 ## Kenapa Google Docs beda sendiri
 
