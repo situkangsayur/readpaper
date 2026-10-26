@@ -31,8 +31,10 @@ void main() {
     final second = sig();
     expect(second, isNot(first));
 
-    // Ditulis ulang dengan ukuran yang sama (pull mengubah satu bidang).
-    await Future<void>.delayed(const Duration(milliseconds: 20));
+    // Ditulis ulang dengan ukuran yang sama (pull mengubah satu bidang). Di
+    // Windows waktu ubahnya hanya sampai detik, jadi tulisan berikutnya harus
+    // jatuh di detik lain — seperti pemeriksaan sungguhan, tiap 3 detik.
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
     item.writeAsStringSync('{"key":"ABCD1235"}');
     final third = sig();
     expect(third, isNot(second));
