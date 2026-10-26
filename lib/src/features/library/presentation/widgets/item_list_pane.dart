@@ -8,11 +8,13 @@ import '../../../reader/presentation/screens/reader_screen.dart';
 import '../../../tabs/presentation/document_tabs.dart';
 import '../../domain/entities/zotero_item.dart';
 import '../../../../shared/widgets/tree_drag.dart';
+import '../../../../shared/widgets/tree_drawer_button.dart';
 import '../controllers/library_controllers.dart';
 import '../screens/duplicate_screen.dart';
 import '../screens/library_stats_screen.dart';
 import 'creator_facet_sheet.dart';
 import 'recent_papers_card.dart';
+import 'item_detail_pane.dart' show openAttachmentReader, readableAttachment;
 import '../import_actions.dart';
 import '../../../notes/data/notes_store.dart';
 import '../../../notes/presentation/controllers/notes_controller.dart';
@@ -91,6 +93,16 @@ class ItemListPane extends ConsumerWidget {
                       item: items[i],
                       selected: items[i].key == selectedKey,
                       onTap: () => ref.read(selectedItemKeyProvider.notifier).select(items[i].key),
+                      onMenu: (at) {
+                        final readable = readableAttachment(ref, items[i]);
+                        if (readable == null) return;
+                        showOpenMenu(
+                          context,
+                          at,
+                          () => openAttachmentReader(context, items[i], readable.$1, readable.$2),
+                          openLabel: context.l10n.libraryRead,
+                        );
+                      },
                     ),
                   ],
               ],
@@ -319,25 +331,50 @@ class _ListFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    height: 26,
-    padding: const EdgeInsets.symmetric(horizontal: 12),
+    // Lebih tinggi bila ada tombol koleksi: sasaran jari, bukan hanya teks.
+    height: TreeDrawerButton.available(context) ? 40 : 26,
+    padding: const EdgeInsets.only(left: 12, right: 4),
     alignment: Alignment.centerLeft,
     decoration: BoxDecoration(
       border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
     ),
-    child: Text(
-      context.l10n.libraryItemCount(count),
-      style: Theme.of(context).textTheme.labelSmall,
+    child: Row(
+      children: <Widget>[
+        Expanded(
+          child: Text(
+            context.l10n.libraryItemCount(count),
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+        ),
+        const TreeDrawerButton(),
+      ],
     ),
   );
 }
 
-class _ItemTile extends StatelessWidget {
-  const _ItemTile({required this.item, required this.selected, required this.onTap});
+class _ItemTile extends StatefulWidget {
+  const _ItemTile({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+    required this.onMenu,
+  });
 
   final ZoteroItem item;
   final bool selected;
   final VoidCallback onTap;
+
+  /// Menu buka (tab baru, panel kanan) di titik yang ditekan.
+  final void Function(Offset at) onMenu;
+
+  @override
+  State<_ItemTile> createState() => _ItemTileState();
+}
+
+class _ItemTileState extends State<_ItemTile> {
+  Offset? _down;
+
+  ZoteroItem get item => widget.item;
 
   @override
   Widget build(BuildContext context) {
@@ -347,9 +384,16 @@ class _ItemTile extends StatelessWidget {
     // Ditekan lama untuk diseret ke koleksi lain di pohon. Tekan lama, bukan
     // seret langsung: daftar ini digulir dengan seretan, dan yang menggulir
     // tidak sedang memindahkan apa pun.
+    //
+    // Tekan lama lalu dilepas di tempat — tidak diseret ke mana pun — membuka
+    // menu buka: di tab baru atau di panel kanan.
     return LongPressDraggable<TreeDrag>(
       data: ItemDrag(itemKey: item.key, label: item.title),
       dragAnchorStrategy: pointerDragAnchorStrategy,
+      onDraggableCanceled: (_, offset) {
+        final down = _down;
+        if (down != null && (offset - down).distance < 24) widget.onMenu(offset);
+      },
       feedback: Material(
         elevation: 6,
         borderRadius: BorderRadius.circular(8),
@@ -369,13 +413,18 @@ class _ItemTile extends StatelessWidget {
           ),
         ),
       ),
-      child: _body(context, scheme, attachment),
+      child: Listener(
+        onPointerDown: (event) => _down = event.position,
+        child: _body(context, scheme, attachment),
+      ),
     );
   }
 
   Widget _body(BuildContext context, ColorScheme scheme, ZoteroAttachment? attachment) {
+    final selected = widget.selected;
     return InkWell(
-      onTap: onTap,
+      onTap: widget.onTap,
+      onSecondaryTapUp: (details) => widget.onMenu(details.globalPosition),
       child: Container(
         color: selected ? scheme.primaryContainer.withValues(alpha: 0.45) : null,
         padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),

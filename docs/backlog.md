@@ -8,6 +8,27 @@ Legenda: `[x]` selesai · `[~]` sebagian · `[ ]` belum.
 
 ---
 
+## Antrean 2026-10-26
+
+- [x] **Berkas dan folder baru tampil tanpa menutup aplikasi**: library dan
+  catatan dibaca ulang begitu isinya berubah di disk dari luar ReadPaper
+  (`git pull` di terminal, ekspor Zotero, pengelola berkas) — diperiksa
+  tiap 3 detik di desktop, 15 detik di tablet, dan seketika saat aplikasi
+  kembali ke depan. Panel berkas mengawasi folder yang sedang terbuka.
+- [x] **Berkas yang ditolak GitHub saat Kirim (tablet)**: tab "Ditolak" di
+  detail sinkron memperlihatkan setiap berkas dengan ukuran dan alasannya,
+  lalu bisa dikecualikan (tetap di perangkat, tidak pernah dikirim), dihapus
+  dari perangkat, atau dicoba lagi. Yang dikecualikan bisa disertakan lagi.
+  Banner galat punya tombol "Lihat berkas".
+- [x] **Berbagi layar (Google Meet) di tablet**: bilah tab bisa dipindah ke
+  bawah (tekan lama sebuah tab, atau Pengaturan); tombol "Koleksi" di bawah
+  daftar paper dan catatan membuka pohon koleksi tanpa tombol menu di pojok
+  kiri atas; tekan lama paper, tombol Baca, atau menu catatan menawarkan
+  "Buka di tab baru" dan "Buka di panel kanan". Tekan lama tab kini membuka
+  menunya, bukan tooltip.
+- [ ] Berkas yang ditolak GitHub lewat `git` (desktop): perlu menulis ulang
+  commit lokal; sementara ini hanya pesan galatnya.
+
 ## Antrean 2026-10-23 — sitasi di empat editor
 
 - [x] **LibreOffice Writer**: ekstensi `.oxt` dengan menu, bilah alat, dan

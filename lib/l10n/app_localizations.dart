@@ -1088,6 +1088,18 @@ abstract class AppLocalizations {
   /// **'LibreOffice belum bisa dipakai: pasang libjavascriptcoregtk-4.1 (Debian/Ubuntu) atau webkit2gtk-4.1 (Arch/CachyOS), lalu buka ulang ReadPaper.'**
   String get citationLibreOfficeMissing;
 
+  /// No description provided for @settingsTabsAtBottom.
+  ///
+  /// In id, this message translates to:
+  /// **'Bilah tab di bawah'**
+  String get settingsTabsAtBottom;
+
+  /// No description provided for @settingsTabsAtBottomHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Tab library dan dokumen tetap terjangkau saat pojok atas layar tertutup gelembung berbagi layar (Google Meet). Juga bisa dipilih dengan menekan lama sebuah tab.'**
+  String get settingsTabsAtBottomHint;
+
   /// No description provided for @findTooltip.
   ///
   /// In id, this message translates to:
@@ -2724,6 +2736,12 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Berkas tidak ditemukan'**
   String get libraryErrFileNotFound;
+
+  /// No description provided for @libraryOpenTree.
+  ///
+  /// In id, this message translates to:
+  /// **'Koleksi'**
+  String get libraryOpenTree;
 
   /// No description provided for @notesUnfiledTitle.
   ///
@@ -6217,6 +6235,36 @@ abstract class AppLocalizations {
   /// **'Seret tab ke sini, atau pilih \"Pindah ke panel kanan\", untuk membaca dua dokumen berdampingan'**
   String get tabsSplitHint;
 
+  /// No description provided for @tabsBarToTop.
+  ///
+  /// In id, this message translates to:
+  /// **'Pindahkan bilah tab ke atas'**
+  String get tabsBarToTop;
+
+  /// No description provided for @tabsBarToBottom.
+  ///
+  /// In id, this message translates to:
+  /// **'Pindahkan bilah tab ke bawah'**
+  String get tabsBarToBottom;
+
+  /// No description provided for @tabsOpenNew.
+  ///
+  /// In id, this message translates to:
+  /// **'Buka di tab baru'**
+  String get tabsOpenNew;
+
+  /// No description provided for @tabsOpen.
+  ///
+  /// In id, this message translates to:
+  /// **'Buka'**
+  String get tabsOpen;
+
+  /// No description provided for @tabsOpenRight.
+  ///
+  /// In id, this message translates to:
+  /// **'Buka di panel kanan'**
+  String get tabsOpenRight;
+
   /// No description provided for @workspaceSwitchRepoCount.
   ///
   /// In id, this message translates to:
@@ -7596,6 +7644,162 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'git tidak ditemukan. Pasang git dan git-lfs — CachyOS/Arch: sudo pacman -S git git-lfs; Debian/Ubuntu: sudo apt install git git-lfs.'**
   String get syncInstallGitLinux;
+
+  /// No description provided for @syncStatusRejected.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} ditolak GitHub'**
+  String syncStatusRejected(int count);
+
+  /// No description provided for @syncErrDecisionUnsupported.
+  ///
+  /// In id, this message translates to:
+  /// **'Berkas yang ditolak hanya bisa diatur dari sini untuk repositori yang disinkronkan lewat API GitHub (Android). Dengan git, keluarkan berkasnya dari commit (git rm --cached) dan tambahkan ke .gitignore, atau simpan lewat Git LFS.'**
+  String get syncErrDecisionUnsupported;
+
+  /// No description provided for @syncFilesExcluded.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} berkas dikecualikan: tetap di perangkat ini, tidak dikirim ke GitHub.'**
+  String syncFilesExcluded(int count);
+
+  /// No description provided for @syncFilesIncluded.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} berkas ikut dikirim lagi pada Kirim berikutnya.'**
+  String syncFilesIncluded(int count);
+
+  /// No description provided for @syncFilesRetry.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} berkas dicoba lagi pada Kirim berikutnya.'**
+  String syncFilesRetry(int count);
+
+  /// No description provided for @syncFilesRemoved.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} berkas dihapus dari perangkat dan dikeluarkan dari antrean kirim.'**
+  String syncFilesRemoved(int count);
+
+  /// No description provided for @syncErrRemoveFile.
+  ///
+  /// In id, this message translates to:
+  /// **'Tidak bisa menghapus {name}: {reason}'**
+  String syncErrRemoveFile(String name, String reason);
+
+  /// No description provided for @syncTabExcluded.
+  ///
+  /// In id, this message translates to:
+  /// **'Dikecualikan'**
+  String get syncTabExcluded;
+
+  /// No description provided for @syncTabRejected.
+  ///
+  /// In id, this message translates to:
+  /// **'Ditolak ({count})'**
+  String syncTabRejected(int count);
+
+  /// No description provided for @syncRemoveFilesTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus {count} berkas dari perangkat?'**
+  String syncRemoveFilesTitle(int count);
+
+  /// No description provided for @syncRemoveFilesBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Berkasnya dihapus dari perangkat ini dan dikeluarkan dari antrean kirim. Ini tidak bisa dibatalkan.'**
+  String get syncRemoveFilesBody;
+
+  /// No description provided for @syncRemoveFilesOnRemote.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} di antaranya punya versi lama di GitHub; versi itu ikut terhapus di GitHub pada Kirim berikutnya.'**
+  String syncRemoveFilesOnRemote(int count);
+
+  /// No description provided for @syncRemoveFile.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus dari perangkat'**
+  String get syncRemoveFile;
+
+  /// No description provided for @syncRejectedIntro.
+  ///
+  /// In id, this message translates to:
+  /// **'GitHub menolak berkas berikut — biasanya karena lebih dari 100 MB. Berkas lain sudah terkirim. Untuk setiap berkas, pilih: kecualikan (tetap di perangkat, tidak pernah dikirim), hapus dari perangkat, atau coba kirim lagi.'**
+  String get syncRejectedIntro;
+
+  /// No description provided for @syncFileGone.
+  ///
+  /// In id, this message translates to:
+  /// **'sudah tidak ada di perangkat'**
+  String get syncFileGone;
+
+  /// No description provided for @syncFileOnRemote.
+  ///
+  /// In id, this message translates to:
+  /// **'versi lama ada di GitHub'**
+  String get syncFileOnRemote;
+
+  /// No description provided for @syncFileDecision.
+  ///
+  /// In id, this message translates to:
+  /// **'Pilihan untuk berkas ini'**
+  String get syncFileDecision;
+
+  /// No description provided for @syncExcludeSelected.
+  ///
+  /// In id, this message translates to:
+  /// **'Kecualikan ({count})'**
+  String syncExcludeSelected(int count);
+
+  /// No description provided for @syncRemoveSelected.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus ({count})'**
+  String syncRemoveSelected(int count);
+
+  /// No description provided for @syncRetrySelected.
+  ///
+  /// In id, this message translates to:
+  /// **'Coba lagi ({count})'**
+  String syncRetrySelected(int count);
+
+  /// No description provided for @syncExcludedTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Dikecualikan dari sinkronisasi'**
+  String get syncExcludedTitle;
+
+  /// No description provided for @syncExcludedIntro.
+  ///
+  /// In id, this message translates to:
+  /// **'Tetap di perangkat ini, tetapi tidak pernah dikirim ke GitHub dan tidak dihitung sebagai perubahan.'**
+  String get syncExcludedIntro;
+
+  /// No description provided for @syncIncludeAgain.
+  ///
+  /// In id, this message translates to:
+  /// **'Sertakan lagi'**
+  String get syncIncludeAgain;
+
+  /// No description provided for @syncExcludeFile.
+  ///
+  /// In id, this message translates to:
+  /// **'Kecualikan (jangan dikirim)'**
+  String get syncExcludeFile;
+
+  /// No description provided for @syncRetryFile.
+  ///
+  /// In id, this message translates to:
+  /// **'Coba kirim lagi'**
+  String get syncRetryFile;
+
+  /// No description provided for @syncSeeRejected.
+  ///
+  /// In id, this message translates to:
+  /// **'Lihat berkas'**
+  String get syncSeeRejected;
 }
 
 class _AppLocalizationsDelegate

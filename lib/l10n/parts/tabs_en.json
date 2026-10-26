@@ -4,5 +4,10 @@
   "tabsCloseOthers": "Close other tabs",
   "tabsMoveRight": "Move to right pane",
   "tabsMoveLeft": "Move to left pane",
-  "tabsSplitHint": "Drag a tab here, or choose \"Move to right pane\", to read two documents side by side"
+  "tabsSplitHint": "Drag a tab here, or choose \"Move to right pane\", to read two documents side by side",
+  "tabsBarToTop": "Move the tab bar to the top",
+  "tabsBarToBottom": "Move the tab bar to the bottom",
+  "tabsOpenNew": "Open in a new tab",
+  "tabsOpen": "Open",
+  "tabsOpenRight": "Open in the right pane"
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import '../../../core/utils/file_pick.dart';
@@ -53,10 +54,47 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   List<FileSystemEntity> _entries = const <FileSystemEntity>[];
   String? _error;
 
+  /// Folder yang terbuka diawasi: berkas yang disimpan aplikasi lain, disalin
+  /// pengelola berkas, atau datang lewat pull tampil tanpa harus membuka
+  /// folder itu lagi.
+  StreamSubscription<FileSystemEvent>? _watch;
+  Timer? _settle;
+  late final AppLifecycleListener _lifecycle;
+
   @override
   void initState() {
     super.initState();
+    _lifecycle = AppLifecycleListener(onResume: _relist);
     _openDefault();
+  }
+
+  @override
+  void dispose() {
+    _watch?.cancel();
+    _settle?.cancel();
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  void _relist() {
+    final dir = _dir;
+    if (dir != null && mounted) _open(dir);
+  }
+
+  void _watchDir(Directory dir) {
+    _watch?.cancel();
+    _watch = null;
+    try {
+      // Satu tingkat saja: hanya isi folder ini yang tampil di daftar. Satu
+      // salinan besar memicu puluhan peristiwa, jadi daftarnya dibaca ulang
+      // sekali sesudah semuanya reda.
+      _watch = dir.watch().listen((_) {
+        _settle?.cancel();
+        _settle = Timer(const Duration(milliseconds: 300), _relist);
+      }, onError: (_) {});
+    } on FileSystemException {
+      // Tanpa pengawas, kembali ke aplikasi tetap membaca ulang.
+    }
   }
 
   /// Folder kerja bawaan: satu tempat milik aplikasi, supaya berkas yang
@@ -73,6 +111,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
           return p.basename(a.path).toLowerCase().compareTo(p.basename(b.path).toLowerCase());
         });
       if (!mounted) return;
+      if (_dir?.path != dir.path || _watch == null) _watchDir(dir);
       setState(() {
         _dir = dir;
         _entries = entries;

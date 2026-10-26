@@ -75,6 +75,7 @@ class DocumentTabsState {
     this.activeRight,
     this.focused = TabSide.left,
     this.split = 0.5,
+    this.atBottom = false,
   });
 
   final List<DocumentTab> tabs;
@@ -86,6 +87,13 @@ class DocumentTabsState {
 
   /// Lebar panel kiri sebagai bagian dari seluruh lebar.
   final double split;
+
+  /// Bilah tab di bawah, bukan di atas.
+  ///
+  /// Saat layar tablet dibagikan lewat Google Meet, gelembung dan jendela
+  /// kecil Meet menutupi pojok atas — persis tempat tab library dan tombol
+  /// belah layar. Di bawah keduanya tetap terjangkau.
+  final bool atBottom;
 
   Iterable<DocumentTab> on(TabSide side) => tabs.where((t) => t.side == side);
 
@@ -101,12 +109,14 @@ class DocumentTabsState {
     int? Function()? activeRight,
     TabSide? focused,
     double? split,
+    bool? atBottom,
   }) => DocumentTabsState(
     tabs: tabs ?? this.tabs,
     activeLeft: activeLeft ?? this.activeLeft,
     activeRight: activeRight == null ? this.activeRight : activeRight(),
     focused: focused ?? this.focused,
     split: split ?? this.split,
+    atBottom: atBottom ?? this.atBottom,
   );
 }
 
@@ -120,6 +130,42 @@ class DocumentTabsController extends Notifier<DocumentTabsState> {
   @override
   DocumentTabsState build() => const DocumentTabsState();
 
+  /// Dipanggil saat letak bilah tab dipilih dari menu tab, supaya pilihan
+  /// itu bisa disimpan; dipasang oleh aplikasi.
+  void Function(bool atBottom)? onBarPositionChanged;
+
+  void setAtBottom(bool value) {
+    if (state.atBottom != value) state = state.copyWith(atBottom: value);
+  }
+
+  void toggleBarPosition() {
+    setAtBottom(!state.atBottom);
+    onBarPositionChanged?.call(state.atBottom);
+  }
+
+  TabSide? _nextSide;
+  DateTime? _nextSideAt;
+
+  /// Dokumen berikutnya dibuka di panel [side] — dari menu "Buka di panel
+  /// kanan", tanpa setiap layar pembuka perlu tahu tentang panel.
+  ///
+  /// Hanya berlaku sebentar: pilihan yang tidak berakhir dengan dokumen yang
+  /// terbuka (berkas yang diserahkan ke aplikasi lain) tidak boleh diam-diam
+  /// menentukan tempat dokumen yang dibuka jauh sesudahnya.
+  void openNextOn(TabSide side) {
+    _nextSide = side;
+    _nextSideAt = DateTime.now();
+  }
+
+  TabSide? _takeNextSide() {
+    final side = _nextSide;
+    final at = _nextSideAt;
+    _nextSide = null;
+    _nextSideAt = null;
+    if (side == null || at == null) return null;
+    return DateTime.now().difference(at) < const Duration(seconds: 3) ? side : null;
+  }
+
   /// Membuka [screen] di tab baru di panel yang sedang aktif.
   Future<T?> open<T>(
     Widget screen, {
@@ -127,15 +173,20 @@ class DocumentTabsController extends Notifier<DocumentTabsState> {
     required IconData icon,
     String? dedupeKey,
   }) {
+    final wanted = _takeNextSide();
     if (dedupeKey != null) {
       final existing = state.tabs.where((t) => t.dedupeKey == dedupeKey).firstOrNull;
       if (existing != null) {
-        activate(existing.id);
+        if (wanted != null && existing.side != wanted) {
+          moveTo(existing.id, wanted);
+        } else {
+          activate(existing.id);
+        }
         return existing.route.popped.then((value) => value is T ? value : null);
       }
     }
     final route = MaterialPageRoute<T>(builder: (_) => screen);
-    final side = state.focused;
+    final side = wanted ?? state.focused;
     final tab = DocumentTab(
       id: _nextId++,
       dedupeKey: dedupeKey,
@@ -148,6 +199,7 @@ class DocumentTabsController extends Notifier<DocumentTabsState> {
       tabs: <DocumentTab>[...state.tabs, tab],
       activeLeft: side == TabSide.left ? tab.id : null,
       activeRight: side == TabSide.right ? () => tab.id : null,
+      focused: side,
     );
     // Layarnya menutup dirinya sendiri (kembali, Simpan, …) atau ditutup
     // lewat [close]: keduanya lewat sini.
@@ -288,10 +340,73 @@ Future<T?> openDocument<T>(
 }) {
   final container = ProviderScope.containerOf(context, listen: false);
   final tabs = container.read(documentTabsProvider.notifier);
-  if (!tabs.hostMounted || LayoutSize.of(context).isCompact) {
+  if (!canUseTabs(context)) {
+    tabs._takeNextSide();
     return Navigator.of(context).push<T>(MaterialPageRoute<T>(builder: (_) => screen));
   }
   return tabs.open<T>(screen, title: title, icon: icon, dedupeKey: dedupeKey);
+}
+
+/// Dokumen terbuka sebagai tab di sini — bukan di ponsel, yang hanya punya
+/// satu layar penuh. Menu "Buka di panel kanan" hanya ditawarkan bila ini
+/// benar.
+bool canUseTabs(BuildContext context) {
+  final container = ProviderScope.containerOf(context, listen: false);
+  return container.read(documentTabsProvider.notifier).hostMounted &&
+      !LayoutSize.of(context).isCompact;
+}
+
+/// Membuka dokumen lewat [open] di panel kanan, berdampingan dengan yang
+/// sudah terbuka.
+void openOnRight(BuildContext context, void Function() open) {
+  ProviderScope.containerOf(
+    context,
+    listen: false,
+  ).read(documentTabsProvider.notifier).openNextOn(TabSide.right);
+  open();
+}
+
+/// Menu buka di [position] — dari tekan lama atau klik kanan: di tab baru,
+/// atau di panel kanan supaya berdampingan dengan yang sedang terbuka.
+///
+/// Dibutuhkan saat tombol di pojok layar tertutup gelembung berbagi layar,
+/// dan sebagai jalan pintas ke panel kanan tanpa menyeret tab.
+Future<void> showOpenMenu(
+  BuildContext context,
+  Offset position,
+  void Function() open, {
+  String? openLabel,
+}) async {
+  final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
+  final tabs = canUseTabs(context);
+  final chosen = await showMenu<int>(
+    context: context,
+    position: RelativeRect.fromRect(position & const Size(1, 1), Offset.zero & overlay.size),
+    items: <PopupMenuEntry<int>>[
+      PopupMenuItem<int>(
+        value: 0,
+        child: ListTile(
+          dense: true,
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.open_in_new, size: 18),
+          title: Text(openLabel ?? (tabs ? context.l10n.tabsOpenNew : context.l10n.tabsOpen)),
+        ),
+      ),
+      if (tabs)
+        PopupMenuItem<int>(
+          value: 1,
+          child: ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.vertical_split_outlined, size: 18),
+            title: Text(context.l10n.tabsOpenRight),
+          ),
+        ),
+    ],
+  );
+  if (!context.mounted) return;
+  if (chosen == 0) open();
+  if (chosen == 1) openOnRight(context, open);
 }
 
 /// Bilah tab di atas, lalu satu atau dua panel di bawahnya.
@@ -336,56 +451,74 @@ class _DocumentTabsHostState extends ConsumerState<DocumentTabsHost> {
         final width = constraints.maxWidth;
         const dividerWidth = 6.0;
         final leftWidth = state.isSplit ? (width - dividerWidth) * state.split : width;
+        final strip = SafeArea(
+          // Bilah tab mengambil jarak bilah status (di atas) atau bilah
+          // navigasi (di bawah); layar di panel tidak perlu menyisakannya lagi.
+          top: !state.atBottom,
+          bottom: state.atBottom,
+          child: SizedBox(
+            height: 38,
+            child: Row(
+              children: <Widget>[
+                SizedBox(
+                  width: state.isSplit ? leftWidth + dividerWidth / 2 : width,
+                  child: _TabStrip(side: TabSide.left, showLibrary: true),
+                ),
+                if (state.isSplit)
+                  Expanded(child: _TabStrip(side: TabSide.right, showLibrary: false)),
+              ],
+            ),
+          ),
+        );
         return Column(
           children: <Widget>[
-            SizedBox(
-              height: 38,
-              child: Row(
-                children: <Widget>[
-                  SizedBox(
-                    width: state.isSplit ? leftWidth + dividerWidth / 2 : width,
-                    child: _TabStrip(side: TabSide.left, showLibrary: true),
-                  ),
-                  if (state.isSplit)
-                    Expanded(child: _TabStrip(side: TabSide.right, showLibrary: false)),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
+            if (!state.atBottom) ...<Widget>[
+              Material(color: Theme.of(context).colorScheme.surfaceContainer, child: strip),
+              const Divider(height: 1),
+            ],
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  SizedBox(
-                    width: leftWidth,
-                    child: _Pane(
-                      side: TabSide.left,
-                      children: <int, Widget>{
-                        libraryTabId: library,
-                        for (final tab in state.on(TabSide.left)) tab.id: _TabBody(tab: tab),
-                      },
-                      active: state.activeLeft,
-                    ),
-                  ),
-                  if (state.isSplit) ...<Widget>[
-                    _SplitHandle(
-                      width: dividerWidth,
-                      onDrag: (dx) =>
-                          controller.setSplit((leftWidth + dx) / (width - dividerWidth)),
-                    ),
-                    Expanded(
+              child: MediaQuery.removePadding(
+                context: context,
+                removeTop: !state.atBottom,
+                removeBottom: state.atBottom,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    SizedBox(
+                      width: leftWidth,
                       child: _Pane(
-                        side: TabSide.right,
+                        side: TabSide.left,
                         children: <int, Widget>{
-                          for (final tab in state.on(TabSide.right)) tab.id: _TabBody(tab: tab),
+                          libraryTabId: library,
+                          for (final tab in state.on(TabSide.left)) tab.id: _TabBody(tab: tab),
                         },
-                        active: state.activeRight,
+                        active: state.activeLeft,
                       ),
                     ),
+                    if (state.isSplit) ...<Widget>[
+                      _SplitHandle(
+                        width: dividerWidth,
+                        onDrag: (dx) =>
+                            controller.setSplit((leftWidth + dx) / (width - dividerWidth)),
+                      ),
+                      Expanded(
+                        child: _Pane(
+                          side: TabSide.right,
+                          children: <int, Widget>{
+                            for (final tab in state.on(TabSide.right)) tab.id: _TabBody(tab: tab),
+                          },
+                          active: state.activeRight,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
+            if (state.atBottom) ...<Widget>[
+              const Divider(height: 1),
+              Material(color: Theme.of(context).colorScheme.surfaceContainer, child: strip),
+            ],
           ],
         );
       },
@@ -506,6 +639,11 @@ class _TabStrip extends ConsumerWidget {
     final controller = ref.read(documentTabsProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
     final focused = state.focused == side && state.isSplit;
+    final barPosition = (
+      state.atBottom ? context.l10n.tabsBarToTop : context.l10n.tabsBarToBottom,
+      state.atBottom ? Icons.vertical_align_top : Icons.vertical_align_bottom,
+      controller.toggleBarPosition,
+    );
     return DragTarget<int>(
       onWillAcceptWithDetails: (details) => state.byId(details.data)?.side != side,
       onAcceptWithDetails: (details) => controller.moveTo(details.data, side),
@@ -532,6 +670,7 @@ class _TabStrip extends ConsumerWidget {
                         icon: Icons.local_library_outlined,
                         selected: state.activeLeft == libraryTabId,
                         onTap: () => controller.activate(libraryTabId),
+                        menu: <(String, IconData, VoidCallback)>[barPosition],
                       ),
                     for (final tab in state.on(side))
                       Draggable<int>(
@@ -573,6 +712,7 @@ class _TabStrip extends ConsumerWidget {
                               () => controller.closeOthers(tab.id),
                             ),
                             (context.l10n.tabsClose, Icons.close, () => controller.close(tab.id)),
+                            barPosition,
                           ],
                         ),
                       ),
@@ -675,6 +815,11 @@ class _TabChip extends StatelessWidget {
                       child: Tooltip(
                         message: title,
                         waitDuration: const Duration(milliseconds: 600),
+                        // Hanya saat tetikus diam di atasnya. Di layar sentuh
+                        // tekan lama adalah menu tab; tooltip yang ikut
+                        // menunggu tekan lama memenangkannya, dan menunya
+                        // tidak pernah muncul.
+                        triggerMode: TooltipTriggerMode.manual,
                         child: Text(
                           title,
                           maxLines: 1,

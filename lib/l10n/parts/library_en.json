@@ -234,5 +234,6 @@
   "libraryErrMoveIntoSelf": "A collection cannot be moved into itself",
   "libraryErrCollectionsMissing": "collections.json does not exist",
   "libraryErrItemNoZotero": "The item file has no zotero section",
-  "libraryErrFileNotFound": "File not found"
+  "libraryErrFileNotFound": "File not found",
+  "libraryOpenTree": "Collections"
 }

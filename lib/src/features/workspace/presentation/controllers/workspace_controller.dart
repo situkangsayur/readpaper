@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 import '../../../../core/errors/failure.dart';
+import '../../../../core/utils/tree_signature.dart';
 import '../../../library/domain/repositories/library_repository.dart';
 import '../../domain/entities/repo_stats.dart';
 import '../../../library/data/datasources/library_transfer.dart';
@@ -26,11 +28,27 @@ import '../../../sync/domain/repositories/git_backend.dart';
 import '../../domain/entities/workspace_state.dart';
 import '../../../../core/l10n.dart';
 
+/// Berkas yang sidiknya menandai library berubah di disk.
+List<String> librarySignaturePaths(String libraryDir) => <String>[
+  p.join(libraryDir, 'collections.json'),
+  p.join(libraryDir, 'items'),
+];
+
 /// Owns the active repository: its clone, its git state and the parsed library.
 ///
 /// Every remote operation funnels through here so the UI only has to render
 /// [WorkspaceState].
 class WorkspaceController extends Notifier<WorkspaceState> {
+  /// Bertambah setiap kali ReadPaper sendiri menulis ke library tanpa
+  /// membacanya ulang (anotasi, gambar tempelan), supaya [DiskWatch] tidak
+  /// mengira tulisan itu datang dari luar.
+  int ownWrites = 0;
+
+  /// Sidik library di disk sesaat sebelum terakhir dibaca; [DiskWatch]
+  /// membaca ulang begitu sidiknya berbeda. Diambil sebelum, bukan sesudah,
+  /// supaya perubahan yang datang selagi library dibaca tidak terlewat.
+  String? librarySignature;
+
   @override
   WorkspaceState build() {
     Future<void>.microtask(bootstrap);
@@ -120,6 +138,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             orElse: () => layout.libraries.first,
           );
 
+      final dir = selected.directoryPath;
+      // Juga bila bacaannya gagal: library yang rusak tidak dibaca ulang
+      // setiap beberapa detik, hanya setelah berubah lagi.
+      librarySignature = await Isolate.run(() => treeSignatureSync(librarySignaturePaths(dir)));
       final index = await repository.loadLibrary(selected);
       state = state.copyWith(
         layout: layout,
@@ -324,6 +346,24 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return result.ok;
   }
 
+  /// Keputusan untuk berkas yang ditolak GitHub: dikecualikan, dihapus,
+  /// dicoba lagi, atau disertakan kembali.
+  Future<bool> decideFiles(List<String> paths, FileDecision decision) async {
+    final profile = state.profile;
+    if (profile == null || paths.isEmpty) return false;
+    final result = await ref
+        .read(gitBackendProvider)
+        .decideFiles(repoPath: profile.localPath, paths: paths, decision: decision);
+    state = state.copyWith(
+      message: result.ok ? result.message : null,
+      error: result.ok ? null : result.message,
+      clearError: result.ok,
+      clearMessage: !result.ok,
+    );
+    await refreshGitStatus();
+    return result.ok;
+  }
+
   Future<void> refreshGitStatus() async {
     final profile = state.profile;
     if (profile == null) return;
@@ -344,6 +384,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required ZoteroAnnotation annotation,
     required bool isNew,
   }) async {
+    ownWrites++;
     final library = state.library;
     final profile = state.profile;
     if (library == null || profile == null) {
@@ -386,6 +427,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required ZoteroItem item,
     required ZoteroAnnotation annotation,
   }) async {
+    ownWrites++;
     final library = state.library;
     final profile = state.profile;
     if (library == null || profile == null) {
@@ -435,6 +477,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required bool isNew,
     Uint8List? bytes,
   }) async {
+    ownWrites++;
     final store = pagePictures(attachmentKey);
     final profile = state.profile;
     if (store == null || profile == null) {
@@ -459,6 +502,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required String itemTitle,
     required ZoteroAnnotation annotation,
   }) async {
+    ownWrites++;
     final store = pagePictures(attachmentKey);
     final profile = state.profile;
     if (store == null || profile == null) return false;
@@ -1071,6 +1115,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final settings = await ref
         .read(settingsRepositoryProvider)
         .updatePreferences(pointerTrailMs: milliseconds);
+    state = state.copyWith(settings: settings);
+  }
+
+  /// Bilah tab dokumen di atas atau di bawah.
+  Future<void> setTabsAtBottom(bool value) async {
+    final settings = await ref
+        .read(settingsRepositoryProvider)
+        .updatePreferences(tabsAtBottom: value);
     state = state.copyWith(settings: settings);
   }
 

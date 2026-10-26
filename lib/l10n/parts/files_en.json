@@ -154,5 +154,7 @@
   "commonShapeLine": "Line",
   "commonShapeArrow": "Arrow",
   "citationLibreOfficeReady": "LibreOffice ready — citations are rendered with {engine}.",
-  "citationLibreOfficeMissing": "LibreOffice cannot be used yet: install libjavascriptcoregtk-4.1 (Debian/Ubuntu) or webkit2gtk-4.1 (Arch/CachyOS), then reopen ReadPaper."
+  "citationLibreOfficeMissing": "LibreOffice cannot be used yet: install libjavascriptcoregtk-4.1 (Debian/Ubuntu) or webkit2gtk-4.1 (Arch/CachyOS), then reopen ReadPaper.",
+  "settingsTabsAtBottom": "Tab bar at the bottom",
+  "settingsTabsAtBottomHint": "Keeps the library and document tabs reachable when a screen-sharing bubble (Google Meet) covers the top corners. You can also switch it by long-pressing a tab."
 }

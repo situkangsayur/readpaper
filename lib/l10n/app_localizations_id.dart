@@ -586,6 +586,13 @@ class AppLocalizationsId extends AppLocalizations {
       'LibreOffice belum bisa dipakai: pasang libjavascriptcoregtk-4.1 (Debian/Ubuntu) atau webkit2gtk-4.1 (Arch/CachyOS), lalu buka ulang ReadPaper.';
 
   @override
+  String get settingsTabsAtBottom => 'Bilah tab di bawah';
+
+  @override
+  String get settingsTabsAtBottomHint =>
+      'Tab library dan dokumen tetap terjangkau saat pojok atas layar tertutup gelembung berbagi layar (Google Meet). Juga bisa dipilih dengan menekan lama sebuah tab.';
+
+  @override
   String get findTooltip => 'Cari di dokumen (Ctrl+F)';
 
   @override
@@ -1566,6 +1573,9 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get libraryErrFileNotFound => 'Berkas tidak ditemukan';
+
+  @override
+  String get libraryOpenTree => 'Koleksi';
 
   @override
   String get notesUnfiledTitle => 'Catatan tanpa koleksi';
@@ -3649,6 +3659,21 @@ class AppLocalizationsId extends AppLocalizations {
       'Seret tab ke sini, atau pilih \"Pindah ke panel kanan\", untuk membaca dua dokumen berdampingan';
 
   @override
+  String get tabsBarToTop => 'Pindahkan bilah tab ke atas';
+
+  @override
+  String get tabsBarToBottom => 'Pindahkan bilah tab ke bawah';
+
+  @override
+  String get tabsOpenNew => 'Buka di tab baru';
+
+  @override
+  String get tabsOpen => 'Buka';
+
+  @override
+  String get tabsOpenRight => 'Buka di panel kanan';
+
+  @override
   String workspaceSwitchRepoCount(int count) {
     return 'Ganti repositori ($count tersedia)';
   }
@@ -4531,4 +4556,110 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get syncInstallGitLinux =>
       'git tidak ditemukan. Pasang git dan git-lfs — CachyOS/Arch: sudo pacman -S git git-lfs; Debian/Ubuntu: sudo apt install git git-lfs.';
+
+  @override
+  String syncStatusRejected(int count) {
+    return '$count ditolak GitHub';
+  }
+
+  @override
+  String get syncErrDecisionUnsupported =>
+      'Berkas yang ditolak hanya bisa diatur dari sini untuk repositori yang disinkronkan lewat API GitHub (Android). Dengan git, keluarkan berkasnya dari commit (git rm --cached) dan tambahkan ke .gitignore, atau simpan lewat Git LFS.';
+
+  @override
+  String syncFilesExcluded(int count) {
+    return '$count berkas dikecualikan: tetap di perangkat ini, tidak dikirim ke GitHub.';
+  }
+
+  @override
+  String syncFilesIncluded(int count) {
+    return '$count berkas ikut dikirim lagi pada Kirim berikutnya.';
+  }
+
+  @override
+  String syncFilesRetry(int count) {
+    return '$count berkas dicoba lagi pada Kirim berikutnya.';
+  }
+
+  @override
+  String syncFilesRemoved(int count) {
+    return '$count berkas dihapus dari perangkat dan dikeluarkan dari antrean kirim.';
+  }
+
+  @override
+  String syncErrRemoveFile(String name, String reason) {
+    return 'Tidak bisa menghapus $name: $reason';
+  }
+
+  @override
+  String get syncTabExcluded => 'Dikecualikan';
+
+  @override
+  String syncTabRejected(int count) {
+    return 'Ditolak ($count)';
+  }
+
+  @override
+  String syncRemoveFilesTitle(int count) {
+    return 'Hapus $count berkas dari perangkat?';
+  }
+
+  @override
+  String get syncRemoveFilesBody =>
+      'Berkasnya dihapus dari perangkat ini dan dikeluarkan dari antrean kirim. Ini tidak bisa dibatalkan.';
+
+  @override
+  String syncRemoveFilesOnRemote(int count) {
+    return '$count di antaranya punya versi lama di GitHub; versi itu ikut terhapus di GitHub pada Kirim berikutnya.';
+  }
+
+  @override
+  String get syncRemoveFile => 'Hapus dari perangkat';
+
+  @override
+  String get syncRejectedIntro =>
+      'GitHub menolak berkas berikut — biasanya karena lebih dari 100 MB. Berkas lain sudah terkirim. Untuk setiap berkas, pilih: kecualikan (tetap di perangkat, tidak pernah dikirim), hapus dari perangkat, atau coba kirim lagi.';
+
+  @override
+  String get syncFileGone => 'sudah tidak ada di perangkat';
+
+  @override
+  String get syncFileOnRemote => 'versi lama ada di GitHub';
+
+  @override
+  String get syncFileDecision => 'Pilihan untuk berkas ini';
+
+  @override
+  String syncExcludeSelected(int count) {
+    return 'Kecualikan ($count)';
+  }
+
+  @override
+  String syncRemoveSelected(int count) {
+    return 'Hapus ($count)';
+  }
+
+  @override
+  String syncRetrySelected(int count) {
+    return 'Coba lagi ($count)';
+  }
+
+  @override
+  String get syncExcludedTitle => 'Dikecualikan dari sinkronisasi';
+
+  @override
+  String get syncExcludedIntro =>
+      'Tetap di perangkat ini, tetapi tidak pernah dikirim ke GitHub dan tidak dihitung sebagai perubahan.';
+
+  @override
+  String get syncIncludeAgain => 'Sertakan lagi';
+
+  @override
+  String get syncExcludeFile => 'Kecualikan (jangan dikirim)';
+
+  @override
+  String get syncRetryFile => 'Coba kirim lagi';
+
+  @override
+  String get syncSeeRejected => 'Lihat berkas';
 }

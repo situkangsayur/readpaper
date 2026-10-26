@@ -697,5 +697,6 @@
   "libraryErrMoveIntoSelf": "Koleksi tidak bisa dipindah ke dalam dirinya sendiri",
   "libraryErrCollectionsMissing": "collections.json tidak ada",
   "libraryErrItemNoZotero": "Berkas item tidak punya bagian zotero",
-  "libraryErrFileNotFound": "Berkas tidak ditemukan"
+  "libraryErrFileNotFound": "Berkas tidak ditemukan",
+  "libraryOpenTree": "Koleksi"
 }

@@ -22,6 +22,7 @@ import '../../../notes/presentation/widgets/note_detail_pane.dart';
 import '../../../notes/presentation/controllers/notes_controller.dart';
 import '../../../settings/presentation/screens/profiles_screen.dart';
 import '../controllers/workspace_controller.dart';
+import '../widgets/sync_detail_sheet.dart';
 import '../widgets/workspace_bar.dart';
 import '../widgets/workspace_placeholders.dart';
 import '../../../settings/presentation/widgets/profile_editor_dialog.dart';
@@ -240,7 +241,15 @@ class _Banner extends ConsumerWidget {
             // boleh menuntut aplikasinya ditutup dulu.
             // Galat token tidak selesai dengan mencoba lagi: profilnya yang
             // perlu diisi, jadi tombolnya langsung ke sana.
-            if (isError && message.toLowerCase().contains('token'))
+            // Berkas yang ditolak GitHub: yang perlu diambil adalah keputusan
+            // per berkas, bukan mencoba lagi.
+            if (isError &&
+                (ref.watch(workspaceControllerProvider).gitStatus?.rejected.isNotEmpty ?? false))
+              TextButton(
+                onPressed: () => showSyncDetailSheet(context),
+                child: Text(context.l10n.syncSeeRejected, style: TextStyle(color: foreground)),
+              )
+            else if (isError && message.toLowerCase().contains('token'))
               TextButton(
                 onPressed: () {
                   final profile = ref.read(workspaceControllerProvider).profile;

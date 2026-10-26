@@ -373,5 +373,7 @@
       }
     }
   },
-  "citationLibreOfficeMissing": "LibreOffice belum bisa dipakai: pasang libjavascriptcoregtk-4.1 (Debian/Ubuntu) atau webkit2gtk-4.1 (Arch/CachyOS), lalu buka ulang ReadPaper."
+  "citationLibreOfficeMissing": "LibreOffice belum bisa dipakai: pasang libjavascriptcoregtk-4.1 (Debian/Ubuntu) atau webkit2gtk-4.1 (Arch/CachyOS), lalu buka ulang ReadPaper.",
+  "settingsTabsAtBottom": "Bilah tab di bawah",
+  "settingsTabsAtBottomHint": "Tab library dan dokumen tetap terjangkau saat pojok atas layar tertutup gelembung berbagi layar (Google Meet). Juga bisa dipilih dengan menekan lama sebuah tab."
 }

@@ -25,6 +25,7 @@ import '../controllers/notes_controller.dart';
 import '../../../files/presentation/open_any_file.dart';
 import '../../../library/presentation/import_actions.dart';
 import '../../../../core/l10n.dart';
+import '../../../../shared/widgets/tree_drawer_button.dart';
 import 'note_detail_pane.dart';
 
 /// Panel tengah saat yang dipilih ada di bawah akar catatan.
@@ -171,6 +172,16 @@ class NoteListPane extends ConsumerWidget {
                       },
                     ),
             ),
+          ),
+        if (TreeDrawerButton.available(context))
+          Container(
+            height: 40,
+            padding: const EdgeInsets.only(right: 4),
+            alignment: Alignment.centerRight,
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+            ),
+            child: const TreeDrawerButton(),
           ),
       ],
     );
@@ -536,6 +547,19 @@ Future<void> showNoteMenu(BuildContext context, WidgetRef ref, NoteItem note) as
         children: <Widget>[
           ListTile(dense: true, title: Text(note.title)),
           const Divider(height: 1),
+          // Dari sini juga, bukan hanya mengetuk barisnya: dan ke panel kanan
+          // tanpa harus menyeret tab.
+          ListTile(
+            leading: const Icon(Icons.open_in_new),
+            title: Text(canUseTabs(context) ? context.l10n.tabsOpenNew : context.l10n.tabsOpen),
+            onTap: () => Navigator.of(sheet).pop('buka'),
+          ),
+          if (canUseTabs(context))
+            ListTile(
+              leading: const Icon(Icons.vertical_split_outlined),
+              title: Text(context.l10n.tabsOpenRight),
+              onTap: () => Navigator.of(sheet).pop('kanan'),
+            ),
           ListTile(
             leading: const Icon(Icons.edit_note),
             title: Text(context.l10n.notesEditDetails),
@@ -578,6 +602,10 @@ Future<void> showNoteMenu(BuildContext context, WidgetRef ref, NoteItem note) as
   final controller = ref.read(notesControllerProvider.notifier);
 
   switch (action) {
+    case 'buka':
+      await openNote(context, ref, note, index);
+    case 'kanan':
+      openOnRight(context, () => openNote(context, ref, note, index));
     case 'repo':
       final choice = await showRepoTransferSheet(
         context,

@@ -4,5 +4,10 @@
   "tabsCloseOthers": "Tutup tab lain",
   "tabsMoveRight": "Pindah ke panel kanan",
   "tabsMoveLeft": "Pindah ke panel kiri",
-  "tabsSplitHint": "Seret tab ke sini, atau pilih \"Pindah ke panel kanan\", untuk membaca dua dokumen berdampingan"
+  "tabsSplitHint": "Seret tab ke sini, atau pilih \"Pindah ke panel kanan\", untuk membaca dua dokumen berdampingan",
+  "tabsBarToTop": "Pindahkan bilah tab ke atas",
+  "tabsBarToBottom": "Pindahkan bilah tab ke bawah",
+  "tabsOpenNew": "Buka di tab baru",
+  "tabsOpen": "Buka",
+  "tabsOpenRight": "Buka di panel kanan"
 }

@@ -639,6 +639,17 @@ class GitCliBackend implements GitBackend {
     );
   }
 
+  /// Dengan `git` sendiri, berkas yang ditolak GitHub sudah masuk ke commit
+  /// lokal, dan mengecualikannya berarti menulis ulang riwayat — keputusan
+  /// yang tidak diambil diam-diam di sini. Status jalur ini memang tidak
+  /// pernah melaporkan berkas yang ditolak.
+  @override
+  Future<GitResult> decideFiles({
+    required String repoPath,
+    required List<String> paths,
+    required FileDecision decision,
+  }) async => GitResult(ok: false, exitCode: 1, message: l10n.syncErrDecisionUnsupported);
+
   @override
   Future<GitResult> setRemote({required String repoPath, required String remoteUrl}) async {
     final existing = (await _capture(repoPath, <String>['remote'])).trim();

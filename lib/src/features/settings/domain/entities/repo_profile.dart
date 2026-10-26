@@ -164,6 +164,7 @@ class AppSettings {
     this.citationServer = true,
     this.language = 'id',
     this.pointerTrailMs = 600,
+    this.tabsAtBottom = false,
   });
 
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
@@ -183,6 +184,7 @@ class AppSettings {
     citationServer: json['citationServer'] as bool? ?? true,
     language: json['language'] as String? ?? 'id',
     pointerTrailMs: (json['pointerTrailMs'] as num?)?.toInt() ?? 600,
+    tabsAtBottom: json['tabsAtBottom'] as bool? ?? false,
   );
 
   final List<RepoProfile> profiles;
@@ -224,6 +226,11 @@ class AppSettings {
   /// buntut, hanya titiknya.
   final int pointerTrailMs;
 
+  /// Bilah tab dokumen di bawah layar, bukan di atas — untuk tablet yang
+  /// layarnya sering dibagikan lewat Google Meet, yang gelembungnya menutupi
+  /// pojok atas.
+  final bool tabsAtBottom;
+
   RepoProfile? get activeProfile {
     if (profiles.isEmpty) return null;
     for (final profile in profiles) {
@@ -243,6 +250,7 @@ class AppSettings {
     'citationServer': citationServer,
     'language': language,
     'pointerTrailMs': pointerTrailMs,
+    'tabsAtBottom': tabsAtBottom,
   };
 
   AppSettings copyWith({
@@ -257,6 +265,7 @@ class AppSettings {
     bool clearActive = false,
     String? language,
     int? pointerTrailMs,
+    bool? tabsAtBottom,
   }) => AppSettings(
     profiles: profiles ?? this.profiles,
     activeProfileId: clearActive ? null : (activeProfileId ?? this.activeProfileId),
@@ -268,6 +277,7 @@ class AppSettings {
     citationServer: citationServer ?? this.citationServer,
     language: language ?? this.language,
     pointerTrailMs: pointerTrailMs ?? this.pointerTrailMs,
+    tabsAtBottom: tabsAtBottom ?? this.tabsAtBottom,
   );
 
   /// Puts [entry] at the front, replacing any earlier visit to the same file.

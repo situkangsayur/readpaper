@@ -618,6 +618,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'LibreOffice cannot be used yet: install libjavascriptcoregtk-4.1 (Debian/Ubuntu) or webkit2gtk-4.1 (Arch/CachyOS), then reopen ReadPaper.';
 
   @override
+  String get settingsTabsAtBottom => 'Tab bar at the bottom';
+
+  @override
+  String get settingsTabsAtBottomHint =>
+      'Keeps the library and document tabs reachable when a screen-sharing bubble (Google Meet) covers the top corners. You can also switch it by long-pressing a tab.';
+
+  @override
   String get findTooltip => 'Find in document (Ctrl+F)';
 
   @override
@@ -1708,6 +1715,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get libraryErrFileNotFound => 'File not found';
+
+  @override
+  String get libraryOpenTree => 'Collections';
 
   @override
   String get notesUnfiledTitle => 'Unfiled notes';
@@ -3863,6 +3873,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Drag a tab here, or choose \"Move to right pane\", to read two documents side by side';
 
   @override
+  String get tabsBarToTop => 'Move the tab bar to the top';
+
+  @override
+  String get tabsBarToBottom => 'Move the tab bar to the bottom';
+
+  @override
+  String get tabsOpenNew => 'Open in a new tab';
+
+  @override
+  String get tabsOpen => 'Open';
+
+  @override
+  String get tabsOpenRight => 'Open in the right pane';
+
+  @override
   String workspaceSwitchRepoCount(int count) {
     return 'Switch repository ($count available)';
   }
@@ -4790,4 +4815,110 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncInstallGitLinux =>
       'git was not found. Install git and git-lfs — CachyOS/Arch: sudo pacman -S git git-lfs; Debian/Ubuntu: sudo apt install git git-lfs.';
+
+  @override
+  String syncStatusRejected(int count) {
+    return '$count rejected by GitHub';
+  }
+
+  @override
+  String get syncErrDecisionUnsupported =>
+      'Rejected files can only be handled here for repositories synced through the GitHub API (Android). With git, take the file out of the commit (git rm --cached) and add it to .gitignore, or store it with Git LFS.';
+
+  @override
+  String syncFilesExcluded(int count) {
+    return '$count files excluded: they stay on this device and are not sent to GitHub.';
+  }
+
+  @override
+  String syncFilesIncluded(int count) {
+    return '$count files will be sent again with the next Send.';
+  }
+
+  @override
+  String syncFilesRetry(int count) {
+    return '$count files will be tried again with the next Send.';
+  }
+
+  @override
+  String syncFilesRemoved(int count) {
+    return '$count files deleted from this device and taken out of the send queue.';
+  }
+
+  @override
+  String syncErrRemoveFile(String name, String reason) {
+    return 'Could not delete $name: $reason';
+  }
+
+  @override
+  String get syncTabExcluded => 'Excluded';
+
+  @override
+  String syncTabRejected(int count) {
+    return 'Rejected ($count)';
+  }
+
+  @override
+  String syncRemoveFilesTitle(int count) {
+    return 'Delete $count files from this device?';
+  }
+
+  @override
+  String get syncRemoveFilesBody =>
+      'The files are deleted from this device and taken out of the send queue. This cannot be undone.';
+
+  @override
+  String syncRemoveFilesOnRemote(int count) {
+    return '$count of them have an older version on GitHub; that version is deleted on GitHub too with the next Send.';
+  }
+
+  @override
+  String get syncRemoveFile => 'Delete from device';
+
+  @override
+  String get syncRejectedIntro =>
+      'GitHub rejected the files below — usually because they are over 100 MB. Everything else was sent. For each file choose: exclude (keep it on this device, never send it), delete it from the device, or try sending it again.';
+
+  @override
+  String get syncFileGone => 'no longer on this device';
+
+  @override
+  String get syncFileOnRemote => 'older version on GitHub';
+
+  @override
+  String get syncFileDecision => 'Options for this file';
+
+  @override
+  String syncExcludeSelected(int count) {
+    return 'Exclude ($count)';
+  }
+
+  @override
+  String syncRemoveSelected(int count) {
+    return 'Delete ($count)';
+  }
+
+  @override
+  String syncRetrySelected(int count) {
+    return 'Try again ($count)';
+  }
+
+  @override
+  String get syncExcludedTitle => 'Excluded from sync';
+
+  @override
+  String get syncExcludedIntro =>
+      'Kept on this device, but never sent to GitHub and not counted as a change.';
+
+  @override
+  String get syncIncludeAgain => 'Include again';
+
+  @override
+  String get syncExcludeFile => 'Exclude (do not send)';
+
+  @override
+  String get syncRetryFile => 'Try sending again';
+
+  @override
+  String get syncSeeRejected => 'See files';
 }

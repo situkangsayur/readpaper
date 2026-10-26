@@ -185,6 +185,47 @@ class _AttachmentSection extends ConsumerWidget {
   }
 }
 
+/// Membuka [attachment] milik [item] di pembacanya, sebagai tab.
+void openAttachmentReader(
+  BuildContext context,
+  ZoteroItem item,
+  ZoteroAttachment attachment,
+  File file,
+) => openDocument<void>(
+  context,
+  // EPUB punya pembacanya sendiri; anotasinya belum ditulis ke Zotero, jadi
+  // ia dibuka hanya untuk dibaca.
+  attachment.isEpub
+      ? EpubReaderScreen(path: file.path, title: item.title)
+      : ReaderScreen(
+          itemKey: item.key,
+          itemFilePath: item.filePath,
+          attachmentKey: attachment.key,
+          filePath: file.path,
+          title: item.title,
+          subtitle: <String>[
+            if (item.creatorLabel.isNotEmpty) item.creatorLabel,
+            if (item.year.isNotEmpty) item.year,
+          ].join(' · '),
+        ),
+  title: item.title,
+  icon: iconForPath(file.path),
+  dedupeKey: file.path,
+);
+
+/// Lampiran [item] yang bisa langsung dibaca di sini (PDF atau EPUB yang ada
+/// di perangkat, bukan penunjuk LFS), dengan berkasnya.
+(ZoteroAttachment, File)? readableAttachment(WidgetRef ref, ZoteroItem item) {
+  final libraryDir = ref.read(workspaceControllerProvider).library?.directoryPath;
+  final attachment = item.primaryReadable;
+  if (libraryDir == null || attachment == null) return null;
+  if (!attachment.isPdf && !attachment.isEpub) return null;
+  final repository = ref.read(libraryRepositoryProvider);
+  final file = repository.resolveAttachment(libraryDir: libraryDir, attachment: attachment);
+  if (file == null || repository.isLfsPointer(file)) return null;
+  return (attachment, file);
+}
+
 class _AttachmentCard extends ConsumerWidget {
   const _AttachmentCard({required this.item, required this.attachment, required this.file});
 
@@ -245,30 +286,21 @@ class _AttachmentCard extends ConsumerWidget {
           style: Theme.of(context).textTheme.labelSmall,
         ),
         trailing: canRead
-            ? FilledButton.tonalIcon(
-                onPressed: () => openDocument<void>(
-                  context,
-                  // EPUB punya pembacanya sendiri; anotasinya belum ditulis
-                  // ke Zotero, jadi ia dibuka hanya untuk dibaca.
-                  attachment.isEpub
-                      ? EpubReaderScreen(path: file!.path, title: item.title)
-                      : ReaderScreen(
-                          itemKey: item.key,
-                          itemFilePath: item.filePath,
-                          attachmentKey: attachment.key,
-                          filePath: file!.path,
-                          title: item.title,
-                          subtitle: <String>[
-                            if (item.creatorLabel.isNotEmpty) item.creatorLabel,
-                            if (item.year.isNotEmpty) item.year,
-                          ].join(' · '),
-                        ),
-                  title: item.title,
-                  icon: iconForPath(file!.path),
-                  dedupeKey: file!.path,
-                ),
-                icon: const Icon(Icons.chrome_reader_mode_outlined, size: 18),
-                label: Text(context.l10n.libraryRead),
+            ? Builder(
+                builder: (context) {
+                  void read() => openAttachmentReader(context, item, attachment, file!);
+                  void menu(Offset at) => showOpenMenu(context, at, read);
+                  // Tekan lama atau klik kanan: buka di panel kanan.
+                  return GestureDetector(
+                    onLongPressStart: (d) => menu(d.globalPosition),
+                    onSecondaryTapUp: (d) => menu(d.globalPosition),
+                    child: FilledButton.tonalIcon(
+                      onPressed: read,
+                      icon: const Icon(Icons.chrome_reader_mode_outlined, size: 18),
+                      label: Text(context.l10n.libraryRead),
+                    ),
+                  );
+                },
               )
             : canOpen
             ? FilledButton.tonalIcon(

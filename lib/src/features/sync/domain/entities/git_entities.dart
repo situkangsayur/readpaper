@@ -70,6 +70,47 @@ class GitChange {
   };
 }
 
+/// Berkas yang ditolak GitHub saat dikirim — biasanya karena terlalu besar —
+/// dan masih menunggu keputusan pemiliknya: dikecualikan, dihapus, atau
+/// dicoba lagi. Lihat [FileDecision].
+@immutable
+class GitRejectedFile {
+  const GitRejectedFile({
+    required this.path,
+    required this.reason,
+    this.size,
+    this.onRemote = false,
+  });
+
+  /// Jalur relatif terhadap akar repositori, dengan `/`.
+  final String path;
+
+  /// Jawaban GitHub, apa adanya.
+  final String reason;
+
+  /// Ukuran berkasnya di perangkat; null bila sudah tidak ada.
+  final int? size;
+
+  /// Versi lama berkas ini ada di GitHub: menghapusnya di sini ikut
+  /// menghapusnya di sana pada pengiriman berikutnya.
+  final bool onRemote;
+}
+
+/// Yang dilakukan pada berkas yang ditolak GitHub.
+enum FileDecision {
+  /// Tetap di perangkat, tetapi tidak pernah dikirim lagi.
+  exclude,
+
+  /// Kebalikan [exclude]: ikut dikirim lagi.
+  include,
+
+  /// Dihapus dari perangkat, dan dari antrean kirim.
+  remove,
+
+  /// Dikirim lagi pada pengiriman berikutnya walaupun isinya sama.
+  retry,
+}
+
 /// Snapshot of a working copy.
 @immutable
 class GitRepoStatus {
@@ -86,6 +127,8 @@ class GitRepoStatus {
     this.hasUpstream = true,
     this.lfsAvailable = false,
     this.lazyAttachments = false,
+    this.rejected = const <GitRejectedFile>[],
+    this.excluded = const <String>[],
   });
 
   const GitRepoStatus.missing(String path)
@@ -100,7 +143,9 @@ class GitRepoStatus {
       lastCommitDate = null,
       hasUpstream = false,
       lfsAvailable = false,
-      lazyAttachments = false;
+      lazyAttachments = false,
+      rejected = const <GitRejectedFile>[],
+      excluded = const <String>[];
 
   final String repoPath;
   final bool exists;
@@ -118,6 +163,13 @@ class GitRepoStatus {
   /// file: a partial+sparse git clone, or the Android mirror.
   final bool lazyAttachments;
 
+  /// Berkas yang ditolak GitHub pada pengiriman terakhir; lihat
+  /// [GitRejectedFile].
+  final List<GitRejectedFile> rejected;
+
+  /// Berkas yang sengaja tidak dikirim ([FileDecision.exclude]).
+  final List<String> excluded;
+
   bool get isDirty => changes.isNotEmpty;
   bool get needsPush => ahead > 0;
   bool get needsPull => behind > 0;
@@ -129,6 +181,7 @@ class GitRepoStatus {
     if (isDirty) parts.add(l10n.syncStatusLocalChanges(changes.length));
     if (ahead > 0) parts.add(l10n.syncStatusAhead(ahead));
     if (behind > 0) parts.add(l10n.syncStatusBehind(behind));
+    if (rejected.isNotEmpty) parts.add(l10n.syncStatusRejected(rejected.length));
     return parts.isEmpty ? l10n.syncStatusInSync : parts.join(' · ');
   }
 }

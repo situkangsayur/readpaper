@@ -77,6 +77,21 @@ class ProfilesScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
           ],
+          const SizedBox(height: 8),
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+            ),
+            child: SwitchListTile(
+              secondary: const Icon(Icons.vertical_align_bottom),
+              title: Text(context.l10n.settingsTabsAtBottom),
+              subtitle: Text(context.l10n.settingsTabsAtBottomHint),
+              value: state.settings.tabsAtBottom,
+              onChanged: controller.setTabsAtBottom,
+            ),
+          ),
           // Hanya desktop: Android dan iOS tidak punya Word atau OnlyOffice
           // desktop yang bisa memakai servernya.
           if (CitationServerController.isDesktop) ...<Widget>[

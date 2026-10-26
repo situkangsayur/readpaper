@@ -176,7 +176,92 @@ class GitHubApiBackend implements GitBackend {
       hasUpstream: true,
       lfsAvailable: false,
       lazyAttachments: true,
+      rejected: _rejectedFiles(repoPath, state),
+      excluded: state.excluded.toList()..sort(),
     );
+  }
+
+  /// Berkas yang ditolak dan masih menunggu di antrean, dengan ukurannya
+  /// sekarang supaya yang memutuskan tahu apa yang sedang ditimbang.
+  List<GitRejectedFile> _rejectedFiles(String repoPath, GitHubSyncState state) {
+    final queued = state.pending.expand((c) => c.paths).toSet();
+    final out = <GitRejectedFile>[
+      for (final entry in state.rejected.entries)
+        if (queued.contains(entry.key) && !state.excluded.contains(entry.key))
+          GitRejectedFile(
+            path: entry.key,
+            reason: entry.value.reason,
+            size: () {
+              final file = File(p.join(repoPath, entry.key));
+              return file.existsSync() ? file.lengthSync() : null;
+            }(),
+            onRemote: state.files.containsKey(entry.key),
+          ),
+    ]..sort((a, b) => a.path.compareTo(b.path));
+    return out;
+  }
+
+  @override
+  Future<GitResult> decideFiles({
+    required String repoPath,
+    required List<String> paths,
+    required FileDecision decision,
+  }) async {
+    final state = GitHubSyncState.load(repoPath);
+    if (state == null) return _notMirrored;
+    final chosen = paths.toSet();
+
+    /// Mengeluarkan [drop] dari antrean; perubahan yang tinggal kosong ikut
+    /// hilang, supaya tidak dicoba selamanya.
+    void unqueue(Set<String> drop) {
+      final kept = <PendingChange>[
+        for (final change in state.pending)
+          PendingChange(
+            message: change.message,
+            paths: change.paths.where((path) => !drop.contains(path)).toList(),
+            at: change.at,
+          ),
+      ]..removeWhere((change) => change.paths.isEmpty);
+      state.pending
+        ..clear()
+        ..addAll(kept);
+    }
+
+    final String message;
+    switch (decision) {
+      case FileDecision.exclude:
+        state.excluded.addAll(chosen);
+        state.rejected.removeWhere((path, _) => chosen.contains(path));
+        unqueue(chosen);
+        message = l10n.syncFilesExcluded(chosen.length);
+      case FileDecision.include:
+        state.excluded.removeAll(chosen);
+        message = l10n.syncFilesIncluded(chosen.length);
+      case FileDecision.retry:
+        state.rejected.removeWhere((path, _) => chosen.contains(path));
+        message = l10n.syncFilesRetry(chosen.length);
+      case FileDecision.remove:
+        for (final path in chosen) {
+          final file = File(p.join(repoPath, path));
+          try {
+            if (file.existsSync()) await file.delete();
+          } on FileSystemException catch (e) {
+            await state.save(repoPath);
+            return GitResult(
+              ok: false,
+              exitCode: 1,
+              message: l10n.syncErrRemoveFile(p.basename(path), e.message),
+            );
+          }
+        }
+        state.rejected.removeWhere((path, _) => chosen.contains(path));
+        // Yang pernah ada di GitHub tetap di antrean: penghapusannya ikut
+        // terkirim. Yang belum pernah sampai cukup dilupakan.
+        unqueue(chosen.where((path) => !state.files.containsKey(path)).toSet());
+        message = l10n.syncFilesRemoved(chosen.length);
+    }
+    await state.save(repoPath);
+    return GitResult(ok: true, exitCode: 0, message: message);
   }
 
   /// Files that differ from what was last synced.
@@ -190,6 +275,7 @@ class GitHubApiBackend implements GitBackend {
     for (final entry in state.files.entries) {
       final file = File(p.join(repoPath, entry.key));
       seen.add(entry.key);
+      if (state.excluded.contains(entry.key)) continue;
       if (!file.existsSync()) {
         changes.add(GitChange(status: ' D', path: entry.key));
         continue;
@@ -210,7 +296,7 @@ class GitHubApiBackend implements GitBackend {
 
     for (final file in _mirroredFiles(repoPath)) {
       final relative = _repoRelative(file.path, repoPath);
-      if (seen.contains(relative)) continue;
+      if (seen.contains(relative) || state.excluded.contains(relative)) continue;
       changes.add(GitChange(status: '??', path: relative));
     }
 
@@ -368,6 +454,7 @@ class GitHubApiBackend implements GitBackend {
           for (final change in _localChanges(repoPath, state)) change.path,
           for (final change in state.pending.expand((c) => c.paths)) change,
         }..removeWhere((path) {
+          if (state.excluded.contains(path)) return true;
           if (!isAttachmentPath(path)) return false;
           dropped.add(path);
           return true;
@@ -431,7 +518,9 @@ class GitHubApiBackend implements GitBackend {
       // Jaring pengaman untuk antrean yang sudah terlanjur tersimpan sebelum
       // penyaringan di commitAll ada: tanpa ini, memasang versi baru saja
       // tidak akan menyembuhkan perangkat yang antreannya sudah teracuni.
-      final sendable = pending.paths.where((path) => !isAttachmentPath(path)).toList();
+      final sendable = pending.paths
+          .where((path) => !isAttachmentPath(path) && !state.excluded.contains(path))
+          .toList();
       if (sendable.isEmpty) {
         state.pending.clear();
         await state.save(repoPath);

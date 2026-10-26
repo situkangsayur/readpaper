@@ -464,6 +464,127 @@ void main() {
       expect(bookUploads, 1, reason: 'isi yang sama tidak diunggah lagi untuk ditolak lagi');
     });
 
+    test(
+      'berkas yang ditolak terlihat di status dan bisa dikecualikan, dihapus, atau dicoba lagi',
+      () async {
+        await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
+        const book = 'catatan/berkas/BK/BOOK0001/buku besar.pdf';
+        const slides = 'catatan/berkas/SL/SLIDE001/slide.pdf';
+        for (final f in <String>[book, slides]) {
+          File(path(f))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('ditolak $f');
+        }
+        backend = GitHubApiBackend(
+          clientFactory: (ref, token) => GitHubApiClient(
+            ref: ref,
+            token: token,
+            client: MockClient((request) async {
+              if (request.method == 'POST' && request.url.path.endsWith('/git/blobs')) {
+                final body = jsonDecode(request.body) as Map<String, dynamic>;
+                if (utf8.decode(base64Decode(body['content'] as String)).startsWith('ditolak')) {
+                  return http.Response(jsonEncode(<String, dynamic>{'message': 'too large'}), 422);
+                }
+              }
+              return server.handle(request);
+            }),
+          ),
+          concurrency: 2,
+        );
+        await backend.commitAll(repoPath: mirror.path, message: 'Dua berkas besar');
+        expect((await backend.push(repoPath: mirror.path, auth: auth)).ok, isFalse);
+
+        var status = await backend.status(mirror.path);
+        expect(status.rejected.map((f) => f.path), <String>[book, slides]);
+        expect(status.rejected.first.size, 'ditolak $book'.length);
+        expect(status.rejected.first.reason, contains('too large'));
+        expect(status.summary, contains('2 ditolak'));
+
+        // Dikecualikan: tetap di perangkat, keluar dari antrean, bukan
+        // perubahan lagi, dan commit berikutnya tidak membawanya kembali.
+        var r = await backend.decideFiles(
+          repoPath: mirror.path,
+          paths: <String>[book],
+          decision: FileDecision.exclude,
+        );
+        expect(r.ok, isTrue, reason: r.message);
+        expect(File(path(book)).existsSync(), isTrue);
+        status = await backend.status(mirror.path);
+        expect(status.rejected.map((f) => f.path), <String>[slides]);
+        expect(status.excluded, <String>[book]);
+        expect(status.changes.map((c) => c.path), isNot(contains(book)));
+        await backend.commitAll(repoPath: mirror.path, message: 'Lagi');
+        expect(
+          GitHubSyncState.load(mirror.path)!.pending.expand((c) => c.paths),
+          isNot(contains(book)),
+        );
+
+        // Dihapus: hilang dari perangkat dan dari antrean; antrean kosong
+        // berarti tidak ada lagi yang ditolak.
+        r = await backend.decideFiles(
+          repoPath: mirror.path,
+          paths: <String>[slides],
+          decision: FileDecision.remove,
+        );
+        expect(r.ok, isTrue, reason: r.message);
+        expect(File(path(slides)).existsSync(), isFalse);
+        status = await backend.status(mirror.path);
+        expect(status.rejected, isEmpty);
+        expect(status.changes, isEmpty);
+        expect(GitHubSyncState.load(mirror.path)!.pending, isEmpty);
+        expect(status.isClean, isTrue);
+
+        // Disertakan lagi: kembali jadi perubahan yang akan dikirim.
+        await backend.decideFiles(
+          repoPath: mirror.path,
+          paths: <String>[book],
+          decision: FileDecision.include,
+        );
+        status = await backend.status(mirror.path);
+        expect(status.excluded, isEmpty);
+        expect(status.changes.map((c) => c.path), contains(book));
+      },
+    );
+
+    test('coba lagi mengunggah ulang isi yang sama', () async {
+      await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
+      const book = 'catatan/berkas/BK/BOOK0001/buku.pdf';
+      File(path(book))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('buku');
+      var reject = true;
+      var uploads = 0;
+      backend = GitHubApiBackend(
+        clientFactory: (ref, token) => GitHubApiClient(
+          ref: ref,
+          token: token,
+          client: MockClient((request) async {
+            if (request.method == 'POST' && request.url.path.endsWith('/git/blobs')) {
+              uploads++;
+              if (reject) {
+                return http.Response(jsonEncode(<String, dynamic>{'message': 'sibuk'}), 422);
+              }
+            }
+            return server.handle(request);
+          }),
+        ),
+        concurrency: 2,
+      );
+      await backend.commitAll(repoPath: mirror.path, message: 'Buku');
+      await backend.push(repoPath: mirror.path, auth: auth);
+      expect(uploads, 1);
+      reject = false;
+      await backend.decideFiles(
+        repoPath: mirror.path,
+        paths: <String>[book],
+        decision: FileDecision.retry,
+      );
+      final pushed = await backend.push(repoPath: mirror.path, auth: auth);
+      expect(pushed.ok, isTrue, reason: pushed.message);
+      expect(uploads, 2);
+      expect((await backend.status(mirror.path)).rejected, isEmpty);
+    });
+
     test('jalur yang tidak pernah ada di GitHub tidak diminta dihapus', () async {
       await backend.clone(remoteUrl: remote, targetPath: mirror.path, auth: auth, branch: 'main');
       File(path('zotero/my-library/items/IT/ITEMKEY1.json')).writeAsStringSync('{"a":6}\n');

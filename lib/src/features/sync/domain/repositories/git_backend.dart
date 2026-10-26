@@ -80,6 +80,14 @@ abstract class GitBackend {
     void Function(SyncProgress progress)? onProgress,
   });
 
+  /// Keputusan untuk berkas yang ditolak GitHub ([GitRepoStatus.rejected])
+  /// atau yang pernah dikecualikan ([GitRepoStatus.excluded]).
+  Future<GitResult> decideFiles({
+    required String repoPath,
+    required List<String> paths,
+    required FileDecision decision,
+  });
+
   Future<GitResult> setRemote({required String repoPath, required String remoteUrl});
 
   Future<List<GitCommitInfo>> log({required String repoPath, int limit = 20});

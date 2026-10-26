@@ -783,5 +783,118 @@
   "syncErrTokenMissingProfile": "Token GitHub belum diisi pada profil repositori.",
   "syncInstallGitWindows": "Git for Windows tidak ditemukan. Pasang dari git-scm.com, atau di PowerShell: winget install --id Git.Git -e — lalu tekan Coba lagi.",
   "syncInstallGitMac": "git tidak ditemukan. Jalankan di Terminal: xcode-select --install.",
-  "syncInstallGitLinux": "git tidak ditemukan. Pasang git dan git-lfs — CachyOS/Arch: sudo pacman -S git git-lfs; Debian/Ubuntu: sudo apt install git git-lfs."
+  "syncInstallGitLinux": "git tidak ditemukan. Pasang git dan git-lfs — CachyOS/Arch: sudo pacman -S git git-lfs; Debian/Ubuntu: sudo apt install git git-lfs.",
+  "syncStatusRejected": "{count} ditolak GitHub",
+  "@syncStatusRejected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncErrDecisionUnsupported": "Berkas yang ditolak hanya bisa diatur dari sini untuk repositori yang disinkronkan lewat API GitHub (Android). Dengan git, keluarkan berkasnya dari commit (git rm --cached) dan tambahkan ke .gitignore, atau simpan lewat Git LFS.",
+  "syncFilesExcluded": "{count} berkas dikecualikan: tetap di perangkat ini, tidak dikirim ke GitHub.",
+  "@syncFilesExcluded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncFilesIncluded": "{count} berkas ikut dikirim lagi pada Kirim berikutnya.",
+  "@syncFilesIncluded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncFilesRetry": "{count} berkas dicoba lagi pada Kirim berikutnya.",
+  "@syncFilesRetry": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncFilesRemoved": "{count} berkas dihapus dari perangkat dan dikeluarkan dari antrean kirim.",
+  "@syncFilesRemoved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncErrRemoveFile": "Tidak bisa menghapus {name}: {reason}",
+  "@syncErrRemoveFile": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "syncTabExcluded": "Dikecualikan",
+  "syncTabRejected": "Ditolak ({count})",
+  "@syncTabRejected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncRemoveFilesTitle": "Hapus {count} berkas dari perangkat?",
+  "@syncRemoveFilesTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncRemoveFilesBody": "Berkasnya dihapus dari perangkat ini dan dikeluarkan dari antrean kirim. Ini tidak bisa dibatalkan.",
+  "syncRemoveFilesOnRemote": "{count} di antaranya punya versi lama di GitHub; versi itu ikut terhapus di GitHub pada Kirim berikutnya.",
+  "@syncRemoveFilesOnRemote": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncRemoveFile": "Hapus dari perangkat",
+  "syncRejectedIntro": "GitHub menolak berkas berikut — biasanya karena lebih dari 100 MB. Berkas lain sudah terkirim. Untuk setiap berkas, pilih: kecualikan (tetap di perangkat, tidak pernah dikirim), hapus dari perangkat, atau coba kirim lagi.",
+  "syncFileGone": "sudah tidak ada di perangkat",
+  "syncFileOnRemote": "versi lama ada di GitHub",
+  "syncFileDecision": "Pilihan untuk berkas ini",
+  "syncExcludeSelected": "Kecualikan ({count})",
+  "@syncExcludeSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncRemoveSelected": "Hapus ({count})",
+  "@syncRemoveSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncRetrySelected": "Coba lagi ({count})",
+  "@syncRetrySelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncExcludedTitle": "Dikecualikan dari sinkronisasi",
+  "syncExcludedIntro": "Tetap di perangkat ini, tetapi tidak pernah dikirim ke GitHub dan tidak dihitung sebagai perubahan.",
+  "syncIncludeAgain": "Sertakan lagi",
+  "syncExcludeFile": "Kecualikan (jangan dikirim)",
+  "syncRetryFile": "Coba kirim lagi",
+  "syncSeeRejected": "Lihat berkas"
 }
