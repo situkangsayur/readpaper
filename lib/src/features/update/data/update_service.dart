@@ -212,6 +212,9 @@ class UpdateService {
       perUser ? '/CURRENTUSER' : '/ALLUSERS',
       // readpaper.iss membuka ReadPaper lagi setelah selesai bila diminta.
       '/RELAUNCH=1',
+      // Catatan pemasangan di sebelah setup-nya, untuk menelusuri pembaruan
+      // yang tidak selesai.
+      '/LOG=${p.join(setup.parent.path, 'setup.log')}',
     ];
     // Lewat Start-Process (ShellExecute), bukan CreateProcess langsung: bila
     // pemasangnya meminta hak administrator, CreateProcess gagal dengan

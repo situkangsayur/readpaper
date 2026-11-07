@@ -139,7 +139,10 @@ jobs:
           $server = Start-Process python -ArgumentList '-m','http.server',"$port",'--bind','127.0.0.1','--directory',$srv -PassThru -WindowStyle Hidden
           Start-Sleep -Seconds 2
           $env:READPAPER_RILIS_URL = "http://127.0.0.1:$port/rilis.json"
-          $run = Start-Process "$app\readpaper.exe" -ArgumentList '--perbarui' -Wait -PassThru
+          $out = Join-Path $env:RUNNER_TEMP 'perbarui-out.txt'
+          $err = Join-Path $env:RUNNER_TEMP 'perbarui-err.txt'
+          $run = Start-Process "$app\readpaper.exe" -ArgumentList '--perbarui' -Wait -PassThru -RedirectStandardOutput $out -RedirectStandardError $err
+          Get-Content $out, $err -ErrorAction SilentlyContinue
           if ($run.ExitCode -ne 0) { throw "readpaper --perbarui gagal (kode $($run.ExitCode))" }
           $back = $false
           foreach ($i in 1..60) {
@@ -147,6 +150,8 @@ jobs:
             if (Get-Process readpaper -ErrorAction SilentlyContinue) { $back = $true; break }
           }
           Stop-Process -Id $server.Id -Force
+          $log = Join-Path $env:TEMP 'readpaper-pembaruan\setup.log'
+          if (Test-Path $log) { Get-Content $log -Tail 40 } else { "Tidak ada $log"; Get-ChildItem (Join-Path $env:TEMP 'readpaper-pembaruan') -ErrorAction SilentlyContinue }
           if (-not $back) { throw "setup senyap tidak membuka ReadPaper lagi" }
           Get-Process readpaper | Stop-Process -Force
           Start-Sleep -Seconds 2
