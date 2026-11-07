@@ -216,18 +216,23 @@ class UpdateService {
       // yang tidak selesai.
       '/LOG=${p.join(setup.parent.path, 'setup.log')}',
     ];
-    // Lewat Start-Process (ShellExecute), bukan CreateProcess langsung: bila
-    // pemasangnya meminta hak administrator, CreateProcess gagal dengan
-    // galat 740, sedangkan ShellExecute menampilkan kotak UAC.
-    String q(String s) => "'${s.replaceAll("'", "''")}'";
-    await Process.start('powershell', <String>[
-      '-NoProfile',
-      '-NonInteractive',
-      '-WindowStyle',
-      'Hidden',
-      '-Command',
-      'Start-Process -FilePath ${q(setup.path)} -ArgumentList ${args.map(q).join(',')}',
-    ], mode: ProcessStartMode.detached);
+    // Setup Inno berjalan sebagai pengguna biasa lalu meminta UAC sendiri
+    // bila perlu. Dulu lewat `powershell Start-Process` yang dilepas: di CI
+    // PowerShell-nya berjalan, tetapi setup-nya tidak pernah dimulai.
+    try {
+      await Process.start(setup.path, args, mode: ProcessStartMode.detached);
+    } on ProcessException catch (e) {
+      // 740: Windows menuntut hak administrator sebelum mulai; ShellExecute
+      // (`start`) yang bisa menampilkan kotak UAC-nya.
+      if (e.errorCode != 740) rethrow;
+      await Process.start('cmd', <String>[
+        '/c',
+        'start',
+        '',
+        setup.path,
+        ...args,
+      ], mode: ProcessStartMode.detached);
+    }
   }
 
   /// Membongkar [tarball] di sebelah [target], lalu menukar foldernya.
