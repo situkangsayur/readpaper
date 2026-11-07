@@ -6325,6 +6325,222 @@ abstract class AppLocalizations {
   /// **'Buka di panel kanan'**
   String get tabsOpenRight;
 
+  /// No description provided for @updateAvailableTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'ReadPaper {version} tersedia'**
+  String updateAvailableTitle(String version);
+
+  /// No description provided for @updateCurrent.
+  ///
+  /// In id, this message translates to:
+  /// **'Terpasang sekarang: {version}'**
+  String updateCurrent(String version);
+
+  /// No description provided for @updateNow.
+  ///
+  /// In id, this message translates to:
+  /// **'Perbarui'**
+  String get updateNow;
+
+  /// No description provided for @updateLater.
+  ///
+  /// In id, this message translates to:
+  /// **'Nanti'**
+  String get updateLater;
+
+  /// No description provided for @updateSkip.
+  ///
+  /// In id, this message translates to:
+  /// **'Lewati versi ini'**
+  String get updateSkip;
+
+  /// No description provided for @updateNotes.
+  ///
+  /// In id, this message translates to:
+  /// **'Catatan rilis'**
+  String get updateNotes;
+
+  /// No description provided for @updateOpenPage.
+  ///
+  /// In id, this message translates to:
+  /// **'Buka halaman rilis'**
+  String get updateOpenPage;
+
+  /// No description provided for @updateManualHint.
+  ///
+  /// In id, this message translates to:
+  /// **'ReadPaper di perangkat ini tidak bisa memperbarui dirinya sendiri. Unduh versi barunya dari halaman rilis.'**
+  String get updateManualHint;
+
+  /// No description provided for @updateDownloading.
+  ///
+  /// In id, this message translates to:
+  /// **'Mengunduh… {percent}%'**
+  String updateDownloading(String percent);
+
+  /// No description provided for @updateInstalling.
+  ///
+  /// In id, this message translates to:
+  /// **'Memasang…'**
+  String get updateInstalling;
+
+  /// No description provided for @updateReadyTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'ReadPaper {version} sudah terpasang'**
+  String updateReadyTitle(String version);
+
+  /// No description provided for @updateRestartHint.
+  ///
+  /// In id, this message translates to:
+  /// **'Versi baru berjalan setelah ReadPaper dibuka lagi. Simpan dulu dokumen yang belum disimpan.'**
+  String get updateRestartHint;
+
+  /// No description provided for @updateRestart.
+  ///
+  /// In id, this message translates to:
+  /// **'Mulai ulang sekarang'**
+  String get updateRestart;
+
+  /// No description provided for @updateFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Pembaruan gagal: {error}'**
+  String updateFailed(String error);
+
+  /// No description provided for @updateRunYourself.
+  ///
+  /// In id, this message translates to:
+  /// **'Atau jalankan sendiri di terminal:'**
+  String get updateRunYourself;
+
+  /// No description provided for @updateCopyCommand.
+  ///
+  /// In id, this message translates to:
+  /// **'Salin perintah'**
+  String get updateCopyCommand;
+
+  /// No description provided for @updateRetry.
+  ///
+  /// In id, this message translates to:
+  /// **'Coba lagi'**
+  String get updateRetry;
+
+  /// No description provided for @updateAndroidPermission.
+  ///
+  /// In id, this message translates to:
+  /// **'Izinkan ReadPaper memasang aplikasi di layar yang terbuka, lalu tekan Perbarui lagi.'**
+  String get updateAndroidPermission;
+
+  /// No description provided for @updateAndroidConfirm.
+  ///
+  /// In id, this message translates to:
+  /// **'Konfirmasikan pemasangannya di layar Android.'**
+  String get updateAndroidConfirm;
+
+  /// No description provided for @updateCancelled.
+  ///
+  /// In id, this message translates to:
+  /// **'Pemasangan dibatalkan.'**
+  String get updateCancelled;
+
+  /// No description provided for @updateNoRoot.
+  ///
+  /// In id, this message translates to:
+  /// **'Tidak ada cara meminta kata sandi administrator dari sini.'**
+  String get updateNoRoot;
+
+  /// No description provided for @updateWindowsConfirmTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Tutup ReadPaper untuk memperbarui?'**
+  String get updateWindowsConfirmTitle;
+
+  /// No description provided for @updateWindowsConfirmBody.
+  ///
+  /// In id, this message translates to:
+  /// **'Pemasangnya berjalan di latar, lalu membuka ReadPaper lagi setelah selesai. Simpan dulu dokumen yang belum disimpan.'**
+  String get updateWindowsConfirmBody;
+
+  /// No description provided for @updateCloseAndUpdate.
+  ///
+  /// In id, this message translates to:
+  /// **'Tutup dan perbarui'**
+  String get updateCloseAndUpdate;
+
+  /// No description provided for @updateCheck.
+  ///
+  /// In id, this message translates to:
+  /// **'Periksa pembaruan'**
+  String get updateCheck;
+
+  /// No description provided for @updateChecking.
+  ///
+  /// In id, this message translates to:
+  /// **'Memeriksa pembaruan…'**
+  String get updateChecking;
+
+  /// No description provided for @updateUpToDate.
+  ///
+  /// In id, this message translates to:
+  /// **'Sudah versi terbaru ({version})'**
+  String updateUpToDate(String version);
+
+  /// No description provided for @updateAuto.
+  ///
+  /// In id, this message translates to:
+  /// **'Beri tahu bila ada versi baru'**
+  String get updateAuto;
+
+  /// No description provided for @updateNoAsset.
+  ///
+  /// In id, this message translates to:
+  /// **'Rilis ini belum membawa berkas untuk perangkat ini; coba lagi sebentar lagi.'**
+  String get updateNoAsset;
+
+  /// No description provided for @updateVia.
+  ///
+  /// In id, this message translates to:
+  /// **'Diperbarui lewat {how}'**
+  String updateVia(String how);
+
+  /// No description provided for @updateKindApk.
+  ///
+  /// In id, this message translates to:
+  /// **'APK dari rilis GitHub'**
+  String get updateKindApk;
+
+  /// No description provided for @updateKindSetup.
+  ///
+  /// In id, this message translates to:
+  /// **'setup.exe dari rilis GitHub'**
+  String get updateKindSetup;
+
+  /// No description provided for @updateKindTarball.
+  ///
+  /// In id, this message translates to:
+  /// **'tarball dari rilis GitHub'**
+  String get updateKindTarball;
+
+  /// No description provided for @updateKindDeb.
+  ///
+  /// In id, this message translates to:
+  /// **'paket .deb dari rilis GitHub'**
+  String get updateKindDeb;
+
+  /// No description provided for @updateKindArch.
+  ///
+  /// In id, this message translates to:
+  /// **'paket pacman (readpaper-bin)'**
+  String get updateKindArch;
+
+  /// No description provided for @updateKindManual.
+  ///
+  /// In id, this message translates to:
+  /// **'halaman rilis GitHub (unduh sendiri)'**
+  String get updateKindManual;
+
   /// No description provided for @workspaceSwitchRepoCount.
   ///
   /// In id, this message translates to:

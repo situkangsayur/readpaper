@@ -648,6 +648,23 @@ Pesan pull menyebut apa yang digabung, misalnya *"Digabung otomatis:
 koleksi.json"*. Kalau dua koleksi bernama sama muncul setelahnya, itu karena
 keduanya memang dibuat terpisah di dua perangkat. Hapus salah satunya.
 
+### Memperbarui ReadPaper
+
+Bila ada versi baru di GitHub, kartu **ReadPaper X tersedia** muncul di pojok
+kanan bawah. Tekan **Perbarui**:
+
+- **Android**: pertama kali, Android meminta izin "pasang aplikasi tidak
+  dikenal" untuk ReadPaper — izinkan, kembali, lalu tekan **Perbarui** lagi.
+  Setelah itu cukup tekan **Perbarui** di layar Android yang muncul.
+- **Windows**: ReadPaper menutup dirinya, pemasang berjalan di latar (Windows
+  mungkin meminta izin administrator), lalu ReadPaper terbuka lagi.
+- **Linux**: kata sandi diminta untuk paket `.deb` dan Arch; tarball di
+  `~/.local/opt` tidak perlu. Setelah selesai, tekan **Mulai ulang sekarang**.
+- **iPhone/iPad**: tombolnya membuka halaman rilis; pasang `.ipa` seperti biasa.
+
+Simpan dulu dokumen yang belum disimpan sebelum memulai ulang. Pemeriksaan
+manual dan sakelar pemberitahuan ada di **Pengaturan**, di bawah nomor versi.
+
 ## 10. Masalah dan pertanyaan
 
 **Pull di desktop gagal dengan "It seems that there is already a rebase-merge

@@ -11,6 +11,8 @@ import '../features/workspace/presentation/controllers/disk_watch.dart';
 import '../features/workspace/presentation/controllers/workspace_controller.dart';
 import '../features/tabs/presentation/document_tabs.dart';
 import '../features/workspace/presentation/screens/home_screen.dart';
+import '../features/update/presentation/update_controller.dart';
+import '../features/update/presentation/update_widgets.dart';
 import 'theme.dart';
 
 class ReadPaperApp extends ConsumerWidget {
@@ -34,6 +36,8 @@ class ReadPaperApp extends ConsumerWidget {
     // Paper, folder, dan catatan yang masuk dari luar aplikasi (git pull di
     // terminal, Zotero, pengelola berkas) tampil tanpa menutup aplikasi.
     ref.listen(diskWatchProvider, (_, _) {});
+    // Rilis baru di GitHub diberitahukan, dan bisa dipasang dari sini.
+    ref.listen(updateControllerProvider, (_, _) {});
     // Letak bilah tab: dipilih dari menu tab atau Pengaturan, disimpan di
     // pengaturan aplikasi.
     final tabs = ref.read(documentTabsProvider.notifier);
@@ -52,6 +56,7 @@ class ReadPaperApp extends ConsumerWidget {
 
     return MaterialApp(
       title: AppConstants.appName,
+      navigatorKey: appNavigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
@@ -74,10 +79,21 @@ class ReadPaperApp extends ConsumerWidget {
       // Pesan dari kode tanpa BuildContext (controller, git) ikut bahasa ini.
       builder: (context, child) {
         setCurrentL10n(AppLocalizations.of(context));
-        return child ?? const SizedBox.shrink();
+        return Stack(
+          children: <Widget>[
+            child ?? const SizedBox.shrink(),
+            // Lapisan Overlay sendiri: kartunya duduk di atas Navigator,
+            // jadi tooltip tombolnya tidak menemukan Overlay milik Navigator.
+            Positioned.fill(child: Overlay(initialEntries: <OverlayEntry>[_updateEntry])),
+          ],
+        );
       },
       // Library jadi tab pertama; dokumen yang dibuka jadi tab di sebelahnya.
       home: const DocumentTabsHost(library: HomeScreen()),
     );
   }
 }
+
+/// Satu entri untuk selamanya; isinya ([UpdateOverlay]) membangun ulang
+/// dirinya sendiri saat status pembaruan berubah.
+final _updateEntry = OverlayEntry(builder: (_) => const UpdateOverlay());

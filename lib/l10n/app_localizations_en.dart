@@ -3929,6 +3929,135 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabsOpenRight => 'Open in the right pane';
 
   @override
+  String updateAvailableTitle(String version) {
+    return 'ReadPaper $version is available';
+  }
+
+  @override
+  String updateCurrent(String version) {
+    return 'Installed now: $version';
+  }
+
+  @override
+  String get updateNow => 'Update';
+
+  @override
+  String get updateLater => 'Later';
+
+  @override
+  String get updateSkip => 'Skip this version';
+
+  @override
+  String get updateNotes => 'Release notes';
+
+  @override
+  String get updateOpenPage => 'Open release page';
+
+  @override
+  String get updateManualHint =>
+      'ReadPaper on this device cannot update itself. Download the new version from the release page.';
+
+  @override
+  String updateDownloading(String percent) {
+    return 'Downloading… $percent%';
+  }
+
+  @override
+  String get updateInstalling => 'Installing…';
+
+  @override
+  String updateReadyTitle(String version) {
+    return 'ReadPaper $version is installed';
+  }
+
+  @override
+  String get updateRestartHint =>
+      'The new version runs once ReadPaper is reopened. Save any unsaved documents first.';
+
+  @override
+  String get updateRestart => 'Restart now';
+
+  @override
+  String updateFailed(String error) {
+    return 'Update failed: $error';
+  }
+
+  @override
+  String get updateRunYourself => 'Or run it yourself in a terminal:';
+
+  @override
+  String get updateCopyCommand => 'Copy command';
+
+  @override
+  String get updateRetry => 'Try again';
+
+  @override
+  String get updateAndroidPermission =>
+      'Allow ReadPaper to install apps on the screen that opened, then press Update again.';
+
+  @override
+  String get updateAndroidConfirm =>
+      'Confirm the installation on the Android screen.';
+
+  @override
+  String get updateCancelled => 'Installation cancelled.';
+
+  @override
+  String get updateNoRoot =>
+      'There is no way to ask for the administrator password from here.';
+
+  @override
+  String get updateWindowsConfirmTitle => 'Close ReadPaper to update?';
+
+  @override
+  String get updateWindowsConfirmBody =>
+      'The installer runs in the background and reopens ReadPaper when it is done. Save any unsaved documents first.';
+
+  @override
+  String get updateCloseAndUpdate => 'Close and update';
+
+  @override
+  String get updateCheck => 'Check for updates';
+
+  @override
+  String get updateChecking => 'Checking for updates…';
+
+  @override
+  String updateUpToDate(String version) {
+    return 'Up to date ($version)';
+  }
+
+  @override
+  String get updateAuto => 'Notify me about new versions';
+
+  @override
+  String get updateNoAsset =>
+      'This release has no file for this device yet; try again shortly.';
+
+  @override
+  String updateVia(String how) {
+    return 'Updated through $how';
+  }
+
+  @override
+  String get updateKindApk => 'the APK from GitHub releases';
+
+  @override
+  String get updateKindSetup => 'setup.exe from GitHub releases';
+
+  @override
+  String get updateKindTarball => 'the tarball from GitHub releases';
+
+  @override
+  String get updateKindDeb => 'the .deb package from GitHub releases';
+
+  @override
+  String get updateKindArch => 'the pacman package (readpaper-bin)';
+
+  @override
+  String get updateKindManual => 'the GitHub release page (manual download)';
+
+  @override
   String workspaceSwitchRepoCount(int count) {
     return 'Switch repository ($count available)';
   }

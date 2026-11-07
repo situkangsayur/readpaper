@@ -3715,6 +3715,135 @@ class AppLocalizationsId extends AppLocalizations {
   String get tabsOpenRight => 'Buka di panel kanan';
 
   @override
+  String updateAvailableTitle(String version) {
+    return 'ReadPaper $version tersedia';
+  }
+
+  @override
+  String updateCurrent(String version) {
+    return 'Terpasang sekarang: $version';
+  }
+
+  @override
+  String get updateNow => 'Perbarui';
+
+  @override
+  String get updateLater => 'Nanti';
+
+  @override
+  String get updateSkip => 'Lewati versi ini';
+
+  @override
+  String get updateNotes => 'Catatan rilis';
+
+  @override
+  String get updateOpenPage => 'Buka halaman rilis';
+
+  @override
+  String get updateManualHint =>
+      'ReadPaper di perangkat ini tidak bisa memperbarui dirinya sendiri. Unduh versi barunya dari halaman rilis.';
+
+  @override
+  String updateDownloading(String percent) {
+    return 'Mengunduh… $percent%';
+  }
+
+  @override
+  String get updateInstalling => 'Memasang…';
+
+  @override
+  String updateReadyTitle(String version) {
+    return 'ReadPaper $version sudah terpasang';
+  }
+
+  @override
+  String get updateRestartHint =>
+      'Versi baru berjalan setelah ReadPaper dibuka lagi. Simpan dulu dokumen yang belum disimpan.';
+
+  @override
+  String get updateRestart => 'Mulai ulang sekarang';
+
+  @override
+  String updateFailed(String error) {
+    return 'Pembaruan gagal: $error';
+  }
+
+  @override
+  String get updateRunYourself => 'Atau jalankan sendiri di terminal:';
+
+  @override
+  String get updateCopyCommand => 'Salin perintah';
+
+  @override
+  String get updateRetry => 'Coba lagi';
+
+  @override
+  String get updateAndroidPermission =>
+      'Izinkan ReadPaper memasang aplikasi di layar yang terbuka, lalu tekan Perbarui lagi.';
+
+  @override
+  String get updateAndroidConfirm =>
+      'Konfirmasikan pemasangannya di layar Android.';
+
+  @override
+  String get updateCancelled => 'Pemasangan dibatalkan.';
+
+  @override
+  String get updateNoRoot =>
+      'Tidak ada cara meminta kata sandi administrator dari sini.';
+
+  @override
+  String get updateWindowsConfirmTitle => 'Tutup ReadPaper untuk memperbarui?';
+
+  @override
+  String get updateWindowsConfirmBody =>
+      'Pemasangnya berjalan di latar, lalu membuka ReadPaper lagi setelah selesai. Simpan dulu dokumen yang belum disimpan.';
+
+  @override
+  String get updateCloseAndUpdate => 'Tutup dan perbarui';
+
+  @override
+  String get updateCheck => 'Periksa pembaruan';
+
+  @override
+  String get updateChecking => 'Memeriksa pembaruan…';
+
+  @override
+  String updateUpToDate(String version) {
+    return 'Sudah versi terbaru ($version)';
+  }
+
+  @override
+  String get updateAuto => 'Beri tahu bila ada versi baru';
+
+  @override
+  String get updateNoAsset =>
+      'Rilis ini belum membawa berkas untuk perangkat ini; coba lagi sebentar lagi.';
+
+  @override
+  String updateVia(String how) {
+    return 'Diperbarui lewat $how';
+  }
+
+  @override
+  String get updateKindApk => 'APK dari rilis GitHub';
+
+  @override
+  String get updateKindSetup => 'setup.exe dari rilis GitHub';
+
+  @override
+  String get updateKindTarball => 'tarball dari rilis GitHub';
+
+  @override
+  String get updateKindDeb => 'paket .deb dari rilis GitHub';
+
+  @override
+  String get updateKindArch => 'paket pacman (readpaper-bin)';
+
+  @override
+  String get updateKindManual => 'halaman rilis GitHub (unduh sendiri)';
+
+  @override
   String workspaceSwitchRepoCount(int count) {
     return 'Ganti repositori ($count tersedia)';
   }

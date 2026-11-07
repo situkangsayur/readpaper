@@ -4,6 +4,9 @@ import android.app.Activity
 import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
+import androidx.core.content.FileProvider
 import android.provider.DocumentsContract
 import android.provider.OpenableColumns
 import io.flutter.embedding.android.FlutterActivity
@@ -48,6 +51,11 @@ class MainActivity : FlutterActivity() {
                     // disalin ke cache. Jalur dari getDirectoryPath tidak bisa
                     // dibaca dart:io di Android 11+ tanpa izin semua berkas.
                     "pickFolderCopy" -> pickFolderCopy(result)
+                    // Pembaruan dari rilis GitHub: APK yang sudah diunduh sisi
+                    // Dart diserahkan ke pemasang paket Android. Pengguna tetap
+                    // mengonfirmasinya sendiri — Android tidak mengizinkan
+                    // aplikasi biasa memasang diam-diam.
+                    "installApk" -> result.success(installApk(call.arguments as String))
                     else -> result.notImplemented()
                 }
             }
@@ -70,6 +78,29 @@ class MainActivity : FlutterActivity() {
                 else -> result.notImplemented()
             }
         }
+    }
+
+    /** "ok", atau "izin" bila pengguna harus mengizinkan sumber ini dulu. */
+    private fun installApk(path: String): String {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !packageManager.canRequestPackageInstalls()
+        ) {
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:$packageName"),
+                ),
+            )
+            return "izin"
+        }
+        val uri = FileProvider.getUriForFile(this, "$packageName.pembaruan", File(path))
+        startActivity(
+            Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+            },
+        )
+        return "ok"
     }
 
     override fun onDestroy() {

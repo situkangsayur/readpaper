@@ -1,3 +1,4 @@
+import '../../../update/presentation/update_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -284,7 +285,7 @@ class _VersionFooter extends StatelessWidget {
                 SelectableText(text, style: small),
               ],
             ),
-            const SizedBox(height: 4),
+            const UpdateSettingsRow(),
             // AGPL asks that an interactive program keeps showing where its
             // source is; this line is that notice, not decoration.
             SelectableText(context.l10n.settingsLicense, textAlign: TextAlign.center, style: small),

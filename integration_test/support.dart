@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:readpaper/src/features/update/presentation/update_controller.dart';
 import 'package:readpaper/src/core/utils/app_paths.dart';
 
 /// Bahan bersama uji ujung ke ujung desktop: library Zotero di repositori git
@@ -224,6 +225,8 @@ class Fixture {
 
     final support = Directory(p.join(f.root.path, 'data'))..createSync();
     AppPaths.debugOverride(support);
+    // Kartu "versi baru tersedia" tidak boleh muncul di tengah uji.
+    UpdateController.automatic = false;
     write(
       p.join(support.path, 'config.json'),
       jsonEncode(<String, dynamic>{

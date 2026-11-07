@@ -2735,6 +2735,91 @@
   "tabsOpenNew": "Buka di tab baru",
   "tabsOpen": "Buka",
   "tabsOpenRight": "Buka di panel kanan",
+  "updateAvailableTitle": "ReadPaper {version} tersedia",
+  "@updateAvailableTitle": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCurrent": "Terpasang sekarang: {version}",
+  "@updateCurrent": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateNow": "Perbarui",
+  "updateLater": "Nanti",
+  "updateSkip": "Lewati versi ini",
+  "updateNotes": "Catatan rilis",
+  "updateOpenPage": "Buka halaman rilis",
+  "updateManualHint": "ReadPaper di perangkat ini tidak bisa memperbarui dirinya sendiri. Unduh versi barunya dari halaman rilis.",
+  "updateDownloading": "Mengunduh… {percent}%",
+  "@updateDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "updateInstalling": "Memasang…",
+  "updateReadyTitle": "ReadPaper {version} sudah terpasang",
+  "@updateReadyTitle": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateRestartHint": "Versi baru berjalan setelah ReadPaper dibuka lagi. Simpan dulu dokumen yang belum disimpan.",
+  "updateRestart": "Mulai ulang sekarang",
+  "updateFailed": "Pembaruan gagal: {error}",
+  "@updateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "updateRunYourself": "Atau jalankan sendiri di terminal:",
+  "updateCopyCommand": "Salin perintah",
+  "updateRetry": "Coba lagi",
+  "updateAndroidPermission": "Izinkan ReadPaper memasang aplikasi di layar yang terbuka, lalu tekan Perbarui lagi.",
+  "updateAndroidConfirm": "Konfirmasikan pemasangannya di layar Android.",
+  "updateCancelled": "Pemasangan dibatalkan.",
+  "updateNoRoot": "Tidak ada cara meminta kata sandi administrator dari sini.",
+  "updateWindowsConfirmTitle": "Tutup ReadPaper untuk memperbarui?",
+  "updateWindowsConfirmBody": "Pemasangnya berjalan di latar, lalu membuka ReadPaper lagi setelah selesai. Simpan dulu dokumen yang belum disimpan.",
+  "updateCloseAndUpdate": "Tutup dan perbarui",
+  "updateCheck": "Periksa pembaruan",
+  "updateChecking": "Memeriksa pembaruan…",
+  "updateUpToDate": "Sudah versi terbaru ({version})",
+  "@updateUpToDate": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateAuto": "Beri tahu bila ada versi baru",
+  "updateNoAsset": "Rilis ini belum membawa berkas untuk perangkat ini; coba lagi sebentar lagi.",
+  "updateVia": "Diperbarui lewat {how}",
+  "@updateVia": {
+    "placeholders": {
+      "how": {
+        "type": "String"
+      }
+    }
+  },
+  "updateKindApk": "APK dari rilis GitHub",
+  "updateKindSetup": "setup.exe dari rilis GitHub",
+  "updateKindTarball": "tarball dari rilis GitHub",
+  "updateKindDeb": "paket .deb dari rilis GitHub",
+  "updateKindArch": "paket pacman (readpaper-bin)",
+  "updateKindManual": "halaman rilis GitHub (unduh sendiri)",
   "workspaceSwitchRepoCount": "Ganti repositori ({count} tersedia)",
   "@workspaceSwitchRepoCount": {
     "placeholders": {

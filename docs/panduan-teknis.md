@@ -554,6 +554,23 @@ Urutannya, setiap kali sebuah perubahan selesai dan terbukti:
 6. **Perbarui halaman unduh internal** dengan APK yang sama. Halaman itu
    dikelola di luar repositori ini; caranya tidak dicatat di sini.
 
+**Pembaruan dari dalam aplikasi bergantung pada rilis ini.** ReadPaper yang
+terpasang membaca `releases/latest` dan memilih berkas menurut akhiran namanya
+(`lib/src/features/update/domain/install_kind.dart`): `.apk`,
+`-windows-x64-setup.exe`, `-linux-x64.tar.gz`, `_amd64.deb`, dan `PKGBUILD`.
+Jangan mengganti pola nama itu. Rilis yang belum membawa berkas untuk sebuah
+platform (mis. setup.exe dari CI belum selesai) membuat tombol Perbarui di
+platform itu berkata "coba lagi sebentar lagi" — tidak memasang yang salah.
+
+APK harus **ditandatangani kunci yang sama** dengan yang sudah terpasang
+(saat ini kunci debug mesin pembangun). APK dengan kunci lain ditolak Android
+("aplikasi tidak terpasang"), dan pengguna harus mencopot dulu.
+
+Mengujinya tanpa rilis sungguhan: `scripts/test-linux-update.sh` menyajikan
+rilis palsu 0.99.0 dan memperbarui tarball, `.deb`, dan paket pacman di
+kontainer lewat `readpaper --perbarui` dengan `READPAPER_RILIS_URL`.
+Kartunya diuji di `integration_test/desktop_update_notice_test.dart`.
+
 Kredensial untuk `gh`: `gh auth login --scopes public_repo`, atau `GH_TOKEN`
 berisi fine-grained token yang dibatasi ke repositori ini dengan *Contents:
 read and write*. Jangan memakai scope `repo` penuh atau `project`.

@@ -123,6 +123,10 @@ Root: HKA; Subkey: "Software\Classes\.odp\OpenWithList\readpaper.exe"; ValueType
 
 [Run]
 Filename: "{app}\readpaper.exe"; Description: "{cm:RunApp}"; Flags: nowait postinstall skipifsilent
+; Pembaruan dari dalam ReadPaper menjalankan setup ini senyap dengan
+; /RELAUNCH=1, lalu ReadPaper keluar. Setelah selesai, ReadPaper dibuka lagi
+; sebagai pengguna yang tadi memakainya, bukan sebagai administrator.
+Filename: "{app}\readpaper.exe"; Flags: nowait runasoriginaluser; Check: WantRelaunch
 
 
 [Code]
@@ -148,6 +152,11 @@ begin
      RegQueryStringValue(HKCU, UninstallKey, 'DisplayVersion', InstalledVersion)) and
     (RegQueryStringValue(HKLM, UninstallKey, 'UninstallString', UninstallCmd) or
      RegQueryStringValue(HKCU, UninstallKey, 'UninstallString', UninstallCmd));
+end;
+
+function WantRelaunch(): Boolean;
+begin
+  Result := ExpandConstant('{param:RELAUNCH|0}') = '1';
 end;
 
 function IsModify(): Boolean;

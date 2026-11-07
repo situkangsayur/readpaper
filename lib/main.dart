@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -6,6 +8,7 @@ import 'src/app/app.dart';
 import 'src/core/utils/app_paths.dart';
 import 'src/features/files/data/incoming_file.dart';
 import 'src/features/presenter/presentation/audience_app.dart';
+import 'src/features/update/data/headless_update.dart';
 
 Future<void> main(List<String> args) async {
   // Jendela audiens mode presenter (desktop) memakai main yang sama, dengan
@@ -15,6 +18,8 @@ Future<void> main(List<String> args) async {
     return;
   }
   WidgetsFlutterBinding.ensureInitialized();
+  // `readpaper --perbarui`: memasang rilis terbaru dari terminal, lalu keluar.
+  if (args.contains('--perbarui')) exit(await runHeadlessUpdate());
   // Linux dan Windows menyerahkan berkas "Buka dengan" sebagai argumen
   // (`Exec=readpaper %f`); Android lewat kanal `readpaper/berkas-masuk`.
   IncomingFile.fromArguments(args);

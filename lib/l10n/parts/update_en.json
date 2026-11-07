@@ -1,0 +1,87 @@
+{
+  "updateAvailableTitle": "ReadPaper {version} is available",
+  "@updateAvailableTitle": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateCurrent": "Installed now: {version}",
+  "@updateCurrent": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateNow": "Update",
+  "updateLater": "Later",
+  "updateSkip": "Skip this version",
+  "updateNotes": "Release notes",
+  "updateOpenPage": "Open release page",
+  "updateManualHint": "ReadPaper on this device cannot update itself. Download the new version from the release page.",
+  "updateDownloading": "Downloading… {percent}%",
+  "@updateDownloading": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "updateInstalling": "Installing…",
+  "updateReadyTitle": "ReadPaper {version} is installed",
+  "@updateReadyTitle": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateRestartHint": "The new version runs once ReadPaper is reopened. Save any unsaved documents first.",
+  "updateRestart": "Restart now",
+  "updateFailed": "Update failed: {error}",
+  "@updateFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "updateRunYourself": "Or run it yourself in a terminal:",
+  "updateCopyCommand": "Copy command",
+  "updateRetry": "Try again",
+  "updateAndroidPermission": "Allow ReadPaper to install apps on the screen that opened, then press Update again.",
+  "updateAndroidConfirm": "Confirm the installation on the Android screen.",
+  "updateCancelled": "Installation cancelled.",
+  "updateNoRoot": "There is no way to ask for the administrator password from here.",
+  "updateWindowsConfirmTitle": "Close ReadPaper to update?",
+  "updateWindowsConfirmBody": "The installer runs in the background and reopens ReadPaper when it is done. Save any unsaved documents first.",
+  "updateCloseAndUpdate": "Close and update",
+  "updateCheck": "Check for updates",
+  "updateChecking": "Checking for updates…",
+  "updateUpToDate": "Up to date ({version})",
+  "@updateUpToDate": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "updateAuto": "Notify me about new versions",
+  "updateNoAsset": "This release has no file for this device yet; try again shortly.",
+  "updateVia": "Updated through {how}",
+  "@updateVia": {
+    "placeholders": {
+      "how": {
+        "type": "String"
+      }
+    }
+  },
+  "updateKindApk": "the APK from GitHub releases",
+  "updateKindSetup": "setup.exe from GitHub releases",
+  "updateKindTarball": "the tarball from GitHub releases",
+  "updateKindDeb": "the .deb package from GitHub releases",
+  "updateKindArch": "the pacman package (readpaper-bin)",
+  "updateKindManual": "the GitHub release page (manual download)"
+}

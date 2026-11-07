@@ -123,12 +123,42 @@ jobs:
             & "$app\git\cmd\git.exe" --version
             if (-not (Select-String -Path "$data\config.json" -Pattern 'jangan-hilang' -Quiet)) { throw "pengaturan hilang (putaran $round)" }
           }
+          # Pembaruan dari dalam aplikasi: rilis palsu 0.99.0 yang membawa
+          # setup ini. `readpaper --perbarui` mengunduhnya, memeriksa sha256,
+          # menjalankannya senyap, lalu keluar; setup membuka ReadPaper lagi.
+          $srv = Join-Path $env:RUNNER_TEMP 'rilis'
+          New-Item -ItemType Directory -Force -Path $srv | Out-Null
+          $name = 'readpaper-0.99.0-windows-x64-setup.exe'
+          Copy-Item $setup "$srv\$name"
+          $port = 18765
+          $sum = (Get-FileHash "$srv\$name" -Algorithm SHA256).Hash.ToLower()
+          @{ tag_name = 'v0.99.0'; body = 'uji'; html_url = "http://127.0.0.1:$port/"; assets = @(@{
+              name = $name; size = (Get-Item "$srv\$name").Length; digest = "sha256:$sum"
+              browser_download_url = "http://127.0.0.1:$port/$name" }) } |
+            ConvertTo-Json -Depth 5 | Out-File -Encoding utf8 "$srv\rilis.json"
+          $server = Start-Process python -ArgumentList '-m','http.server',"$port",'--bind','127.0.0.1','--directory',$srv -PassThru -WindowStyle Hidden
+          Start-Sleep -Seconds 2
+          $env:READPAPER_RILIS_URL = "http://127.0.0.1:$port/rilis.json"
+          $run = Start-Process "$app\readpaper.exe" -ArgumentList '--perbarui' -Wait -PassThru
+          if ($run.ExitCode -ne 0) { throw "readpaper --perbarui gagal (kode $($run.ExitCode))" }
+          $back = $false
+          foreach ($i in 1..60) {
+            Start-Sleep -Seconds 2
+            if (Get-Process readpaper -ErrorAction SilentlyContinue) { $back = $true; break }
+          }
+          Stop-Process -Id $server.Id -Force
+          if (-not $back) { throw "setup senyap tidak membuka ReadPaper lagi" }
+          Get-Process readpaper | Stop-Process -Force
+          Start-Sleep -Seconds 2
+          Remove-Item Env:READPAPER_RILIS_URL
+          if (-not (Select-String -Path "$data\config.json" -Pattern 'jangan-hilang' -Quiet)) { throw "pembaruan menghapus pengaturan" }
+          "Pembaruan dari dalam aplikasi: setup senyap berjalan dan ReadPaper terbuka lagi."
           $uninstaller = Get-ChildItem $app -Filter 'unins*.exe' | Select-Object -First 1
           Start-Process $uninstaller.FullName -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
           Start-Sleep -Seconds 3
           if (Test-Path "$app\readpaper.exe") { throw "uninstall tidak membuang program" }
           if (-not (Select-String -Path "$data\config.json" -Pattern 'jangan-hilang' -Quiet)) { throw "uninstall menghapus pengaturan" }
-          "Pasang, perbarui, dan uninstall: pengaturan tetap utuh."
+          "Pasang, perbarui (juga dari dalam aplikasi), dan uninstall: pengaturan tetap utuh."
 
       # Yang dibungkus adalah seluruh isi folder Release: readpaper.exe tidak
       # berjalan tanpa `data/` dan DLL di sebelahnya — termasuk pdfium.dll,

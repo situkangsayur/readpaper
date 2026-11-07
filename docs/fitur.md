@@ -460,6 +460,27 @@ berkas di `attachments/` sering puluhan megabita dan ditolak API. Anotasi,
 koleksi, item baru, dan catatan tetap terkirim dari Android. PDF-nya sendiri
 harus masuk lewat git di komputer.
 
+### Pembaruan dari dalam aplikasi
+
+ReadPaper memeriksa rilis terbaru di GitHub (saat dibuka dan setiap enam jam)
+dan memberi tahu lewat kartu di pojok layar bila ada versi baru. **Perbarui**
+mengambil berkas yang cocok dengan cara ReadPaper itu terpasang, memeriksa
+sha256-nya, lalu memasangnya — tanpa mengunduh dan memasang ulang dengan
+tangan:
+
+| Terpasang sebagai | Yang diambil | Cara memasangnya |
+|---|---|---|
+| APK (Android) | `.apk` | pemasang paket Android; pengguna mengizinkan sekali, lalu mengonfirmasi |
+| setup.exe (Windows) | `-setup.exe` | setup senyap; ReadPaper ditutup lalu dibuka lagi sendiri |
+| tarball di folder sendiri (`~/.local/opt/readpaper`) | `.tar.gz` | folder diganti di tempat, tanpa root |
+| paket `.deb` | `.deb` | `apt-get install`, kata sandi lewat kotak polkit |
+| paket pacman `readpaper-bin` | `PKGBUILD` + `.tar.gz` | `makepkg`, lalu `pacman -U` lewat polkit |
+| iOS, zip Windows portabel, build pengembangan | — | hanya diberi tahu; tombolnya membuka halaman rilis |
+
+Di Linux, versi baru berjalan setelah **Mulai ulang sekarang**. Pemberitahuan
+otomatis bisa dimatikan, dan satu versi bisa dilewati, di Pengaturan (di bawah
+nomor versi). Dari terminal: `readpaper --perbarui`.
+
 Windows dibangun di runner GitHub Actions dan belum ditandatangani, jadi
 SmartScreen memperingatkan saat dibuka. macOS belum ada.
 
