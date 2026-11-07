@@ -245,14 +245,18 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   gemetar.
 - **Tambah halaman kosong** di tengah ("n halaman setelah halaman ini") atau di
   akhir dokumen, untuk dicoreti. Halaman aslinya disalin sebagai objek PDF,
-  jadi teksnya tetap bisa dicari. Yang berubah adalah salinan kerja; berkas
-  aslinya tidak disentuh sampai disimpan.
+  jadi teksnya tetap bisa dicari. Coretan, anotasi, dan catatan presenter di
+  halaman sesudahnya ikut bergeser, jadi tetap di slide-nya. Untuk PDF lepas
+  yang berubah adalah salinan kerja, sampai disimpan. Untuk PDF di Catatan
+  dan paper library — yang anotasinya tersimpan seketika — halamannya ditulis
+  ke PDF-nya sendiri, setelah menawarkan **salinan versi asli** (`…-asli.pdf`).
 - **Simpan, Simpan sebagai, dan bagikan.** Simpan yang pertama selalu
   **Simpan sebagai**: pilih nama dan folder, dan berkas yang dibuka tidak
   disentuh. Simpan berikutnya langsung menimpa berkas hasil itu (Ctrl+S;
   Ctrl+Shift+S untuk nama lain). Bila nama tujuan sudah ada, ReadPaper
   bertanya **Ya** atau **Tidak** dulu, dengan peringatan lebih keras bila yang
-  akan ditimpa adalah berkas aslinya. PDF hasilnya tetap berisi teks asli;
+  akan ditimpa adalah berkas aslinya — dan pilihan **Timpa, simpan aslinya**,
+  yang menyimpan versi sebelum dicoret sebagai `…-asli.pdf` di sebelahnya. PDF hasilnya tetap berisi teks asli;
   coretan, stabilo, dan gambar tempelan ditambahkan di atasnya. Tersedia juga
   ekspor halaman sebagai PNG/JPG pada 72/144/288 dpi, cetak, bagikan ke aplikasi
   lain, dan ubah teks PDF menjadi Markdown.

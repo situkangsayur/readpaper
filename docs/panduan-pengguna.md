@@ -320,8 +320,10 @@ Ada dua jenis hasil, dan keduanya berbeda:
   catatan tempel yang bisa dibuka di pembaca PDF mana pun. Goresan yang belum
   selesai ikut disimpan lebih dulu.
   Di Android, pilih **Folder kerja** supaya berkasnya muncul di panel berkas.
-  Halaman kosong yang ditambahkan **hanya ikut lewat cara ini** — penambahan
-  halaman tidak mengubah berkas aslinya.
+  Halaman kosong yang ditambahkan ke PDF lepas **hanya ikut lewat cara ini** —
+  penambahan halaman tidak mengubah berkas aslinya. (PDF di Catatan dan paper
+  library berbeda: halaman kosongnya langsung ditulis ke PDF-nya, setelah
+  ReadPaper menawarkan untuk menyimpan salinan versi aslinya dulu.)
 
 Untuk PDF lepas, hanya cara kedua yang ada: anotasinya hilang kalau pembaca
 ditutup tanpa menyimpan. Kalau PDF kuliah itu ingin disimpan di library, lihat

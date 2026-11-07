@@ -16,11 +16,15 @@ class SaveFolder {
 /// Hasil dialog: jalur berkas yang dipilih, atau permintaan memakai dialog
 /// simpan bawaan sistem (untuk tempat di luar jangkauan aplikasi di Android).
 class SaveAsChoice {
-  const SaveAsChoice.file(String this.path) : systemName = null;
-  const SaveAsChoice.system(String this.systemName) : path = null;
+  const SaveAsChoice.file(String this.path, {this.keepOriginal = false}) : systemName = null;
+  const SaveAsChoice.system(String this.systemName) : path = null, keepOriginal = false;
 
   final String? path;
   final String? systemName;
+
+  /// Menimpa berkas yang sedang dibuka, setelah menyimpan salinan versi
+  /// aslinya di sebelahnya.
+  final bool keepOriginal;
 }
 
 /// Nama berkas dari isian pengguna.
@@ -132,7 +136,10 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
     if (File(path).existsSync()) {
       final original = widget.originalPath;
       final isOriginal = original != null && SaveAsNames.samePath(original, path);
-      final replace = await showDialog<bool>(
+      // Tiga jawaban untuk berkas aslinya: tidak, timpa, atau timpa sambil
+      // menyimpan salinan versi sebelum dicoret — yang ditawarkan paling
+      // depan, karena coretan yang melebur ke halaman tidak bisa dibalik.
+      final replace = await showDialog<String>(
         context: context,
         builder: (context) => AlertDialog(
           icon: const Icon(Icons.warning_amber_rounded),
@@ -144,23 +151,31 @@ class _SaveAsDialogState extends State<_SaveAsDialog> {
           ),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
+              onPressed: () => Navigator.of(context).pop('no'),
               child: Text(context.l10n.readerNo),
             ),
-            FilledButton(
-              style: isOriginal
-                  ? FilledButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                      foregroundColor: Theme.of(context).colorScheme.onError,
-                    )
-                  : null,
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(context.l10n.readerYesOverwrite),
-            ),
+            if (isOriginal)
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop('keep'),
+                child: Text(context.l10n.readerOverwriteKeepOriginal),
+              ),
+            if (isOriginal)
+              TextButton(
+                style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+                onPressed: () => Navigator.of(context).pop('yes'),
+                child: Text(context.l10n.readerYesOverwrite),
+              )
+            else
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop('yes'),
+                child: Text(context.l10n.readerYesOverwrite),
+              ),
           ],
         ),
       );
-      if (replace != true || !mounted) return;
+      if ((replace != 'yes' && replace != 'keep') || !mounted) return;
+      Navigator.of(context).pop(SaveAsChoice.file(path, keepOriginal: replace == 'keep'));
+      return;
     }
     if (!mounted) return;
     Navigator.of(context).pop(SaveAsChoice.file(path));

@@ -6199,6 +6199,66 @@ abstract class AppLocalizations {
   /// **'Anotasi ini tertanam di dalam PDF (dibuat di aplikasi lain); di sini hanya bisa dibaca.'**
   String get readerEmbeddedReadOnly;
 
+  /// No description provided for @readerBlankPagesIntoFileExplain.
+  ///
+  /// In id, this message translates to:
+  /// **'Seukuran halaman pertamanya. Halamannya ditulis ke PDF ini sendiri, supaya coretan di sana tetap di tempatnya saat dibuka lagi.'**
+  String get readerBlankPagesIntoFileExplain;
+
+  /// No description provided for @readerKeepOriginalTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Simpan versi aslinya?'**
+  String get readerKeepOriginalTitle;
+
+  /// No description provided for @readerKeepOriginalExplain.
+  ///
+  /// In id, this message translates to:
+  /// **'{name} akan berubah. Salinan versi sebelumnya bisa disimpan dulu di {folder}, supaya versi aslinya tetap ada.'**
+  String readerKeepOriginalExplain(String name, String folder);
+
+  /// No description provided for @readerKeepOriginalYes.
+  ///
+  /// In id, this message translates to:
+  /// **'Simpan salinan asli'**
+  String get readerKeepOriginalYes;
+
+  /// No description provided for @readerKeepOriginalNo.
+  ///
+  /// In id, this message translates to:
+  /// **'Tanpa salinan'**
+  String get readerKeepOriginalNo;
+
+  /// No description provided for @readerOriginalKeptAs.
+  ///
+  /// In id, this message translates to:
+  /// **'Versi aslinya disimpan sebagai {name}'**
+  String readerOriginalKeptAs(String name);
+
+  /// No description provided for @readerOriginalKeepFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Salinan aslinya tidak bisa dibuat: {error}'**
+  String readerOriginalKeepFailed(String error);
+
+  /// No description provided for @readerBlankPagesWritten.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} halaman kosong disisipkan setelah halaman {page} dan tersimpan di PDF-nya'**
+  String readerBlankPagesWritten(int count, int page);
+
+  /// No description provided for @readerBlankPagesWrittenEnd.
+  ///
+  /// In id, this message translates to:
+  /// **'{count} halaman kosong ditambahkan di akhir dan tersimpan di PDF-nya'**
+  String readerBlankPagesWrittenEnd(int count);
+
+  /// No description provided for @readerOverwriteKeepOriginal.
+  ///
+  /// In id, this message translates to:
+  /// **'Timpa, simpan aslinya'**
+  String get readerOverwriteKeepOriginal;
+
   /// No description provided for @tabsLibrary.
   ///
   /// In id, this message translates to:

@@ -257,6 +257,7 @@ Pertahankan kebiasaan itu: tes yang gagal sudah memberi tahu apa yang rusak.
 | `stylus_pressure_test.dart`, `ink_geometry_test.dart` | tekanan jadi tebal, tebal per titik bertahan setelah disimpan, dipotong, atau diputar |
 | `annotation_move_test.dart`, `annotation_move_layer_test.dart` | memindah, memperbesar, memutar tinta; pegangan di tepi halaman tetap bisa disentuh |
 | `pdf_page_editor_test.dart` | halaman kosong di awal, tengah, akhir; hasilnya bukan gambar sehingga berkas tidak membengkak |
+| `page_insertion_test.dart` | halaman kosong di tengah menggeser anotasi, label, indeks urut, dan catatan presenter halaman sesudahnya — bukan yang sebelumnya |
 | `note_document_test.dart`, `notebook_screen_test.dart`, `shape_connector_test.dart` | buku catatan: putar empat kali kembali persis, penghubung mengikuti benda, penghapus sebagian membelah goresan, stylus bertekanan |
 | `markdown_doc_test.dart`, `mermaid_graph_test.dart`, `markdown_pdf_test.dart`, `pdf_to_markdown*_test.dart` | pengurai Markdown, tata letak Mermaid, dua arah konversi |
 | `search_query_test.dart`, `duplicate_finder_test.dart`, `library_stats_test.dart` | operator cari, pencocokan duplikat bertingkat, statistik |

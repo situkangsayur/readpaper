@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:image/image.dart' as img;
 import 'package:pdfium_dart/pdfium_dart.dart' as pdfium;
+import 'package:pdfrx/pdfrx.dart' show PdfrxEntryFunctions;
 
 import '../../library/domain/entities/zotero_annotation.dart';
 import 'page_picture.dart';
@@ -39,6 +40,54 @@ class PdfPageEditor {
     lib.FPDF_InitLibrary();
     return lib;
   }
+
+  // ------------------------------------------------- di isolate pekerja pdfrx
+
+  // pdfrx memasang pemeta font sistemnya ke pdfium dari isolate pekerjanya
+  // sendiri, di semua platform native. pdfium itu global: begitu isolate
+  // utama membuka halaman yang fontnya tidak tertanam (Helvetica dari
+  // generator PDF, misalnya), pdfium memanggil balik pemeta font milik
+  // isolate lain dan Dart VM mematikan aplikasinya ("Cannot invoke native
+  // callback from a different isolate"). Menjeda pekerjanya tidak menolong —
+  // yang salah adalah isolatenya, bukan waktunya. Jadi penyuntingan yang
+  // dipanggil aplikasi dijalankan di isolate pekerja itu sendiri.
+
+  /// [addBlankPages], dijalankan di isolate pekerja pdfrx.
+  static Future<void> addBlankPagesInWorker({
+    required String source,
+    required String target,
+    int count = 1,
+    int? at,
+  }) => PdfrxEntryFunctions.instance.compute(_addBlankPagesTask, (
+    source: source,
+    target: target,
+    count: count,
+    at: at,
+  ));
+
+  static Future<void> _addBlankPagesTask(({String source, String target, int count, int? at}) m) =>
+      addBlankPages(source: m.source, target: m.target, count: m.count, at: m.at);
+
+  /// [withAnnotations], dijalankan di isolate pekerja pdfrx. Anotasinya
+  /// dikirim sudah dikelompokkan per nomor halaman, karena fungsi yang
+  /// menggenggam layar tidak bisa dikirim ke isolate lain.
+  static Future<Uint8List> withAnnotationsInWorker({
+    required String source,
+    required Map<int, List<ZoteroAnnotation>> byPage,
+    Map<String, Uint8List> pictures = const <String, Uint8List>{},
+  }) => PdfrxEntryFunctions.instance.compute(_withAnnotationsTask, (
+    source: source,
+    byPage: byPage,
+    pictures: pictures,
+  ));
+
+  static Uint8List _withAnnotationsTask(
+    ({String source, Map<int, List<ZoteroAnnotation>> byPage, Map<String, Uint8List> pictures}) m,
+  ) => withAnnotations(
+    source: m.source,
+    annotationsFor: (page) => m.byPage[page] ?? const <ZoteroAnnotation>[],
+    pictures: m.pictures,
+  );
 
   /// Ukuran A4 dalam titik PDF, dipakai kalau dokumennya tidak punya halaman
   /// yang bisa ditiru ukurannya.

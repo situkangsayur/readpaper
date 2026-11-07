@@ -3854,6 +3854,47 @@ class AppLocalizationsEn extends AppLocalizations {
       'This annotation is embedded in the PDF (made in another app); it can only be read here.';
 
   @override
+  String get readerBlankPagesIntoFileExplain =>
+      'The size of the first page. The pages are written into this PDF itself, so ink on them stays in place when it is opened again.';
+
+  @override
+  String get readerKeepOriginalTitle => 'Keep the original?';
+
+  @override
+  String readerKeepOriginalExplain(String name, String folder) {
+    return '$name is about to change. A copy of the version before it can be kept in $folder first, so the original is not lost.';
+  }
+
+  @override
+  String get readerKeepOriginalYes => 'Keep a copy';
+
+  @override
+  String get readerKeepOriginalNo => 'No copy';
+
+  @override
+  String readerOriginalKeptAs(String name) {
+    return 'The original was kept as $name';
+  }
+
+  @override
+  String readerOriginalKeepFailed(String error) {
+    return 'Could not keep a copy of the original: $error';
+  }
+
+  @override
+  String readerBlankPagesWritten(int count, int page) {
+    return '$count blank pages inserted after page $page and saved into the PDF';
+  }
+
+  @override
+  String readerBlankPagesWrittenEnd(int count) {
+    return '$count blank pages added at the end and saved into the PDF';
+  }
+
+  @override
+  String get readerOverwriteKeepOriginal => 'Overwrite, keep the original';
+
+  @override
   String get tabsLibrary => 'Library';
 
   @override

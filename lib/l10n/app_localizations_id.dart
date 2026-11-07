@@ -3640,6 +3640,47 @@ class AppLocalizationsId extends AppLocalizations {
       'Anotasi ini tertanam di dalam PDF (dibuat di aplikasi lain); di sini hanya bisa dibaca.';
 
   @override
+  String get readerBlankPagesIntoFileExplain =>
+      'Seukuran halaman pertamanya. Halamannya ditulis ke PDF ini sendiri, supaya coretan di sana tetap di tempatnya saat dibuka lagi.';
+
+  @override
+  String get readerKeepOriginalTitle => 'Simpan versi aslinya?';
+
+  @override
+  String readerKeepOriginalExplain(String name, String folder) {
+    return '$name akan berubah. Salinan versi sebelumnya bisa disimpan dulu di $folder, supaya versi aslinya tetap ada.';
+  }
+
+  @override
+  String get readerKeepOriginalYes => 'Simpan salinan asli';
+
+  @override
+  String get readerKeepOriginalNo => 'Tanpa salinan';
+
+  @override
+  String readerOriginalKeptAs(String name) {
+    return 'Versi aslinya disimpan sebagai $name';
+  }
+
+  @override
+  String readerOriginalKeepFailed(String error) {
+    return 'Salinan aslinya tidak bisa dibuat: $error';
+  }
+
+  @override
+  String readerBlankPagesWritten(int count, int page) {
+    return '$count halaman kosong disisipkan setelah halaman $page dan tersimpan di PDF-nya';
+  }
+
+  @override
+  String readerBlankPagesWrittenEnd(int count) {
+    return '$count halaman kosong ditambahkan di akhir dan tersimpan di PDF-nya';
+  }
+
+  @override
+  String get readerOverwriteKeepOriginal => 'Timpa, simpan aslinya';
+
+  @override
   String get tabsLibrary => 'Library';
 
   @override

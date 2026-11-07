@@ -497,6 +497,52 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return true;
   }
 
+  /// Menyimpan sekaligus anotasi dan gambar tempelan paper library yang
+  /// nomor halamannya bergeser karena halaman kosong disisipkan ke PDF-nya,
+  /// lalu meng-commit semuanya — termasuk PDF-nya sendiri — sebagai satu
+  /// perubahan.
+  ///
+  /// Satu commit, bukan satu per anotasi: slide yang dicoreti bisa membawa
+  /// puluhan coretan, dan semuanya bagian dari satu langkah yang sama.
+  Future<bool> savePageInsertion({
+    required ZoteroItem item,
+    required String attachmentKey,
+    required List<ZoteroAnnotation> annotations,
+    required String message,
+  }) async {
+    ownWrites++;
+    final library = state.library;
+    final profile = state.profile;
+    if (library == null || profile == null) {
+      state = state.copyWith(error: l10n.workspaceErrAnnotationNoLibrary);
+      return false;
+    }
+    try {
+      final store = pagePictures(attachmentKey);
+      for (final annotation in annotations) {
+        if (PagePicture.isPicture(annotation)) {
+          await store?.put(annotation);
+          continue;
+        }
+        await ref
+            .read(libraryRepositoryProvider)
+            .saveAnnotation(
+              itemFilePath: item.filePath,
+              libraryDir: library.directoryPath,
+              annotation: annotation,
+            );
+      }
+    } on Failure catch (e) {
+      state = state.copyWith(error: l10n.workspaceErrAnnotationSave(e.message));
+      return false;
+    } catch (e) {
+      state = state.copyWith(error: l10n.workspaceErrAnnotationSave('$e'));
+      return false;
+    }
+    await _commitAnnotation(profile: profile, message: message);
+    return true;
+  }
+
   Future<bool> deletePagePicture({
     required String attachmentKey,
     required String itemTitle,

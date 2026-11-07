@@ -47,6 +47,7 @@ import '../widgets/annotation_editor.dart';
 import '../widgets/annotation_move_layer.dart';
 import '../widgets/annotation_overlay_painter.dart';
 import '../../domain/page_image_export.dart';
+import '../../domain/page_insertion.dart';
 import '../widgets/annotation_sidebar.dart';
 import '../widgets/save_as_dialog.dart';
 import '../widgets/export_image_sheet.dart';
@@ -1782,6 +1783,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     if (choice == null || !mounted) return false;
     final path = choice.path;
     if (path == null) return _savePdfThroughDialog(choice.systemName!);
+    if (choice.keepOriginal && SaveAsNames.samePath(path, widget.filePath)) {
+      if (await _keepOriginalCopy(Directory(p.dirname(widget.filePath))) == null) return false;
+      _originalOffered = true;
+      if (!mounted) return false;
+    }
     return _writePdfTo(path);
   }
 
@@ -1798,7 +1804,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _say(context.l10n.readerPreparingPdf);
     try {
       final bytes = await _annotatedPdf();
-      await File(path).writeAsBytes(bytes, flush: true);
+      if (overSource) {
+        // Berkas yang sedang ditampilkan: tidak ditulis di tempat selagi
+        // pdfium masih membacanya.
+        final temp = File(
+          p.join((await getTemporaryDirectory()).path, 'simpan-${p.basename(path)}'),
+        );
+        await temp.writeAsBytes(bytes, flush: true);
+        await _replaceFile(from: temp.path, to: path);
+        await temp.delete();
+      } else {
+        await File(path).writeAsBytes(bytes, flush: true);
+      }
       if (!mounted) return true;
       setState(() {
         _savedAs = path;
@@ -2174,9 +2191,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   /// menempel pada dokumennya.
   ///
   /// Halamannya disalin sebagai objek PDF, bukan digambar ulang jadi gambar:
-  /// teks paper aslinya tetap bisa dicari dan disalin. Ditambahkan di akhir
-  /// supaya nomor halaman anotasi yang sudah ada tidak bergeser.
+  /// teks paper aslinya tetap bisa dicari dan disalin. Disisipkan di tengah,
+  /// anotasi dan catatan presenter halaman-halaman sesudahnya ikut digeser.
   Future<void> _addBlankPages() async {
+    final intoFile = _autoSaves || !widget.isStandalone;
     // Dua pertanyaan, bukan satu: berapa, lalu di mana. Menambahkan di akhir
     // saja memaksa yang sedang menjelaskan melompat ke belakang dokumen, dan
     // catatan yang ditulis di sana kehilangan tempatnya dalam cerita.
@@ -2187,7 +2205,11 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         children: <Widget>[
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-            child: Text(context.l10n.readerBlankPagesExplain),
+            child: Text(
+              intoFile
+                  ? context.l10n.readerBlankPagesIntoFileExplain
+                  : context.l10n.readerBlankPagesExplain,
+            ),
           ),
           for (final n in <int>[1, 2, 5])
             SimpleDialogOption(
@@ -2207,6 +2229,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final count = pilihan.count;
     final at = pilihan.here ? _currentPage : null;
 
+    // Goresan yang belum jadi anotasi harus punya nomor halamannya lebih
+    // dulu, supaya ikut bergeser bersama yang lain.
+    if (_pendingInk.isNotEmpty) await _saveInk();
+    if (!mounted) return;
+
+    // PDF catatan dan paper library menyimpan anotasinya di luar PDF, saat itu
+    // juga. Halaman kosong yang hanya ada di salinan kerja sementara hilang
+    // begitu dibuka lagi, dan semua coretan sesudahnya bergeser satu slide.
+    // Jadi halamannya ditulis ke PDF-nya sendiri — setelah menawarkan
+    // salinan versi aslinya.
+    if (intoFile && !await _offerToKeepOriginal()) return;
+
     try {
       final dir = await Directory(
         p.join((await getTemporaryDirectory()).path, 'papan'),
@@ -2214,23 +2248,69 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       final stem = p.basenameWithoutExtension(_path);
       final target = p.join(dir.path, '$stem-papan-${DateTime.now().millisecondsSinceEpoch}.pdf');
 
-      await PdfPageEditor.addBlankPages(source: _path, target: target, count: count, at: at);
+      // Di isolate pekerja pdfrx, bukan di sini: lihat [PdfPageEditor]. Dari
+      // isolate utama, PDF yang fontnya tidak tertanam mematikan aplikasi.
+      await PdfPageEditor.addBlankPagesInWorker(
+        source: _path,
+        target: target,
+        count: count,
+        at: at,
+      );
 
       final before = _controller.pages.length;
+      // Indeks halaman pertama yang disisipkan; semua yang ada di indeks itu
+      // atau sesudahnya mundur [count].
+      final insertedAt = at ?? before;
+      final moved = PageInsertion.shifted(_annotations, at: insertedAt, count: count);
+      final notes = PageInsertion.notes(_presenterNotes, at: insertedAt, count: count);
+
       if (!mounted) return;
       setState(() {
+        _annotations = PageInsertion.apply(_annotations, at: insertedAt, count: count);
+        _presenterNotes = notes;
+        // Langkah urungkan yang tersimpan menyebut nomor halaman lama.
+        _undoSteps.clear();
+        _redoSteps.clear();
+        // Penampil pindah ke salinan kerja lebih dulu, juga saat halamannya
+        // ditulis ke PDF-nya sendiri: pdfium membaca berkas yang terbuka
+        // sepotong-sepotong, dan menimpanya selagi dibaca mematikan aplikasi.
         _workingPath = target;
-        _unsaved = true;
+        if (!intoFile) _unsaved = true;
       });
-      _say(
-        at == null
-            ? context.l10n.readerBlankPagesAdded(count)
-            : context.l10n.readerBlankPagesInserted(count, at),
-      );
+      if (intoFile) {
+        _markOwnChange();
+        try {
+          await _replaceFile(from: target, to: widget.filePath);
+        } on Object catch (e) {
+          // Halamannya tetap ada di salinan kerja dan bisa disimpan sebagai
+          // PDF baru; yang tidak boleh terjadi adalah diam saja.
+          if (mounted) setState(() => _unsaved = true);
+          if (mounted) _say(context.l10n.readerAddPagesFailed('$e'));
+          return;
+        }
+        await _savePageInsertion(moved, count: count);
+        if (!mounted) return;
+      }
+      _say(switch ((intoFile, at)) {
+        (true, null) => context.l10n.readerBlankPagesWrittenEnd(count),
+        (true, final int page) => context.l10n.readerBlankPagesWritten(count, page),
+        (false, null) => context.l10n.readerBlankPagesAdded(count),
+        (false, final int page) => context.l10n.readerBlankPagesInserted(count, page),
+      });
       // Langsung ke halaman kosong pertamanya: yang menambahkannya hendak
       // menulis di sana sekarang, bukan mencarinya dulu.
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      // Penampil yang dimuat ulang butuh sedikit waktu sebelum halaman
+      // barunya ada.
       final target1 = (at ?? before) + 1;
+      for (var i = 0; i < 10; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        if (!mounted) return;
+        if (_controller.isReady && _controller.pages.length > before) break;
+      }
+      // Penampil baru masih memasang posisi awalnya sesaat setelah siap; tanpa
+      // jeda ini lompatannya ditimpa kembali ke halaman 1.
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      if (!mounted) return;
       if (_controller.isReady && target1 <= _controller.pages.length) {
         await _controller.goToPage(
           pageNumber: target1,
@@ -2240,6 +2320,121 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     } on Object catch (e) {
       if (mounted) _say(context.l10n.readerAddPagesFailed('$e'));
     }
+  }
+
+  /// Mengganti [to] dengan isi [from] tanpa pernah menulis di atas berkas
+  /// yang mungkin masih dibaca: disalin ke sebelahnya, lalu diganti nama.
+  /// Di Windows penggantian nama ditolak selama berkasnya masih terbuka,
+  /// jadi dicoba lagi sebentar sampai penampil lama melepaskannya.
+  static Future<void> _replaceFile({required String from, required String to}) async {
+    final temp = '$to.rp-baru';
+    await File(from).copy(temp);
+    for (var attempt = 0; ; attempt++) {
+      try {
+        await File(temp).rename(to);
+        return;
+      } on FileSystemException {
+        if (attempt >= 15) {
+          if (File(temp).existsSync()) await File(temp).delete();
+          rethrow;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
+    }
+  }
+
+  /// Sudah ditanyakan sekali di pembukaan ini — jawabannya berlaku untuk
+  /// perubahan berikutnya pada berkas yang sama.
+  bool _originalOffered = false;
+
+  /// Menawarkan salinan versi asli sebelum [widget.filePath] berubah untuk
+  /// pertama kalinya. False bila dibatalkan, atau salinannya gagal dibuat —
+  /// lebih baik tidak mengubah apa pun daripada kehilangan versi aslinya.
+  Future<bool> _offerToKeepOriginal() async {
+    if (_originalOffered) return true;
+    final folder = _canWriteInPlace
+        ? Directory(p.dirname(widget.filePath))
+        : await WorkFolder.dir();
+    if (!mounted) return false;
+    final folderLabel = _canWriteInPlace ? p.basename(folder.path) : WorkFolder.label(folder);
+    final keep = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: const Icon(Icons.history_outlined),
+        title: Text(context.l10n.readerKeepOriginalTitle),
+        content: Text(
+          context.l10n.readerKeepOriginalExplain(p.basename(widget.filePath), folderLabel),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(context.l10n.readerCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(context.l10n.readerKeepOriginalNo),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(context.l10n.readerKeepOriginalYes),
+          ),
+        ],
+      ),
+    );
+    if (keep == null || !mounted) return false;
+    if (keep && await _keepOriginalCopy(folder) == null) return false;
+    _originalOffered = true;
+    return true;
+  }
+
+  /// Menyalin [widget.filePath] apa adanya ke [folder] sebagai `…-asli.pdf`.
+  /// Mengembalikan jalurnya, atau null bila gagal (setelah mengatakannya).
+  Future<String?> _keepOriginalCopy(Directory folder) async {
+    try {
+      final stem = widget.isStandalone && !_autoSaves
+          ? p.basenameWithoutExtension(widget.filePath)
+          : _fileStem(widget.title);
+      final copy = WorkFolder.freshFile(folder, '$stem-asli', '.pdf');
+      await File(widget.filePath).copy(copy.path);
+      if (mounted) _say(context.l10n.readerOriginalKeptAs(p.basename(copy.path)));
+      return copy.path;
+    } on Object catch (e) {
+      if (mounted) _say(context.l10n.readerOriginalKeepFailed('$e'));
+      return null;
+    }
+  }
+
+  /// Menyimpan anotasi yang bergeser karena halaman disisipkan ke PDF-nya,
+  /// bersama catatan presenter, sebagai satu perubahan.
+  Future<void> _savePageInsertion(List<ZoteroAnnotation> moved, {required int count}) async {
+    final message = 'Sisipkan $count halaman kosong: ${widget.title}';
+    _markOwnChange();
+    final store = _notesStore ??= _presenterNotesStore();
+    try {
+      await store.save(_presenterNotes);
+    } on Object catch (e) {
+      _say(l10n.presenterNotesSaveFailed('$e'));
+    }
+    if (widget.isStandalone) {
+      // Berkas pendampingnya ditulis utuh, dan pemanggilnya meng-commit
+      // seluruh folder catatan — PDF-nya ikut.
+      await _writeAnnotationsFile(message);
+      return;
+    }
+    final item = _detail?.item;
+    if (item == null) return;
+    _loadGeneration++;
+    final saved = await _workspace.savePageInsertion(
+      item: item,
+      attachmentKey: widget.attachmentKey,
+      annotations: moved,
+      message: message,
+    );
+    if (!mounted) return;
+    if (!saved) {
+      _say(ref.read(workspaceControllerProvider).error ?? context.l10n.readerSaveAnnotationFailed);
+    }
+    await _load();
   }
 
   /// Renders every page with its annotations into one PDF.
@@ -2252,9 +2447,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   Future<Uint8List> _annotatedPdf() async {
     try {
       await _loadPictures();
-      return PdfPageEditor.withAnnotations(
+      // Sama dengan [_onPage], dikelompokkan lebih dulu.
+      final byPage = <int, List<ZoteroAnnotation>>{};
+      for (final a in <ZoteroAnnotation>[..._annotations, ..._embedded]) {
+        (byPage[a.pageIndex + 1] ??= <ZoteroAnnotation>[]).add(a);
+      }
+      return await PdfPageEditor.withAnnotationsInWorker(
         source: _path,
-        annotationsFor: _onPage,
+        byPage: byPage,
         pictures: _pictureBytes,
       );
     } on Object {

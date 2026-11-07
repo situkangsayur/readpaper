@@ -1101,6 +1101,57 @@
   "readerErrPageSize": "Unreasonable page size: {size}",
   "readerEmbeddedLabel": "In the PDF · read-only",
   "readerEmbeddedReadOnly": "This annotation is embedded in the PDF (made in another app); it can only be read here.",
+  "readerBlankPagesIntoFileExplain": "The size of the first page. The pages are written into this PDF itself, so ink on them stays in place when it is opened again.",
+  "readerKeepOriginalTitle": "Keep the original?",
+  "readerKeepOriginalExplain": "{name} is about to change. A copy of the version before it can be kept in {folder} first, so the original is not lost.",
+  "@readerKeepOriginalExplain": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "readerKeepOriginalYes": "Keep a copy",
+  "readerKeepOriginalNo": "No copy",
+  "readerOriginalKeptAs": "The original was kept as {name}",
+  "@readerOriginalKeptAs": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "readerOriginalKeepFailed": "Could not keep a copy of the original: {error}",
+  "@readerOriginalKeepFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "readerBlankPagesWritten": "{count} blank pages inserted after page {page} and saved into the PDF",
+  "@readerBlankPagesWritten": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "page": {
+        "type": "int"
+      }
+    }
+  },
+  "readerBlankPagesWrittenEnd": "{count} blank pages added at the end and saved into the PDF",
+  "@readerBlankPagesWrittenEnd": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readerOverwriteKeepOriginal": "Overwrite, keep the original",
   "tabsLibrary": "Library",
   "tabsClose": "Close tab",
   "tabsCloseOthers": "Close other tabs",
