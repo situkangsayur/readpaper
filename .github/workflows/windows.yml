@@ -141,7 +141,10 @@ jobs:
           $env:READPAPER_RILIS_URL = "http://127.0.0.1:$port/rilis.json"
           $out = Join-Path $env:RUNNER_TEMP 'perbarui-out.txt'
           $err = Join-Path $env:RUNNER_TEMP 'perbarui-err.txt'
-          $run = Start-Process "$app\readpaper.exe" -ArgumentList '--perbarui' -Wait -PassThru -RedirectStandardOutput $out -RedirectStandardError $err
+          # Bukan -Wait: di pwsh 7 itu menunggu seluruh pohon prosesnya, termasuk
+          # setup dan ReadPaper yang dibukanya lagi — yang tidak pernah keluar.
+          $run = Start-Process "$app\readpaper.exe" -ArgumentList '--perbarui' -PassThru -RedirectStandardOutput $out -RedirectStandardError $err
+          if (-not $run.WaitForExit(180000)) { throw "readpaper --perbarui tidak selesai dalam 3 menit" }
           Get-Content $out, $err -ErrorAction SilentlyContinue
           if ($run.ExitCode -ne 0) { throw "readpaper --perbarui gagal (kode $($run.ExitCode))" }
           $back = $false
@@ -152,7 +155,7 @@ jobs:
           Stop-Process -Id $server.Id -Force
           Get-Process | Where-Object { $_.ProcessName -like 'readpaper*' } | Format-Table ProcessName, Id, StartTime -AutoSize
           $log = Join-Path $env:TEMP 'readpaper-pembaruan\setup.log'
-          if (Test-Path $log) { Get-Content $log -Tail 40 } else { "Tidak ada $log"; Get-ChildItem (Join-Path $env:TEMP 'readpaper-pembaruan') -ErrorAction SilentlyContinue }
+          if (Test-Path $log) { Get-Content $log | Select-String -Pattern 'Starting the installation|Installation process succeeded|Run entry|Filename:|Exception|Error|Log closed' } else { "Tidak ada $log"; Get-ChildItem (Join-Path $env:TEMP 'readpaper-pembaruan') -ErrorAction SilentlyContinue }
           if (-not $back) { throw "setup senyap tidak membuka ReadPaper lagi" }
           Get-Process readpaper | Stop-Process -Force
           Start-Sleep -Seconds 2
