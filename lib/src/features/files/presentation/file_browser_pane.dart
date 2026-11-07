@@ -1,3 +1,4 @@
+import '../../workspace/presentation/controllers/workspace_controller.dart' show syncGeneration;
 import 'dart:async';
 import 'dart:io';
 
@@ -65,6 +66,9 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(onResume: _relist);
+    // Pengawas folder tidak selalu melihat berkas yang ditulis tarik (mis.
+    // di Android, atau folder yang diganti utuh); sesudah tarik dibaca ulang.
+    syncGeneration.addListener(_relist);
     _openDefault();
   }
 
@@ -72,6 +76,7 @@ class _FileBrowserPaneState extends ConsumerState<FileBrowserPane> {
   void dispose() {
     _watch?.cancel();
     _settle?.cancel();
+    syncGeneration.removeListener(_relist);
     _lifecycle.dispose();
     super.dispose();
   }

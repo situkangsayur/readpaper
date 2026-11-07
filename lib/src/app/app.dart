@@ -81,7 +81,18 @@ class ReadPaperApp extends ConsumerWidget {
         setCurrentL10n(AppLocalizations.of(context));
         return Stack(
           children: <Widget>[
-            child ?? const SizedBox.shrink(),
+            // Android 15 ke atas menggambar aplikasi di bawah bilah sistem
+            // (edge-to-edge). Dengan navigasi gestur bilahnya tipis, jadi
+            // nyaris tidak terasa; dengan tiga tombol (kembali, beranda,
+            // aplikasi terakhir) bilahnya ~48 dp dan menutupi koleksi, berkas,
+            // atau info paling bawah. Satu SafeArea untuk seluruh aplikasi,
+            // termasuk dialog dan lembar bawah. Atas tidak: AppBar sudah
+            // menanganinya. Di desktop jaraknya nol; di iPhone ini garis
+            // beranda.
+            ColoredBox(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: SafeArea(top: false, child: child ?? const SizedBox.shrink()),
+            ),
             // Lapisan Overlay sendiri: kartunya duduk di atas Navigator,
             // jadi tooltip tombolnya tidak menemukan Overlay milik Navigator.
             Positioned.fill(child: Overlay(initialEntries: <OverlayEntry>[_updateEntry])),

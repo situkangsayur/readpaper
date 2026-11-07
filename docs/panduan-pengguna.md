@@ -648,6 +648,12 @@ Pesan pull menyebut apa yang digabung, misalnya *"Digabung otomatis:
 koleksi.json"*. Kalau dua koleksi bernama sama muncul setelahnya, itu karena
 keduanya memang dibuat terpisah di dua perangkat. Hapus salah satunya.
 
+### Bilah navigasi Android
+
+Baik dengan navigasi gestur maupun tiga tombol (kembali, beranda, aplikasi
+terakhir), baris paling bawah — koleksi, berkas, atau info terakhir — selalu
+berada di atas bilah sistem, tidak tertutup.
+
 ### Memperbarui ReadPaper
 
 Bila ada versi baru di GitHub, kartu **ReadPaper X tersedia** muncul di pojok

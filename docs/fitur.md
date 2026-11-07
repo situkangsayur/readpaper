@@ -169,6 +169,10 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
 - **Penampil PDF** dengan pilihan teks, zum, dan bilah gulir. Nomor halaman di
   bilah atas bisa diketuk untuk **lompat ke halaman** dan membuka **daftar
   isi** bawaan berkas (kalau berkasnya punya).
+- **Zum yang pas.** Tombol perbesar/perkecil melangkah sekitar 1,25× (dulu
+  berlipat dua: satu tekan langsung terlalu dekat, kembali ke pas terlalu
+  jauh); pas halaman dan pas lebar tetap jadi anak tangganya. Setiap dokumen
+  dibuka lagi pada zum yang terakhir dipakai, relatif terhadap lebar layar.
 - **PDF diunduh saat dibuka.** Yang diambil pertama kali hanya metadata
   library; PDF menyusul satu per satu lewat tombol **Unduh** di panel detail.
   Library dengan ratusan PDF tidak perlu diunduh seluruhnya ke tablet.
@@ -418,7 +422,9 @@ membacanya kembali. Semua fitur di bawah tunduk pada aturan itu.
   dibuka. Unduhan yang terputus bisa dilanjutkan dari tempatnya berhenti.
 - **Periksa, tarik, kirim**: tiga tombol di bilah atas (di layar sempit, satu
   menu). Lencana menunjukkan berapa commit baru di GitHub dan berapa perubahan
-  lokal yang menunggu.
+  lokal yang menunggu. Sesudah tarik, library, koleksi catatan, dan
+  penjelajah berkas langsung dibaca ulang — juga bila tarikannya berakhir
+  dengan galat setelah sebagian berkas berubah, dan setelah PDF diunduh.
 - **Satu perubahan, satu commit.** Setiap anotasi, koleksi baru, atau catatan
   yang disimpan langsung di-commit dengan pesan yang terbaca. Pilihan **Push
   otomatis setelah menyimpan anotasi** di profil mengirimnya seketika.
@@ -505,8 +511,7 @@ Diringkas dari butir yang belum selesai di [backlog.md](backlog.md):
   library 1.740 item, mendekati kuota GitHub 5.000 per jam.
 - **Token di Android** disimpan di berkas privat aplikasi, belum di keystore.
   APK masih ditandatangani dengan kunci debug.
-- **Belum ada panel thumbnail halaman** atau tingkat zum yang tersimpan per
-  paper.
+- **Belum ada panel thumbnail halaman.**
 - **Word dan PowerPoint hanya untuk dibaca**, dan tanpa LibreOffice bukan
   tampilan persis: huruf tema diganti huruf aplikasi, bagan dan SmartArt
   tidak tampil, bentuk selain kotak/elips digambar sebagai kotak, WMF belum

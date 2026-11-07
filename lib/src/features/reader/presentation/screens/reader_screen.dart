@@ -48,6 +48,8 @@ import '../widgets/annotation_move_layer.dart';
 import '../widgets/annotation_overlay_painter.dart';
 import '../../domain/page_image_export.dart';
 import '../../domain/page_insertion.dart';
+import '../../domain/zoom_steps.dart';
+import '../../data/zoom_memory.dart';
 import '../widgets/annotation_sidebar.dart';
 import '../widgets/save_as_dialog.dart';
 import '../widgets/export_image_sheet.dart';
@@ -232,6 +234,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   /// Debounces history writes while pages are being flicked through.
   Timer? _recordTimer;
+  Timer? _zoomSave;
+  double? _savedZoom;
 
   /// Held so the final history write still works from [dispose].
   late final WorkspaceController _workspace;
@@ -439,6 +443,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
   @override
   void dispose() {
+    _zoomSave?.cancel();
+    _controller.removeListener(_onViewChanged);
     final audience = _audience;
     if (audience != null) unawaited(audience.close());
     _audienceClosed?.cancel();
@@ -1539,6 +1545,29 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     }
 
     _recordVisit(profileId);
+  }
+
+  /// Membuka dokumen pada zum yang terakhir dipakai untuknya.
+  Future<void> _restoreZoom() async {
+    final ratio = ZoomMemory.ratioFor(widget.filePath);
+    if (ratio == null || !_controller.isReady || _presentMode) return;
+    _savedZoom = ratio;
+    final center = _controller.value.calcPosition(_controller.viewSize);
+    await _controller.setZoom(center, _controller.coverScale * ratio, duration: Duration.zero);
+  }
+
+  /// Zum yang diubah (cubit, tombol, Ctrl+roda) diingat setelah reda.
+  void _onViewChanged() {
+    if (_presentMode || !_controller.isReady) return;
+    final ratio = _controller.currentZoom / _controller.coverScale;
+    if (_savedZoom != null && (ratio - _savedZoom!).abs() < 0.01) return;
+    _zoomSave?.cancel();
+    _zoomSave = Timer(const Duration(seconds: 1), () {
+      if (!mounted || _presentMode || !_controller.isReady) return;
+      final now = _controller.currentZoom / _controller.coverScale;
+      _savedZoom = now;
+      ZoomMemory.remember(widget.filePath, now);
+    });
   }
 
   /// Saves the page after the scrolling stops, not during it.
@@ -3904,6 +3933,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       },
       backgroundColor: _tint.background ?? AppTheme.readerBackground(scheme),
       margin: 10,
+      // Tombol +/− melangkah ~1,25×, bukan berlipat dua; lihat readerZoomStops.
+      zoomStepsDelegateProvider: const ReaderZoomStepsProvider(),
       pagePaintCallbacks: _paintMatches,
       textSelectionParams: _penMode ? _selectOff : (_markerMode ? _selectByDrag : _selectByHandles),
       // While marking, the drag belongs to the selection; while drawing, to
@@ -3962,6 +3993,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         final outline = await document.loadOutline();
         if (mounted) setState(() => _outline = outline);
         await _resumeAndRemember();
+        if (!widget.startPresenting && mounted) await _restoreZoom();
+        controller.addListener(_onViewChanged);
         if (widget.startPresenting && mounted && !_presentMode) {
           controller.goToPage(pageNumber: 1);
           _togglePresent();

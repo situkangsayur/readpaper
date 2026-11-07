@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show ValueNotifier;
+
 import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -19,6 +21,7 @@ import '../../../library/domain/entities/zotero_annotation.dart';
 import '../../../library/domain/entities/zotero_item.dart';
 import '../../../files/domain/folder_scan.dart';
 import '../../../reader/data/page_picture.dart';
+import '../../../notes/presentation/controllers/notes_controller.dart';
 import '../../../settings/domain/entities/repo_profile.dart';
 import '../../../sync/domain/entities/git_entities.dart';
 import '../../../sync/domain/entities/sync_progress.dart';
@@ -38,6 +41,10 @@ List<String> librarySignaturePaths(String libraryDir) => <String>[
 ///
 /// Every remote operation funnels through here so the UI only has to render
 /// [WorkspaceState].
+/// Bertambah setiap kali tarik atau unduhan LFS selesai, supaya tampilan
+/// yang membaca disk sendiri (penjelajah berkas) ikut membaca ulang.
+final syncGeneration = ValueNotifier<int>(0);
+
 class WorkspaceController extends Notifier<WorkspaceState> {
   /// Bertambah setiap kali ReadPaper sendiri menulis ke library tanpa
   /// membacanya ulang (anotasi, gambar tempelan), supaya [DiskWatch] tidak
@@ -200,16 +207,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (result.ok) {
       await openProfile(profile);
       await _touchSyncTime(profile);
-      await _fetchAllIfWanted(profile);
+      if (await _fetchAllIfWanted(profile)) await reloadLibrary();
     }
     return result.ok;
   }
 
   /// Di Android, mirror hanya memuat metadata. Bila profil mematikan "Unduh
   /// PDF hanya saat dibuka", semua PDF diunduh sesudah ambil dan pull.
-  Future<void> _fetchAllIfWanted(RepoProfile profile) async {
+  Future<bool> _fetchAllIfWanted(RepoProfile profile) async {
     final backend = ref.read(gitBackendProvider);
-    if (profile.lazyAttachments || backend is! GitHubApiBackend) return;
+    if (profile.lazyAttachments || backend is! GitHubApiBackend) return false;
     _beginPhase(SyncPhase.pulling);
     final auth = await _authFor(profile);
     final result = await backend.fetchAllAttachments(
@@ -218,6 +225,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       onProgress: _appendProgress,
     );
     await _endPhase(result);
+    return true;
   }
 
   /// Throws away the working copy and takes it again, so an old full clone can
@@ -256,24 +264,48 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final ok = await _remoteAction(SyncPhase.pulling, (backend, profile, auth) {
       return backend.pull(repoPath: profile.localPath, auth: auth, onProgress: _appendProgress);
     });
+    // Selalu dibaca ulang, juga bila tarikannya berakhir gagal: bentrok yang
+    // diselesaikan sebagian atau jaringan yang putus di tengah sudah bisa
+    // mengubah berkas. Dulu hanya library, dan hanya bila berhasil; koleksi
+    // catatan menunggu pemeriksaan disk berikutnya (15 detik di tablet), dan
+    // yang tidak terbaca baru tampil setelah aplikasi dibuka ulang.
+    await _reloadAfterSync();
     if (ok) {
-      await reloadLibrary();
       final profile = state.profile;
       if (profile != null) {
         await _touchSyncTime(profile);
-        await _fetchAllIfWanted(profile);
+        if (await _fetchAllIfWanted(profile)) await reloadLibrary();
       }
     }
     return ok;
+  }
+
+  /// Library dan catatan dibaca ulang dari disk sesudah tindakan yang bisa
+  /// membawa berkas dari remote.
+  Future<void> _reloadAfterSync() async {
+    await reloadLibrary();
+    await refreshGitStatus();
+    try {
+      await ref.read(notesControllerProvider.notifier).reload();
+    } on Object {
+      // Catatan yang gagal dibaca dilaporkan controller-nya sendiri.
+    }
+    syncGeneration.value++;
   }
 
   Future<bool> push() => _remoteAction(SyncPhase.pushing, (backend, profile, auth) {
     return backend.push(repoPath: profile.localPath, auth: auth, onProgress: _appendProgress);
   });
 
-  Future<bool> lfsPull() => _remoteAction(SyncPhase.pulling, (backend, profile, auth) {
-    return backend.lfsPull(repoPath: profile.localPath, auth: auth, onProgress: _appendProgress);
-  });
+  Future<bool> lfsPull() async {
+    final ok = await _remoteAction(SyncPhase.pulling, (backend, profile, auth) {
+      return backend.lfsPull(repoPath: profile.localPath, auth: auth, onProgress: _appendProgress);
+    });
+    // PDF yang tadinya penunjuk LFS sekarang berkas sungguhan.
+    await reloadLibrary();
+    syncGeneration.value++;
+    return ok;
+  }
 
   /// Stages everything, commits, and pushes when [push] is true.
   Future<bool> commitAll({required String message, bool push = true}) async {
