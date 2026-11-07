@@ -49,7 +49,7 @@ dependencies:
   # Membaca gaya dan locale CSL, yang berbentuk XML
   xml: ^7.0.1
   # Membaca .doc/.xls yang sebenarnya HTML (ekspor aplikasi web).
-  html: ^0.15.4
+  html: ^0.15.7
 
   # Utils
   collection: ^1.19.1
